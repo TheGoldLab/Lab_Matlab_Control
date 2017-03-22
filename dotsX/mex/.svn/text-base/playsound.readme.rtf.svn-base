@@ -1,0 +1,29 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf410
+{\fonttbl\f0\fmodern\fcharset77 CourierNewPSMT;\f1\fswiss\fcharset77 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\deftab720
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrt\brdrnil \trbrdrr\brdrnil 
+\clvertalt \clshdrawnil \clwWidth20660\clftsWidth3 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadl100 \clpadr100 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\ql\qnatural
+
+\f0\fs21\fsmilli10790 \cf0 Fix for PLAYSND.maxmac in TIGER, from PsychToolbox forum:\
+\
+The solution may have been posted already, but I didn't see it. Please forgive me, if this is a repeat.\
+\
+The problem causing the sound snafu in Matlab 7.1 is QuickTime, which did not initialize properly during MATLAB startup, and the sound command uses QuickTime. The fix?\
+\
+remove this file:\
+\
+libtiff.dylib\
+\
+which is most likely to be in this folder:\
+\
+Applications/MATLAB71/bin/mac\
+\
+R Sekuler\
+\cell \lastrow\row
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f1\fs24 \cf0 http://tech.groups.yahoo.com/group/psychtoolbox/messages/}

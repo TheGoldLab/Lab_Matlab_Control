@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID
+END
+putMap.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/putMap.m
+END
+putValues.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/putValues.m
+END
+dXgameHID.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/dXgameHID.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/set.m
+END
+getJump.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/getJump.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/get.m
+END
+reset.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/reset.m
+END
+root.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/root.m
+END
+saveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXgameHID/saveToFIRA.m
+END

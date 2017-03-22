@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark
+END
+logTop.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/logTop.m
+END
+dXbenchmarks.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/dXbenchmarks.m
+END
+measureDotDensityPerformance.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/measureDotDensityPerformance.m
+END
+measureFrameFlipDeadline.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/measureFrameFlipDeadline.m
+END
+measureClassDrawingOverhead.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/measureClassDrawingOverhead.m
+END
+measureRemoteClockDrift.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1/trunk/DotsX/utilities/benchmark/measureRemoteClockDrift.m
+END

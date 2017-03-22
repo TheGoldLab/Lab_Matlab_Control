@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/31/trunk/DotsX/classes/control/@dXquest
+END
+dB2Stim.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/dB2Stim.m
+END
+stim2dB.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/stim2dB.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/28/trunk/DotsX/classes/control/@dXquest/set.m
+END
+summarize.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/summarize.m
+END
+dXquest.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/30/trunk/DotsX/classes/control/@dXquest/dXquest.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/get.m
+END
+control.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/control.m
+END
+update.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/update.m
+END
+endTrial.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/31/trunk/DotsX/classes/control/@dXquest/endTrial.m
+END
+reset.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/30/trunk/DotsX/classes/control/@dXquest/reset.m
+END
+saveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXquest/saveToFIRA.m
+END

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="182"
+   name=""
+   committed-date="2007-03-02T21:05:34.354667Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/OSX/clutX"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="182"
+   name="clutX.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-03-02T21:05:34.354667Z"
+   checksum="8155863c9a4b713f10788642cd255979"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="182"
+   name="clutX.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-03-02T21:05:34.354667Z"
+   checksum="0088eab799518943ccadd52ce994b12f"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

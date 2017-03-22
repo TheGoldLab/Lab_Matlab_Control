@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/75/trunk/DotsX/tasks/response_modality
+END
+centerTargetOnFixation.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/75/trunk/DotsX/tasks/response_modality/centerTargetOnFixation.m
+END
+modalityDemo.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/modalityDemo.m
+END
+modalityFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/modalityFeedback.m
+END
+gXmodality_motionControl.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/gXmodality_motionControl.m
+END
+showDotsCheckFP.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/showDotsCheckFP.m
+END
+gXmodality_hardware.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/gXmodality_hardware.m
+END
+modality_task_args.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/modality_task_args.m
+END
+gXmodality_graphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/gXmodality_graphics.m
+END

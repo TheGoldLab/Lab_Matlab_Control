@@ -1,0 +1,6 @@
+#!/bin/sh
+# Attempt to launch Matlab and invoke a Snow Dots ensemble server.
+
+# go to the first Matlab folder for OS X
+cd /Applications/MATLAB*
+bin/matlab -nosplash -nodesktop -r "dotsEnsembleServer.runNewServer();"

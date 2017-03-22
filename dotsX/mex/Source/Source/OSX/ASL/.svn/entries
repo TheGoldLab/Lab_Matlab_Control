@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="360"
+   name=""
+   committed-date="2007-09-06T15:45:23.933234Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/OSX/ASL"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="360"
+   name="asl.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T15:45:23.933234Z"
+   checksum="520ff17a227e887e77770f6f7d2f5333"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="serialPort.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="72ee3990f8898e9ecc5385663db7ae6c"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="config.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="41ed70c2e861cb9b7d46993c9921bc42"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="266"
+   name="serialPort.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-05-31T22:02:09.941575Z"
+   checksum="a4500d9960fbe909cb3504b140ac0185"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

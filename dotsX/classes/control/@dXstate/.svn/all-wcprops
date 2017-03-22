@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXstate
+END
+loop.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXstate/loop.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXstate/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXstate/set.m
+END
+dXstate.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXstate/dXstate.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXstate/get.m
+END
+debugLoop.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXstate/debugLoop.m
+END

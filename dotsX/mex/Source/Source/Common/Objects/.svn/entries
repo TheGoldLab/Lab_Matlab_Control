@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/Common/Objects"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="LCTarget.c"
+   text-time="2008-12-29T20:08:59.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="354a6d0307ba745ba186a0e0f328bec2"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCScreenLocation.c"
+   text-time="2008-12-29T20:08:59.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="eb3d412701201a82a7f4755609c6dc3d"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+</wc-entries>

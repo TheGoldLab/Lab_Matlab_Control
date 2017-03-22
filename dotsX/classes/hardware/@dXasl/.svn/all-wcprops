@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/75/trunk/DotsX/classes/hardware/@dXasl
+END
+query.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/query.m
+END
+putMap.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/75/trunk/DotsX/classes/hardware/@dXasl/putMap.m
+END
+putValues.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/putValues.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/set.m
+END
+dXasl.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/75/trunk/DotsX/classes/hardware/@dXasl/dXasl.m
+END
+getJump.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/75/trunk/DotsX/classes/hardware/@dXasl/getJump.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/get.m
+END
+reset.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/reset.m
+END
+root.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/root.m
+END
+saveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/@dXasl/saveToFIRA.m
+END

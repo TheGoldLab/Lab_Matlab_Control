@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/OSX/pTask"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="MMActiveWire.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="d3010b627378517e6156d35bf0dedea8"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="MMPTask.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="7ad81bb6e7d673ebdd91041b39f45eb5"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

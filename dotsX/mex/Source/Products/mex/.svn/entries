@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="269"
+   name=""
+   committed-date="2007-06-07T19:01:19.207195Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Products/mex"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="aw.mexmac"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="0675721c132e76a514333ba5722a80a0"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="4"
+   name="aw.m"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="30643e8d00eb272c8c5e03b6034b96c6"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="266"
+   name="lpHID.mexmaci"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2007-05-31T22:02:09.941575Z"
+   checksum="1d1388f708fe39bd3c1fb84988d907f1"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="269"
+   name="as.mexmaci"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2007-06-07T19:01:19.207195Z"
+   checksum="ad8fc55afacfe23644b22fed58fa7162"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="42"
+   name="lpHID.mexmac"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-12-08T21:39:54.768154Z"
+   checksum="6478694945aa559c80cf79886f0feac9"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="21"
+   name="as.mexmac"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-10-12T18:52:24.571309Z"
+   checksum="9a1af5bfc2932f7470ce0b50905ed29d"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="4"
+   name="as.m"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="40a97dfee9c23714f7c100d874ccc1c3"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+</wc-entries>

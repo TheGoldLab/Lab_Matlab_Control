@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu
+END
+dXdu.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/dXdu.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/set.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/get.m
+END
+update.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/update.m
+END
+endTrial.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/endTrial.m
+END
+saveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdu/saveToFIRA.m
+END

@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXdistr
+END
+newMeanNewSubBlockSize.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXdistr/newMeanNewSubBlockSize.m
+END
+newGaussian.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/newGaussian.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/set.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/get.m
+END
+control.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/control.m
+END
+dXdistr.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/dXdistr.m
+END
+update.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/update.m
+END
+endTrial.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/75/trunk/DotsX/classes/control/@dXdistr/endTrial.m
+END
+reset.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/reset.m
+END
+saveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/classes/control/@dXdistr/saveToFIRA.m
+END

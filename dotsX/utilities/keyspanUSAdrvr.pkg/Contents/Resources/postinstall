@@ -1,0 +1,6 @@
+#!/bin/sh
+
+logger running KeyspanUSAdriver.post_install
+
+PERM="$1"/Contents/Resources
+"$PERM"/driverLoad

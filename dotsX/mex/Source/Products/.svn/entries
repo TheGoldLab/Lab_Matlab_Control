@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="269"
+   name=""
+   committed-date="2007-06-07T19:01:19.207195Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Products"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   name="mex"
+   kind="dir"/>
+<entry
+   name="libraries"
+   kind="dir"/>
+</wc-entries>

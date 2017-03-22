@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sound
+END
+taskRandom_sound.m
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sound/taskRandom_sound.m
+END
+soundRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sound/soundRoot.m
+END
+pickSound.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sound/pickSound.m
+END
+gXsound_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sound/gXsound_statelist.m
+END

@@ -1,0 +1,26 @@
+/* tryGLSL shader
+ * futz around with a shader
+ *
+ * Spawned 2008 by Ben Heasly from Mario Kleiner's ExpandingRings.frag.txt
+ */
+
+#version 110
+
+uniform float f;
+uniform float ppd;
+uniform float c;
+uniform vec4  ColorHigh;
+uniform vec4  ColorLow;
+
+void main()
+{
+    /* Query current output texel position: */
+    vec2 p = gl_TexCoord[0].xy;
+
+    /* half-width of sinusoid */
+    float hw = .5*( (((1.0+c)/(1.0-c))-1.0) / (((1.0+c)/(1.0-c))+1.0) );
+
+    /* Get sinusoid for mixing two colors */
+    float s = 0.5 + hw*sin( (p[0]/ppd) * (f*6.2832) );
+    gl_FragColor = mix(ColorHigh, ColorLow, s);
+}

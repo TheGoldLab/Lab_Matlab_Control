@@ -1,0 +1,80 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf340
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 # Dream Oddball Task\
+\
+Overview: A certain sound frequency will be played commonly. A second, \'91oddball\'92 frequency will be played rarely. The participant is required to press a button or pattern of buttons to respond to oddball frequencies when they play.\
+\
+There are additional modes that can be run as well:\
+\
+Distractor Mode: This turns on a distractor sound that will intermittently play and make the task a little more difficult.\
+\
+Adaptive Mode: This will tune the difference between the oddball frequency and commonly-played frequency to adapt the difficulty of the task to the participant\'92s ability.\
+\
+Opposite Input Mode: During the standard version of the task, the participant must respond to oddball frequencies being played. With Opposite Input Mode turned on, they must respond to standard frequencies, and IGNORE oddball frequencies.\
+\
+***\
+# Dependencies\
+\
+The **FoundationCode** folder includes Snowdots by Ben Heasley, Psychtoolbox, Stanford's MGL Library, the Tobii SDK, and other assorted Matlab toolboxes. The Custom folder features code that was written by me or by colleagues at the GoldLab. These are all **REQUIRED** to be in the Matlab path for the task code to work!\
+\
+Before running this task, TobiiCalibration must have been run on a subject to calibrate the Tobii Eyetracker! The calibration file can be found in the greater GoldLabPsychophysics repository: *Foundation/Custom/KabirTobiiCalibration.m*\
+\
+***\
+# The Task Constructor\
+\
+To create the runnable task object, run:\
+\
+	>[task, list] = dreamOddballConfig(distractor_on, adaptive_on, opposite_on)\
+\
+The arguments inside the dreamOddballConfig function are 0s or 1s.\
+\
+distractor_on == 1 means that the task is in Distractor Mode. \
+\
+adaptive_on ==1 means the task in in Adaptive Mode.\
+\
+opposite_on ==1 means the task is in Opposite Input Mode.\
+\
+All three modes can be active at once.\
+\
+To actually run the task:\
+\
+	>[task,list] = dreamOddballConfig(0,0,0)\
+	>dotsTheScreen.openWindow() %Opens window\
+	>task.run  %Runs task\
+	>dotsTheScreen.closeWindow()  %Closes window \
+\
+***\
+\
+# Data storage\
+\
+Everything is stored in the \'91list\'92 object that will appear after the task is constructed. \
+\
+The list can be accessed by indexing using string \'91mnemonics\'92.\
+\
+For example, to access Eyetracker data for the left eye, I can:\
+\
+	>list\{\'92Eye\'92\}\{\'91Left\'92\}\
+\
+Some important data stores:\
+\
+list\{\'91Stimulus\'92\}\{\'91Playtimes\'92\} = Timestamps for every sound played\
+list\{\'91Stimulus\'92\}\{\'91Playfreqs\'92\} = Frequencies played for each trial\
+\
+list\{\'91Input\'92\}\{\'91Choices\'92\} = Participant inputs for a trial\
+list\{\'91Input\'92\}\{\'91Corrects\'92\} = Whether or not answers were correct for each trial\
+\
+list\{\'91Eye\'92\}\{\'91Left\'92\} = All eye tracking data (X-coordinate, Y-coordinate, Eye Diameter, Validity Code) for the left eye\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 list\{\'91Eye\'92\}\{\'91Right\'92\} = All eye tracking data (X-coordinate, Y-coordinate, Eye Diameter, Validity Code) for the right eye\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+	\
+\
+\
+}

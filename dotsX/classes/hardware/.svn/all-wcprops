@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/75/trunk/DotsX/classes/hardware
+END
+formatPMDReport.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/formatPMDReport.m
+END
+rPutMappings.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/rPutMappings.m
+END
+dXkbFunctionKeys.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/dXkbFunctionKeys.m
+END
+README.rtf
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/README.rtf
+END
+dXkbWait.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/dXkbWait.m
+END
+dXkbWaitRelease.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/dXkbWaitRelease.m
+END
+rHIDPutValues.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/classes/hardware/rHIDPutValues.m
+END

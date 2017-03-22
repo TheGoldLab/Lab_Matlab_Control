@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources
+END
+package_version
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/package_version
+END
+Welcome.rtf
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/Welcome.rtf
+END
+ReadMe.rtf
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/ReadMe.rtf
+END
+keyspanUSAdrvr.pax.gz
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/keyspanUSAdrvr.pax.gz
+END
+driverLoad
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/driverLoad
+END
+BundleVersions.plist
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/BundleVersions.plist
+END
+postinstall
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/postinstall
+END
+License.rtf
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/License.rtf
+END
+keyspanUSAdrvr.bom
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/keyspanUSAdrvr.bom
+END
+keyspanUSAdrvr.sizes
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/keyspanUSAdrvr.sizes
+END
+postupgrade
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/postupgrade
+END
+preinstall
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/preinstall
+END
+preupgrade
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/utilities/keyspanUSAdrvr.pkg/Contents/Resources/preupgrade
+END

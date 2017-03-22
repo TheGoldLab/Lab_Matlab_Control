@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/Common/DataTypes"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="LCRoot.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="3bf2a8204fe6fe0aa593a1647fd464a8"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCVariable.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="1ae81a9344ea5f2fac6da95876d86167"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCObject.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="68c8d399f354cdad535d5f9845cf127e"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCRoot.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="ccdbe30210de18a09affde2cf15c5fc2"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCVariable.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="1a73e3940ef7e46af854f22207447e57"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCObject.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="96b73730499567fcbf99d499d570e527"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

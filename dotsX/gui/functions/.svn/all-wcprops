@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/15/trunk/DotsX/gui/functions
+END
+dXROOT_sortedFields.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXROOT_sortedFields.m
+END
+dXobject_makeWidgets.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_makeWidgets.m
+END
+dXobject_cellAddRemove.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_cellAddRemove.m
+END
+updateTaskControls.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/updateTaskControls.m
+END
+trialSummary.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/trialSummary.m
+END
+dXobject_editField.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_editField.m
+END
+dXGUI_sync.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/15/trunk/DotsX/gui/functions/dXGUI_sync.m
+END
+dXwriteExisting.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXwriteExisting.m
+END
+dXROOT_makeMenu.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXROOT_makeMenu.m
+END
+dXobject_sliderCallback.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_sliderCallback.m
+END
+dXobject_widgetByType.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_widgetByType.m
+END
+dXobject_enqueueSetArgs.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/gui/functions/dXobject_enqueueSetArgs.m
+END

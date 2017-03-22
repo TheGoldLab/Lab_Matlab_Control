@@ -1,0 +1,179 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad
+END
+gXpupil_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXpupil_statelist.m
+END
+gXsublim_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXsublim_statelist.m
+END
+updateReward.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/16/trunk/DotsX/tasks/random_numbers/continuous_gamepad/updateReward.m
+END
+gXrandomContinuous_helpers.m
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXrandomContinuous_helpers.m
+END
+setBadTrialFlag.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/setBadTrialFlag.m
+END
+gXrandomConfidence_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXrandomConfidence_statelist.m
+END
+randomContinuous_helpers.m
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/randomContinuous_helpers.m
+END
+confFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/confFeedback.m
+END
+taskRandomContinuous.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/taskRandomContinuous.m
+END
+sublim.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sublim.m
+END
+mask.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/mask.m
+END
+gXpupil_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXpupil_text.m
+END
+pupilRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/16/trunk/DotsX/tasks/random_numbers/continuous_gamepad/pupilRoot.m
+END
+errorFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/errorFeedback.m
+END
+pickSoundOld.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/pickSoundOld.m
+END
+sublimRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/sublimRoot.m
+END
+gXpupilSP_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/16/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXpupilSP_text.m
+END
+makConfVis.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/makConfVis.m
+END
+confidenceRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/confidenceRoot.m
+END
+gXrandomConfidence_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXrandomConfidence_text.m
+END
+gXrandomContinuous_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXrandomContinuous_statelist.m
+END
+pickSoundBAD.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/pickSoundBAD.m
+END
+drawNew.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/drawNew.m
+END
+continuousRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/75/trunk/DotsX/tasks/random_numbers/continuous_gamepad/continuousRoot.m
+END
+gXrandomContinuous_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/gXrandomContinuous_text.m
+END
+taskRandom_pupil.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/taskRandom_pupil.m
+END
+taskRandom_sublim.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/taskRandom_sublim.m
+END
+taskRandomConfidence.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/1/trunk/DotsX/tasks/random_numbers/continuous_gamepad/taskRandomConfidence.m
+END
+compareEstimate.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/16/trunk/DotsX/tasks/random_numbers/continuous_gamepad/compareEstimate.m
+END

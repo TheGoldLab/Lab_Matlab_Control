@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/Rex"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="LREcodeToPlexon.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="0e91cc9a6e76667d2e927107c660551b"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LRGraphicsMessages.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="8b9d5dbb497d71651e8eaaadef5f189f"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LRRexHeader.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="1c2febb4939c3c797ef2c964a848e9de"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LREcodeToPlexon.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="29cf4fe215624e090b318f961a7877d2"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LRGraphicsMessages.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="59988fdd3376648d4b23c246b8929b55"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

@@ -1,0 +1,215 @@
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/!svn/ver/75/trunk/DotsX/scripts
+END
+demoUDPDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoUDPDots.m
+END
+demoUDPTargets.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoUDPTargets.m
+END
+demoNDimVisualize.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoNDimVisualize.m
+END
+demoText.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoText.m
+END
+takeABreak.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/1/trunk/DotsX/scripts/takeABreak.m
+END
+demoPolygon.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoPolygon.m
+END
+demoTable.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoTable.m
+END
+demoBitsPlusGray.m
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoBitsPlusGray.m
+END
+demoFmin.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoFmin.m
+END
+demoDotsNoInit.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoDotsNoInit.m
+END
+testQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/scripts/testQuest.m
+END
+demoDots6.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoDots6.m
+END
+demoTexture.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoTexture.m
+END
+dots.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/1/trunk/DotsX/scripts/dots.m
+END
+demoASLBlinkFilter.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoASLBlinkFilter.m
+END
+demoTargets.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoTargets.m
+END
+testDotsRandSeed.m
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/1/trunk/DotsX/scripts/testDotsRandSeed.m
+END
+motionAdapt.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/motionAdapt.m
+END
+ASLCalibrate.m
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/75/trunk/DotsX/scripts/ASLCalibrate.m
+END
+demoImage.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoImage.m
+END
+demoDistrDotsChange.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoDistrDotsChange.m
+END
+demoTextCenter.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoTextCenter.m
+END
+demoSyntax.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoSyntax.m
+END
+demoLine.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoLine.m
+END
+demoAllGraphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoAllGraphics.m
+END
+demoTakeABreak.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoTakeABreak.m
+END
+demoLinePlus.m
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoLinePlus.m
+END
+demoPMD1208.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoPMD1208.m
+END
+demoGamePad.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoGamePad.m
+END
+testChecker.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/scripts/testChecker.m
+END
+demoVideo.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoVideo.m
+END
+demoVirtualTexture.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoVirtualTexture.m
+END
+demoDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/75/trunk/DotsX/scripts/demoDots.m
+END
+demoDistributionDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoDistributionDots.m
+END
+demoPMDChannelZero.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/1/trunk/DotsX/scripts/demoPMDChannelZero.m
+END

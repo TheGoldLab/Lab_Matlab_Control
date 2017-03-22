@@ -1,0 +1,125 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/75/trunk/DotsX/tasks/learning_bias
+END
+biasQuestAssessRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/75/trunk/DotsX/tasks/learning_bias/biasQuestAssessRoot.m
+END
+gXbias_hardware.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/gXbias_hardware.m
+END
+taskBiasLever_180C.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/taskBiasLever_180C.m
+END
+copyQuestCoherences.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/copyQuestCoherences.m
+END
+readQuestCoherences.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/readQuestCoherences.m
+END
+gXbias_graphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/29/trunk/DotsX/tasks/learning_bias/gXbias_graphics.m
+END
+graphics_test.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/graphics_test.m
+END
+taskBiasLever_20C.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/taskBiasLever_20C.m
+END
+setupQuestForMotionAxis.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/setupQuestForMotionAxis.m
+END
+taskBiasLever_180P.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/taskBiasLever_180P.m
+END
+taskBiasLever_180Q.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/taskBiasLever_180Q.m
+END
+gXbias_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/gXbias_statelist.m
+END
+testDotsOverlay.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/testDotsOverlay.m
+END
+bias_task_args.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/bias_task_args.m
+END
+biasSetDirections.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/biasSetDirections.m
+END
+taskBiasLever_20P.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/taskBiasLever_20P.m
+END
+bias_paradigm_sets.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/bias_paradigm_sets.m
+END
+taskBiasLever_20Q.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/31/trunk/DotsX/tasks/learning_bias/taskBiasLever_20Q.m
+END
+biasRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/75/trunk/DotsX/tasks/learning_bias/biasRoot.m
+END
+biasFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/tasks/learning_bias/biasFeedback.m
+END

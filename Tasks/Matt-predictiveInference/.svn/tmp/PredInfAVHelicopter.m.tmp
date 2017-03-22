@@ -1,0 +1,520 @@
+classdef PredInfAVHelicopter < PredInfAV
+    % Predictive inference task with "Helicopter" audiovisual style
+    
+    properties
+        
+        % the background image object
+        background;
+        
+        % an image file to show in the background
+        backgroundImageFile = 'bison.jpg';
+        
+        % how wide to stretch the background image
+        backgroundWidth = 30;
+        
+        % how tall to stretch the background image
+        backgroundHeight = 20;
+        
+        % whether or not to show clouds in place of the helicopter
+        isCloudy = false;
+        
+        % a cloudy image object
+        clouds;
+        
+        % an image file which contains clouds
+        cloudsImageFile = 'clouds.tiff';
+        
+        % how wide to stretch the clouds image
+        cloudsWidth = 30;
+        
+        % how tall to stretch the clouds image
+        cloudsHeight = 4;
+        
+        % height of the helicopter image
+        yHelicopter = 8;
+        
+        % height of the clouds image
+        yClouds = 8;
+        
+        % height of the ground where bags fall
+        yGround = -8;
+        
+        % line for the ground where bags fall and subject digs a hole
+        ground;
+        
+        % width of the hole in the ground
+        holeWidth = 3;
+        
+        % height of the hole in the ground
+        holeHeight = 2;
+        
+        % trial-by-trial cound of coins that landed in the hole
+        coinsInHole = 0;
+        
+        % pile of coins accumulated during a block
+        pile;
+        
+        % line for showing the trial "delta" error
+        delta;
+        
+        % line for tracing falling bags paths
+        tracer;
+        
+        % an animator for extending the tracer along with the bag
+        tracerAnimator;
+        
+        % a helicopter image object
+        helicopter;
+        
+        % an animator object for the helicopter hovering vertically
+        hoverAnimator;
+        
+        % an animator object for the helicopter flying horizontally
+        flyAnimator;
+        
+        % an image file with a helicopter
+        heliImageFile = 'helicopter.tiff';
+        
+        % width of the helicopter image
+        heliWidth = 3;
+        
+        % height of the helicopter image
+        heliHeight = 3;
+        
+        % a bag image object
+        bag;
+        
+        % an animator object for the bag
+        bagAnimator;
+        
+        % an image file with a bag
+        bagImageFile = 'bag-of-coins.tiff';
+        
+        % width of the bag image
+        bagWidth = 2;
+        
+        % height of the bag image
+        bagHeight = 2;
+        
+        % an explosion for lots of coins
+        explosion;
+        
+        % an animator object for the explosion
+        explAnimator;
+        
+        % how many coins to explode from the bag
+        nExplCoins = 200;
+        
+        % pizel size of each explosion coin
+        explCoinSize = 4;
+        
+        % standard deviation of coins explosion
+        explStd = 1;
+        
+        % a color that might be described as "hot"
+        hotColor = [0.9 0.6 0.3];
+        
+        % a color that might be described as "cool"
+        coolColor = [0.1 0.1 0.6];
+        
+        % a color that might be described as "gold"
+        goldColor = [1.0 0.84 0];
+        
+        % a color that might be described as "silver"
+        silverColor = [0.7 0.7 0.8];
+        
+        % a color that might be described as "bronze"
+        bronzeColor = [0.8 0.5 0.2];
+        
+        % text for subject performance
+        subjectScore;
+        
+        % font size for all texts
+        fontSize = 48;
+    end
+    
+    methods
+        % Set up audio-visual resources as needed.
+        function initialize(self)
+            dm = dotsTheDrawablesManager.theObject();
+            
+            % same background for instructions, trial, and feedback
+            self.background = dm.newObject('dotsDrawableImages');
+            self.background.fileNames = {self.backgroundImageFile};
+            self.background.width = self.backgroundWidth;
+            self.background.height = self.backgroundHeight;
+            dm.addObjectToGroup( ...
+                self.background, self.instructionGroup, -1);
+            dm.addObjectToGroup(self.background, self.trialGroup, -1);
+            dm.addObjectToGroup(self.background, self.feedbackGroup, -1);
+            
+            % optional clouds to cover the sky
+            self.clouds = dm.newObject('dotsDrawableImages');
+            self.clouds.fileNames = {self.cloudsImageFile};
+            self.clouds.width = self.cloudsWidth;
+            self.clouds.height = self.cloudsHeight;
+            self.clouds.y = self.yClouds;
+            
+            % line for the ground, with a hole in it
+            self.ground = dm.newObject('dotsDrawableVertices');
+            self.ground.y = self.yGround + [0 0 -self.holeHeight, ...
+                -self.holeHeight 0 0];
+            self.ground.size = 3;
+            self.ground.usageHint = 6;
+            self.ground.primitive = 1;
+            
+            % error indicator line on top of the ground
+            self.delta = dm.newObject('dotsDrawableLines');
+            self.delta.yFrom = self.yGround;
+            self.delta.yTo = self.yGround;
+            self.delta.width = 10;
+            
+            % timecourse shared by a few animators
+            tDrop = 0;
+            tLand = self.tOutcome/2;
+            tExploded = self.tOutcome;
+            
+            % Animate the falling bag
+            self.bag = dm.newObject('dotsDrawableImages');
+            self.bag.fileNames = {self.bagImageFile};
+            self.bag.width = self.bagWidth;
+            self.bag.height = self.bagHeight;
+            
+            self.bagAnimator = dm.newObject('dotsDrawableAnimator');
+            self.bagAnimator.addDrawable(self.bag);
+            tVis = [tDrop, tLand];
+            vis = [1 0];
+            self.bagAnimator.addMember('isVisible', tVis, vis, false);
+            
+            % add extra detail for accelerated bag falling
+            fallPoints = 25;
+            fallInterval = tLand - tDrop;
+            fallTimes = linspace(0, fallInterval, fallPoints);
+            yStart = self.yHelicopter - self.bagHeight/2;
+            yFall = yStart + (self.yGround-yStart) ...
+                *(fallTimes.^2)/(fallTimes(end).^2);
+            bagFallTimes = tDrop + fallTimes;
+            self.bagAnimator.addMember('y', bagFallTimes, yFall, true);
+            
+            % Animate the tracer to follow the falling bag
+            % tracer to follow falling bags
+            self.tracer = dm.newObject('dotsDrawableLines');
+            self.tracer.width = 1;
+            self.tracer.yFrom = self.yHelicopter;
+            
+            self.tracerAnimator = dm.newObject('dotsDrawableAnimator');
+            self.tracerAnimator.addDrawable(self.tracer);
+            self.tracerAnimator.isAggregateDraw = false;
+            self.tracerAnimator.addMember( ...
+                'yTo', bagFallTimes, yFall, true);
+            
+            % Animate the helicopter hovering and flying horizontally
+            self.helicopter = dm.newObject('dotsDrawableImages');
+            self.helicopter.fileNames = {self.heliImageFile};
+            self.helicopter.width = self.heliWidth;
+            self.helicopter.height = self.heliHeight;
+            self.helicopter.isFlippedHorizontal = true;
+            
+            self.flyAnimator = dm.newObject('dotsDrawableAnimator');
+            self.flyAnimator.addDrawable(self.helicopter);
+            self.flyAnimator.isAggregateDraw = false;
+            
+            self.hoverAnimator = dm.newObject('dotsDrawableAnimator');
+            self.hoverAnimator.addDrawable(self.helicopter);
+            hoverTimes = linspace(0, 2, 25);
+            yHover = self.yHelicopter ...
+                + 0.5*sin(hoverTimes/max(hoverTimes)*2*pi);
+            self.hoverAnimator.addMember('y', hoverTimes, yHover, true);
+            self.hoverAnimator.setMemberCompletionStyle( ...
+                'y', 'wrap', hoverTimes(end));
+            
+            % Animate the explosion of coins after the bag lands.
+            self.explosion = dm.newObject('dotsDrawableExplosion');
+            self.explosion.y = self.yGround;
+            self.explosion.gravity = -20;
+            self.explosion.bounceDamping = [.5 .5];
+            self.explosion.size = self.explCoinSize;
+            self.explosion.colors = [ ...
+                self.goldColor; ...
+                self.silverColor; ...
+                self.bronzeColor];
+            self.explosion.isInternalTime = false;
+            
+            self.explAnimator = dm.newObject('dotsDrawableAnimator');
+            self.explAnimator.addDrawable(self.explosion);
+            tExp = [tDrop, tLand, tExploded];
+            internalTime = [0 0 4];
+            visible = [0 1 1];
+            self.explAnimator.addMember( ...
+                'currentTime', tExp, internalTime, true);
+            self.explAnimator.addMember( ...
+                'isVisible', tExp, visible, false);
+            
+            % a pile of coins which accumulates from trial to trial
+            self.pile = dm.newObject('dotsDrawableVertices');
+            self.pile.size = self.explCoinSize;
+            self.pile.colors = [ ...
+                self.goldColor; ...
+                self.silverColor; ...
+                self.bronzeColor];
+            self.pile.usageHint = 6;
+            self.pile.primitive = 0;
+            
+            % sort out the order of drawing during trials
+            dm.addObjectToGroup(self.ground, self.trialGroup, 0);
+            dm.addObjectToGroup(self.delta, self.trialGroup, 1);
+            dm.addObjectToGroup(self.tracerAnimator, self.trialGroup, 2);
+            dm.addObjectToGroup(self.tracer, self.trialGroup, 3);
+            dm.addObjectToGroup(self.flyAnimator, self.trialGroup, 4);
+            dm.addObjectToGroup(self.hoverAnimator, self.trialGroup, 5);
+            dm.addObjectToGroup(self.bagAnimator, self.trialGroup, 6);
+            dm.addObjectToGroup(self.explAnimator, self.trialGroup, 7);
+            dm.addObjectToGroup(self.pile, self.trialGroup, 8);
+            dm.addObjectToGroup(self.clouds, self.trialGroup, 10);
+            
+            % text for showing subject performance feedback
+            self.subjectScore = dm.newObject('dotsDrawableText');
+            self.subjectScore.color = 255*self.goldColor;
+            self.subjectScore.fontSize = self.fontSize;
+            self.subjectScore.x = 0;
+            self.subjectScore.y = 0;
+            dm.addObjectToGroup(self.subjectScore, self.feedbackGroup, 1);
+        end
+        
+        % Give the previous or first task instruction.
+        function doPreviousInstruction(self)
+            
+        end
+        
+        % Give the next or last task instruction.
+        function doNextInstruction(self)
+            
+        end
+        
+        % Indicate that its time to predict.
+        function doPredict(self)
+            
+            % Some graphics would be meaningless on the first block
+            if self.logic.blockTotalTrials <= 0
+                self.helicopter.x = 0;
+                self.delta.isVisible = false;
+                self.tracer.isVisible = false;
+                self.pile.isVisible = false;
+            end
+            
+            % Cloudy behavior literally hides the helicopter,
+            %   not just masking it
+            if self.isCloudy
+                self.hoverAnimator.isVisible = false;
+                self.helicopter.isVisible = false;
+                self.clouds.isVisible = true;
+            else
+                self.hoverAnimator.isVisible = true;
+                self.helicopter.isVisible = true;
+                self.clouds.isVisible = false;
+            end
+            
+            % trials start with no coins in the hole
+            self.coinsInHole = 0;
+            
+            % downplay some visual elements
+            self.delta.color = self.coolColor;
+            self.tracer.color = self.coolColor;
+            self.tracerAnimator.isVisible = false;
+            self.flyAnimator.isVisible = false;
+            self.bagAnimator.isVisible = false;
+            self.explAnimator.isVisible = false;
+            
+            % highlight the ground to indicate it's time to predict
+            self.ground.colors = self.hotColor;
+            self.updatePredict();
+            
+            dm = dotsTheDrawablesManager.theObject();
+            dm.mayDrawNextFrame(true);
+        end
+        
+        % Let the prediction reflect new subject input.
+        function updatePredict(self)
+            p = self.logic.getPrediction() / self.logic.maxOutcome;
+            xPredict = p*self.width - (self.width/2);
+            
+            % redraw the hole in the ground by line strip
+            self.ground.x = [ ...
+                -0.5*self.width, ...
+                xPredict - 0.5*self.holeWidth, ...
+                xPredict - 0.5*self.holeWidth, ...
+                xPredict + 0.5*self.holeWidth, ...
+                xPredict + 0.5*self.holeWidth, ...
+                0.5*self.width];
+            
+            % translate the pile of coins without modifying buffered data
+            self.pile.translation = [xPredict 0 0];
+        end
+        
+        % Indicate that the prediction is not commited.
+        function doCommit(self)
+            self.ground.colors = self.coolColor;
+            
+            if ~self.isCloudy ...
+                    && (self.logic.blockTotalTrials <= 0 ...
+                    || self.logic.isChangeTrial)
+                % tell the helicopter to fly to a new place
+                p = self.logic.currentMean ./ self.logic.maxOutcome;
+                xTo = p .* self.width - (self.width/2);
+                xFly = [self.helicopter.x, xTo];
+                tFly = [0 self.tCommit/2];
+                self.flyAnimator.addMember('x', tFly, xFly, true);
+                self.flyAnimator.isVisible = true;
+                self.flyAnimator.prepareToDrawInWindow();
+            end
+            
+            dm = dotsTheDrawablesManager.theObject();
+            dm.mayDrawNextFrame(true);
+        end
+        
+        % Indicate the new trial outcome.
+        function doOutcome(self)
+            
+            % stop flying the helicopter
+            if ~self.isCloudy
+                self.flyAnimator.isVisible = false;
+            end
+            
+            % tell the bag and tracer where to drop
+            p = self.logic.currentOutcome / self.logic.maxOutcome;
+            xOutcome = p*self.width - (self.width/2);
+            self.bag.x = xOutcome;
+            
+            self.tracer.xFrom = xOutcome;
+            self.tracer.xTo = xOutcome;
+            self.tracer.color = self.hotColor;
+            self.tracer.isVisible = true;
+            
+            % tell the coins where to explode and land
+            xCoins = normrnd(xOutcome, self.explStd, 1, self.nExplCoins);
+            self.explosion.x = xOutcome;
+            self.explosion.xRest = xCoins;
+            
+            % choose which coins fall in the hole vs on the ground
+            p = self.logic.getPrediction() / self.logic.maxOutcome;
+            xPredict = p*self.width - (self.width/2);
+            isInHole = xCoins >= (xPredict-self.holeWidth/2) ...
+                & xCoins <= (xPredict+self.holeWidth/2);
+            yCoins = self.yGround*ones(1, self.nExplCoins);
+            yCoins(isInHole) = self.yGround - self.holeHeight;
+            self.explosion.yRest = yCoins;
+            
+            % choose how long each coint takes to bounce
+            self.explosion.tRest = normrnd(1, 1, 1, self.nExplCoins);
+            
+            % count coins in the hole, to be awarded at doSuccess
+            self.coinsInHole = sum(isInHole);
+            
+            self.tracerAnimator.isVisible = true;
+            self.bagAnimator.isVisible = true;
+            self.explAnimator.isVisible = true;
+            
+            self.tracerAnimator.prepareToDrawInWindow();
+            self.bagAnimator.prepareToDrawInWindow();
+            self.explAnimator.prepareToDrawInWindow();
+            
+            dm = dotsTheDrawablesManager.theObject();
+            dm.mayDrawNextFrame(true);
+        end
+        
+        % Indicate the prediction delta.
+        function doDelta(self)
+            p = self.logic.getPrediction() / self.logic.maxOutcome;
+            xPredict = p*self.width - (self.width/2);
+            self.delta.xFrom = xPredict;
+            
+            p = self.logic.currentOutcome / self.logic.maxOutcome;
+            xOutcome = p*self.width - (self.width/2);
+            self.delta.xTo = xOutcome;
+            
+            self.delta.color = self.hotColor;
+            self.delta.isVisible = true;
+            
+            dm = dotsTheDrawablesManager.theObject();
+            dm.mayDrawNextFrame(true);
+        end
+        
+        % Indicate success of the trial.
+        function doSuccess(self)
+            self.logic.blockScore = ...
+                self.logic.blockScore + self.coinsInHole;
+            
+            % draw the pile, if any coins have accumulated
+            nCoins = self.logic.blockScore;
+<<<<<<< .mine
+            totalCoins = self.logic.trialsPerBlock * self.nExplCoins;
+            disp(sprintf('%d out of %d coins', nCoins, totalCoins))
+            
+            height = self.holeHeight*nCoins/totalCoins;
+            gaussX = normrnd(self.holeWidth/2, self.holeWidth/10, 1, nCoins);
+            bins = linspace(0, self.holeWidth, 10);
+            [n, x] = hist(gaussX, bins);
+            
+            % pick position for *each coin*, by lookup into histogram?
+=======
+            if nCoins > 0
+                totalCoins = self.logic.trialsPerBlock * self.nExplCoins;
+                [pileX, pileY] = PredInfAVHelicopter.pilePosition( ...
+                    nCoins, totalCoins, self.holeWidth, self.holeHeight);
+                self.pile.x = pileX;
+                self.pile.y = self.yGround - self.holeHeight + pileY;
+                self.pile.isVisible = true;
+            else
+                self.pile.isVisible = false;
+            end
+>>>>>>> .r763
+        end
+        
+        % Indicate failure of the trial.
+        function doFailure(self)
+            
+        end
+        
+        % Describe feedback about the subject performance.
+        function doFeedback(self)
+            totalCoins = self.logic.trialsPerBlock * self.nExplCoins;
+            self.subjectScore.string = ...
+                sprintf('You collected %d out of %d coins!', ...
+                self.logic.blockScore, totalCoins);
+            
+            dm = dotsTheDrawablesManager.theObject();
+            dm.prepareActiveGroupForWindow();
+            dm.mayDrawNextFrame(false);
+        end
+    end
+    
+    methods (Static)
+        % Calculate positions for coins in a pile.
+        function [x, y] = pilePosition(n, nMax, w, h)
+            if n <= 0
+                x = 0;
+                y = 0;
+                return
+            end
+            
+            % take n picks from the standard Gaussian
+            % chop Gaussian into several bins
+            % stack up picks for each bin
+            nBins = 10;
+            wBins = 4;
+            picks = normrnd(0, 1, 1, n);
+            bins = [-inf linspace(-wBins/2, wBins/2, nBins) inf];
+            stacked = zeros(1, n);
+            for ii = 2:nBins+2
+                isThisBin = (picks > bins(ii-1)) & (picks <= bins(ii));
+                binStacked = cumsum(isThisBin);
+                stacked(isThisBin) = binStacked(isThisBin);
+            end
+            
+            % stretch the stacks into graphical coordinates
+            x = (w/wBins)*picks;
+            x = min(max(x, -w/2), w/2);
+            y = (h*(n/nMax)/max(stacked))*stacked;
+        end
+    end
+end

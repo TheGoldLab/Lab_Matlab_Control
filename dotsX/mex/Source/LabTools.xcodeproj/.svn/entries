@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="363"
+   name=""
+   committed-date="2007-09-06T21:55:08.372338Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/LabTools.xcodeproj"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="jigold.pbxuser"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="71b2adc70deab203152d24c87aef595f"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="363"
+   name="lab.mode1"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2007-09-06T21:55:08.372338Z"
+   checksum="8621f9c7a17a1e89bc3567d0ebc6cc5b"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="363"
+   name="lab.pbxuser"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2007-09-06T21:55:08.372338Z"
+   checksum="cbcdbf68d8980434407d0143189132fc"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="360"
+   name="project.pbxproj"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2007-09-06T15:45:23.933234Z"
+   checksum="35b041c86cc34ff2e7e0ccab9cb62db2"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+<entry
+   committed-rev="4"
+   name="jigold.mode1"
+   text-time="2008-12-29T20:09:01.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="3b4ff2e77662d0c77ff6ca82bc9b2988"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:01.000000Z"/>
+</wc-entries>

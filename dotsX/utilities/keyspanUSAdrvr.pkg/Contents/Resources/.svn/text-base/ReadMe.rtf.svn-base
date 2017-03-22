@@ -1,0 +1,222 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf410
+{\fonttbl\f0\fnil\fcharset77 Monaco;\f1\fswiss\fcharset77 Helvetica-Bold;\f2\fswiss\fcharset77 Helvetica-Oblique;
+\f3\fnil\fcharset77 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;\red255\green0\blue6;\red250\green41\blue38;\red137\green19\blue21;
+}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\f0\fs28 \cf0 \ul \ulc0 TABLE OF CONTENTS\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs18 \cf0 \ulnone * Introduction (\cf2 Please Read!!!\cf0 )\
+* Change Log\
+* Software Overview\
+* API / Port Naming Scheme\
+* Serial Features\
+* Technical Support\
+* Developer Support\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs28 \cf0 \ul \
+INTRODUCTION\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs18 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs24 \cf2 \ulc2 \CocoaLigature0 \shad\shadx17\shady-18\shadr0\shado85 \shadc0 PLEASE READ!!!\
+FEATURES CHANGED IN VERSION 2.x!!!\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs18 \cf0 \ulnone \CocoaLigature1 \shad0 Keyspan's USB Serial Adapter 2.x drivers has changes in its feature set that may affect your use of your Keyspan adapter.  Please read this section entirely.  \
+\
+* If you have a USA-19HS, USA-28XG, or USA-49WG, \cf3 you must \
+  reboot\cf0  if you are upgrading from a previous version of \
+  the Keyspan USB serial drivers.  This ensures that Mac \
+  OS X properly loads the latest drivers for your Keyspan \
+  adapter.\
+\
+* As of version 2.2, Keyspan OSX driver will not release your\
+  Keyspan adapter to other OSes running within Mac OS X (ie\
+  Classic, VirtualPC, Parallels Desktop).  If you wish to use\
+  a Keyspan Mac OS 9.x driver in Classic or want to use a \
+  Keyspan Windows driver in VirtualPC/Parallels, you must \
+  uninstall the Keyspan Mac OS X driver.\
+\
+* As of version 2.1, all Keyspan adapters will show an 'extra \
+  serial port' called KeySerial1.  KeySerial1 is an alias to\
+  the first port on the first Keyspan adapter connected to \
+  your computer.  For example, if you have a single port \
+  adapter, you will get 2 ports (ie USA19HxyzP1 and KeySerial).\
+  You can select either port.  If you have a four port adapter,\
+  you will get 5 ports (USA49WxyzP1 thru P4 and KeySerial1 \
+  pointing to USA49WxyzP1).   Note, you will only have \
+  one KeySerial port regardless how many different adapters \
+  are connected to your computer.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs20 \cf4 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs28 \cf0 \ul \CocoaLigature1 CHANGE LOG
+\fs18 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 \ulnone \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b\fs22 \cf0 \
+Version 2.5 - 
+\f2\i\b0\fs18 Released 11 26 2007
+\f3\i0 	
+\f0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 - updated firmware for USA-19HS and UPR-112G (serial port).\
+  Recommended for all USA-19HS and UPR-112G users that use \
+  their adapter(s) on Mac and Windows systems.\
+  \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b\fs22 \cf0 Version 2.4 - 
+\f2\i\b0\fs18 Released 04 19 2007
+\f3\i0 	
+\f0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 - improve data toggle reset upon open for \
+  USA-49W and USA-49WLC\
+\
+- improve data toggle reset upon open for \
+  USA-28X, USA-19 and USA-28 (and associated families)\
+\
+- Add UPR-112 and UPR-112G to installer's Welcome Page\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b\fs22 \cf0 Version 2.3
+\f0\b0\fs18 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 - fix memory leak in acquirePort/releasePort\
+  cleanup allocated IOKit buffers upon driver unload\
+\
+- enable RTS control of output driver in USA-28XG and USA-28X\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b\fs22 \cf0 Version 2.2
+\f0\b0\fs18 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 - Added support for USA-28XG\
+- Disabled obselete device sharing scheme\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b\fs22 \cf0 Version 2.1 - 
+\f2\i\b0\fs18 Released 06 13 2007
+\f0\i0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 - IMPORTANT!\
+  Changed port naming so that first port now has \
+  'KeySerial1' AS WELL AS geographical name\
+- Added support for USA-49WG, \
+  including firmware upgrade (USA-64 2006may24 11:03)\
+- Created Universal Binary of Driver & Assistant\
+- Updated USA-19H firmware to improve forwarding logic\
+- Improved install process\
+- Fixed IOKit object leak in Assistant\
+\
+These are release notes for KeyspanUSAdriver.kext, the MacOS X driver for the Keyspan family of USB serial adapters.\
+\
+This version requires OS X version 10.2.8 or later.\
+\
+The installer doesn't require reboot.\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs28 \cf0 \ul SOFTWARE OVERVIEW
+\fs18 \ulnone \
+This software release is a Mac OS X kernel device driver.  This means that any failure or bug in this software could easily crash your system and/or compromise your data.  Use caution.\
+\
+This software supports the following Keyspan hardware:\
+\
+* Twin Serial Adapter (p/n's: USA-28X, USA-28XA and USA-28XB)\
+* Twin Serial Adapter (p/n: USA-28XG)\
+* PDA Adapter (p/n's: USA-19 and USA-19Qi)\
+* High Speed Serial Adapter (p/n's: USA-19W and USA-19QW)\
+* USA-18X Serial Adapter\
+* USA-28 USB Serial Adapter\
+* USA-49W 4-port Serial Adapter (p/n's: USA-49W, USA-49WLC, USA-4E230)\
+* USA-19H USB Serial Adapter (p/n's: USA-19HS, USA-19Hp, and USA-19HG)\
+* serial port in UPR-112 Mini Port Replicator\
+* serial port in UPR-112G Mini Port Replicator (USA-19HS)\
+\
+This version also installs an assistant application, called 'Keyspan Serial Assistant' into the OSX Applications folder.  This application list all Keyspan Serial devices which are currently connected to your computer.\
+\
+\
+
+\fs28 \ul API / PORT NAMING SCHEME
+\fs18 \ulnone \
+This driver provides serial services through the POSIX API.  The names of the two example serial ports are:\
+\
+  - /dev/tty.USA28X<geo>P1  -- or -- /dev/cu.USA28X<geo>P1\
+  - /dev/tty.USA28X<geo>P2  -- or -- /dev/cu.USA28X<geo>P2\
+  - /dev/tty.KeySerial1     -- or -- /dev/cu.KeySerial1\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs22 \cf0 \ul USA28X\ulnone  
+\fs18 is the model number of the adapter being used. \
+\
+
+\fs22 \ul <geo>
+\fs18 \ulnone  is the 2 or more digit geographical name.  A typical port name will be USA28X\ul 913\ulnone P1 (e.g. "913" means USB bus #9, host hub port #1 and external hub port #3).\
+\
+
+\fs22 \ul Px
+\fs18 \ulnone  is the port number on the specific adapter.  In the example shown P1 is port 1 on the USA-28X adapter.  P2 is port 2, etc.  \
+\
+
+\fs22 \ul KeySerial1
+\fs18 \ulnone  is an alias to the first port on the first Keyspan adapter connected to your computer.  In the example shown above, KeySerial is pointer to USA28X<geo>P1.  Note, you will only have one KeySerial1 port\
+regardless how many different adapters are connected to your computer.\
+\
+Note that using the "cu" ports allows you to open() the port with a normal\
+blocking call and it doesn't wait on DCD.  Open()ing the "tty" port waits for DCD high unless O_NONBLOCK is used.\
+\
+See the 'man' page on 'termios' as well as /sys/termios.h\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs28 \cf0 \ul SERIAL FEATURES
+\fs18 \ulnone \
+The Keyspan USB/Serial driver supports all POSIX serial port features described in termios, subject to the following details and limitations:\
+\
+1. Baud rates up to 230400 (on USA-28X, USA-18X, USA-19W, USA-19QW, USA-19H); up to 115200 on USA-19Qi and USA-28; up to 57600 on USA-19\
+\
+2. Xon/Xoff flow control on all devices\
+\
+3. CTS/DTR hardware flow control on all devices\
+\
+4. RTS/DSR hardware flow control on devices with DB9 connector (USA-19xx; USA-49W, USA-49WLC, USA-4E230)\
+\
+5. Modem control on all available signals (input: CTS and DCD, output: DTR on USA-28X and USA-18X).  (input: CTS, DSR, RI and DCD, output: RTS, DTR on USA-19xx and USA-49W)  \
+\
+
+\fs28 \ul TECHNICAL SUPPORT\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs18 \cf0 \ulnone To obtain technical support, please visit:\
+\
+http://www.keyspan.com/support/\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs28 \cf0 \ul DEVELOPER SUPPORT\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\fs18 \cf0 \ulnone If you are a programmer and need developer support, please contact our developer support department at supportdevATkeyspanDOTcom\
+}

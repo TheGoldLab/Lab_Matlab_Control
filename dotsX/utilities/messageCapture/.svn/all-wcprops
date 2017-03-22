@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/utilities/messageCapture
+END
+getMsg.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/utilities/messageCapture/getMsg.m
+END
+sendMsgH.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/utilities/messageCapture/sendMsgH.m
+END
+rRemoteSetup.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/utilities/messageCapture/rRemoteSetup.m
+END
+sendMsg.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/utilities/messageCapture/sendMsg.m
+END

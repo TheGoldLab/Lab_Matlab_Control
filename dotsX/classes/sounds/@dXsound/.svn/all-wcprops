@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound
+END
+dXsound.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound/dXsound.m
+END
+play.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound/play.m
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound/set.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/sounds/@dXsound/get.m
+END

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="266"
+   name=""
+   committed-date="2007-05-31T22:02:09.941575Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/OSX/LPHID"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="266"
+   name="lpHID.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-05-31T22:02:09.941575Z"
+   checksum="7a9361bd876a4057c37d4c69939c845e"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="42"
+   name="lpHID.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-12-08T21:39:54.768154Z"
+   checksum="b9ebd72ea8890c38a0806e47b2c71a3e"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

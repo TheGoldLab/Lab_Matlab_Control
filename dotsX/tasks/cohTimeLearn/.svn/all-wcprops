@@ -1,0 +1,131 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn
+END
+gXcohTimeLearn_hardware.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/gXcohTimeLearn_hardware.m
+END
+cohTimeLearn_repeatCohQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_repeatCohQuest.m
+END
+tryDotParams.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/tryDotParams.m
+END
+taskCohTimeLearn_interleaved_Practice.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_interleaved_Practice.m
+END
+gXcohTimeLearn_graphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/gXcohTimeLearn_graphics.m
+END
+cohTimeLearn_testGraphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_testGraphics.m
+END
+taskCohTimeLearn_interleaved_cohQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_interleaved_cohQuest.m
+END
+taskCohTimeLearn_timeQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_timeQuest.m
+END
+cohTimeLearn_interleaved_readCohThresh.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_interleaved_readCohThresh.m
+END
+cohTimeLearn_saveCohThresh.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_saveCohThresh.m
+END
+cohTimeLearn_pickNewViewingTime.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_pickNewViewingTime.m
+END
+gXcohTimeLearn_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/17/trunk/DotsX/tasks/cohTimeLearn/gXcohTimeLearn_statelist.m
+END
+taskCohTimeLearn_Practice.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_Practice.m
+END
+taskCohTimeLearn_cohQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_cohQuest.m
+END
+cohTimeLearn_task_args.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_task_args.m
+END
+cohTimeLearn_pickQuestCondition.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_pickQuestCondition.m
+END
+cohTimeLearn_readCohThresh.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_readCohThresh.m
+END
+cohTimeLearnRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearnRoot.m
+END
+taskCohTimeLearn_interleaved_timeQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/taskCohTimeLearn_interleaved_timeQuest.m
+END
+cohTimeLearnFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/75/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearnFeedback.m
+END
+cohTimeLearn_interleaved_saveCohThresh.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/cohTimeLearn/cohTimeLearn_interleaved_saveCohThresh.m
+END

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+logger running KeyspanUSAdrvr:driverLoad
+
+PRODUCT_NAME=KeyspanUSAdriver.kext
+
+#/usr/sbin/chown -R root:wheel /tmp/"$PRODUCT_NAME"
+#if [ -e /System/Library/Extensions/"$PRODUCT_NAME" ]; then
+#	rm -R /System/Library/Extensions/"$PRODUCT_NAME".old
+#	mv /System/Library/Extensions/"$PRODUCT_NAME" /System/Library/Extensions/"$PRODUCT_NAME".old
+#	rm -R /tmp/"$PRODUCT_NAME".old
+#	mv -f /System/Library/Extensions/"$PRODUCT_NAME".old /tmp
+#fi
+#mv /tmp/"$PRODUCT_NAME" /System/Library/Extensions
+
+/usr/sbin/chown -R root:wheel /System/Library/Extensions/"$PRODUCT_NAME"
+/usr/bin/touch /System/Library/Extensions
+
+# see if Jaguar or later
+if [ -e /usr/sbin/kextstat ]; then
+
+	/sbin/kextunload -m com.keyspan.iokit.usb.KeyspanUSAdriver
+	# /sbin/kextload /System/Library/Extensions/"$PRODUCT_NAME"
+
+	# send sighup to kextd to get it to rescan the Extensions folder for new .kexts
+	logger KeyspanUSAdrvr:driverLoad signalling kextd
+	/bin/kill -1 `ps -ax | grep kextd | grep -v grep | awk '{print $1}'`
+
+fi
+#rm -R -f /System/Library/Extensions/"$PRODUCT_NAME".old
+
+exit 0

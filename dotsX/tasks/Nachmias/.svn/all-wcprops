@@ -1,0 +1,167 @@
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias
+END
+dSumm.m
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/dSumm.m
+END
+ROCsumm.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/ROCsumm.m
+END
+common_task_args.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/common_task_args.m
+END
+previewFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/previewFeedback.m
+END
+nachmiasRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/nachmiasRoot.m
+END
+taskDiscrim2afcContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDiscrim2afcContrast.m
+END
+taskDiscrim3afcContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDiscrim3afcContrast.m
+END
+psychSumm.m
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/psychSumm.m
+END
+common_paradigm_sets.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/common_paradigm_sets.m
+END
+nachmiasMetaFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/nachmiasMetaFIRA.m
+END
+dPredict.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/dPredict.m
+END
+gXnachmias_contrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/gXnachmias_contrast.m
+END
+gXnachmias_testContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/gXnachmias_testContrast.m
+END
+taskDetectDownContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDetectDownContrast.m
+END
+taskDetectLDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDetectLDots.m
+END
+paramSumm.m
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/paramSumm.m
+END
+taskEasyContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskEasyContrast.m
+END
+taskDiscrim2afcDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDiscrim2afcDots.m
+END
+taskDiscrim3afcDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDiscrim3afcDots.m
+END
+gXnachmias_helpers.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/gXnachmias_helpers.m
+END
+taskDetectRDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDetectRDots.m
+END
+fix_FIRA_with_svn.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/fix_FIRA_with_svn.m
+END
+gXnachmias_dots.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/gXnachmias_dots.m
+END
+errPow.m
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/errPow.m
+END
+gXnachmias_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/gXnachmias_statelist.m
+END
+taskDetectUpContrast.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskDetectUpContrast.m
+END
+taskEasyDots.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/tasks/Nachmias/taskEasyDots.m
+END

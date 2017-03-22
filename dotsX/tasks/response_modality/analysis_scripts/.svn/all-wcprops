@@ -1,0 +1,215 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts
+END
+naiveWeibullFit.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/naiveWeibullFit.m
+END
+ddModality.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/ddModality.m
+END
+diamLook.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/diamLook.m
+END
+sessionThresh.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/sessionThresh.m
+END
+psychFitsAll.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/psychFitsAll.m
+END
+RTWriteup.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTWriteup.m
+END
+isThisF.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/isThisF.m
+END
+eyeByTrial.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/eyeByTrial.m
+END
+RTByCoh.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTByCoh.m
+END
+RTProgress.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTProgress.m
+END
+weibLapse.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/weibLapse.m
+END
+getGrandddRTFit.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/getGrandddRTFit.m
+END
+whatSSE.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/whatSSE.m
+END
+saccade4Fun.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/saccade4Fun.m
+END
+whitherF.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/whitherF.m
+END
+questQuest.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/questQuest.m
+END
+quick_surface.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/quick_surface.m
+END
+cohHists.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/cohHists.m
+END
+BigProgress.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/BigProgress.m
+END
+ddRT_modalityAndSession.m
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/ddRT_modalityAndSession.m
+END
+ddRT_test_dataFit.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/ddRT_test_dataFit.m
+END
+slopeChange.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/slopeChange.m
+END
+latencyComparison.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/latencyComparison.m
+END
+modalityMetaFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/modalityMetaFIRA.m
+END
+fixMissingCorrect.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/fixMissingCorrect.m
+END
+RTSummary.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTSummary.m
+END
+ddRT_surface.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/ddRT_surface.m
+END
+RTFixVar.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTFixVar.m
+END
+dPrimeProgress.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/dPrimeProgress.m
+END
+getCommonDataTypes.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/getCommonDataTypes.m
+END
+RTOverview.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/RTOverview.m
+END
+test_new_ddRT_var.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/test_new_ddRT_var.m
+END
+noChoiceSaccades.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/noChoiceSaccades.m
+END
+BigFixVar.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/BigFixVar.m
+END
+threshANOVA.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/1/trunk/DotsX/tasks/response_modality/analysis_scripts/threshANOVA.m
+END

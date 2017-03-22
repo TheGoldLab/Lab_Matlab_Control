@@ -1,0 +1,2251 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0F3CA54E0C5646C000FAE9C5 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0F3CA54F0C5646C000FAE9C5 /* HID_Utilities_External.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9C756C093B7175003E8E29 /* HID_Utilities_External.h */; };
+		0F3CA5510C5646C000FAE9C5 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0F3CA5540C5646C000FAE9C5 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0F3CA5550C5646C000FAE9C5 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0F3CA5560C5646C000FAE9C5 /* libHIDUtilities-Intel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FBE7DA00B93AF5000D02415 /* libHIDUtilities-Intel.a */; };
+		0F3CA5640C56477900FAE9C5 /* HIDx.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CA5620C56477900FAE9C5 /* HIDx.c */; };
+		0F3CA5650C56477900FAE9C5 /* HIDx.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F3CA5630C56477900FAE9C5 /* HIDx.h */; };
+		0F3CA75E0C579AE700FAE9C5 /* HIDx_dXgameHID.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CA75B0C579AE700FAE9C5 /* HIDx_dXgameHID.c */; };
+		0F3CA75F0C579AE700FAE9C5 /* HIDx_dXkbHID.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CA75C0C579AE700FAE9C5 /* HIDx_dXkbHID.c */; };
+		0F3CA7600C579AE700FAE9C5 /* HIDx_dXPMDHID.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CA75D0C579AE700FAE9C5 /* HIDx_dXPMDHID.c */; };
+		0F69958B0C592CD300658120 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F6994E10C592B6B00658120 /* CoreServices.framework */; };
+		0F78AB670B97732700A57BE5 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0F78AB6B0B97732700A57BE5 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0F78AB6D0B97732700A57BE5 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0F78AB6E0B97732700A57BE5 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0F78AB900B97744500A57BE5 /* clutX.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F78AB8E0B97744500A57BE5 /* clutX.c */; };
+		0F78AB910B97744500A57BE5 /* clutX.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F78AB8F0B97744500A57BE5 /* clutX.h */; };
+		0F9C7520093B6962003E8E29 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0F9C7524093B6962003E8E29 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0F9C7526093B6962003E8E29 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0F9C7527093B6962003E8E29 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0F9C7548093B6D2C003E8E29 /* lpHID.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F9C7546093B6D2C003E8E29 /* lpHID.c */; };
+		0F9C7549093B6D2C003E8E29 /* lpHID.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9C7547093B6D2C003E8E29 /* lpHID.h */; };
+		0F9C756D093B7175003E8E29 /* HID_Utilities_External.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9C756C093B7175003E8E29 /* HID_Utilities_External.h */; };
+		0F9C7683093BAF80003E8E29 /* libHIDUtilities.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F9C7682093BAF80003E8E29 /* libHIDUtilities.a */; };
+		0FBE7CC40B93A19300D02415 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0FBE7CC50B93A19300D02415 /* lpHID.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9C7547093B6D2C003E8E29 /* lpHID.h */; };
+		0FBE7CC60B93A19300D02415 /* HID_Utilities_External.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9C756C093B7175003E8E29 /* HID_Utilities_External.h */; };
+		0FBE7CC80B93A19300D02415 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0FBE7CC90B93A19300D02415 /* lpHID.c in Sources */ = {isa = PBXBuildFile; fileRef = 0F9C7546093B6D2C003E8E29 /* lpHID.c */; };
+		0FBE7CCB0B93A19300D02415 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0FBE7CCC0B93A19300D02415 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0FBE7CD80B93A19C00D02415 /* serialPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE1970F07CFA2B7003EC4AF /* serialPort.h */; };
+		0FBE7CD90B93A19C00D02415 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0FBE7CDB0B93A19C00D02415 /* serialPort.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FEB5CCB083CF97700333983 /* serialPort.c */; };
+		0FBE7CDC0B93A19C00D02415 /* asl.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FE1973B07CFA356003EC4AF /* asl.c */; };
+		0FBE7CDD0B93A19C00D02415 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0FBE7CDF0B93A19C00D02415 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0FBE7CE00B93A19C00D02415 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0FBE7DA10B93AF5000D02415 /* libHIDUtilities-Intel.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FBE7DA00B93AF5000D02415 /* libHIDUtilities-Intel.a */; };
+		0FE1973807CFA31F003EC4AF /* serialPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE1970F07CFA2B7003EC4AF /* serialPort.h */; };
+		0FE1973D07CFA35B003EC4AF /* asl.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FE1973B07CFA356003EC4AF /* asl.c */; };
+		0FE1973F07CFA396003EC4AF /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		0FE1978B07CFA42B003EC4AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0FE1978F07CFA43C003EC4AF /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0FE1982607CFA440003EC4AF /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		0FE1982707CFA440003EC4AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		0FEA1853092E738B002777AB /* LCObject.c in Sources */ = {isa = PBXBuildFile; fileRef = A19282FC0795E79F009C7832 /* LCObject.c */; };
+		0FEA18FB092E8B87002777AB /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0FEA18FC092E8B88002777AB /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		0FEB5CCD083CF97F00333983 /* serialPort.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FEB5CCB083CF97700333983 /* serialPort.c */; };
+		A10CCA610831982F00E3D225 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		A10CCA630831982F00E3D225 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978E07CFA43C003EC4AF /* IOKit.framework */; };
+		A10CCA640831982F00E3D225 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */; };
+		A19284240798282B009C7832 /* ActiveWireLib.h in Headers */ = {isa = PBXBuildFile; fileRef = A19284230798282B009C7832 /* ActiveWireLib.h */; };
+		A1B9EB550781E36800FEA346 /* MMActiveWire.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB540781E36800FEA346 /* MMActiveWire.c */; };
+		A1B9EB6C0781E40800FEA346 /* mexversion.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB6B0781E40800FEA346 /* mexversion.c */; };
+		A1B9EB710781E41B00FEA346 /* matrix.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB6F0781E41B00FEA346 /* matrix.h */; };
+		A1B9EB720781E41B00FEA346 /* mex.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB700781E41B00FEA346 /* mex.h */; };
+		A1B9EB970781EA8400FEA346 /* LCMessages.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB280781E30F00FEA346 /* LCMessages.h */; };
+		A1B9EB980781EA9C00FEA346 /* LCSafeAlloc.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB2A0781E30F00FEA346 /* LCSafeAlloc.h */; };
+		A1B9EB990781EAA200FEA346 /* LCSafeAlloc.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB3B0781E32600FEA346 /* LCSafeAlloc.c */; };
+		A1B9EB9A0781EAAC00FEA346 /* LCMessages.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB390781E32600FEA346 /* LCMessages.c */; };
+		A1B9EBBB0781EBF800FEA346 /* LCMath.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB270781E30F00FEA346 /* LCMath.h */; };
+		A1B9EBBC0781EC1900FEA346 /* LCMath.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB380781E32600FEA346 /* LCMath.c */; };
+		A1B9EBBF0781ECF600FEA346 /* LCCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB250781E30F00FEA346 /* LCCommon.h */; };
+		A1B9EBC00781ED1300FEA346 /* LCVariable.h in Headers */ = {isa = PBXBuildFile; fileRef = A1B9EB2C0781E30F00FEA346 /* LCVariable.h */; settings = {ATTRIBUTES = (); }; };
+		A1B9EBC10781ED1F00FEA346 /* LCVariable.c in Sources */ = {isa = PBXBuildFile; fileRef = A1B9EB3D0781E32600FEA346 /* LCVariable.c */; };
+		A1C0A4FB07A0344300F9EAEE /* LCObject.h in Headers */ = {isa = PBXBuildFile; fileRef = A19282F50795E774009C7832 /* LCObject.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		0F5D55BE09323AB700426743 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.3_3;
+			fileType = sourcecode.c;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+		0F5D55BF09323AC000426743 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.3_3;
+			fileType = sourcecode.asm;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+		0FC387780871949B00C5E65E /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.3_3;
+			fileType = sourcecode.asm;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+		0FC38779087194A700C5E65E /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.3_3;
+			fileType = sourcecode.c;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+/* End PBXBuildRule section */
+
+/* Begin PBXFileReference section */
+		0F3B51AA0C511EF300BF2A2A /* HID_sandbox.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = HID_sandbox.c; path = Source/OSX/HIDx/HID_sandbox.c; sourceTree = SOURCE_ROOT; };
+		0F3CA55C0C5646C000FAE9C5 /* HIDx.mexmaci.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HIDx.mexmaci.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F3CA5620C56477900FAE9C5 /* HIDx.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = HIDx.c; path = ../Source/OSX/HIDx/HIDx.c; sourceTree = "<group>"; };
+		0F3CA5630C56477900FAE9C5 /* HIDx.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = HIDx.h; path = ../Source/OSX/HIDx/HIDx.h; sourceTree = "<group>"; };
+		0F3CA75B0C579AE700FAE9C5 /* HIDx_dXgameHID.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = HIDx_dXgameHID.c; path = Source/OSX/HIDx/HIDx_dXgameHID.c; sourceTree = "<group>"; };
+		0F3CA75C0C579AE700FAE9C5 /* HIDx_dXkbHID.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = HIDx_dXkbHID.c; path = Source/OSX/HIDx/HIDx_dXkbHID.c; sourceTree = "<group>"; };
+		0F3CA75D0C579AE700FAE9C5 /* HIDx_dXPMDHID.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = HIDx_dXPMDHID.c; path = Source/OSX/HIDx/HIDx_dXPMDHID.c; sourceTree = "<group>"; };
+		0F6994E10C592B6B00658120 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+		0F78AB740B97732700A57BE5 /* clutX.mexmaci.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = clutX.mexmaci.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F78AB8E0B97744500A57BE5 /* clutX.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = clutX.c; sourceTree = "<group>"; };
+		0F78AB8F0B97744500A57BE5 /* clutX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = clutX.h; sourceTree = "<group>"; };
+		0F9C7546093B6D2C003E8E29 /* lpHID.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = lpHID.c; path = ../Source/OSX/LPHID/lpHID.c; sourceTree = "<group>"; };
+		0F9C7547093B6D2C003E8E29 /* lpHID.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = lpHID.h; path = ../Source/OSX/LPHID/lpHID.h; sourceTree = "<group>"; };
+		0F9C755C093B6DFF003E8E29 /* lpHID.mexmac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lpHID.mexmac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F9C756C093B7175003E8E29 /* HID_Utilities_External.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = HID_Utilities_External.h; path = "../Pschtoolbox_latest/beta/PsychSourceGL/Cohorts/HID Utilities Source/HID_Utilities_External.h"; sourceTree = SOURCE_ROOT; };
+		0F9C7682093BAF80003E8E29 /* libHIDUtilities.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libHIDUtilities.a; path = ../../mfiles_lab/DotsX/mex/libHIDUtilities.a; sourceTree = SOURCE_ROOT; };
+		0FB854F70C70CE6600893934 /* HID_cookie_strings.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = HID_cookie_strings.plist; path = Source/OSX/HIDx/HID_cookie_strings.plist; sourceTree = "<group>"; };
+		0FB854F80C70CE6600893934 /* HID_device_usage_strings.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = HID_device_usage_strings.plist; path = Source/OSX/HIDx/HID_device_usage_strings.plist; sourceTree = "<group>"; };
+		0FB854F90C70CE6600893934 /* HID_usage_strings.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = HID_usage_strings.plist; path = Source/OSX/HIDx/HID_usage_strings.plist; sourceTree = "<group>"; };
+		0FBE7CD30B93A19300D02415 /* lpHID.mexmaci.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lpHID.mexmaci.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FBE7CD50B93A19300D02415 /* lpHID-Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "lpHID-Info copy.plist"; sourceTree = "<group>"; };
+		0FBE7CE80B93A19C00D02415 /* as.mexmaci.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = as.mexmaci.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FBE7CEA0B93A19C00D02415 /* asl-info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "asl-info copy.plist"; sourceTree = "<group>"; };
+		0FBE7DA00B93AF5000D02415 /* libHIDUtilities-Intel.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libHIDUtilities-Intel.a"; path = "../../mfiles_lab/DotsX/mex/libHIDUtilities-Intel.a"; sourceTree = SOURCE_ROOT; };
+		0FE1970F07CFA2B7003EC4AF /* serialPort.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = serialPort.h; path = ../Source/OSX/ASL/serialPort.h; sourceTree = "<group>"; };
+		0FE1973B07CFA356003EC4AF /* asl.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = asl.c; path = ../Source/OSX/ASL/asl.c; sourceTree = "<group>"; };
+		0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		0FE1978E07CFA43C003EC4AF /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
+		0FEB5CCB083CF97700333983 /* serialPort.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = serialPort.c; path = ../Source/OSX/ASL/serialPort.c; sourceTree = "<group>"; };
+		A10CCA660831982F00E3D225 /* rSet.mexmac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = rSet.mexmac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A14D812E07A042AE00CC3568 /* MMPTask.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = MMPTask.c; path = ../Source/OSX/pTask/MMPTask.c; sourceTree = "<group>"; };
+		A14D817007A13BB500CC3568 /* LCRoot.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCRoot.c; path = ../../../../Source/Common/DataTypes/LCRoot.c; sourceTree = "<group>"; };
+		A14D817607A13BC500CC3568 /* LCRoot.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCRoot.h; path = ../../../../Source/Common/DataTypes/LCRoot.h; sourceTree = "<group>"; };
+		A19282F50795E774009C7832 /* LCObject.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCObject.h; path = ../../../../Source/Common/DataTypes/LCObject.h; sourceTree = "<group>"; };
+		A19282FC0795E79F009C7832 /* LCObject.c */ = {isa = PBXFileReference; languageSpecificationIdentifier = c; lastKnownFileType = sourcecode.c.c; name = LCObject.c; path = ../../Source/Common/DataTypes/LCObject.c; sourceTree = BUILT_PRODUCTS_DIR; };
+		A19283570796C101009C7832 /* LCTarget.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCTarget.c; path = ../Source/Common/Objects/LCTarget.c; sourceTree = "<group>"; };
+		A192837A0796C294009C7832 /* LCScreenLocation.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCScreenLocation.c; path = ../Source/Common/Objects/LCScreenLocation.c; sourceTree = "<group>"; };
+		A19284230798282B009C7832 /* ActiveWireLib.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ActiveWireLib.h; path = ../Source/OSX/ActiveWire/ActiveWireLib.h; sourceTree = "<group>"; };
+		A1B9EB0E0781E2B300FEA346 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		A1B9EB170781E2DA00FEA346 /* aw.mexmac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = aw.mexmac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B9EB250781E30F00FEA346 /* LCCommon.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCCommon.h; path = ../Source/Common/Utilities/LCCommon.h; sourceTree = "<group>"; };
+		A1B9EB270781E30F00FEA346 /* LCMath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCMath.h; path = ../Source/Common/Utilities/LCMath.h; sourceTree = "<group>"; };
+		A1B9EB280781E30F00FEA346 /* LCMessages.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCMessages.h; path = ../Source/Common/Utilities/LCMessages.h; sourceTree = "<group>"; };
+		A1B9EB2A0781E30F00FEA346 /* LCSafeAlloc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCSafeAlloc.h; path = ../Source/Common/Utilities/LCSafeAlloc.h; sourceTree = "<group>"; };
+		A1B9EB2C0781E30F00FEA346 /* LCVariable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LCVariable.h; path = ../../../../Source/Common/DataTypes/LCVariable.h; sourceTree = "<group>"; };
+		A1B9EB380781E32600FEA346 /* LCMath.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCMath.c; path = ../Source/Common/Utilities/LCMath.c; sourceTree = "<group>"; };
+		A1B9EB390781E32600FEA346 /* LCMessages.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCMessages.c; path = ../Source/Common/Utilities/LCMessages.c; sourceTree = "<group>"; };
+		A1B9EB3B0781E32600FEA346 /* LCSafeAlloc.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = LCSafeAlloc.c; path = ../Source/Common/Utilities/LCSafeAlloc.c; sourceTree = "<group>"; };
+		A1B9EB3D0781E32600FEA346 /* LCVariable.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 30; name = LCVariable.c; path = Source/Common/DataTypes/LCVariable.c; sourceTree = SOURCE_ROOT; };
+		A1B9EB540781E36800FEA346 /* MMActiveWire.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = MMActiveWire.c; path = ../Source/OSX/ActiveWire/MMActiveWire.c; sourceTree = "<group>"; };
+		A1B9EB6B0781E40800FEA346 /* mexversion.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = mexversion.c; path = /Applications/MATLAB74/extern/src/mexversion.c; sourceTree = "<absolute>"; };
+		A1B9EB6F0781E41B00FEA346 /* matrix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = matrix.h; path = /Applications/MATLAB74/extern/include/matrix.h; sourceTree = "<absolute>"; };
+		A1B9EB700781E41B00FEA346 /* mex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = mex.h; path = /Applications/MATLAB74/extern/include/mex.h; sourceTree = "<absolute>"; };
+		A1EF134607DE606600CEA479 /* as.mexmac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = as.mexmac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1EF134807DE606600CEA479 /* libcommonLib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libcommonLib.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0F3CA5530C5646C000FAE9C5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F3CA5540C5646C000FAE9C5 /* IOKit.framework in Frameworks */,
+				0F3CA5550C5646C000FAE9C5 /* CoreFoundation.framework in Frameworks */,
+				0F3CA5560C5646C000FAE9C5 /* libHIDUtilities-Intel.a in Frameworks */,
+				0F69958B0C592CD300658120 /* CoreServices.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F78AB6C0B97732700A57BE5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F78AB6D0B97732700A57BE5 /* IOKit.framework in Frameworks */,
+				0F78AB6E0B97732700A57BE5 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F9C7525093B6962003E8E29 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F9C7526093B6962003E8E29 /* IOKit.framework in Frameworks */,
+				0F9C7527093B6962003E8E29 /* CoreFoundation.framework in Frameworks */,
+				0F9C7683093BAF80003E8E29 /* libHIDUtilities.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CCA0B93A19300D02415 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CCB0B93A19300D02415 /* IOKit.framework in Frameworks */,
+				0FBE7CCC0B93A19300D02415 /* CoreFoundation.framework in Frameworks */,
+				0FBE7DA10B93AF5000D02415 /* libHIDUtilities-Intel.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CDE0B93A19C00D02415 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CDF0B93A19C00D02415 /* IOKit.framework in Frameworks */,
+				0FBE7CE00B93A19C00D02415 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FE1973307CFA304003EC4AF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FE1982607CFA440003EC4AF /* IOKit.framework in Frameworks */,
+				0FE1982707CFA440003EC4AF /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10CCA620831982F00E3D225 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10CCA630831982F00E3D225 /* IOKit.framework in Frameworks */,
+				A10CCA640831982F00E3D225 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB150781E2DA00FEA346 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FE1978B07CFA42B003EC4AF /* CoreFoundation.framework in Frameworks */,
+				0FE1978F07CFA43C003EC4AF /* IOKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB940781EA6F00FEA346 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0F78AB8D0B97744500A57BE5 /* clutX */ = {
+			isa = PBXGroup;
+			children = (
+				0F78AB8E0B97744500A57BE5 /* clutX.c */,
+				0F78AB8F0B97744500A57BE5 /* clutX.h */,
+			);
+			name = clutX;
+			path = Source/OSX/clutX;
+			sourceTree = "<group>";
+		};
+		0F9C754A093B6D5D003E8E29 /* LPHID */ = {
+			isa = PBXGroup;
+			children = (
+				0F3B51AA0C511EF300BF2A2A /* HID_sandbox.c */,
+				0F9C7682093BAF80003E8E29 /* libHIDUtilities.a */,
+				0F9C756C093B7175003E8E29 /* HID_Utilities_External.h */,
+				0F9C7546093B6D2C003E8E29 /* lpHID.c */,
+				0F9C7547093B6D2C003E8E29 /* lpHID.h */,
+			);
+			name = LPHID;
+			sourceTree = "<group>";
+		};
+		0FE196FC07CFA229003EC4AF /* ASL */ = {
+			isa = PBXGroup;
+			children = (
+				0FE1970207CFA240003EC4AF /* headers */,
+				0FE196FF07CFA232003EC4AF /* sources */,
+			);
+			name = ASL;
+			sourceTree = "<group>";
+		};
+		0FE196FF07CFA232003EC4AF /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				0FEB5CCB083CF97700333983 /* serialPort.c */,
+				0FE1973B07CFA356003EC4AF /* asl.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		0FE1970207CFA240003EC4AF /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				0FE1970F07CFA2B7003EC4AF /* serialPort.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		0FEA14A3092E6393002777AB /* FlatCarbon */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = FlatCarbon;
+			path = /Developer/Headers/FlatCarbon;
+			sourceTree = "<absolute>";
+		};
+		A10CCA6E083198B100E3D225 /* rSet */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = rSet;
+			sourceTree = "<group>";
+		};
+		A112CB29078999CB00B4F3DD /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB220781E2FA00FEA346 /* headers */,
+				A1B9EB1F0781E2F400FEA346 /* sources */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+		A112CB2F078999E900B4F3DD /* Objects */ = {
+			isa = PBXGroup;
+			children = (
+				A112CB32078999F900B4F3DD /* headers */,
+				A112CB35078999FD00B4F3DD /* sources */,
+			);
+			name = Objects;
+			sourceTree = "<group>";
+		};
+		A112CB32078999F900B4F3DD /* headers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		A112CB35078999FD00B4F3DD /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				A192837A0796C294009C7832 /* LCScreenLocation.c */,
+				A19283570796C101009C7832 /* LCTarget.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		A19283940796C6DC009C7832 /* DataTypes */ = {
+			isa = PBXGroup;
+			children = (
+				A19283970796C6E3009C7832 /* headers */,
+				A192839A0796C6E8009C7832 /* sources */,
+			);
+			name = DataTypes;
+			path = ../Source/Common/DataTypes;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A19283970796C6E3009C7832 /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				A14D817607A13BC500CC3568 /* LCRoot.h */,
+				A1B9EB2C0781E30F00FEA346 /* LCVariable.h */,
+				A19282F50795E774009C7832 /* LCObject.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		A192839A0796C6E8009C7832 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				A14D817007A13BB500CC3568 /* LCRoot.c */,
+				A1B9EB3D0781E32600FEA346 /* LCVariable.c */,
+				A19282FC0795E79F009C7832 /* LCObject.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		A19283E907982445009C7832 /* ActiveWire */ = {
+			isa = PBXGroup;
+			children = (
+				A192841D07982809009C7832 /* headers */,
+				A19284200798280D009C7832 /* sources */,
+			);
+			name = ActiveWire;
+			sourceTree = "<group>";
+		};
+		A19283EC07982456009C7832 /* PTask */ = {
+			isa = PBXGroup;
+			children = (
+				A14D812E07A042AE00CC3568 /* MMPTask.c */,
+			);
+			name = PTask;
+			sourceTree = "<group>";
+		};
+		A192841D07982809009C7832 /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				A19284230798282B009C7832 /* ActiveWireLib.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		A19284200798280D009C7832 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB540781E36800FEA346 /* MMActiveWire.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		A1B9EA560781E0E400FEA346 = {
+			isa = PBXGroup;
+			children = (
+				0FB854F70C70CE6600893934 /* HID_cookie_strings.plist */,
+				0FB854F80C70CE6600893934 /* HID_device_usage_strings.plist */,
+				0FB854F90C70CE6600893934 /* HID_usage_strings.plist */,
+				0F3CA75B0C579AE700FAE9C5 /* HIDx_dXgameHID.c */,
+				0F3CA75C0C579AE700FAE9C5 /* HIDx_dXkbHID.c */,
+				0F3CA75D0C579AE700FAE9C5 /* HIDx_dXPMDHID.c */,
+				0F78AB8D0B97744500A57BE5 /* clutX */,
+				A1B9EA680781E23700FEA346 /* Source */,
+				A1B9EA6E0781E24900FEA346 /* External Frameworks and Libraries */,
+				A1B9EA6B0781E23D00FEA346 /* Products */,
+				0FBE7CD50B93A19300D02415 /* lpHID-Info copy.plist */,
+				0FBE7CEA0B93A19C00D02415 /* asl-info copy.plist */,
+			);
+			sourceTree = "<group>";
+		};
+		A1B9EA680781E23700FEA346 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				0F3CA5620C56477900FAE9C5 /* HIDx.c */,
+				0F3CA5630C56477900FAE9C5 /* HIDx.h */,
+				A1B9EB1C0781E2EB00FEA346 /* Common */,
+				A1B9EB470781E33700FEA346 /* MATLAB */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		A1B9EA6B0781E23D00FEA346 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB170781E2DA00FEA346 /* aw.mexmac.app */,
+				A1EF134607DE606600CEA479 /* as.mexmac.app */,
+				A1EF134807DE606600CEA479 /* libcommonLib.a */,
+				A10CCA660831982F00E3D225 /* rSet.mexmac.app */,
+				0F9C755C093B6DFF003E8E29 /* lpHID.mexmac.app */,
+				0FBE7CD30B93A19300D02415 /* lpHID.mexmaci.app */,
+				0FBE7CE80B93A19C00D02415 /* as.mexmaci.app */,
+				0F78AB740B97732700A57BE5 /* clutX.mexmaci.app */,
+				0F3CA55C0C5646C000FAE9C5 /* HIDx.mexmaci.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B9EA6E0781E24900FEA346 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				0FBE7DA00B93AF5000D02415 /* libHIDUtilities-Intel.a */,
+				0F6994E10C592B6B00658120 /* CoreServices.framework */,
+				0FE1978E07CFA43C003EC4AF /* IOKit.framework */,
+				0FE1978A07CFA42B003EC4AF /* CoreFoundation.framework */,
+				A1B9EB0E0781E2B300FEA346 /* Carbon.framework */,
+				0FEA14A3092E6393002777AB /* FlatCarbon */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		A1B9EB1C0781E2EB00FEA346 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				A19283940796C6DC009C7832 /* DataTypes */,
+				A112CB2F078999E900B4F3DD /* Objects */,
+				A112CB29078999CB00B4F3DD /* Utilities */,
+			);
+			name = Common;
+			sourceTree = "<group>";
+		};
+		A1B9EB1F0781E2F400FEA346 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB380781E32600FEA346 /* LCMath.c */,
+				A1B9EB390781E32600FEA346 /* LCMessages.c */,
+				A1B9EB3B0781E32600FEA346 /* LCSafeAlloc.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+		A1B9EB220781E2FA00FEA346 /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB250781E30F00FEA346 /* LCCommon.h */,
+				A1B9EB270781E30F00FEA346 /* LCMath.h */,
+				A1B9EB280781E30F00FEA346 /* LCMessages.h */,
+				A1B9EB2A0781E30F00FEA346 /* LCSafeAlloc.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		A1B9EB470781E33700FEA346 /* MATLAB */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB5F0781E3AE00FEA346 /* resources */,
+				A1B9EB620781E3D800FEA346 /* mex */,
+			);
+			name = MATLAB;
+			sourceTree = "<group>";
+		};
+		A1B9EB5F0781E3AE00FEA346 /* resources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB650781E3E700FEA346 /* headers */,
+				A1B9EB680781E3EB00FEA346 /* sources */,
+			);
+			name = resources;
+			sourceTree = "<group>";
+		};
+		A1B9EB620781E3D800FEA346 /* mex */ = {
+			isa = PBXGroup;
+			children = (
+				0F9C754A093B6D5D003E8E29 /* LPHID */,
+				A10CCA6E083198B100E3D225 /* rSet */,
+				0FE196FC07CFA229003EC4AF /* ASL */,
+				A19283E907982445009C7832 /* ActiveWire */,
+				A19283EC07982456009C7832 /* PTask */,
+			);
+			name = mex;
+			sourceTree = "<group>";
+		};
+		A1B9EB650781E3E700FEA346 /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB6F0781E41B00FEA346 /* matrix.h */,
+				A1B9EB700781E41B00FEA346 /* mex.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
+		A1B9EB680781E3EB00FEA346 /* sources */ = {
+			isa = PBXGroup;
+			children = (
+				A1B9EB6B0781E40800FEA346 /* mexversion.c */,
+			);
+			name = sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		0F3CA54D0C5646C000FAE9C5 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F3CA54E0C5646C000FAE9C5 /* mex.h in Headers */,
+				0F3CA54F0C5646C000FAE9C5 /* HID_Utilities_External.h in Headers */,
+				0F3CA5650C56477900FAE9C5 /* HIDx.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F78AB650B97732700A57BE5 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F78AB670B97732700A57BE5 /* mex.h in Headers */,
+				0F78AB910B97744500A57BE5 /* clutX.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F9C751E093B6962003E8E29 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F9C7520093B6962003E8E29 /* mex.h in Headers */,
+				0F9C7549093B6D2C003E8E29 /* lpHID.h in Headers */,
+				0F9C756D093B7175003E8E29 /* HID_Utilities_External.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CC30B93A19300D02415 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CC40B93A19300D02415 /* mex.h in Headers */,
+				0FBE7CC50B93A19300D02415 /* lpHID.h in Headers */,
+				0FBE7CC60B93A19300D02415 /* HID_Utilities_External.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CD70B93A19C00D02415 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CD80B93A19C00D02415 /* serialPort.h in Headers */,
+				0FBE7CD90B93A19C00D02415 /* mex.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FE1971E07CFA304003EC4AF /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FE1973807CFA31F003EC4AF /* serialPort.h in Headers */,
+				0FEA18FB092E8B87002777AB /* mex.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10CCA5C0831982F00E3D225 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FEA18FC092E8B88002777AB /* mex.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB580781E37F00FEA346 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B9EB710781E41B00FEA346 /* matrix.h in Headers */,
+				A1B9EB720781E41B00FEA346 /* mex.h in Headers */,
+				A19284240798282B009C7832 /* ActiveWireLib.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB920781EA6F00FEA346 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B9EBBF0781ECF600FEA346 /* LCCommon.h in Headers */,
+				A1B9EBBB0781EBF800FEA346 /* LCMath.h in Headers */,
+				A1B9EB970781EA8400FEA346 /* LCMessages.h in Headers */,
+				A1B9EB980781EA9C00FEA346 /* LCSafeAlloc.h in Headers */,
+				A1B9EBC00781ED1300FEA346 /* LCVariable.h in Headers */,
+				A1C0A4FB07A0344300F9EAEE /* LCObject.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		0F3CA54C0C5646C000FAE9C5 /* HIDx */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F3CA5580C5646C000FAE9C5 /* Build configuration list for PBXNativeTarget "HIDx" */;
+			buildPhases = (
+				0F3CA54D0C5646C000FAE9C5 /* Headers */,
+				0F3CA5500C5646C000FAE9C5 /* Sources */,
+				0F3CA5530C5646C000FAE9C5 /* Frameworks */,
+				0F3CA5570C5646C000FAE9C5 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HIDx;
+			productName = aw;
+			productReference = 0F3CA55C0C5646C000FAE9C5 /* HIDx.mexmaci.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0F78AB640B97732700A57BE5 /* clutX */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F78AB700B97732700A57BE5 /* Build configuration list for PBXNativeTarget "clutX" */;
+			buildPhases = (
+				0F78AB650B97732700A57BE5 /* Headers */,
+				0F78AB680B97732700A57BE5 /* Sources */,
+				0F78AB6C0B97732700A57BE5 /* Frameworks */,
+				0F78AB6F0B97732700A57BE5 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = clutX;
+			productName = aw;
+			productReference = 0F78AB740B97732700A57BE5 /* clutX.mexmaci.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0F9C751D093B6962003E8E29 /* lpHID */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F9C752B093B6962003E8E29 /* Build configuration list for PBXNativeTarget "lpHID" */;
+			buildPhases = (
+				0F9C751E093B6962003E8E29 /* Headers */,
+				0F9C7521093B6962003E8E29 /* Sources */,
+				0F9C7525093B6962003E8E29 /* Frameworks */,
+				0F9C7528093B6962003E8E29 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = lpHID;
+			productName = aw;
+			productReference = 0F9C755C093B6DFF003E8E29 /* lpHID.mexmac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0FBE7CC20B93A19300D02415 /* lpHID intel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0FBE7CCF0B93A19300D02415 /* Build configuration list for PBXNativeTarget "lpHID intel" */;
+			buildPhases = (
+				0FBE7CC30B93A19300D02415 /* Headers */,
+				0FBE7CC70B93A19300D02415 /* Sources */,
+				0FBE7CCA0B93A19300D02415 /* Frameworks */,
+				0FBE7CCE0B93A19300D02415 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "lpHID intel";
+			productName = aw;
+			productReference = 0FBE7CD30B93A19300D02415 /* lpHID.mexmaci.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0FBE7CD60B93A19C00D02415 /* as intel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0FBE7CE40B93A19C00D02415 /* Build configuration list for PBXNativeTarget "as intel" */;
+			buildPhases = (
+				0FBE7CD70B93A19C00D02415 /* Headers */,
+				0FBE7CDA0B93A19C00D02415 /* Sources */,
+				0FBE7CDE0B93A19C00D02415 /* Frameworks */,
+				0FBE7CE10B93A19C00D02415 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "as intel";
+			productName = aw;
+			productReference = 0FBE7CE80B93A19C00D02415 /* as.mexmaci.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0FE1971D07CFA304003EC4AF /* as */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F8446D60871A66300657606 /* Build configuration list for PBXNativeTarget "as" */;
+			buildPhases = (
+				0FE1971E07CFA304003EC4AF /* Headers */,
+				0FE1972B07CFA304003EC4AF /* Sources */,
+				0FE1973307CFA304003EC4AF /* Frameworks */,
+				0FE1973407CFA304003EC4AF /* ShellScript */,
+			);
+			buildRules = (
+				0F5D55BF09323AC000426743 /* PBXBuildRule */,
+				0F5D55BE09323AB700426743 /* PBXBuildRule */,
+			);
+			dependencies = (
+			);
+			name = as;
+			productName = aw;
+			productReference = A1EF134607DE606600CEA479 /* as.mexmac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A10CCA5B0831982F00E3D225 /* rSet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F8446CE0871A66300657606 /* Build configuration list for PBXNativeTarget "rSet" */;
+			buildPhases = (
+				A10CCA5C0831982F00E3D225 /* Headers */,
+				A10CCA5E0831982F00E3D225 /* Sources */,
+				A10CCA620831982F00E3D225 /* Frameworks */,
+				A10CCA650831982F00E3D225 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = rSet;
+			productName = aw;
+			productReference = A10CCA660831982F00E3D225 /* rSet.mexmac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1B9EB160781E2DA00FEA346 /* aw */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F8446D20871A66300657606 /* Build configuration list for PBXNativeTarget "aw" */;
+			buildPhases = (
+				A1B9EB580781E37F00FEA346 /* Headers */,
+				A1B9EB140781E2DA00FEA346 /* Sources */,
+				A1B9EB150781E2DA00FEA346 /* Frameworks */,
+				A1B9EB880781E5BE00FEA346 /* ShellScript */,
+			);
+			buildRules = (
+				0FC38779087194A700C5E65E /* PBXBuildRule */,
+				0FC387780871949B00C5E65E /* PBXBuildRule */,
+			);
+			dependencies = (
+			);
+			name = aw;
+			productName = aw;
+			productReference = A1B9EB170781E2DA00FEA346 /* aw.mexmac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1B9EB950781EA6F00FEA346 /* commonLib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0F8446DA0871A66300657606 /* Build configuration list for PBXNativeTarget "commonLib" */;
+			buildPhases = (
+				A1B9EB920781EA6F00FEA346 /* Headers */,
+				A1B9EB930781EA6F00FEA346 /* Sources */,
+				A1B9EB940781EA6F00FEA346 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = commonLib;
+			productName = commonLib;
+			productReference = A1EF134807DE606600CEA479 /* libcommonLib.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1B9EA5A0781E0E400FEA346 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 0F8446DE0871A66300657606 /* Build configuration list for PBXProject "LabTools" */;
+			hasScannedForEncodings = 0;
+			mainGroup = A1B9EA560781E0E400FEA346;
+			projectDirPath = "";
+			targets = (
+				A10CCA5B0831982F00E3D225 /* rSet */,
+				A1B9EB160781E2DA00FEA346 /* aw */,
+				0FE1971D07CFA304003EC4AF /* as */,
+				A1B9EB950781EA6F00FEA346 /* commonLib */,
+				0F9C751D093B6962003E8E29 /* lpHID */,
+				0FBE7CC20B93A19300D02415 /* lpHID intel */,
+				0FBE7CD60B93A19C00D02415 /* as intel */,
+				0F78AB640B97732700A57BE5 /* clutX */,
+				0F3CA54C0C5646C000FAE9C5 /* HIDx */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0F3CA5570C5646C000FAE9C5 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"$TARGET_BUILD_DIR/HIDx.mexmaci.app/Contents/MacOS/HIDx.mexmaci\" Products/mex\ncp \"$TARGET_BUILD_DIR/HIDx.mexmaci.app/Contents/MacOS/HIDx.mexmaci\" /Users/lab/GoldLab/Matlab/mfiles_lab/DotsX/mex";
+		};
+		0F78AB6F0B97732700A57BE5 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"$TARGET_BUILD_DIR/clutX.mexmaci.app/Contents/MacOS/clutX.mexmaci\" Products/mex\n\ncp \"$TARGET_BUILD_DIR/clutX.mexmaci.app/Contents/MacOS/clutX.mexmaci\" /Users/lab/GoldLab/Matlab/mfiles_lab/DotsX/mex/";
+		};
+		0F9C7528093B6962003E8E29 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"$TARGET_BUILD_DIR/$TARGET_NAME.mexmac.app/Contents/MacOS/$TARGET_NAME.mexmac\" Products/mex\ncp \"$TARGET_BUILD_DIR/$TARGET_NAME.mexmac.app/Contents/MacOS/$TARGET_NAME.mexmac\" $SRCROOT/../../mfiles_lab/DotsX/mex/";
+		};
+		0FBE7CCE0B93A19300D02415 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"$TARGET_BUILD_DIR/lpHID.mexmaci.app/Contents/MacOS/lpHID.mexmaci\" Products/mex";
+		};
+		0FBE7CE10B93A19C00D02415 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp \"$TARGET_BUILD_DIR/as.mexmaci.app/Contents/MacOS/as.mexmaci\" Products/mex";
+		};
+		0FE1973407CFA304003EC4AF /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#cp build/Development/as.mexmac.app/Contents/MacOS/as.mexmac Products/mex\n#nmedit -s /Applications/MATLAB71/extern/lib/mac/mexFunction.map build/asl.mexmac\n#cp build/asl.mexmac Products/mex\n# Copy Foo.mexmac which we built into Applications/Psychtoolbox/PsychBar directory.   \ncp \"$TARGET_BUILD_DIR/$TARGET_NAME.mexmac.app/Contents/MacOS/$TARGET_NAME.mexmac\" Products/mex\ncp \"$TARGET_BUILD_DIR/$TARGET_NAME.mexmac.app/Contents/MacOS/$TARGET_NAME.mexmac\" $SRCROOT/../../mfiles_lab/DotsX/mex/";
+		};
+		A10CCA650831982F00E3D225 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp build/rSet.mexmac.app/Contents/MacOS/rSet.mexmac Products/mex\n#nmedit -s /Applications/MATLAB701/extern/lib/mac/mexFunction.map build/asl.mexmac\n#cp build/asl.mexmac Products/mex";
+		};
+		A1B9EB880781E5BE00FEA346 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#cp build/Development/aw.mexmac.app/Contents/MacOS/aw.mexmac Products/mex\ncp \"$TARGET_BUILD_DIR/$TARGET_NAME.mexmac.app/Contents/MacOS/$TARGET_NAME.mexmac\" Products/mex";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0F3CA5500C5646C000FAE9C5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F3CA75E0C579AE700FAE9C5 /* HIDx_dXgameHID.c in Sources */,
+				0F3CA75F0C579AE700FAE9C5 /* HIDx_dXkbHID.c in Sources */,
+				0F3CA7600C579AE700FAE9C5 /* HIDx_dXPMDHID.c in Sources */,
+				0F3CA5510C5646C000FAE9C5 /* mexversion.c in Sources */,
+				0F3CA5640C56477900FAE9C5 /* HIDx.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F78AB680B97732700A57BE5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F78AB6B0B97732700A57BE5 /* mexversion.c in Sources */,
+				0F78AB900B97744500A57BE5 /* clutX.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0F9C7521093B6962003E8E29 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F9C7524093B6962003E8E29 /* mexversion.c in Sources */,
+				0F9C7548093B6D2C003E8E29 /* lpHID.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CC70B93A19300D02415 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CC80B93A19300D02415 /* mexversion.c in Sources */,
+				0FBE7CC90B93A19300D02415 /* lpHID.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FBE7CDA0B93A19C00D02415 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FBE7CDB0B93A19C00D02415 /* serialPort.c in Sources */,
+				0FBE7CDC0B93A19C00D02415 /* asl.c in Sources */,
+				0FBE7CDD0B93A19C00D02415 /* mexversion.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0FE1972B07CFA304003EC4AF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FEB5CCD083CF97F00333983 /* serialPort.c in Sources */,
+				0FE1973D07CFA35B003EC4AF /* asl.c in Sources */,
+				0FE1973F07CFA396003EC4AF /* mexversion.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10CCA5E0831982F00E3D225 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10CCA610831982F00E3D225 /* mexversion.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB140781E2DA00FEA346 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B9EB550781E36800FEA346 /* MMActiveWire.c in Sources */,
+				A1B9EB6C0781E40800FEA346 /* mexversion.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B9EB930781EA6F00FEA346 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B9EBBC0781EC1900FEA346 /* LCMath.c in Sources */,
+				A1B9EB9A0781EAAC00FEA346 /* LCMessages.c in Sources */,
+				A1B9EB990781EAA200FEA346 /* LCSafeAlloc.c in Sources */,
+				A1B9EBC10781ED1F00FEA346 /* LCVariable.c in Sources */,
+				0FEA1853092E738B002777AB /* LCObject.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0F3CA5590C5646C000FAE9C5 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB74/extern/lib/maci/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/extern/include\"";
+				INFOPLIST_FILE = "";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB74/bin/maci",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_2)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_3)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"/Users/lab/GoldLab/Matlab/mex_lab/Pschtoolbox_latest/beta/PsychSourceGL/Cohorts/HID Utilities Source/HID.bundle/Contents/MacOS\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_2 = "\"$(SRCROOT)/../../mfiles_lab/DotsX/mex\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_3 = "\"$(SRCROOT)/../../mfiles_lab/DotsX/mex\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = HIDx.mexmaci;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F3CA55A0C5646C000FAE9C5 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/lpHID-Info copy 2.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F3CA55B0C5646C000FAE9C5 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/lpHID-Info copy 2.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0F78AB710B97732700A57BE5 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB74/extern/lib/maci/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = "";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy 2.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/bin/maci\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = clutX.mexmaci;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F78AB720B97732700A57BE5 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy 2.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F78AB730B97732700A57BE5 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy 2.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0F8446CF0871A66300657606 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = rSet.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F8446D00871A66300657606 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = rSet.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F8446D10871A66300657606 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = rSet.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0F8446D30871A66300657606 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "aw-Info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-undefined",
+					suppress,
+					"-flat_namespace",
+					"-lActiveWire",
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = aw.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F8446D40871A66300657606 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "aw-Info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-undefined",
+					suppress,
+					"-flat_namespace",
+					"-lActiveWire",
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = aw.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F8446D50871A66300657606 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "aw-Info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-undefined",
+					suppress,
+					"-flat_namespace",
+					"-lActiveWire",
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = aw.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0F8446D70871A66300657606 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "asl-info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F8446D80871A66300657606 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "asl-info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F8446D90871A66300657606 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "asl-info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0F8446DB0871A66300657606 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_FAST_MATH = NO;
+				GCC_INPUT_FILETYPE = automatic;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = NO;
+				GCC_USE_GCC3_PFE_SUPPORT = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = NO;
+				GCC_WARN_PEDANTIC = NO;
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = commonLib;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Development;
+		};
+		0F8446DC0871A66300657606 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_FAST_MATH = NO;
+				GCC_INPUT_FILETYPE = automatic;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = NO;
+				GCC_USE_GCC3_PFE_SUPPORT = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = NO;
+				GCC_WARN_PEDANTIC = NO;
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = commonLib;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Deployment;
+		};
+		0F8446DD0871A66300657606 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_FAST_MATH = NO;
+				GCC_INPUT_FILETYPE = automatic;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = NO;
+				GCC_USE_GCC3_PFE_SUPPORT = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = NO;
+				GCC_WARN_PEDANTIC = NO;
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = commonLib;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Default;
+		};
+		0F8446DF0871A66300657606 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		0F8446E00871A66300657606 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		0F8446E10871A66300657606 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+		0F9C752C093B6962003E8E29 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB74/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Shared/Matlab/mex_lab/LabTools/lpHID-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB74/bin/mac",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"/Users/lab/GoldLab/Matlab/mex_lab/Pschtoolbox_latest/beta/PsychSourceGL/Cohorts/HID Utilities Source/HID.bundle/Contents/MacOS\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0F9C752D093B6962003E8E29 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Shared/Matlab/mex_lab/LabTools/lpHID-info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0F9C752E093B6962003E8E29 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Shared/Matlab/mex_lab/LabTools/lpHID-info.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0FBE7CD00B93A19300D02415 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB74/extern/lib/maci/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/lpHID-Info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB74/bin/maci",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_2)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_3)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"/Users/lab/GoldLab/Matlab/mex_lab/Pschtoolbox_latest/beta/PsychSourceGL/Cohorts/HID Utilities Source/HID.bundle/Contents/MacOS\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_2 = "\"$(SRCROOT)/../../mfiles_lab/DotsX/mex\"";
+				LIBRARY_SEARCH_PATHS_QUOTED_3 = "\"$(SRCROOT)/../../mfiles_lab/DotsX/mex\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmaci;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0FBE7CD10B93A19300D02415 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Shared/Matlab/mex_lab/LabTools/lpHID-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0FBE7CD20B93A19300D02415 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Shared/Matlab/mex_lab/LabTools/lpHID-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac",
+					$SRCROOT/../../mfiles_lab/DotsX/mex/,
+				);
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+					"-fconstant-cfstrings",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = lpHID.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+		0FBE7CE50B93A19C00D02415 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB74/extern/lib/maci/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = "";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB74/bin/maci\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmaci;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Development;
+		};
+		0FBE7CE60B93A19C00D02415 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Deployment;
+		};
+		0FBE7CE70B93A19C00D02415 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXPORTED_SYMBOLS_FILE = "$(SYSTEM_APPS_DIR)/MATLAB71/extern/lib/mac/mexFunction.map";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MATLAB_MEX_FILE;
+				HEADER_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/extern/include\"";
+				INFOPLIST_FILE = "/Users/lab/GoldLab/Matlab/mex_lab/LabTools/asl-info copy.plist";
+				INSTALL_PATH = "";
+				LIBRARY_SEARCH_PATHS = "\"$(SYSTEM_APPS_DIR)/MATLAB71/bin/mac\"";
+				OTHER_CFLAGS = (
+					"-fexceptions",
+					"-no-cpp-precomp",
+				);
+				OTHER_LDFLAGS = (
+					"-bundle",
+					"-flat_namespace",
+					"-undefined",
+					suppress,
+					"-lmx",
+					"-lmex",
+					"-lmat",
+					"-lstdc++",
+				);
+				OTHER_REZFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = as.mexmac;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = app;
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0F3CA5580C5646C000FAE9C5 /* Build configuration list for PBXNativeTarget "HIDx" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F3CA5590C5646C000FAE9C5 /* Development */,
+				0F3CA55A0C5646C000FAE9C5 /* Deployment */,
+				0F3CA55B0C5646C000FAE9C5 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F78AB700B97732700A57BE5 /* Build configuration list for PBXNativeTarget "clutX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F78AB710B97732700A57BE5 /* Development */,
+				0F78AB720B97732700A57BE5 /* Deployment */,
+				0F78AB730B97732700A57BE5 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F8446CE0871A66300657606 /* Build configuration list for PBXNativeTarget "rSet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F8446CF0871A66300657606 /* Development */,
+				0F8446D00871A66300657606 /* Deployment */,
+				0F8446D10871A66300657606 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F8446D20871A66300657606 /* Build configuration list for PBXNativeTarget "aw" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F8446D30871A66300657606 /* Development */,
+				0F8446D40871A66300657606 /* Deployment */,
+				0F8446D50871A66300657606 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F8446D60871A66300657606 /* Build configuration list for PBXNativeTarget "as" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F8446D70871A66300657606 /* Development */,
+				0F8446D80871A66300657606 /* Deployment */,
+				0F8446D90871A66300657606 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F8446DA0871A66300657606 /* Build configuration list for PBXNativeTarget "commonLib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F8446DB0871A66300657606 /* Development */,
+				0F8446DC0871A66300657606 /* Deployment */,
+				0F8446DD0871A66300657606 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F8446DE0871A66300657606 /* Build configuration list for PBXProject "LabTools" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F8446DF0871A66300657606 /* Development */,
+				0F8446E00871A66300657606 /* Deployment */,
+				0F8446E10871A66300657606 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0F9C752B093B6962003E8E29 /* Build configuration list for PBXNativeTarget "lpHID" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F9C752C093B6962003E8E29 /* Development */,
+				0F9C752D093B6962003E8E29 /* Deployment */,
+				0F9C752E093B6962003E8E29 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0FBE7CCF0B93A19300D02415 /* Build configuration list for PBXNativeTarget "lpHID intel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FBE7CD00B93A19300D02415 /* Development */,
+				0FBE7CD10B93A19300D02415 /* Deployment */,
+				0FBE7CD20B93A19300D02415 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		0FBE7CE40B93A19C00D02415 /* Build configuration list for PBXNativeTarget "as intel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FBE7CE50B93A19C00D02415 /* Development */,
+				0FBE7CE60B93A19C00D02415 /* Deployment */,
+				0FBE7CE70B93A19C00D02415 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A1B9EA5A0781E0E400FEA346 /* Project object */;
+}

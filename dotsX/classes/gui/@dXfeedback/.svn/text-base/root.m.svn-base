@@ -1,0 +1,1 @@
+function fb_ = root(fb_, varargin)%overloaded root method for class dXfeedback.%   fb_ = root(fb_, varargin)%%   Classes that define a root method may only have one instance and it%   must belong to the 'root' group.%%   See also root rGroup, rAdd% Copyright 2006 by Joshua I. Gold%   University of Pennsylvania

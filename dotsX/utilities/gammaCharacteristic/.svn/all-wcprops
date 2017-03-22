@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/utilities/gammaCharacteristic
+END
+measureGammaJ17.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/1/trunk/DotsX/utilities/gammaCharacteristic/measureGammaJ17.m
+END
+makeGammaTable.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/1/trunk/DotsX/utilities/gammaCharacteristic/makeGammaTable.m
+END
+J17GammaCorrection.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/1/trunk/DotsX/utilities/gammaCharacteristic/J17GammaCorrection.m
+END
+J17Read.m
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/1/trunk/DotsX/utilities/gammaCharacteristic/J17Read.m
+END

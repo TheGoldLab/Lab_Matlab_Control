@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/Common"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   name="Objects"
+   kind="dir"/>
+<entry
+   name="Utilities"
+   kind="dir"/>
+<entry
+   name="DataTypes"
+   kind="dir"/>
+</wc-entries>

@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout
+END
+testReadoutGraphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/testReadoutGraphics.m
+END
+taskReadout.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/taskReadout.m
+END
+readoutRoot.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/readoutRoot.m
+END
+readoutFeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/readoutFeedback.m
+END
+readout_computeMotionDist.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/readout_computeMotionDist.m
+END
+gXreadout_statelist.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/gXreadout_statelist.m
+END
+gXreadout_hardware.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/gXreadout_hardware.m
+END
+readoutSummary.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/readoutSummary.m
+END
+gXreadout_graphics.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/gXreadout_graphics.m
+END
+newRandSeedSaveToFIRA.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/tasks/readout/newRandSeedSaveToFIRA.m
+END

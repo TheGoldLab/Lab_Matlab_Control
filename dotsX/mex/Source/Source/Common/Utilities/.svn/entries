@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="4"
+   name=""
+   committed-date="2006-07-27T22:43:59.719727Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/Common/Utilities"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="4"
+   name="LCGraphics.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="6241e8fb24838944e136c759a72783fd"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCPerformance.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="b97b2e1bfa5d266b244e587e3d4e6d8e"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCGraphics.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="81ee33e448ebddcf3fcf8e2efe6f0094"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCPerformance.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="903cc680652459c0fc1351eab94e1f4a"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCMessages.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="39ca5a0ebe13e3878d9d92938a51ae0a"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCMath.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="b7c8503182063d73c5ad9233781d4aff"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCSafeAlloc.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="8e475c4198ba1cb19194889370c447f4"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCMessages.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="8a4421158a90e31eab4b2510de177ad4"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCCommon.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="7b0811b97de82f8eddc1b5a35583fa26"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCMath.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="b11c832b89d6b743f4cd9076465014b2"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:08:59.000000Z"/>
+<entry
+   committed-rev="4"
+   name="LCSafeAlloc.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2006-07-27T22:43:59.719727Z"
+   checksum="329f677d96f4d0b1dcf813d69409993d"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

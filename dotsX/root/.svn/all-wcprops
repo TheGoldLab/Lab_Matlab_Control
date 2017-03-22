@@ -1,0 +1,155 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/31/trunk/DotsX/root
+END
+rInit.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/1/trunk/DotsX/root/rInit.m
+END
+rRemoteAddGroups.m
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/1/trunk/DotsX/root/rRemoteAddGroups.m
+END
+rRun.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/1/trunk/DotsX/root/rRun.m
+END
+rPlay.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/1/trunk/DotsX/root/rPlay.m
+END
+rSetTaskByName.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/root/rSetTaskByName.m
+END
+rRemoteSetup.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/1/trunk/DotsX/root/rRemoteSetup.m
+END
+rMap.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/1/trunk/DotsX/root/rMap.m
+END
+rDisplayError.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/1/trunk/DotsX/root/rDisplayError.m
+END
+rGet.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/1/trunk/DotsX/root/rGet.m
+END
+rScreen.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/1/trunk/DotsX/root/rScreen.m
+END
+rRootRead.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/1/trunk/DotsX/root/rRootRead.m
+END
+rSetMany.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/1/trunk/DotsX/root/rSetMany.m
+END
+rBatch.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/1/trunk/DotsX/root/rBatch.m
+END
+rWinPtr.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/1/trunk/DotsX/root/rWinPtr.m
+END
+rDone.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/1/trunk/DotsX/root/rDone.m
+END
+rClear.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/1/trunk/DotsX/root/rClear.m
+END
+rAdd.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/1/trunk/DotsX/root/rAdd.m
+END
+rRemoteClient.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/31/trunk/DotsX/root/rRemoteClient.m
+END
+rTaskIndex.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/21/trunk/DotsX/root/rTaskIndex.m
+END
+rSet.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/1/trunk/DotsX/root/rSet.m
+END
+rGroup.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/1/trunk/DotsX/root/rGroup.m
+END
+rRemove.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/1/trunk/DotsX/root/rRemove.m
+END
+rGetTaskByName.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/1/trunk/DotsX/root/rGetTaskByName.m
+END
+rRootWrite.m
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/1/trunk/DotsX/root/rRootWrite.m
+END
+rRemoteClientDebug.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/1/trunk/DotsX/root/rRemoteClientDebug.m
+END

@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/75/trunk/DotsX/classes/gui/@dXfeedback
+END
+loadobj.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/loadobj.m
+END
+set.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/set.m
+END
+get.m
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/get.m
+END
+dXfeedback.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/dXfeedback.m
+END
+show.m
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/75/trunk/DotsX/classes/gui/@dXfeedback/show.m
+END
+writeToText.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/writeToText.m
+END
+endTrial.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/endTrial.m
+END
+root.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/1/trunk/DotsX/classes/gui/@dXfeedback/root.m
+END

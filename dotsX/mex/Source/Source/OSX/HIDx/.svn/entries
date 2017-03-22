@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="363"
+   name=""
+   committed-date="2007-09-06T21:55:08.372338Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source/OSX/HIDx"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   committed-rev="342"
+   name="HID_cookie_strings.plist"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-08-20T20:17:07.281456Z"
+   checksum="bebdd2ba3f4b9c22091724320e2dfccc"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="363"
+   name="HIDx.h"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T21:55:08.372338Z"
+   checksum="3b74f11e4757357267bb4127c32ff7fb"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="342"
+   name="HID_sandbox.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-08-20T20:17:07.281456Z"
+   checksum="bfa4981e7717da67c1a9ae719c2697a5"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="360"
+   name="HIDx_dXgameHID.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T15:45:23.933234Z"
+   checksum="9b36cb98241fe7b2d4b30b831e7eaedb"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="342"
+   name="HID_device_usage_strings.plist"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-08-20T20:17:07.281456Z"
+   checksum="a0579f84b770e8383b4e36ed216520f5"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="360"
+   name="HIDx_dXkbHID.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T15:45:23.933234Z"
+   checksum="79ba90ca5a131d83f05396d46b0dbbc6"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="342"
+   name="HID_usage_strings.plist"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-08-20T20:17:07.281456Z"
+   checksum="ed4fc08674fec4bbabe7c50cf512386d"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="363"
+   name="HIDx.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T21:55:08.372338Z"
+   checksum="11b460852cff8c8070ab5fe29d0831ff"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+<entry
+   committed-rev="363"
+   name="HIDx_dXPMDHID.c"
+   text-time="2008-12-29T20:09:00.000000Z"
+   committed-date="2007-09-06T21:55:08.372338Z"
+   checksum="75d5d5aabf0bc4a13b0d5c45f9f12c91"
+   last-author="lab"
+   kind="file"
+   prop-time="2008-12-29T20:09:00.000000Z"/>
+</wc-entries>

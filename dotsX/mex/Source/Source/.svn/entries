@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wc-entries
+   xmlns="svn:">
+<entry
+   committed-rev="363"
+   name=""
+   committed-date="2007-09-06T21:55:08.372338Z"
+   url="http://192.168.1.9:8800/svn/LabTools/trunk/Source"
+   last-author="lab"
+   kind="dir"
+   uuid="48a43d20-8119-0410-a6d6-9e863cb72f4a"
+   repos="http://192.168.1.9:8800/svn"
+   revision="675"/>
+<entry
+   name="Common"
+   kind="dir"/>
+<entry
+   name="OSX"
+   kind="dir"/>
+<entry
+   name="Rex"
+   kind="dir"/>
+</wc-entries>
