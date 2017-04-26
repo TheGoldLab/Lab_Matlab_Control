@@ -7,3 +7,5 @@ Custom utilities for experimental control for the Gold Lab
 - PsychToolbox: http://psychtoolbox.org
 
 - It's important to note that the lastest version that Snow-Dots will work properly on is 2013a.
+
+Be sure to check out the lab Wiki if you are just getting started!
