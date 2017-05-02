@@ -15,6 +15,15 @@ tony.prepareToPlay();
 tony.play();
 pause(tony.duration);
 
+%The PlayableNote function smoothes the sound so it doesn't abruptly end.
+player = dotsPlayableNote();
+player.frequency = 1000;
+player.duration = 3;
+player.intensity = .25;
+player.prepareToPlay();
+player.play();
+pause(player.duration);
+
 % alter the tone parameters and play it again
 tony.frequency = 880;
 tony.duration = 2;
@@ -39,6 +48,12 @@ filey.prepareToPlay();
 filey.mayPlayNow();
 pause(filey.duration);
 
+% try to play two sounds at once
+%   this may fail with a bug in Matlab's audioplayer class
+tony.mayPlayNow();
+pause(tony.duration/2);
+filey.mayPlayNow();
+pause(filey.duration);
 % try to play two sounds at once
 %   this may fail with a bug in Matlab's audioplayer class
 tony.mayPlayNow();
