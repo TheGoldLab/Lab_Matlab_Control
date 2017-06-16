@@ -50,8 +50,8 @@ classdef dotsPlayableFile < dotsPlayable
             [filePath, fileName, fileType] = fileparts(soundFile);
             if strcmp(fileType, '.wav')
                 % MATLAB's builtin .wav reader
-                [self.waveform, self.sampleFrequency, self.bitsPerSample] = ...
-                    wavread(soundFile);
+                [self.waveform, self.sampleFrequency] = audioread(soundFile);
+                self.bitsPerSample = getfield(audioinfo(soundFile), 'BitsPerSample');
                 
             elseif strcmp(sfileType, '.mp3')
                 if exist('mp3read', 'file')
