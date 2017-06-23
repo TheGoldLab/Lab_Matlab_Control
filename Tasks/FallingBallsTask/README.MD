@@ -1,1 +1,2 @@
-! The version currently uploaded is far from finished. When the task is finished, this warning will be removed. 
+The FallingBallTask Prediction/Estimation/Run files are out-of-date. They will work but the newer verions will be uploaded soon.
+AutoBallDropFeedback is a version of the falling balls task where users can adjust the hazard rate, sigma ratio, sigma0, and learning rate during the task. It currently does not save any data. It is for demonstration purposes. The Green ball will fall continually and the user is suppose to try and pick the best learning rate for the current set of parameters based on trail-by-trial feedback.
