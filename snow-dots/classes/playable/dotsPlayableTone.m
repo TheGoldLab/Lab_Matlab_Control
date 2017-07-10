@@ -24,7 +24,11 @@ classdef dotsPlayableTone < dotsPlayable
             nSamples = self.sampleFrequency * self.duration;
             rads = linspace(0, nCycles*2*pi, nSamples);
             self.waveform = sin(rads)*self.intensity;
-            
+            if strcmp(self.side,'left')
+            self.waveform = [self.waveform; zeros(size(self.waveform))];
+            elseif strcmp(self.side,'right')
+            self.waveform = [zeros(size(self.waveform)); self.waveform];
+            end
             self.player = audioplayer(self.waveform, ...
                 self.sampleFrequency, self.bitsPerSample);
         end
