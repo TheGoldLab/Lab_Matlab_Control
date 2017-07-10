@@ -31,7 +31,7 @@ classdef dotsPlayable < handle
         
         %If a sound should only play in the left side or right side. Enter
         %in 'left' or 'right'. Keep empty for both sides.
-        side = ''
+        side = '';
     end
     
     properties (SetAccess = protected)
