@@ -28,6 +28,10 @@ classdef dotsPlayable < handle
         % m is the number of audio channels, 1 for mono and 2 for stereo.
         % n is the number of sound samples (i.e. the length of the sound).
         waveform;
+        
+        %If a sound should only play in the left side or right side. Enter
+        %in 'left' or 'right'. Keep empty for both sides.
+        side = ''
     end
     
     properties (SetAccess = protected)
