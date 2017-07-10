@@ -51,9 +51,14 @@ classdef dotsPlayableNote < dotsPlayable
             end
             
             note = note.*ampenv(1:cutoff); %creating sound with specific frequency
-            note = [note; note];
             note = note*self.intensity;
-            
+            if strcmp(self.side,'left')
+            note = [note; zeros(size(note))];
+            elseif strcmp(self.side,'right')
+            note = [zeros(size(note)); note];
+            else
+                note = [note; note];
+            end
             self.waveform = note;
         end
         
