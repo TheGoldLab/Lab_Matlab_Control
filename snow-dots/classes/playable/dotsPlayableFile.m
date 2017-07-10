@@ -76,7 +76,11 @@ classdef dotsPlayableFile < dotsPlayable
                 self.player.stop();
                 self.player = [];
             end
-            
+            if strcmp(self.side,'left')
+            self.waveform = [self.waveform, zeros(size(self.waveform))];
+            elseif strcmp(self.side,'right')
+            self.waveform = [zeros(size(self.waveform)), self.waveform];
+            end
             self.player = audioplayer(self.waveform.*self.intensity, ...
                 self.sampleFrequency, self.bitsPerSample);
         end
