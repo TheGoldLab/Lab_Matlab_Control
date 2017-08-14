@@ -1,4 +1,4 @@
-function [subID, savename] = MKEyelinkCalibrate()
+function CPEyelinkCalibrateTest()
 %% Eyelink Calibration
 %M.Kabir
 %This should open up Eyelink, calibrate, and also open a file according to
@@ -7,14 +7,7 @@ function [subID, savename] = MKEyelinkCalibrate()
 
 
 %% Creating a Non Redundant Savefile name
-subID = input('Subject ID is: ', 's');
-appendno = 0;
-savename = [subID num2str(appendno) '.edf'];
-
-while exist(savename)
-    appendno = appendno + 1;
-    savename = [subID num2str(appendno) '.edf'];
-end
+%removed save file stuff. CP
 
 %% Running calib and starting an edf file + recording
 Screen('Preference', 'SkipSyncTests', 1)
@@ -52,9 +45,6 @@ try
     
     % make sure that we get gaze data from the Eyelink
     Eyelink('Command', 'link_sample_data = LEFT,RIGHT,GAZE,AREA,PUPIL');
-    
-    % open file to record data to
-    Eyelink('Openfile', savename);
     
     % STEP 4
     % Calibrate the eye tracker
@@ -98,7 +88,7 @@ try
         % check for presence of a new sample update
         if Eyelink('NewFloatSampleAvailable') > 0
             % get the sample in the form of an event structure
-            evt = Eyelink( 'NewestFloatSample');
+            evt = Eyelink( 'NewestFloatSample')
             if eye_used ~= -1 % do we know which eye to use yet?
                 % if we do, get current gaze position from sample
                 x = evt.gx(eye_used+1); % +1 as we're accessing MATLAB array

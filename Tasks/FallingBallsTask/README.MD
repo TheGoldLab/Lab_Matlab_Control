@@ -1,2 +1,14 @@
-The FallingBallTask Prediction/Estimation/Run files are out-of-date. They will work but the newer verions will be uploaded soon.
-AutoBallDropFeedback is a version of the falling balls task where users can adjust the hazard rate, sigma ratio, sigma0, and learning rate during the task. It currently does not save any data. It is for demonstration purposes. The Green ball will fall continually and the user is suppose to try and pick the best learning rate for the current set of parameters based on trail-by-trial feedback.
+# Falling Ball Task #
+
+Matlab task scripts for running a version of prediction/estimation inference task to test a theory developed by Gaia Tavoni
+
+### Dependencies ###
+Need to have **Snow Dots** and **Tower of Psych** installed.
+
+If you don't have it, install them from here (https://github.com/NaimKabir/GoldLabPsychophysics)
+
+
+### Contributors ###
+
+* Chris Pizzica
+* Takahiro Doi

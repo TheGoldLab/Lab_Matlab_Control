@@ -8,6 +8,12 @@ function [tree, list] = FallingBallTaskPrediction(logic, isClient)
 % clc;
 sc=dotsTheScreen.theObject;
 sc.reset('displayIndex', 1);
+%The settings file should force any displays with resolutions bigger than 1080p to scale
+%down so that the experiment looks "normal."
+% dotsTheMachineConfiguration.readUserSettingsFile('/Volumes/Untitled/FallingBallsHelicopterVersion/DotsScreenSetup.xml')
+
+
+
 
 
 if nargin < 1 || isempty(logic)
@@ -35,15 +41,16 @@ list = topsGroupedList('falling balls data');
 list{'object'}{'logic'} = logic;
 % +++ Add some constants that define task behavior
 % +++
-
+%This is the mean of the RedBall used for the normal distribution
+list{'Stimulus'}{'RedMean'} = normrnd(0,logic.Sigma0);
+list{'Stimulus'}{'RedBallpass'} = 0;
 % Timing properties
 list{'timing'}{'counter'}       = 0;
 list{'timing'}{'prepare'}       = 1;
 list{'timing'}{'stimulus'}      = 2;
 list{'timing'}{'choice'}        = 10;
-list{'timing'}{'feedback'}      = 1;
 list{'timing'}{'intertrial'}    = 1;
-list{'timing'}{'set time'}      = 1;
+list{'timing'}{'set time'}      = .60;
 list{'timing'}{'rest time'}     = 1;
 
 % Graphics properties
@@ -56,25 +63,26 @@ list{'graphics'}{'blue'}              = [0.1 0.25 1.0];
 list{'graphics'}{'brown'}             = [0.6 0.2 0.9];
 list{'graphics'}{'ball diameter'}     = 0.4;
 list{'graphics'}{'target diameter'}   = 0.3;
-list{'graphics'}{'ceiling width'}     = 4;  % in pix
+list{'graphics'}{'ceiling width'}     = 10;  % in pix
 list{'graphics'}{'ground width'}      = 10;
 
 
 list{'graphics'}{'left side'}         = -6;
 list{'graphics'}{'right side'}        = 6;
 list{'graphics'}{'bottom'}            = -3;
-list{'graphics'}{'almost bottom'}     = list{'graphics'}{'bottom'};
+list{'graphics'}{'almost bottom'}     = list{'graphics'}{'bottom'}+ .3;
 list{'graphics'}{'top'}               = 3;
-list{'graphics'}{'almost top'}        = list{'graphics'}{'top'};
+list{'graphics'}{'almost top'}        = list{'graphics'}{'top'} -.3;
 
-list{'graphics'}{'animation time'}    = 1;
+list{'graphics'}{'animation time'}    = .5;
 
 % list{'mouse'}{'movement'}             = [];
-list{'target'}{'feedback number'}     = [];
+list{'target'}{'feedback number'}     = {};
 list{'trial'}{'mouse position'}       = {};
 list{'mouse'}{'counter'}              = 0;
 list{'mouse'}{'trial'}                = {};
 list{'stimulus'}{'changepoint'}       = {};
+
 %% *************************
 %
 % GRAPHICS
@@ -86,6 +94,20 @@ list{'stimulus'}{'changepoint'}       = {};
 drawables = dotsEnsembleUtilities.makeEnsemble(...
     'drawables', list{'graphics'}{'isClient'});
 
+
+% texture -- due to Kamesh
+% isoColor1 = [0 0 0];
+% isoColor2 = [150 150 150];
+% checkerH = 500;
+% checkerW = 30;
+% boardheight = floor((dotsTheScreen.theObject.displayPixels(4))/3.6);
+% boardwidth = floor((dotsTheScreen.theObject.displayPixels(3))/1.94);
+% 
+% checkTexture1 = dotsDrawableTextures();
+% checkTexture1.textureMakerFevalable = {@kameshTextureMaker,...
+% checkerH,checkerW,boardheight,boardwidth,isoColor1,isoColor2};
+% drawables.addObject(checkTexture1);
+
 % +++ dotsDrawableLines objects: the ceiling and ground
 % +++
 ceiling = dotsDrawableLines();
@@ -94,7 +116,7 @@ ceiling.xTo       = 10;
 ceiling.yFrom     = [list{'graphics'}{'top'}];
 ceiling.yTo       = [list{'graphics'}{'top'}];
 ceiling.pixelSize = list{'graphics'}{'ceiling width'};
-ceiling.colors    = [list{'graphics'}{'white'}];
+ceiling.colors    = [list{'graphics'}{'gray'}];
 ceiling_index     = drawables.addObject(ceiling);
 
 ground = dotsDrawableLines();
@@ -109,33 +131,10 @@ ground_index     = drawables.addObject(ground);
 
 % +++ dotsDrawableTargets object: target for sample on the ground (_g)
 % +++
-target_g         = dotsDrawableTargets();
-target_g.colors  = list{'graphics'}{'gray'};
-target_g.width   = list{'graphics'}{'target diameter'};
-target_g.height  = list{'graphics'}{'target diameter'};
-target_g.xCenter = -3; 
-target_g.yCenter = list{'graphics'}{'bottom'};
-target_g_index   = drawables.addObject(target_g);
+
 
 % +++ dotsDrawableTargets object: mask on the ceiling 
 % +++
-mask = dotsDrawableLines();
-mask.xFrom     = -10;
-mask.xTo       = 10;
-mask.yFrom     = list{'graphics'}{'top'}-0.1;
-mask.yTo       = list{'graphics'}{'top'}-0.1;
-mask.pixelSize = 50;
-mask.colors    = list{'graphics'}{'brown'};
-mask_index     = drawables.addObject(mask);
-
-mask2 = dotsDrawableLines();
-mask2.xFrom     = -10;
-mask2.xTo       = 10;
-mask2.yFrom     = list{'graphics'}{'top'}-0.2;
-mask2.yTo       = list{'graphics'}{'top'}-0.2;
-mask2.pixelSize = 50;
-mask2.colors    = list{'graphics'}{'brown'};
-mask2_index     = drawables.addObject(mask2);
 
 % +++ dotsDrawableText object: Question prompt above the ceiling
 % +++
@@ -143,16 +142,33 @@ question = dotsDrawableText();
 question.string = 'Where will the Green Ball fall next?';
 question.color  = [1 1 1];
 question.fontSize = 32;
-question.y      = list{'graphics'}{'top'} + 0.5;
+question.y      = list{'graphics'}{'top'} + 7;
 question_index  = drawables.addObject(question);
 
-set_cueT = dotsDrawableText();
-set_cueT.string = 'Balls are on the ceiling';
-set_cueT.color  = [1 1 1];
-set_cueT.fontSize = 17;
-set_cueT.y      = list{'graphics'}{'top'} -0.5;
-set_cueT.x      = -10;
-setT_index  = drawables.addObject(set_cueT);
+blackout         = dotsDrawableTargets();
+blackout.colors  = [0 0 0];
+blackout.width   = 30;
+blackout.height  = 30;
+blackout.xCenter = 0; 
+blackout.yCenter = 0;
+blackout_index   = drawables.addObject(blackout);
+
+mask = dotsDrawableImages();
+mask.fileNames = {'cloud.png'};
+mask.x         = 0;
+mask.y         = list{'graphics'}{'top'} + 2;
+mask.width     = 20;
+mask.height    = 4;
+mask_index     = drawables.addObject(mask);
+
+target_g         = dotsDrawableImages();
+target_g.fileNames = {'super_tube.png'};
+target_g.width   = 1;
+target_g.height  = 1;
+target_g.x = 0; 
+target_g.y = list{'graphics'}{'bottom'} + .3;
+target_g_index   = drawables.addObject(target_g);
+
 
 
 % +++ Automate the task of drawing all these objects
@@ -165,14 +181,15 @@ drawables.automateObjectMethod( ...
 
 % +++ Save the drawables and useful groups of indices in the list
 % +++
+
 list{'graphics'}{'drawables'}          = drawables;
 list{'graphics'}{'ceiling index'}      = ceiling_index;
 list{'graphics'}{'ground index'}       = ground_index;
 list{'graphics'}{'mask index'}         = mask_index;
-list{'graphics'}{'mask2 index'}        = mask2_index;
 list{'graphics'}{'target index'}       = target_g_index;
 list{'graphics'}{'question'}           = question_index;
-list{'graphics'}{'setT index'}         = setT_index;
+list{'graphics'}{'blackout'}          = blackout_index;
+
 
 % +++ Configure the screen
 % +++
@@ -217,6 +234,9 @@ if gp.isAvailable
     isButtonOne = [gp.components.ID] == gp.buttonIDs(1);
     buttonOne = gp.components(isButtonOne);
     gp.defineEvent(buttonOne.ID, 'commit', buttonOne.CalibrationMax);
+    isButtonThree = [gp.components.ID] == gp.buttonIDs(3);
+    buttonThree = gp.components(isButtonThree);
+    gp.defineEvent(buttonThree.ID, 'break', buttonThree.CalibrationMax);
     
     
 else
@@ -263,9 +283,7 @@ list{'input'}{'target'} = [];
 list{'input'}{'sample'} = [];
 list{'input'}{'mean'} = []; 
 
-%This is the mean of the RedBall used for the normal distribution
-list{'Stimulus'}{'RedMean'} = normrnd(0,logic.Sigma0);
-list{'Stimulus'}{'RedBallpass'} = 0;
+
 
 
 list{'Stimulus'}{'GreenBallpass'} = 0;
@@ -309,29 +327,25 @@ on      = @(index)drawables.setObjectProperty('isVisible', true,  index);
 off     = @(index)drawables.setObjectProperty('isVisible', false, index);
 Fpos    = {@positionBall, list};
 quest   = list{'graphics'}{'question'};
-setT    = list{'graphics'}{'setT index'};
-questsetT = [list{'graphics'}{'question'} list{'graphics'}{'setT index'}];
 tSet    = list{'timing'}{'set time'};
 tAni    = list{'graphics'}{'animation time'};
-tRest   = list{'timing'}{'rest time'};
 tIT     = list{'timing'}{'intertrial'};
 tChoice = list{'timing'}{'choice'};
+blackbox = list{'graphics'}{'blackout'};
 
 %Pposition is called when Probe Trials start. It's purpose is to just make the
 %question appear above. Pset is there just so the balls don't hang in the
 %air after user input like they would on an observation trial.
 fixedStates = { ...
     'name'      'entry'    'input' 'timeout' 'exit'  'next'; ...
-    'Begin'     {}           {}          0       {}      'prepare'; ...
+    'Being'     {} {}      0        {off blackbox}  'prepare';...
     'prepare'   {}   {@test, list}       0       {}      'position'; ...
-    'Pposition' {on questsetT}    {}     0       {}     'position';...
+    'Pposition' {}    {}     0       {}     'position';...
     'position'  {}           Fpos    tChoice       {}              'set'; ...
-    'Pset'      {@Set_cue, list} {}      tSet-tSet    {off setT}   'animate';...
-    'set'       {@Set_cue, list} {}       tSet        {off setT}   'animate';...   
-    'animate'   {@startAnimation, list}      {}       tAni      {}      'rest'; ...
-    'rest'      {@rest, list} {}         tRest       {}    'feedback';...
-    'feedback'  {@feedback, list} {}    0        {}        'finish';...
-    'finish'    {@finishTrial, list}           {}         tIT      {off quest}       ''; ...
+    'Pset'      {@Set_cue, list} {}      tSet-tSet    {}   'animate';...
+    'set'       {@Set_cue, list} {}       tSet-tSet        {}   'animate';...   
+    'animate'   {@startAnimation, list}      {}       tAni      {}      'finish'; ...
+    'finish'    {@finishTrial, list}           {}         tIT      {}       ''; ...
     
     };
 fixedMachine.addMultipleStates(fixedStates);
@@ -375,18 +389,14 @@ if true
     theScreen = list{'graphics'}{'screen'};
     theScreen.callObjectMethod(@open);
 
-    
-%     Always show the ceiling during observation trials
     drawables = list{'graphics'}{'drawables'};
-    borderI   = [list{'graphics'}{'ground index'} list{'graphics'}{'ceiling index'}];
-    drawables.setObjectProperty('isVisible', true, borderI);
 
 
     mask_index = list{'graphics'}{'mask index'};
-    mask2_index = list{'graphics'}{'mask2 index'};
-    setT_index  = list{'graphics'}{'setT index'};
-    question = list{'graphics'}{'question'};
-    drawables.setObjectProperty('isVisible',false,[mask_index mask2_index  setT_index question]);
+    question_index = list{'graphics'}{'question'};
+    drawables.setObjectProperty('isVisible',false,mask_index);
+    drawables.setObjectProperty('isVisible',false,question_index);
+
     
 end
 
@@ -400,7 +410,7 @@ function next_state_ = test(list)
 logic = list{'object'}{'logic'};
 drawables = list{'graphics'}{'drawables'};
 mask_index = list{'graphics'}{'mask index'};
-mask2_index = list{'graphics'}{'mask2 index'};
+question_index = list{'graphics'}{'question'};
 %Import counter container
 list{'timing'}{'counter'} = list{'timing'}{'counter'} + 1;
 stim_counter = list{'timing'}{'counter'};
@@ -410,7 +420,8 @@ if stim_counter <= logic.observation;
     list{'input'}{'target'} = [list{'input'}{'target'}, 99];
     next_state_ = 'set';
 else    
-    drawables.setObjectProperty('isVisible',true, [mask_index mask2_index]);
+    drawables.setObjectProperty('isVisible',true, mask_index);
+    drawables.setObjectProperty('isVisible', true, question_index);
     next_state_ = 'Pposition';
 end
 
@@ -424,18 +435,20 @@ function startTrial(list)
     list{'control'}{'current choice'} = 'none';
     drawables = list{'graphics'}{'drawables'};
     
-    % prepare to draw -- show static balls, hide falling balls    
+    % prepare to draw -- show static balls, hide falling balls
     gTI = list{'graphics'}{'target index'};  
     drawables.setObjectProperty('isVisible', true, gTI);
-    drawables.setObjectProperty('colors', ...
-        list{'graphics'}{'gray'}, gTI);
-    drawables.setObjectProperty('x',0,gTI);
     
-    borderI   = [list{'graphics'}{'ground index'} list{'graphics'}{'ceiling index'}];
-    drawables.setObjectProperty('isVisible', true, borderI);
+    
+    ground   = list{'graphics'}{'ground index'}; 
+    ceiling  = list{'graphics'}{'ceiling index'};
+    drawables.setObjectProperty('isVisible', true, [ground ceiling]);
+
     
 list{'mouse'}{'counter'} = list{'mouse'}{'counter'} + 1;
 list{'mouse'}{'trial'} = {};
+
+
 
 %Import logic for hazard rate
 logic = list{'object'}{'logic'};
@@ -449,20 +462,50 @@ RedBall_position = list{'Stimulus'}{'RedMean'};
 if  B <= Hazard;
     RedBall_position = normrnd(0,logic.Sigma0);
     list{'stimulus'}{'changepoint'} = [list{'stimulus'}{'changepoint'}, 1];
+
 else
     list{'stimulus'}{'changepoint'} = [list{'stimulus'}{'changepoint'}, 0];
+
 end
 %Indicates start of trial for mouse movement
 list{'Stimulus'}{'RedMean'} = RedBall_position;
-       
+
+stim_counter = list{'timing'}{'counter'};
+
+% flyingSlideShow = dotsDrawableAnimator();
+% % flyingSlideShow.isAggregateDraw = false;
+% flyingSlideShow.addDrawable(arrow);
+% xTimes = [0 RedBall_position];
+% xPoints = [0 RedBall_position];
+% xInterpolated = true;
+% flyingSlideShow.addMember('x', xTimes, xPoints, xInterpolated);
+% flyingSlideShow.setMemberCompletionStyle('x', 'stop');
+% 
+% drawables.addObject(flyingSlideShow);
+% drawables.callObjectMethod(@prepareToDrawInWindow);
+if stim_counter <= (logic.observation - 1);
+gTI       = list{'graphics'}{'target index'};
+drawables.setObjectProperty('isVisible', false, gTI);
+
+arrow = dotsDrawableImages();
+arrow.fileNames = {'Lakitu.png'};
+arrow.x = list{'Stimulus'}{'RedMean'};
+arrow.y = 4.1;
+arrow.height = 2;
+arrow.width  = 2;
+arrow_cue = drawables.addObject(arrow);
+list{'stimulus'}{'down arrow'} = arrow_cue;
+end
+ 
+
 % ++++++++
 % FUNCTION: Set_cue
 %    
 function Set_cue(list)
-if true
+
 drawables = list{'graphics'}{'drawables'};
 logic = list{'object'}{'logic'};
-
+stim_counter = list{'timing'}{'counter'};
 %Pulls a random number from a distribution and is used for the Red Balls X
 %location
 rng('shuffle')
@@ -476,85 +519,65 @@ distribS = normrnd(distribM,sample_sigma);
     while distribS > 6 || distribS < -6
         distribS = normrnd(distribM,sample_sigma);
     end
+    
+%This creates the gauss curve based off the RedBall mean
+if stim_counter <= logic.observation;
+v = dotsDrawableVertices();
+v.colors = [1 .5 .25];
+v.indices = [];
+v.x = [-10:.1:10];
+%The scaling of the gauss curve in relation to Sigma0 is in "units" of 15. Anything else and the
+%curve will exceed or fall below the ceiling.
+v.y = normpdf(v.x,distribM,sample_sigma);
+v.z = 0;
+v.isSmooth = true;
+v.pixelSize = 5;
+v.translation = [0 -3 0];
+v.scaling = [1 15*sample_sigma 0];
+v.rotation = [0 0 0];
+v.primitive = 1;
+v_cue = drawables.addObject(v);
+list{'Stimulus'}{'Curve'} = v_cue;
+end
 
-% Creates a Red Ball/mean ball
-fall_ball_mean = dotsDrawableTargets();
-fall_ball_mean.width   = list{'graphics'}{'ball diameter'};
-fall_ball_mean.height  = list{'graphics'}{'ball diameter'};
-fall_ball_mean.xCenter = distribM;
-fall_ball_mean.yCenter = list{'graphics'}{'almost top'};
-fall_ball_mean.colors  = list{'graphics'}{'red'};
-drawables.addObject(fall_ball_mean);
 list{'Stimulus'}{'RedBallpass'} = distribM;
 
-
-%Create Green Ball/sample ball
+% 
+% %Create Green Ball/sample ball
 fall_ball_samp = dotsDrawableTargets();
 fall_ball_samp.width   = list{'graphics'}{'ball diameter'};
 fall_ball_samp.height  = list{'graphics'}{'ball diameter'};
 fall_ball_samp.xCenter = distribS;
 fall_ball_samp.yCenter = list{'graphics'}{'almost top'};
 fall_ball_samp.colors  = list{'graphics'}{'green'};
-drawables.addObject(fall_ball_samp);
+fall_ball_samp_cue = drawables.addObject(fall_ball_samp);
 list{'Stimulus'}{'GreenBallpass'} = distribS;
 list{'Stimulus'}{'GreenBall'} = distribS;
+list{'Stimulus'}{'fall ball samp cue'} = fall_ball_samp_cue;
 
-
-set_cue = dotsDrawableText();
-set_cue.string = 'Balls are on the ceiling';
-set_cue.color  = [1 1 1];
-set_cue.fontSize = 17;
-set_cue.y      = list{'graphics'}{'top'} -0.5;
-set_cue.x      = -10;
-set_index  = drawables.addObject(set_cue);
-dotsDrawables.hide(set_cue)
-list{'Stimulus'}{'set cue'} = set_index;
-
-%%% This determines if the mean ball
-%%% will fall along with the sample ball%%%%
-
-
-drawables.callObjectMethod(@prepareToDrawInWindow);
-
-%Add the fallings balls X positions to a list for saving
+% %Add the fallings balls X positions to a list for saving
 list{'input'}{'sample'} = [list{'input'}{'sample'}, distribS];
 list{'input'}{'mean'}   = [list{'input'}{'mean'}, distribM];
-end
+
 % ++++++++
 % FUNCTION: startAnimation
 %
 function startAnimation(list)
 if true
+    
+logic     = list{'object'}{'logic'};    
 drawables = list{'graphics'}{'drawables'};
-
-set_index          = list{'Stimulus'}{'set cue'};
-drawables.setObjectProperty('isVisible', false, set_index);
-
+fall_ball_samp_cue = list{'Stimulus'}{'fall ball samp cue'};
+drawables.setObjectProperty('isVisible', false, [fall_ball_samp_cue]);
 
 
-logic     = list{'object'}{'logic'};
-% Creates a Red Ball/mean ball
-fall_ball_mean_ani = dotsDrawableTargets();
-fall_ball_mean_ani.width   = list{'graphics'}{'ball diameter'};
-fall_ball_mean_ani.height  = list{'graphics'}{'ball diameter'};
-fall_ball_mean_ani.xCenter = list{'Stimulus'}{'RedBallpass'};
-fall_ball_mean_ani.yCenter = list{'graphics'}{'top'};
-fall_ball_mean_ani.colors  = list{'graphics'}{'red'};
-%Create Green Ball/sample ball
+
 fall_ball_samp_ani = dotsDrawableTargets();
 fall_ball_samp_ani.width   = list{'graphics'}{'ball diameter'};
 fall_ball_samp_ani.height  = list{'graphics'}{'ball diameter'};
 fall_ball_samp_ani.xCenter = list{'Stimulus'}{'GreenBallpass'};
 fall_ball_samp_ani.yCenter = list{'graphics'}{'top'};
 fall_ball_samp_ani.colors  = list{'graphics'}{'green'};
-
-%Creates the falling animation for the Red Ball
-ballAnimator_mean = dotsDrawableAnimator();
-ballAnimator_mean.addDrawable(fall_ball_mean_ani);
-ballAnimator_mean.addMember('yCenter', [0 list{'graphics'}{'animation time'}], ...
-    [list{'graphics'}{'almost top'} list{'graphics'}{'almost bottom'}], true);
-ballAnimator_mean.setMemberCompletionStyle('yCenter', 'stop');
-mean_fall = drawables.addObject(ballAnimator_mean);
 
 % Creates the falling ball animation for the Red Ball
 ballAnimator_samp = dotsDrawableAnimator();
@@ -564,95 +587,21 @@ ballAnimator_samp.addMember('yCenter', [0 list{'graphics'}{'animation time'}], .
 ballAnimator_samp.setMemberCompletionStyle('yCenter', 'stop');
 samp_fall= drawables.addObject(ballAnimator_samp);
 
-% Create string that shows when the Balls are falling
-falling = dotsDrawableText();
-falling.string = 'Balls are falling';
-falling.color  = [1 1 1];
-falling.fontSize = 17;
-falling.x  = 0;
-falling.y  = 0;
 
-% Add falling string as a drawable animation named falling_cue
-falling_cue = dotsDrawableAnimator();
-falling_cue.addDrawable(falling);
-falling_cue.addMember('y', [0 list{'graphics'}{'animation time'}], ...
-    [list{'graphics'}{'almost top'}-1 list{'graphics'}{'almost bottom'}], true);
-falling_cue.setMemberCompletionStyle('y','stop');
-
-% Way of clearing the text off screen at the end of the
-% run without turning it off yet. It makes the text jump to an off screen
-% position after it falls to the bottom. Done by having interpolation set
-% to false
-% falling_cue.addMember('x', list{'graphics'}{'animation time'} - .10, ...
-%     [-10 100],false);
-falling_fall=drawables.addObject(falling_cue); 
-drawables.setObjectProperty('isVisible',true,falling_fall);
-list{'graphics'}{'falling fall'} = falling_fall;
-
-stim_counter = list{'timing'}{'counter'};
-if stim_counter <= logic.observation
-    drawables.setObjectProperty('isVisible', true, samp_fall);
-    drawables.setObjectProperty('isVisible', true, mean_fall);
-else
-    drawables.setObjectProperty('isVisible', true, samp_fall);
-    drawables.setObjectProperty('isVisible', false, mean_fall);
-end
-drawables.callObjectMethod(@prepareToDrawInWindow);
 %Put the falling balls in a list so that it can be used to turn them off at
 %the end of each trial.
 list{'graphics'}{'sample index'} = samp_fall;           
-list{'graphics'}{'mean index'}   = mean_fall;
 
+
+drawables.callObjectMethod(@prepareToDrawInWindow);
+
+%let the balls fall. It takes just a tad bit longer than 1 second for the balls
+%to completely fall. This is better to be set longer than 1 second
+%otherwise the balls will almost reach the bottom, the tone will play and
+%they will slightly jerk down to their final position afterwards.
+drawables.run(list{'graphics'}{'animation time'} + .1);
 
 end
-
-% ++++++++
-% FUNCTION: Rest
-% 
-function rest(list)
-if true
-drawables = list{'graphics'}{'drawables'};
-logic = list{'object'}{'logic'};
-% Creates a Red Ball/mean ball
-fall_ball_mean_rest = dotsDrawableTargets();
-fall_ball_mean_rest.width   = list{'graphics'}{'ball diameter'};
-fall_ball_mean_rest.height  = list{'graphics'}{'ball diameter'};
-fall_ball_mean_rest.xCenter = list{'Stimulus'}{'RedBallpass'};
-fall_ball_mean_rest.yCenter = list{'graphics'}{'almost bottom'};
-fall_ball_mean_rest.colors  = list{'graphics'}{'red'};
-fall_ball_mean_rest_index   = drawables.addObject(fall_ball_mean_rest);
-list{'graphics'}{'mean rest'} = fall_ball_mean_rest_index;
-
-%Create Green Ball/sample ball
-fall_ball_samp_rest = dotsDrawableTargets();
-fall_ball_samp_rest.width   = list{'graphics'}{'ball diameter'};
-fall_ball_samp_rest.height  = list{'graphics'}{'ball diameter'};
-fall_ball_samp_rest.xCenter = list{'Stimulus'}{'GreenBallpass'};
-fall_ball_samp_rest.yCenter = list{'graphics'}{'almost bottom'};
-fall_ball_samp_rest.colors  = list{'graphics'}{'green'};
-fall_ball_samp_rest_index   = drawables.addObject(fall_ball_samp_rest);
-list{'graphics'}{'samp rest'} = fall_ball_samp_rest_index;
-
-resttext = dotsDrawableText();
-resttext.string  = 'Balls are on the ground';
-resttext.color    = [1 1 1];
-resttext.fontSize = 17;
-resttext.y       = list{'graphics'}{'bottom'} + 0.5;
-resttext.x       = -10;
-rest_index    = drawables.addObject(resttext);
-list{'graphics'}{'rest index'} = rest_index;
-
-%%% This determines if the mean ball
-%%% will fall along with the sample ball%%%%
-stim_counter = list{'timing'}{'counter'};
-if stim_counter <= logic.observation
-    drawables.setObjectProperty('isVisible', true, [fall_ball_samp_rest_index fall_ball_mean_rest_index rest_index]);
-else
-    drawables.setObjectProperty('isVisible', true, [fall_ball_samp_rest_index rest_index]);
-    drawables.setObjectProperty('isVisible', false, fall_ball_mean_rest_index);
-end
-
-end   
 
 % ++++++++
 % FUNCTION: PositionBall
@@ -663,7 +612,6 @@ function next_state_ = positionBall(list)
 
 if true
 
-    
     % Get ui object
     ui = list{'input'}{'controller'};
 
@@ -686,11 +634,15 @@ if true
         if any(strcmp(names, 'move'))       
                 name = 'move';
                 data = ui.state(IDs(find(strcmp(names, 'move'),1,'last')),:);                
-            end
+        end
             
         if any(strcmp(names, 'commit'))
             name = 'commit';
             data = ui.state(IDs(find(strcmp(names, 'commit'),1,'last')),:);
+        end
+        if any(strcmp(names, 'break'))
+            name = 'break';
+            data = ui.state(IDs(find(strcmp(names,'break'),1,'last')),:);
         end
     end
     
@@ -709,7 +661,7 @@ if true
             right_side = list{'graphics'}{'right side'};
             
             %Gets the current position of the target index
-            current_position = drawables.getObjectProperty('xCenter', gTI);          
+            current_position = drawables.getObjectProperty('x', gTI);          
             
                     
             %Adds the current trials mouse movement to be added to a
@@ -726,24 +678,25 @@ if true
                 new_position = right_side;
             end
             if new_position ~= current_position
-                drawables.setObjectProperty('xCenter', new_position, gTI);
+                drawables.setObjectProperty('x', new_position, gTI);
             end
         
         % commit!
+        elseif strcmp(name,'break')
+            error('oh boy')
+           
         elseif strcmp(name, 'commit')
             
                 logic = list{'object'}{'logic'};
                 stim_counter = list{'timing'}{'counter'};
             % gets x-value of the target ball when they commit            
-            commit_position = drawables.getObjectProperty('xCenter', gTI);
+            commit_position = drawables.getObjectProperty('x', gTI);
             
-            % adds commit position to growing list
+            % adds commit position to growing list            
             list{'input'}{'target'} = [list{'input'}{'target'}, commit_position];
-            
             list{'target'}{'commit'} = commit_position;
-     
-            drawables.setObjectProperty('colors', ...
-                list{'graphics'}{'blue'}, gTI);
+
+
             if stim_counter <= logic.observation
                 next_state_ = 'set';
             else
@@ -755,48 +708,22 @@ if true
         
 end
 
-function feedback(list)
-
-commit_position = list{'target'}{'commit'};
-distribS = list{'Stimulus'}{'GreenBall'};
-feedback_number = distribS-commit_position;
-
-%Store the feedback number into a growing list
-list{'target'}{'feedback number'} = [list{'target'}{'feedback number'}, feedback_number];    
-
 % ++++++++
 % FUNCTION: finishTrial
 %
 function finishTrial(list)
-if true
-   
 
+  
 % hide the balls
     drawables = list{'graphics'}{'drawables'};
-   
+    logic = list{'object'}{'logic'};
     
-    fall_ball_mean_rest_index = list{'graphics'}{'mean rest'};
-    fall_ball_samp_rest_index = list{'graphics'}{'samp rest'};
-    rest_index                = list{'graphics'}{'rest index'};
+    arrow_cue = list{'stimulus'}{'down arrow'};
+    samp_fall = list{'graphics'}{'sample index'};    
+    fall_ball_samp_cue= list{'Stimulus'}{'fall ball samp cue'};
+    v_cue = list{'Stimulus'}{'Curve'};
+    drawables.removeObject([samp_fall fall_ball_samp_cue arrow_cue v_cue]);
     
-    mask_index = list{'graphics'}{'mask index'};
-    mask2_index = list{'graphics'}{'mask2 index'};
-    
-    
-    samp_fall = list{'graphics'}{'sample index'};
-    mean_fall = list{'graphics'}{'mean index'};    
-    falling_fall = list{'graphics'}{'falling fall'};
-    
-    borderI   = [list{'graphics'}{'ground index'} list{'graphics'}{'ceiling index'}];
-    
-    gTI = list{'graphics'}{'target index'}; 
-    
-    %If this isn't set to false, the balls and text will build up on screen
-    %after each trial
-    drawables.setObjectProperty('isVisible', false, [samp_fall mean_fall falling_fall fall_ball_mean_rest_index fall_ball_samp_rest_index rest_index]);
-    drawables.setObjectProperty('isVisible', false, [mask_index mask2_index]);   
-    drawables.setObjectProperty('isVisible', false, borderI);
-    drawables.setObjectProperty('isVisible', false, gTI);
      
     %creates the growing cell array with col 1 being trial number and col 2
     %being mouse position for that individual trial.
@@ -808,10 +735,19 @@ if true
     order{stim_counter, 2} = mouse_trial;
     list{'trial'}{'mouse position'} = order;
     
+%stim_counter starts at 0 and observation starts at 1. Add 1 to observation so it lines up.    
+if stim_counter >= logic.observation + 1    
+    commit_position = list{'target'}{'commit'};
+    distribS = list{'Stimulus'}{'GreenBall'};
+    feedback_number = distribS + commit_position;
 
-    % Wait out the intertrial interval
-%     pause(list{'timing'}{'intertrial'});
+%Store the feedback number into a growing list
+list{'target'}{'feedback number'} = [list{'target'}{'feedback number'}, feedback_number];
 end
+
+% Wait out the intertrial interval
+%     pause(list{'timing'}{'intertrial'});
+
 
 % ++++++++
 % FUNCTION: finishTree

@@ -24,8 +24,8 @@ nColors = numel(color1);
 colors = zeros(totalH, totalW, nColors);
 plane = zeros(totalH, totalW);
 for ii = 1:nColors
-    plane(grid(1:totalH, 1:totalW)) = color1(ii);
-    plane(~grid(1:totalH, 1:totalW)) = color2(ii);
+    plane(grid(1:totalH, 1:totalW)) = 255*color1(ii);
+    plane(~grid(1:totalH, 1:totalW)) = 255*color2(ii);
     colors(:,:,ii) = plane;
 end
 
