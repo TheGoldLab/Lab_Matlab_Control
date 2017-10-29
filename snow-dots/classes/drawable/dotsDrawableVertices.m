@@ -102,6 +102,10 @@ classdef dotsDrawableVertices < dotsDrawable
     
     
     properties (SetAccess = protected)
+        
+        % helper framework object
+        screenFramework;        
+
         % identifier and other info for the OpenGL vertex attribute buffer
         attribBufferInfo = [];
         
@@ -129,12 +133,18 @@ classdef dotsDrawableVertices < dotsDrawable
         function self = dotsDrawableVertices
             self = self@dotsDrawable;
             
+            % set some properties
             keys = 0:9;
             values = cell(size(keys));
             [values{1}] = deal('points');
             [values{2:4}] = deal('lines');
             [values{5:end}] = deal('polygons');
             self.smoothMap = containers.Map(num2cell(keys), values);
+            
+            % set the appropriate screen framework helper
+            self.screenFramework = ...
+                dotsTheScreen.getObjectByScreenType('dotsDrawableVertices');
+            self.screenFramework.parent = self;
         end
         
         % Release OpenGL resources.
@@ -206,6 +216,9 @@ classdef dotsDrawableVertices < dotsDrawable
         
         % Draw vertices from OpenGL buffer objects.
         function draw(self)
+            
+            self.screenFramework.draw(self);
+            
             % toggle antialiasing
             dotsMglSmoothness( ...
                 self.smoothMap(self.primitive), double(self.isSmooth));
@@ -255,6 +268,7 @@ classdef dotsDrawableVertices < dotsDrawable
     end
     
     methods (Access = protected)
+        
         % Release OpenGL buffer handles and memory.
         function deleteBuffers(self)
             self.deleteAttribBuffer();
@@ -280,7 +294,8 @@ classdef dotsDrawableVertices < dotsDrawable
         % Release OpenGL vertex attribute resources.
         function deleteAttribBuffer(self)
             if ~isempty(self.attribBufferInfo)
-                dotsMglDeleteVertexBufferObject(self.attribBufferInfo);
+                self.screenFramework.deleteAttribBuffer(self.attribBufferInfo);
+%                dotsMglDeleteVertexBufferObject(self.attribBufferInfo);
             end
             self.attribBufferInfo = [];
             self.isAttribBufferStale = true;
@@ -306,7 +321,8 @@ classdef dotsDrawableVertices < dotsDrawable
         % Release OpenGL vertex index resources.
         function deleteIndexBuffer(self)
             if ~isempty(self.indexBufferInfo)
-                dotsMglDeleteVertexBufferObject(self.indexBufferInfo);
+                self.screenFramework.deleteAttribBuffer(self.indexBufferInfo);
+%                dotsMglDeleteVertexBufferObject(self.indexBufferInfo);
             end
             self.indexBufferInfo = [];
             self.isIndexBufferStale = true;
@@ -340,7 +356,8 @@ classdef dotsDrawableVertices < dotsDrawable
         % Release OpenGL vertex color resources.
         function deleteColorBuffer(self)
             if ~isempty(self.colorBufferInfo)
-                dotsMglDeleteVertexBufferObject(self.colorBufferInfo);
+                self.screenFramework.deleteAttribBuffer(self.colorBufferInfo);
+%               dotsMglDeleteVertexBufferObject(self.colorBufferInfo);
             end
             self.colorBufferInfo = [];
             self.isColorBufferStale = true;
@@ -381,16 +398,16 @@ classdef dotsDrawableVertices < dotsDrawable
             if isempty(oldBuffer) || numel(data) ~= oldBuffer.nElements
                 % need to create a new buffer
                 if isstruct(oldBuffer)
-                    dotsMglDeleteVertexBufferObject(oldBuffer);
+                    self.screenFramework.deleteAttribBuffer(oldBuffer);
                 end
-                buffer = dotsMglCreateVertexBufferObject( ...
+                buffer = self.screenFramework.createAttribBuffer(...
                     data, target, self.usageHint, elementsPerVertex);
                 
             else
                 % only need to replace data in the buffer
                 %   use doReallocate to encourage parallelism
                 doReallocate = true;
-                dotsMglWriteToVertexBufferObject( ...
+                self.screenFramework.writeToAttribBuffer(...
                     oldBuffer, data, [], doReallocate);
                 buffer = oldBuffer;
             end
@@ -398,21 +415,21 @@ classdef dotsDrawableVertices < dotsDrawable
         
         % Bind buffers for drawing.
         function selectBuffers(self)
-            dotsMglSelectVertexData( ...
+            self.screenFramework.selectVertexData( ...
                 [self.attribBufferInfo, self.colorBufferInfo], ...
                 {'vertex', 'color'});
         end
         
         % Unbind buffers for drawing.
         function deselectBuffers(self)
-            dotsMglSelectVertexData();
+            self.screenFramework.selectVertexData();
         end
         
         % Mark all OpenGL buffers as stale.
         function flagAllBuffersAsStale(self)
             self.isAttribBufferStale = true;
-            self.isIndexBufferStale = true;
-            self.isColorBufferStale = true;
+            self.isIndexBufferStale  = true;
+            self.isColorBufferStale  = true;
         end
     end
 end
