@@ -53,12 +53,12 @@ classdef dotsAllSingletonObjects < handle
             end
         end
         
-        % Set multiple properties.
+        % Set multiple properties, when valid.
         function set(self, varargin)
             if nargin > 1
                 classProps = properties(self);
-                setProps = varargin(1:2:end);
-                setVals = varargin(2:2:end);
+                setProps   = varargin(1:2:end);
+                setVals    = varargin(2:2:end);
                 [validProps, validIndexes] = ...
                     intersect(setProps, classProps);
                 for ii = 1:length(validIndexes)
@@ -66,6 +66,11 @@ classdef dotsAllSingletonObjects < handle
                     self.(setProps{index}) = setVals{index};
                 end
             end
+        end
+        
+        % set a single property
+        function value = get(self, property)
+            value = self.(property);
         end
     end
 end
