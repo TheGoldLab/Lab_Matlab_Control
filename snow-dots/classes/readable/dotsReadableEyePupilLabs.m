@@ -52,6 +52,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
         pXID = [3 6];
         pYID = [4 7];
         pDID = [5 8];
+        
+        blankID = 9;
     end
     
     properties (Access = private)
@@ -388,7 +390,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % will allow us to send commands to the software in addition to
             % getting what the SUB port is.
             self.req = zmq.core.socket(self.zmqContext,'ZMQ_REQ');
-            zmq.core.setsockopt(self.req,'ZMQ_CONNECT_TIMEOUT',5000);
+            zmq.core.setsockopt(self.req,'ZMQ_SNDTIMEO',5000);
             isOpen = ~zmq.core.connect(self.req,['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
             
             % Only continue if we have successfully opened a REQ connection
@@ -424,11 +426,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             self.pXID = [3 6];
             self.pYID = [4 7];
             self.pDID = [5 8];
+            self.blankID = 9;
             IDs = {self.gXID, self.gYID, self.pXID(1), self.pYID(1),...
-                self.pDID(1), self.pXID(2), self.pYID(2), self.pDID(2)};
+                self.pDID(1), self.pXID(2), self.pYID(2), self.pDID(2), self.blankID};
             
             names = {'gaze x', 'gaze y', 'pupil0 x', 'pupil0 y', 'pupil0 size',...
-                'pupil1 x', 'pupil1 y', 'pupil1 size'};
+                'pupil1 x', 'pupil1 y', 'pupil1 size', 'blank'};
             components = struct('ID', IDs, 'name', names);
         end
         
@@ -466,6 +469,10 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                 
                 newData(1,:) = [self.gXID gazePos(1) time];
                 newData(2,:) = [self.gYID gazePos(2) time];
+                
+                if self.dataType == 1
+                    newData(3:end,1) = self.blankID;
+                end
             end
             
             % Conveniently, the gaze data struct contains the pupil data
@@ -484,23 +491,27 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                     newData(4 + (ii-1)*3,:) = [self.pYID(id+1) pupilPos(2) time];
                     newData(5 + (ii-1)*3,:) = [self.pDID(id+1) pupilSize time];
                 end
+                
+                if self.dataType == 2
+                    newData(1:2,1) = self.blankID;
+                end
             end
         end
         
         function newData = transformRawData(self, newData)
             % Transform gaze
             gazeData = newData([self.gXID, self.gYID],2);
-            gazeData = self.tranlation + self.rotation * self.scale * gazeData;
+            gazeData = self.translation' + self.rotation * self.scale * gazeData;
             newData([self.gXID, self.gYID],2) = gazeData;
             
             % Transform pupil0
             p0Data = newData([self.pXID(1), self.pYID(1)],2);
-            p0Data = self.tranlation + self.rotation * self.scale * p0Data;
+            p0Data = self.translation' + self.rotation * self.scale * p0Data;
             newData([self.pXID(1), self.pYID(1)],2) = p0Data;
             
             % Transform pupil1
             p1Data = newData([self.pXID(2), self.pYID(2)],2);
-            p1Data = self.tranlation + self.rotation * self.scale * p1Data;
+            p1Data = self.translation' + self.rotation * self.scale * p1Data;
             newData([self.pXID(2), self.pYID(2)],2) = p1Data;
         end
         
