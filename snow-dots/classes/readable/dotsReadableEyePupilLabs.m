@@ -33,10 +33,10 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
         dataType = 1;
         
         % How far on the X axis the calibration markers should be placed
-        calibDeltaX = 15;
+        calibDeltaX = 10;
         
         % How far on the Y axis the calibration markers should be placed
-        calibDeltaY = 8;
+        calibDeltaY = 6;
         
         % Size of calibration marker (arbitrary units)
         calibSize = 1;
@@ -103,7 +103,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % numeric value. If val is not provided or is not numeric, this
             % function defaults to a value of 0.0.
             
-            if nargin < 1
+            if nargin < 2
                 val = 0.0;
             end
             
