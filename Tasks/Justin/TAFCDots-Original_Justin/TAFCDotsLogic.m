@@ -77,6 +77,7 @@ classdef TAFCDotsLogic < handle
         
         stimtime = [];
         stimOnset = nan;
+        coherence = 100;
 
     end
     
@@ -100,7 +101,7 @@ classdef TAFCDotsLogic < handle
         % trial tracker for interleave
         tracker;
         
-        coherence;
+        
         
 
         
@@ -160,14 +161,16 @@ classdef TAFCDotsLogic < handle
             % default to bad trial, unless set to good
             self.isGoodTrial = false;
             
-            if self.blockCompletedTrials <= self.practiceN
-                self.coherence = max(self.coherenceset);
-            else
-                randind = randperm(length(self.coherenceset));
-                self.coherence = self.coherenceset(randind(1));
-            end
+            %Choosing Coherence from a set
+            %practice N influences coherence. Don't need for our trials
+            %if self.blockCompletedTrials <= self.practiceN
+            %    self.coherence = max(self.coherenceset);
+            %else
+            %    randind = randperm(length(self.coherenceset));
+            %    self.coherence = self.coherenceset(randind(1));
+            %end
 
-            self.duration = min(self.minT + exprnd(1),self.maxT);
+            %self.duration = min(self.minT + exprnd(1),self.maxT);
 
             self.setTimeAfter(0);
             

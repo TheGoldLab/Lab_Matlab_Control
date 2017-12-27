@@ -1,7 +1,11 @@
 function [tree, list] = configureTAFCDotsDur(logic, isClient)
 % for the within trial change-point task
+
 sc=dotsTheScreen.theObject;
-sc.reset('displayIndex', 1);
+%Adjust-1
+%0 - for window
+%1 - for full screen
+sc.reset('displayIndex', 0);
 
 if nargin < 1 || isempty(logic)
     logic = TAFCDotsLogic();
@@ -141,49 +145,6 @@ list{'graphics'}{'counter index'} = counterInd;
 list{'graphics'}{'score index'} = scoreInd;
 list{'graphics'}{'screen'} = screen;
 
-
-%% Input:
-% Create an input source.
-% keyboard inputs
-keyOpt.PrimaryUsageName = 'Keyboard';
-kb = dotsReadableHIDKeyboard(keyOpt);
-ui = kb;
-
-% define movements, which must be held down
-%   map f-key -1 to left and j-key +1 to right
-isF = strcmp({kb.components.name}, 'KeyboardF');
-isJ = strcmp({kb.components.name}, 'KeyboardJ');
-
-fKey = kb.components(isF);
-jKey = kb.components(isJ);
-
-uiMap.left.ID = fKey.ID;
-uiMap.right.ID = jKey.ID;
-kb.setComponentCalibration(fKey.ID, [], [], [0 -1]);
-kb.setComponentCalibration(jKey.ID, [], [], [0 +1]);
-
-% undefine any default events
-IDs = kb.getComponentIDs();
-for ii = 1:numel(IDs)
-    kb.undefineEvent(IDs(ii));
-end
-
-% define events, which fire once even if held down
-%   pressing f or j is a 'moved' event
-%   pressing space bar is a 'commit' event
-kb.defineEvent(fKey.ID, 'moved', 0, 0, true);
-kb.defineEvent(jKey.ID, 'moved', 0, 0, true);
-isSpaceBar = strcmp({kb.components.name}, 'KeyboardSpacebar');
-spaceBar = kb.components(isSpaceBar);
-kb.defineEvent(spaceBar.ID, 'commit', spaceBar.CalibrationMax);
-
-isEsc = strcmp({kb.components.name}, 'KeyboardEscape');
-EscKey = kb.components(isEsc);
-kb.defineEvent(EscKey.ID, 'exit', 0, 0, true);
-
-list{'input'}{'controller'} = ui;
-list{'input'}{'mapping'} = uiMap;
-
 %% Outline the structure of the experiment with topsRunnable objects
 %   visualize the structure with tree.gui()
 %   run the experiment with tree.run()
@@ -192,7 +153,7 @@ list{'input'}{'mapping'} = uiMap;
 tree = topsTreeNode('2AFC task');
 tree.iterations = 1;
 tree.startFevalable = {@callObjectMethod, screen, @open};
-tree.finishFevalable = {@wrapUp, list};
+tree.finishFevalable = {};
 
 % "session" is a branch of the tree with the task itself
 session = topsTreeNode('session');
@@ -212,7 +173,7 @@ trialStates = topsStateMachine('trial states');
 trial.addChild(trialStates);
 
 trialCalls = topsCallList('call functions');
-trialCalls.addCall({@read, ui}, 'read input');
+%trialCalls.addCall({@read, ui}, 'read input');
 list{'control'}{'trial calls'} = trialCalls;
 
 % "instructions" is a branch of the tree with an instructional slide show
@@ -221,8 +182,8 @@ instructions.iterations = 1;
 tree.addChild(instructions);
 
 viewSlides = topsConcurrentComposite('slide show');
-viewSlides.startFevalable = {@flushData, ui};
-viewSlides.finishFevalable = {@flushData, ui};
+%viewSlides.startFevalable = {@flushData, ui};
+%viewSlides.finishFevalable = {@flushData, ui};
 instructions.addChild(viewSlides);
 
 instructionStates = topsStateMachine('instruction states');
@@ -245,19 +206,19 @@ list{'outline'}{'tree'} = tree;
 
 %% Organize the presentation of instructions
 % the instructions state machine will respond to user input commands
-states = { ...
-    'name'      'next'      'timeout'	'entry'     'input'; ...
-    'showSlide' ''          logic.decisiontime_max    {}          {@getNextEvent ui}; ...
-     'rightFine' 'showSlide' 0           {}	{}; ...
-     'leftFine'  'showSlide' 0           {} {}; ...
-    'commit'     ''          0           {}          {}; ...
-    };
-instructionStates.addMultipleStates(states);
-instructionStates.startFevalable = {@doMessage, list, ''};
-instructionStates.finishFevalable = {@doMessage, list, ''};
-
-% the instructions call list runs in parallel with the state machine
-instructionCalls.addCall({@read, ui}, 'input');
+% states = { ...
+%     'name'      'next'      'timeout'	'entry'     'input'; ...
+%     'showSlide' ''          logic.decisiontime_max    {}          {@getNextEvent ui}; ...
+%      'rightFine' 'showSlide' 0           {}	{}; ...
+%      'leftFine'  'showSlide' 0           {} {}; ...
+%     'commit'     ''          0           {}          {}; ...
+%     };
+% instructionStates.addMultipleStates(states);
+% instructionStates.startFevalable = {@doMessage, list, ''};
+% instructionStates.finishFevalable = {@doMessage, list, ''};
+% 
+% % the instructions call list runs in parallel with the state machine
+% instructionCalls.addCall({@read, ui}, 'input');
 
 %% Trial
 % Define states for trials with constant timing.
@@ -274,15 +235,16 @@ fixedStates = { ...
     'name'      'entry'         'timeout'	'exit'          'next'      'input'; ...
 %    'inst'      {@doNextInstruction, av} 1        {}              ''; ...
     'prepare1'   {on fpInd}          0       {on, [counterInd, scoreInd]}                  'pause'     {}; ...
-    'pause'     {chf fpInd} 0       {@run instructions}                  'pause2'   {};...
-    'pause2'    {cho fpInd}              2           {@flushui, list}    'prepare2'  {};...
+    %'pause'     {chf fpInd} 0       {@run instructions}                  'pause2'   {};...
+    'pause'     {chf fpInd} 0       {}                  'pause2'   {};...
+    'pause2'    {cho fpInd}              0           {}    'prepare2'  {};...
     'prepare2'   {on qpInd}      0       {}      'change-time' {}; ...
     'change-time'      {@editState, trialStates, list, logic}   0    {}    'stimulus1'     {}; ...
     'stimulus1'  {on stimInd}   0       {} 'stimulus0' {}; ...
 %    'stimulus2'  {@changeDirection, list} 0     {}	'change-time' {}; ...
-    'stimulus0'  {@flushui, list}   0    {@setTimeStamp, logic}             'decision'     {}; ...
+    'stimulus0'  {}   0    {@setTimeStamp, logic}             'decision'     {}; ...
    % 'stimulus0'  {}   0    {@setTimeStamp, logic}             'decision'     {}; ... 
-    'decision'  {off stimInd}   logic.decisiontime_max  {}  'moved'  {@getNextEvent ui}; ...
+    'decision'  {off stimInd}   0  {}  'moved'  {@getNextEvent_Clean logic.decisiontime_max trialStates list}; ...
     'moved'    {}         0     {@showFeedback, list} 'choice' {}; ...
     'choice'    {}	tFeed     {}              'complete' {}; ...
     'complete'  {}  0   {}              'counter'          {}; ... % always a good trial for now
@@ -305,32 +267,49 @@ trial.addChild(screen);
 %% Custom Behaviors:
 % Define functions to handle some of the unique details of this task.
 
-function flushui(list)
-ui = list{'input'}{'controller'};
-ui.flushData;
-list{'control'}{'current choice'} = 'none';
+%Records the choice of the user.
+function [name,data] = getNextEvent_Clean(dt, trialStates, list)
+flag = 1;
+logic = list{'object'}{'logic'};
+logic.choice = NaN;
+
+while flag
+    key_entered = mglGetKeyEvent(dt);
+    %If decision times out this block is executed 
+    if (isempty(key_entered))
+        logic.choice=0;
+        flag=0;
+    elseif (strcmp(key_entered.charCode,'f'))
+        logic.choice = -1; % left
+        flag = 0;
+    elseif (strcmp(key_entered.charCode,'j'))
+        logic.choice = +1; % right
+        flag = 0;
+    end
+end
+
+%TODO: Need to figure out what dependency necessitates these
+%existing
+name = NaN;
+data = NaN;
+list{'object'}{'logic'} = logic;
+
 
 function configStartTrial(list)
 % start Logic trial
 logic = list{'object'}{'logic'};
 logic.startTrial;
-
-% clear data from the last trial
-ui = list{'input'}{'controller'};
-ui.flushData();
 list{'control'}{'current choice'} = 'none';
 
 % reset the appearance of targets and cursor
-%   use the drawables ensemble, to allow remote behavior
+% use the drawables ensemble, to allow remote behavior
 drawables = list{'graphics'}{'drawables'};
 targsInd = list{'graphics'}{'targets index'};
 stimInd = list{'graphics'}{'stimulus index'};
 drawables.setObjectProperty( ...
     'colors', list{'graphics'}{'gray'}, [targsInd]);
 
-% randval = rand;
-% randval = 0;
-
+%initial direction of dots is randomized
 logic.direction0 = round(rand)*180;
 
 % let all the graphics set up to draw in the open window
@@ -388,6 +367,13 @@ save(dataFullFile, 'statusData')
 % only need to wait our the intertrial interval
 pause(list{'timing'}{'intertrial'});
 
+
+%At the end of every decision in the tree, this function records the
+%direction and coherence at every time point (directionvc, coherencevc),
+%records if correct choice was made, and sets color of dot for feedback
+
+%tldr: add or adjust post decision options here
+
 function showFeedback(list)
 logic = list{'object'}{'logic'};
 % hide the fixation point and cursor
@@ -395,102 +381,44 @@ drawables = list{'graphics'}{'drawables'};
 fpInd = list{'graphics'}{'fixation point index'};
 targsInd = list{'graphics'}{'targets index'};
 stimInd = list{'graphics'}{'stimulus index'};
-counterInd = list{'graphics'}{'counter index'};
-scoreInd = list{'graphics'}{'score index'};
 logic.setDetection();
 drawables.setObjectProperty('isVisible', false, [fpInd]);
 drawables.setObjectProperty('isVisible', true, [targsInd]);
 
-ui = list{'input'}{'controller'};
-
-logic.keyhistory = ui.history;
-
-
-uiMap = list{'input'}{'mapping'};isLeft = ui.getValue(uiMap.left.ID) == -1;
-isRight = ui.getValue(uiMap.right.ID) == +1;
-if isLeft
+if logic.choice == -1 %left choice
     list{'control'}{'current choice'} = 'leftward';
-    logic.choice = -1; % left
-elseif isRight
+elseif logic.choice == 1 %right choice
     list{'control'}{'current choice'} = 'rightward';
-    logic.choice = 1; % right
 end
-
+ 
 stim = drawables.getObject(stimInd);
-
 logic.directionvc = stim.directionvc(1:stim.tind);
 logic.coherencevc = stim.coherencevc(1:stim.tind);
-
 stimstrct = obj2struct(stim);
-
 logic.stimstrct = stimstrct;
 
-if logic.choice == -1 && stim.direction == 180
+%Record accuracy of choice and change color of dot accordingly
+if logic.choice == -1 && stim.direction == 180 %correct choice left
     drawables.setObjectProperty( ...
         'colors', list{'graphics'}{'green'}, targsInd);
-    logic.correct = 1;
-elseif logic.choice == 1 && stim.direction == 0
-    drawables.setObjectProperty( ...
-        'colors', list{'graphics'}{'green'}, targsInd);
-    logic.correct = 1;
-elseif logic.choice == 0
-    drawables.setObjectProperty( ...
-        'colors', list{'graphics'}{'yellow'}, targsInd);
-    logic.correct = 0;
-else
-    drawables.setObjectProperty( ...
-        'colors', list{'graphics'}{'red'}, targsInd);
-logic.correct = 0;
+     logic.correct = 1;
+elseif logic.choice == 1 && stim.direction == 0 %correct choice right
+     drawables.setObjectProperty( ...
+         'colors', list{'graphics'}{'green'}, targsInd);
+     logic.correct = 1;
+elseif logic.choice == 0 %timeout
+     drawables.setObjectProperty( ...
+         'colors', list{'graphics'}{'yellow'}, targsInd);
+     logic.correct = 0;
+else %wrong choice
+     drawables.setObjectProperty( ...
+         'colors', list{'graphics'}{'red'}, targsInd);
+     logic.correct = 0;
 end
-% 
-% if logic.choice == 0
-%     drawables.setObjectProperty( ...
-%         'colors', list{'graphics'}{'yellow'}, targsInd);
-% else
-%     drawables.setObjectProperty( ...
-%         'colors', list{'graphics'}{'green'}, targsInd);
-% end
 
-%logic.computeBehaviorParameters();
-if logic.correct == 1
-    logic.score = logic.score + 0.1;
-elseif logic.correct == 0
-    logic.score = logic.score - 0.1;
-    if logic.score < 0
-        logic.score = 0;
-    end
-end
-    
-drawables = list{'graphics'}{'drawables'};
-drawables.setObjectProperty('string', strcat(num2str(logic.blockTotalTrials + 1), '/',...
-    num2str(logic.trialsPerBlock)), counterInd);
-% drawables.setObjectProperty('string', strcat('$', num2str(logic.score)), scoreInd);
-
+%Computes and records logic.ReactionTimeData and logic.PercentCorrData
+logic.computeBehaviorParameters();
 
 function editState(trialStates, list, logic)
 logic = list{'object'}{'logic'};
 trialStates.editStateByName('stimulus1', 'timeout', logic.duration);
-
-
-
-function wrapUp(list)
-uiMap = list{'input'}{'mapping'};
-if strcmp(uiMap, 'mouse')
-    ui = list{'input'}{'controller'};
-    ui.isExclusive = false;
-    ui.initialize;
-end
-
-screen = list{'graphics'}{'screen'};
-screen.callObjectMethod(@close);
-
-function doMessage(list, message)
-messages = list{'graphics'}{'messages'};
-if nargin > 1
-    m = message;
-else
-    m = '';
-end
-messages.setObjectProperty('string', m);
-messages.callByName('drawMessage');
-messages.callObjectMethod(@prepareToDrawInWindow);
