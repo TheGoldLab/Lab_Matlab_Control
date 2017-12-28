@@ -93,13 +93,12 @@ These are tasks exclusively for use with the eyetracker hardware. The code is si
    There are 4 parts of the experiment where the eyetracker is called again to record a message. This is used to record time points during the experiment for post experiment analysis. The eyetracker returns one continuous time series edf file and we use this time point to parse the part of the time series we are interested in. The time point recordings of interest are indicated below:
 
    Eyelink('Message', 'STIMSTART');  
-   This is recorded after the program is prepared to draw and will start drawing the stimulus
+   This is recorded after the program is prepared to draw and will start drawing the stimulus  
    Eyelink('Message', ‘STIMSTOP’);  
-   This is recorded as soon as the program ceases drawing the dots.
-   Eyelink('Message', 'TRIALSTART');
-   
-   This is recorded before the program prepares to draw 
-   Eyelink('Message', 'TRIALEND');
+   This is recorded as soon as the program ceases drawing the dots  
+   Eyelink('Message', 'TRIALSTART');  
+   This is recorded before the program prepares to draw  
+   Eyelink('Message', 'TRIALEND');  
    
    This is recorded after the user has made their choice and the program has recorded the data and is ready to cease
 
@@ -123,3 +122,20 @@ These are tasks exclusively for use with the eyetracker hardware. The code is si
 
 * Be sure to include the MLEyelinkCalibrate.m file to call the functions needed to set up the eyetracker.
 
+# TAFCDots_coh_drop_V3_eyetracker
+
+The experimental paradigm of this is heavily updated from the similarly named non-Eyelink code. 
+
+Experimental paradigm:
+
+![Experimental paradigm](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Experiment")
+
+This is a visualization of the trial paradigm. This is similar to the non-Eyelinker version of this experimental paradigm. Artificial changepoints are still set for low hazard trials. Details for all of these are set in scriptRun.m
+
+A major change is there will be a signal (change of focal point to yellow) that probabilistically indicates the last changepoint has occurred. Probabilistically is set that 50% of the time the yellow signal occurs it accurately denotes a change point and the other 50% the signal is meaningless (random point chosen between the end of the linear drop (1.5 seconds) and the end of the experiment). 
+
+To be clear, there will always be a yellow signal displayed, but 50% of the time they indicate the last change point has occurred, and the other half of the time they are meaningless.
+
+# TAFCDots_QUEST_Eyetracker
+
+This is the same exact QUEST+ paradigm as the previous version except it is ready to run on the Eyetracker computer with gamepad controls. There is no eye tracking information collected as we are just getting the threshold.	
