@@ -72,3 +72,51 @@ Current experimental paradigm is the same as the Glaze 2015 paper (500 milliseco
 Be sure the QUEST+ library is included. Set the add path function to find the QUEST+ library in scriptRun.m. I have already included the QUEST+ library in this repository (Downloaded October 1st, 2017).
 (https://github.com/brainardlab/mQUESTPlus, http://jov.arvojournals.org/article.aspx?articleid=2611972)
 
+# Eyetracker Libraries
+
+These are tasks exclusively for use with the eyetracker hardware. The code is similarly organized as before with a couple modulations:
+
+1. New input device (getNextEvent_clean, pause_trial)
+... The psychophysics computer allows the use of a gamepad to be used for input subject response. I find the gamepad to be more intuitive and ergonomic so I have replaced the mglGetKeyEvent keyboard input with dotsReadableHIDGamepad game controller input. 
+
+... The code to set up the gamepad is in the configure file in the section commented “Set up UI Reader”. The gamepad is used in the following functions:
+
+... pause_trial is executed to pause the experiment before the display of the dots motion. It waits for a response from the gamepad (indicated by the press of button A) to allow the experiment to continue.
+
+... getNextEvent_clean waits for the game controller input of left (indicated by pressing the left bumper) or right (indicated by the right bumper).
+
+2. Eyetracker hardware - Trial Recording
+
+* The eyetracker code is setup in the section commented “Eyelink Initialization”. There you will be able to configure the eyetracker to the participant. Once you are satisfied with the configuration press the output/record button to return the program to the experimental paradigm.
+
+* There are 4 parts of the experiment where the eyetracker is called again to record a message. This is used to record time points during the experiment for post experiment analysis. The eyetracker returns one continuous time series edf file and we use this time point to parse the part of the time series we are interested in. The time point recordings of interest are indicated below:
+
+Eyelink('Message', 'STIMSTART');
+This is recorded after the program is prepared to draw and will start drawing the stimulus
+Eyelink('Message', ‘STIMSTOP’);
+This is recorded as soon as the program ceases drawing the dots.
+Eyelink('Message', 'TRIALSTART');
+This is recorded before the program prepares to draw 
+Eyelink('Message', 'TRIALEND');
+This is recorded after the user has made their choice and the program has recorded the data and is ready to cease
+
+I placed these time point recordings here so that the time between STIMSTART and STIMSTOP will border the time the stimulus (dot motion) is shown. The time between TRIALSTART and TRIALSTOP will border most of the experiment so it should also include information on the user during and right after the decision.
+
+Disclaimer: I have not completing testing on these timepoints. It has not been verified these timepoints will capture the intended information. There are factors to watch out for such as length of machine implementation (e.g. changing isVisible to false will not have an immediate effect of turning off the stimulus as the program has to complete the current draw cycle before implementing changes in the next). There might be other hidden machine level processes that might add a variety of extra time to our time boundaries. Further testing should be done to verify the accuracy of these timepoints.
+
+Disclaimer / Warning: I developed most of the code using only one experimental block. If you were to change nBlocks (located in scriptRun.m) to be more than 1 I can spot one error you will encounter:
+
+configFinishTrial contains code to turn off the Eyetracker and record the current data to an EDF file. The logic of the function is set to execute if the trial count has reached the amount set in logic.trialsPerBlock (this is set by trialsPerBlock in scriptRun.m). This logic is currently agnostic of the amount of blocks you have set, thus it will stop the eyetracker after only one block has finished even if you have more set to run. This can be fixed by adjusting the logic of the if statement. 
+
+Other potential errors and parts of the code I didn’t understand are detailed by comments in the code. Search “TODO” to find them. 
+
+3. Eyetracker Hardware - Focus of pupil on focal point
+
+To verify that the participant is focused on the task, we can detect if their gaze drifts away from the focal point (middle of the screen). 
+
+This code is implemented in record_stim and calls the function checkFixationHold which updates the value of list{'Eyelink'}{'FixVal'} to be 0 if fixation on the focal point is not held. 
+
+The function checkFixation is also added as it is called upon by checkFixationHold. 
+
+Be sure to include the MLEyelinkCalibrate.m file to call the functions needed to set up the eyetracker.
+
