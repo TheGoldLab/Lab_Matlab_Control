@@ -77,6 +77,7 @@ Be sure the QUEST+ library is included. Set the add path function to find the QU
 These are tasks exclusively for use with the eyetracker hardware. The code is similarly organized as before with a couple modulations:
 
 1. New input device (getNextEvent_clean, pause_trial)
+
 ... The psychophysics computer allows the use of a gamepad to be used for input subject response. I find the gamepad to be more intuitive and ergonomic so I have replaced the mglGetKeyEvent keyboard input with dotsReadableHIDGamepad game controller input. 
 
 ... The code to set up the gamepad is in the configure file in the section commented “Set up UI Reader”. The gamepad is used in the following functions:
@@ -112,9 +113,7 @@ Other potential errors and parts of the code I didn’t understand are detailed 
 
 3. Eyetracker Hardware - Focus of pupil on focal point
 
-To verify that the participant is focused on the task, we can detect if their gaze drifts away from the focal point (middle of the screen). 
-
-This code is implemented in record_stim and calls the function checkFixationHold which updates the value of list{'Eyelink'}{'FixVal'} to be 0 if fixation on the focal point is not held. 
+...To verify that the participant is focused on the task, we can detect if their gaze drifts away from the focal point (middle of the screen). ..This code is implemented in record_stim and calls the function checkFixationHold which updates the value of list{'Eyelink'}{'FixVal'} to be 0 if fixation on the focal point is not held. 
 
 The function checkFixation is also added as it is called upon by checkFixationHold. 
 
