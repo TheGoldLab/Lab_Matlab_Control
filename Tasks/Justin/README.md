@@ -90,14 +90,14 @@ These are tasks exclusively for use with the eyetracker hardware. The code is si
 
 * The eyetracker code is setup in the section commented “Eyelink Initialization”. There you will be able to configure the eyetracker to the participant. Once you are satisfied with the configuration press the output/record button to return the program to the experimental paradigm.
 
-... There are 4 parts of the experiment where the eyetracker is called again to record a message. This is used to record time points during the experiment for post experiment analysis. The eyetracker returns one continuous time series edf file and we use this time point to parse the part of the time series we are interested in. The time point recordings of interest are indicated below:
+   There are 4 parts of the experiment where the eyetracker is called again to record a message. This is used to record time points during the experiment for post experiment analysis. The eyetracker returns one continuous time series edf file and we use this time point to parse the part of the time series we are interested in. The time point recordings of interest are indicated below:
 
-  * Eyelink('Message', 'STIMSTART');
-   This is recorded after the program is prepared to draw and will start drawing the stimulus
+   Eyelink('Message', 'STIMSTART');
+       This is recorded after the program is prepared to draw and will start drawing the stimulus
   * Eyelink('Message', ‘STIMSTOP’);
    This is recorded as soon as the program ceases drawing the dots.
   * Eyelink('Message', 'TRIALSTART');
-   This is recorded before the program prepares to draw 
+      This is recorded before the program prepares to draw 
   * Eyelink('Message', 'TRIALEND');
    This is recorded after the user has made their choice and the program has recorded the data and is ready to cease
 
