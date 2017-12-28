@@ -93,12 +93,12 @@ These are tasks exclusively for use with the eyetracker hardware. The code is si
    There are 4 parts of the experiment where the eyetracker is called again to record a message. This is used to record time points during the experiment for post experiment analysis. The eyetracker returns one continuous time series edf file and we use this time point to parse the part of the time series we are interested in. The time point recordings of interest are indicated below:
 
    Eyelink('Message', 'STIMSTART');
-       This is recorded after the program is prepared to draw and will start drawing the stimulus
-  * Eyelink('Message', ‘STIMSTOP’);
+   This is recorded after the program is prepared to draw and will start drawing the stimulus
+   Eyelink('Message', ‘STIMSTOP’);
    This is recorded as soon as the program ceases drawing the dots.
-  * Eyelink('Message', 'TRIALSTART');
-      This is recorded before the program prepares to draw 
-  * Eyelink('Message', 'TRIALEND');
+   Eyelink('Message', 'TRIALSTART');
+   This is recorded before the program prepares to draw 
+   Eyelink('Message', 'TRIALEND');
    This is recorded after the user has made their choice and the program has recorded the data and is ready to cease
 
    I placed these time point recordings here so that the time between STIMSTART and STIMSTOP will border the time the stimulus (dot motion) is shown. The time between TRIALSTART and TRIALSTOP will border most of the experiment so it should also include information on the user during and right after the decision.
