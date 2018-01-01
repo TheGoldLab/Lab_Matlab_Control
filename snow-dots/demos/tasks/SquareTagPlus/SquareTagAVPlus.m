@@ -15,7 +15,7 @@ classdef SquareTagAVPlus < SquareTagAV
         height = 20;
         
         % background color for the task
-        backgroundColor = [0 0 0];
+        backgroundColor = [0 0 0]';
         
         % color for squares yet to be tagged
         squareColor;
@@ -47,9 +47,9 @@ classdef SquareTagAVPlus < SquareTagAV
             nColors = 9;
             colors = puebloColors(nColors);
             shuffle = randperm(nColors);
-            self.squareColor = colors(shuffle(1),:);
-            self.taggedColor = colors(shuffle(2),:);
-            self.cursorColor = colors(shuffle(3),:);
+            self.squareColor = colors(shuffle(1),:)';
+            self.taggedColor = colors(shuffle(2),:)';
+            self.cursorColor = colors(shuffle(3),:)';
         end
         
         % Set up audio-visual resources as needed.
@@ -61,7 +61,6 @@ classdef SquareTagAVPlus < SquareTagAV
             self.squares.xCenter = 0;
             self.squares.yCenter = 0;
             self.squares.colors = self.squareColor;
-            self.squares.nSides = 4;
             self.squares.isVisible = false;
             
             % a targets object to represent the cursor
@@ -69,7 +68,6 @@ classdef SquareTagAVPlus < SquareTagAV
             self.cursor.xCenter = 0;
             self.cursor.yCenter = 0;
             self.cursor.colors = self.cursorColor;
-            self.cursor.nSides = 12;
             self.cursor.width = 0.5;
             self.cursor.height = 0.5;
             self.cursor.isVisible = false;
@@ -106,7 +104,7 @@ classdef SquareTagAVPlus < SquareTagAV
             
             % reset square colors for the start of the trial
             %   repeat the colors to facilitate per-square coloring, below
-            self.squares.colors = repmat(self.squareColor, nSquares, 1);
+            self.squares.colors = repmat(self.squareColor, 1, nSquares);
             
             % show squares and cursor
             self.squares.isVisible = true;
@@ -119,8 +117,8 @@ classdef SquareTagAVPlus < SquareTagAV
         function doNextSquare(self)
             % re-color the tagged squares
             nTagged = self.logic.currentSquare-1;
-            self.squares.colors(1:nTagged,:) = ...
-                repmat(self.taggedColor, nTagged, 1);
+            self.squares.colors(:, 1:nTagged) = ...
+                repmat(self.taggedColor, 1, nTagged);
             self.drawEverything();
         end
         

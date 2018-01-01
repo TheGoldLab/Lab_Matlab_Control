@@ -33,7 +33,7 @@ for ii = 1:11
    
    textList{2}.string = sprintf('%d', 11-ii);   
    dotsDrawable.drawFrame(textList);
-   pause(delay)
+   pause(delay);
 end
 
 % close the OpenGL drawing window

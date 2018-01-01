@@ -42,8 +42,10 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % approximate conversion factor for the current display
       pixelsPerDegree;
       
-      % x,y coordinates (in pixels) of midpoint of drawing rect
+      % x coordinate (in pixels) of midpoint of drawing rect
       xScreenCenter;
+
+      % y coordinate (in pixels) of midpoint of drawing rect
       yScreenCenter;
       
       % a foreground color, [L] [LA] [RGB] [RGBA], 0-255
@@ -219,34 +221,30 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          if lengths(1) < max_length
             x = repmat(x(1)*self.pixelsPerDegree,1,max_length);
          else
-            x = x(:).*self.pixelsPerDegree;
+            x = x(:)'.*self.pixelsPerDegree;
          end
          if lengths(2) < max_length
             y = repmat(y(1)*self.pixelsPerDegree,1,max_length);
          else
-            y = y(:).*self.pixelsPerDegree;
+            y = y(:)'.*self.pixelsPerDegree;
          end
          if lengths(3) < max_length
-            width = repmat(width(1)*self.pixelsPerDegree,1,max_length);
+            half_width = repmat(width(1)*self.pixelsPerDegree/2,1,max_length);
          else
-            width = width(:).*self.pixelsPerDegree;
+            half_width = width(:)'.*self.pixelsPerDegree./2;
          end
          if lengths(4) < max_length
-            height = repmat(height(1)*self.pixelsPerDegree,1,max_length);
+            half_height = repmat(height(1)*self.pixelsPerDegree/2,1,max_length);
          else
-            height = height(:).*self.pixelsPerDegree;
+            half_height = height(:)'.*self.pixelsPerDegree./2;
          end         
          
          % get rect
-         rect = CenterRectOnPoint( ...
-            [zeros(max_length,2) width height], ...
-            self.xScreenCenter+x, ...
-            self.xScreenCenter-y);
-         
-         % orient for Screen
-         if size(rect,1) > 1
-            rect = rect';
-         end
+         rect = cat(1, ...
+            self.xScreenCenter+x-half_width, ...
+            self.yScreenCenter-y-half_height, ...
+            self.xScreenCenter+x+half_width, ...
+            self.yScreenCenter-y+half_height);
       end
    end
    
@@ -278,6 +276,13 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % NEED THIS FOR NOW ON MACBOOK PRO
          % REMOVE WHEN STABLE
          Screen('Preference', 'SkipSyncTests', 1);
+         
+         % get the frame rate
+         self.windowFrameRate = Screen('NominalFrameRate', self.displayIndex);
+         % PUT IN A DUMMY FOR NOW -- CAREFUL!!
+         if self.windowFrameRate == 0
+            self.windowFrameRate = 60;
+         end
          
          % Here we could use DisplaySize to get the dimensions (in mm),
          %  but the Screen documentation says that it can be unreliable
@@ -312,9 +317,11 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          
          %
          % OPEN the screen/window ... ignore all parameters after
-         %   bitDepth. Type "Screen OpenWindow?" for details.
+         %  bitDepth. Type "Screen OpenWindow?" for details.
+         % NOTE: Using PsychImaging to ensure that the color
+         %  specification is [0,1] (see PsychDefaultSetup)
          [self.windowPointer, self.windowRect] = ...
-            Screen('OpenWindow', ...
+            PsychImaging('OpenWindow', ...
             self.displayIndex, ...
             self.backgroundColor, ...
             self.debugRect, ...
@@ -328,7 +335,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             (2*atan2d(self.width/2, self.distance));
          
          % get midpoint of drawing rect
-         [self.xScreenCenter, self.xScreenCenter] = ...
+         [self.xScreenCenter, self.yScreenCenter] = ...
             RectCenter(self.windowRect);
             
          % conditionally maximize drawing priority
@@ -340,7 +347,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % Set up alpha-blending for smooth (anti-aliased) lines
          if self.useAntiAliasing
             Screen('BlendFunction', self.windowPointer, ...
-               'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+               GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
          end
 
          % get the VBL count
@@ -351,9 +358,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          if self.hideCursor
             HideCursor(self.displayIndex);
          end
-         
-         % get the frame rate
-         self.windowFrameRate = Screen('NominalFrameRate', self.windowPointer);
          
          % load the gamma table... remember to transpose
          %   because it's stored in MGL-friendly format
@@ -373,6 +377,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       function close(self)
          
          % close window
+         self.windowPointer
          Screen('Close', self.windowPointer);
          self.windowPointer = [];
          
@@ -420,13 +425,25 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             frameInfo.isTight      = false;
          else
             
-            % flush, swap buffers. 2nd return argument is estimate of
-            %   stimulus-onset time, which I don't know how it's
-            %   computed for LCDs so I'm ignoring for now
-            [frameInfo.onsetTime, ~, ...
-               frameInfo.swapTime, Missed, ~] = ...
-               Screen('Flip', self.windowPointer, when, ...
-               dontClear, self.dontSync);
+            if nargin < 2
+               
+               % flush, swap buffers. 2nd return argument is estimate of
+               %   stimulus-onset time, which I don't know how it's
+               %   computed for LCDs so I'm ignoring for now
+               [frameInfo.onsetTime, ~, ...
+                  frameInfo.swapTime, Missed, ~] = ...
+                  Screen('Flip', self.windowPointer);, when, ...
+                  dontClear, self.dontSync);
+            else
+               
+               % flush, swap buffers. 2nd return argument is estimate of
+               %   stimulus-onset time, which I don't know how it's
+               %   computed for LCDs so I'm ignoring for now
+               [frameInfo.onsetTime, ~, ...
+                  frameInfo.swapTime, Missed, ~] = ...
+                  Screen('Flip', self.windowPointer, when, ...
+                  dontClear, self.dontSync);
+            end
             
             % report errors... need to check accuracy of this
             if Missed

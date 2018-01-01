@@ -5,7 +5,7 @@ classdef dotsDrawablePolygon < dotsDrawable
    properties
       
       % Colors, n columns x <scalar or [r g b] or [r g b a]>
-      color = [1 0 0];
+      colors = [1 0 0];
       
       % Array of x values
       x = 0;
@@ -40,11 +40,11 @@ classdef dotsDrawablePolygon < dotsDrawable
            
             case 'FramePoly'
                Screen('FramePoly', theScreen.windowPointer, ...
-                  self.color, [self.x(:) self.y(:)], self.penWidth);
+                  self.colors, [self.x(:) self.y(:)], self.penWidth);
             
             case 'FillPoly'
                Screen('FillPoly', theScreen.windowPointer, ...
-                  self.color, [self.x(:) self.y(:)], self.isConvex);
+                  self.colors, [self.x(:) self.y(:)], self.isConvex);
          end         
       end
    end

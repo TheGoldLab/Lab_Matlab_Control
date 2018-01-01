@@ -37,7 +37,7 @@ t.xCenter = linspace(-10, 10, n)';
 t.yCenter = linspace(-5, 5, n)';
 t.width   = linspace(0.1, 1, n)';
 t.height  = linspace(1, 0.1, n)';
-t.color   = hot(n)';
+t.colors  = hot(n)';
 dotsDrawable.drawFrame({t});
 pause(delay);
 
@@ -51,7 +51,7 @@ dotsDrawable.drawFrame({t});
 pause(delay);
 
 t.targetType = 'FrameOval';
-t.color = [0 255 0];
+t.colors   = [0 255 0];
 t.penWidth = 3;
 dotsDrawable.drawFrame({t});
 pause(delay);

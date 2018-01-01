@@ -377,7 +377,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       function close(self)
          
          % close window
-         self.windowPointer
          Screen('Close', self.windowPointer);
          self.windowPointer = [];
          
@@ -425,13 +424,25 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             frameInfo.isTight      = false;
          else
             
-            % flush, swap buffers. 2nd return argument is estimate of
-            %   stimulus-onset time, which I don't know how it's
-            %   computed for LCDs so I'm ignoring for now
-            [frameInfo.onsetTime, ~, ...
-               frameInfo.swapTime, Missed, ~] = ...
-               Screen('Flip', self.windowPointer, when, ...
-               dontClear, self.dontSync);
+            if nargin < 2
+               
+               % flush, swap buffers. 2nd return argument is estimate of
+               %   stimulus-onset time, which I don't know how it's
+               %   computed for LCDs so I'm ignoring for now
+               [frameInfo.onsetTime, ~, ...
+                  frameInfo.swapTime, Missed, ~] = ...
+                  Screen('Flip', self.windowPointer, [], ...
+                  [], self.dontSync);
+            else
+               
+               % flush, swap buffers. 2nd return argument is estimate of
+               %   stimulus-onset time, which I don't know how it's
+               %   computed for LCDs so I'm ignoring for now
+               [frameInfo.onsetTime, ~, ...
+                  frameInfo.swapTime, Missed, ~] = ...
+                  Screen('Flip', self.windowPointer, when, ...
+                  dontClear, self.dontSync);
+            end
             
             % report errors... need to check accuracy of this
             if Missed

@@ -5,7 +5,7 @@ classdef dotsDrawableTargets < dotsDrawable
    properties
       
       % colors, n rows x <scalar or [r g b]' or [r g b a]'>
-      color = [1 0 0]';
+      colors = [1 0 0]';
       
       % Center x position
       xCenter = 0;
@@ -27,6 +27,9 @@ classdef dotsDrawableTargets < dotsDrawable
       
       % (string) type: 'FillRect', 'FrameRect', 'FillOval', or 'FrameOval'
       targetType = 'FillRect';
+      
+      % translate xCenter, yCenter
+      translation = [0 0];
    end
    
    methods
@@ -40,27 +43,30 @@ classdef dotsDrawableTargets < dotsDrawable
          
          % Use screen with type and collected arguments
          theScreen = dotsTheScreen.theObject();
-         rect = theScreen.getRect(self.xCenter, self.yCenter, ...
-            self.width, self.height);
+         rect = theScreen.getRect( ...
+            self.xCenter + self.translation(1), ...
+            self.yCenter + self.translation(2), ...
+            self.width, ...
+            self.height);
          
          switch(self.targetType)
             
             case 'FillRect'
                Screen('FillRect', theScreen.windowPointer, ...
-                  self.color, rect);
+                  self.colors, rect);
                
             case 'FrameRect'
                Screen('FrameRect', theScreen.windowPointer, ...
-                  self.color, rect, ...
+                  self.colors, rect, ...
                   self.penWidth);
                
             case 'FillOval' % could add perfectUpToMaxDiameter
                Screen('FillOval', theScreen.windowPointer, ...
-                  self.color, rect);
+                  self.colors, rect);
                
             case 'FrameOval'
                Screen('FrameOval', theScreen.windowPointer, ...
-                  self.color, rect, ...
+                  self.colors, rect, ...
                   self.penWidth, self.penHeight);
          end
       end

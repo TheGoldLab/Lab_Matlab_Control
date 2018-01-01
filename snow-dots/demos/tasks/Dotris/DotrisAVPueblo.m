@@ -102,7 +102,6 @@ classdef DotrisAVPueblo < DotrisAV
             b.xCenter = [];
             b.yCenter = [];
             b.colors = self.boardColor;
-            b.nSides = 4;
             b.isVisible = true;
             self.board = self.drawableEnsemble.addObject(b);
             
@@ -113,7 +112,6 @@ classdef DotrisAVPueblo < DotrisAV
             cp.xCenter = [];
             cp.yCenter = [];
             cp.colors = self.currentPieceColor;
-            cp.nSides = 4;
             cp.isVisible = true;
             self.currentPiece = self.drawableEnsemble.addObject(cp);
             
@@ -125,7 +123,6 @@ classdef DotrisAVPueblo < DotrisAV
             np.xCenter = [];
             np.yCenter = [];
             np.colors = self.nextPieceColor;
-            np.nSides = 4;
             np.isVisible = true;
             offset = 2 + (0.5 * self.squareSize * self.logic.boardWidth);
             np.translation = [offset 0 0];
@@ -138,7 +135,6 @@ classdef DotrisAVPueblo < DotrisAV
             p.xCenter = [];
             p.yCenter = [];
             p.colors = self.pileColor;
-            p.nSides = 4;
             p.isVisible = true;
             self.pile = self.drawableEnsemble.addObject(p);
             

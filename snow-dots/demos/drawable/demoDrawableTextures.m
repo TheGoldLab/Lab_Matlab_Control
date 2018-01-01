@@ -3,7 +3,6 @@
 % @ingroup dotsDemos
 function demoDrawableTextures(delay)
 
-
 if nargin < 1
     delay = 2;
 end
@@ -21,7 +20,7 @@ tx = dotsDrawableTextures();
 % demo script.  It knows how to make a checkerboard texture with
 % OpenGL.  It expectes to receive the texture object and a color
 % parameter.
-red = [192 16 16];
+red = [192 16 16]./255;
 tx.textureMakerFevalable = {@checkerTextureMaker, red};
 
 % checkers should have abrupt edges, not isSmooth blending
@@ -29,8 +28,8 @@ tx.isSmooth = false;
 
 % create a target dot to display near or behind the texture
 dot = dotsDrawableTargets();
-blue = [16 0 128];
-dot.pixelSize = 1;
+blue = [16 0 128]./255;
+dot.width = 1;
 dot.colors = blue;
 
 % add the texture and dot objects to an ensemble, to draw them together

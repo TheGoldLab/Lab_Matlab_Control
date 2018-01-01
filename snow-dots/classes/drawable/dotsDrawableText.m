@@ -154,8 +154,8 @@ classdef dotsDrawableText < dotsDrawable
             
             % Open texture with slightly larger bounds
             % FOR NOW ASSUMES BACKGROUND IS BLACK
-            textureBackground = zeros(RectHeight(destinationRect), ...
-               RectWidth(destinationRect));
+            textureBackground = zeros(ceil(RectHeight(destinationRect)), ...
+               ceil(RectWidth(destinationRect)));
             
             % make the texture
             textTexture = Screen('MakeTexture', ...
