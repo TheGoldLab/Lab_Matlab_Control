@@ -4,7 +4,7 @@
 function demoDrawableLines(delay)
 
 if nargin < 1
-    delay = 2;
+    delay = 1;
 end
 
 % get a drawing window
@@ -23,15 +23,15 @@ dotsDrawable.drawFrame({l});
 pause(delay);
 
 obj1 = dotsDrawableLines();
+obj1.colors = [255 0 255];
+obj1.width  = 5;
 obj2 = dotsDrawableTargets();
-
 dotsDrawable.drawFrame({obj1, obj2});
-
-
+pause(delay);
 
 % draw a fat line
-l.pixelSize = 10;
-l.colors = [1 0 0];
+l.width = 10;
+l.colors = [0 0 255];
 dotsDrawable.drawFrame({l});
 pause(delay);
 
@@ -41,18 +41,13 @@ l.xFrom = linspace(-5, 0, n);
 l.xTo = linspace(0, 10, n);
 l.yFrom = -5;
 l.yTo = 5;
-l.pixelSize = 2;
-l.colors = lines(n);
-dotsDrawable.drawFrame({l});
-pause(delay);
-
-% draw crazy colors
-l.isColorByVertexGroup = false;
+l.width = randi(5,n,1);
+l.colors = lines(n*2)'.*255;
 dotsDrawable.drawFrame({l});
 pause(delay);
 
 % draw antialiased lines
-l.isSmooth = true;
+l.smooth = 1;
 dotsDrawable.drawFrame({l});
 pause(delay);
 

@@ -1,4 +1,4 @@
-classdef dotsTheScreen < dotsAllSingletonObjects
+classdef dotsTheScreenOriginal < dotsAllSingletonObjects
     % @class dotsTheScreen
     % Singleton to work with the OpenGL drawing context.
     % @details
@@ -10,6 +10,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
     % dotsTheMachineConfiguration provides hardware-specific default
     % property values to dotsTheScreen.
     properties
+       
         % dispay width (cm)
         width;
         

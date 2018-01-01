@@ -221,24 +221,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             self.screenFramework.closeWindowForScreen();
         end
         
-        % Draw the next frame
-        function frameInfo = nextFrame(doClear, when)
-            if nargin < 1 || isempty(doClear)
-                doClear = true;
-            end
-            if nargin < 1 || isempty(when)
-                when = 0;
-            end
-            self      = dotsTheScreen.theObject();
-            frameInfo = self.screenFramework.nextFrameForScreen(doClear, when);
-        end
-        
-        % Blank the screen
-        function frameInfo = blank()
-            self      = dotsTheScreen.theObject();
-            frameInfo = self.screenFramework.blankForScreen();
-        end
-        
         % Save gamma-correction data in newGammaTable to a .mat file.
         % Argument:
         %   fileName ... optional. If empty uses default from 

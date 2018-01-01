@@ -17,42 +17,37 @@ arc = dotsDrawableArcs();
 % draw one coarse arc
 arc.xCenter = 0;
 arc.yCenter = 0;
+arc.width   = 5;
 arc.startAngle = -30;
 arc.sweepAngle = 180;
-arc.colors = [0 128 64];
-arc.nPieces = 10;
+arc.color = [0 128 64];
 dotsDrawable.drawFrame({arc});
 pause(delay);
 
-% draw one smoother arc
-arc.nPieces = 100;
+% change type
+arc.arcType = 'FillArc';
+dotsDrawable.drawFrame({arc});
+pause(delay);
+
+arc.arcType = 'FrameArc';
+arc.penWidth = 3;
+arc.penHeight = 3;
 dotsDrawable.drawFrame({arc});
 pause(delay);
 
 % draw several smoother arcs
 n = 5;
-arc.xCenter = 0;
-arc.yCenter = 0;
-arc.startAngle = linspace(0, 270, n);
-arc.sweepAngle = 20*ones(1,n);
-arc.rInner = linspace(4, 8, n);
-arc.rOuter = linspace(5, 10, n);
-dotsDrawable.drawFrame({arc});
-pause(delay);
-
-% draw colorful arcs
-arc.colors = hsv(n);
-dotsDrawable.drawFrame({arc});
-pause(delay);
-
-% show some crazy colors by ignoring arc boundaries
-arc.isColorByVertexGroup = false;
-dotsDrawable.drawFrame({arc});
-pause(delay);
-
-% try to isSmooth out the arc edges further
-arc.isSmooth = true;
-dotsDrawable.drawFrame({arc});
+arcs = cell(n,1);
+coppermap = hot(n).*255;
+for ii = 1:n
+   arcs{ii} = dotsDrawableArcs();
+   arcs{ii}.width  = ii;
+   arcs{ii}.height = 2*ii;
+   arcs{ii}.startAngle = (ii-1)*270/n;
+   arcs{ii}.sweepAngle = ii*10;
+   arcs{ii}.color = coppermap(ii,:);
+end
+dotsDrawable.drawFrame(arcs);
 pause(delay);
 
 % close the OpenGL drawing window

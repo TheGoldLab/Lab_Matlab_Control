@@ -4,7 +4,7 @@
 function demoDrawableTargets(delay)
 
 if nargin < 1
-    delay = 2;
+    delay = 1;
 end
 
 % get a drawing window
@@ -17,51 +17,42 @@ dotsTheScreen.openWindow();
 % create a targets object
 t = dotsDrawableTargets();
 
-% draw one target
-t.isSmooth = false;
-t.xCenter = 0;
+% draw two targets
+t.xCenter = [-10 10];
 t.yCenter = 0;
-t.colors = [1 0 0];
-t.nSides = 4;
+t.width   = 2;
+t.targetType = 'FillOval';
 dotsDrawable.drawFrame({t});
 pause(delay);
 
-% draw one fat target
+% draw two elongated targets
+t.xCenter = 0;
 t.height = 5;
-t.width = 8;
 dotsDrawable.drawFrame({t});
 pause(delay);
 
 % draw many targets
 n = 10;
-t.xCenter = linspace(-10, 10, n);
-t.yCenter = linspace(-5, 5, n);
-t.width = linspace(0.1, 1, n);
-t.height = linspace(1, 0.1, n);
+t.xCenter = linspace(-10, 10, n)';
+t.yCenter = linspace(-5, 5, n)';
+t.width   = linspace(0.1, 1, n)';
+t.height  = linspace(1, 0.1, n)';
+t.color   = hot(n)';
 dotsDrawable.drawFrame({t});
 pause(delay);
 
-% draw some different polygons
-t.xCenter = [-5 5];
-t.yCenter = 0;
-t.width = 8;
-t.height = 8;
-t.colors = cool(n);
-t.nSides = 30;
+% draw some different shapes
+t.targetType = 'FrameRect';
 dotsDrawable.drawFrame({t});
 pause(delay);
 
-t.nSides = 7;
+t.targetType = 'FillOval';
 dotsDrawable.drawFrame({t});
 pause(delay);
 
-% draw crazy colors
-t.isColorByVertexGroup = false;
-dotsDrawable.drawFrame({t});
-pause(delay);
-
-% try to isSmooth the target edges
-t.isSmooth = true;
+t.targetType = 'FrameOval';
+t.color = [0 255 0];
+t.penWidth = 3;
 dotsDrawable.drawFrame({t});
 pause(delay);
 

@@ -67,36 +67,36 @@ yPoints = -2*sin(spinTimes*2*pi/max(spinTimes));
 spinningText.addMember('y', spinTimes, yPoints, spinInterpolated);
 spinningText.setMemberCompletionStyle('y', 'wrap', max(spinTimes));
 
-% make a reversible explosion
-explosion = dotsDrawableExplosion();
-explodeDuration = 3;
-nParticles = 500;
-explosion.pixelSize = 3;
-explosion.gravity = -10;
-explosion.bounceDamping = [.3 .1];
-explosion.colors = [1 0 0];%hot(100);
-explosion.x = 0;
-explosion.xRest = randn(1, nParticles);
-explosion.y = 1;
-explosion.yRest = -3;
-explosion.tRest = explodeDuration + randn(1, nParticles);
-explosion.isInternalTime = false;
-
-reversibleExplosion =  dotsDrawableAnimator();
-reversibleExplosion.addDrawable(explosion);
-realTimes = [0 1 2]*explodeDuration;
-explosionTimes = [0 2 0]*explodeDuration;
-timeInterpolated = true;
-reversibleExplosion.addMember('currentTime', ...
-    realTimes, explosionTimes, timeInterpolated);
-reversibleExplosion.setMemberCompletionStyle( ...
-    'currentTime', 'wrap', max(realTimes));
+% % make a reversible explosion
+% explosion = dotsDrawableExplosion();
+% explodeDuration = 3;
+% nParticles = 500;
+% explosion.pixelSize = 3;
+% explosion.gravity = -10;
+% explosion.bounceDamping = [.3 .1];
+% explosion.colors = [1 0 0];%hot(100);
+% explosion.x = 0;
+% explosion.xRest = randn(1, nParticles);
+% explosion.y = 1;
+% explosion.yRest = -3;
+% explosion.tRest = explodeDuration + randn(1, nParticles);
+% explosion.isInternalTime = false;
+% 
+% reversibleExplosion =  dotsDrawableAnimator();
+% reversibleExplosion.addDrawable(explosion);
+% realTimes = [0 1 2]*explodeDuration;
+% explosionTimes = [0 2 0]*explodeDuration;
+% timeInterpolated = true;
+% reversibleExplosion.addMember('currentTime', ...
+%     realTimes, explosionTimes, timeInterpolated);
+% reversibleExplosion.setMemberCompletionStyle( ...
+%     'currentTime', 'wrap', max(realTimes));
 
 %% aggregate objects into one ensemble
 drawables = topsEnsemble('animator demo');
 drawables.addObject(flyingSlideShow);
 drawables.addObject(spinningText);
-drawables.addObject(reversibleExplosion);
+%drawables.addObject(reversibleExplosion);
 
 % automate the task of drawing all the objects
 %   the static drawFrame() takes a cell array of objects

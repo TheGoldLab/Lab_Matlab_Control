@@ -1,11 +1,18 @@
-classdef dotsTheScreenMGL < dotsTheScreenType
-    % Class dotsTheScreenMGL
-    % Singleton to work with the OpenGL drawing context using MGL.
-    % 
-    % dotsTheScreenMGL manages the Snow Dots OpenGL drawing context via MGL
+classdef dotsTheScreen < dotsAllSingletonObjects
+   % @class dotsTheScreen
+   % Singleton to work with the OpenGL drawing context.
+   % @details
+   % dotsTheScreen manages the Snow Dots OpenGL drawing context. "Context"
+   % includes the display and window to use for drawing, OpenGL system
+   % resources, OpenGL configuration, and state memory, all of which Snow
+   % Dots needs in order to draw graphics with OpenGL.
+   % @details
+   % dotsTheMachineConfiguration provides hardware-specific default
+   % property values to dotsTheScreen.
+   % 
     properties (SetAccess = protected)
-        
-        % utility object to account for OpenGL frame timing
+      
+      % utility object to account for OpenGL frame timing
         flushGauge;
     end
     

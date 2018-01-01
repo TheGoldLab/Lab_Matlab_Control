@@ -294,7 +294,6 @@ classdef dotsDrawableExplosion < dotsDrawableVertices
         
         % Draw particles, based on the current time.
         function draw(self)
-           
             % activate the explosion shader program
             dotsMglUseShaderProgram(self.programInfo);
             

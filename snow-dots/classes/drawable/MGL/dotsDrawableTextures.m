@@ -10,9 +10,7 @@ classdef dotsDrawableTextures < dotsDrawable
     % create new textures.  textureMakerFevalable should expect the
     % dotsDrawableText object as the first argument and return a struct
     % array of texture information with one element per texture.
-    
     properties
-       
         % x-coordinate of the center of the drawn texture (degrees
         % visual angle, centered in window)
         x = 0;
@@ -44,9 +42,6 @@ classdef dotsDrawableTextures < dotsDrawable
         % degrees counterclockwise to rotate the texture about its center
         rotation = 0;
         
-        % see DrawTexture for details
-        filterMode = 1;
-        
         % fevalable cell array for creating arbitrary textures
         % @details
         % The function should expect the dotsDrawableTextures object as the
@@ -67,7 +62,6 @@ classdef dotsDrawableTextures < dotsDrawable
     end
     
     properties (SetAccess = protected)
-       
         % struct array of texture information returned from
         % textureMakerFevalable.
         textureInfo = [];
@@ -80,7 +74,6 @@ classdef dotsDrawableTextures < dotsDrawable
     end
     
     methods
-       
         % Constructor takes no arguments.
         function self = dotsDrawableTextures()
             self = self@dotsDrawable();
@@ -94,7 +87,6 @@ classdef dotsDrawableTextures < dotsDrawable
         
         % Make a new texture(s) with textureMakerFevalable.
         function prepareToDrawInWindow(self)
-           
             if isstruct(self.textureInfo)
                 for ii = 1:self.nTextures
                     mglDeleteTexture(self.textureInfo(ii));
@@ -120,7 +112,6 @@ classdef dotsDrawableTextures < dotsDrawable
         
         % Draw textures that were made by textureMakerFevalable.
         function draw(self)
-           
             % make sure the OpenGL texture is up to date
             if self.isTextureStale
                 self.prepareToDrawInWindow();
@@ -128,20 +119,32 @@ classdef dotsDrawableTextures < dotsDrawable
             
             if self.slideNumber > 0 && self.slideNumber <= self.nTextures
                 
-               % get windowPointer
-               theScreen       = dotsTheScreen.theObject();
-               destinationRect = theScreen.getRect(self.x, self.y, ...
-                  self.width, self.height);
-                               
-                Screen('DrawTexture', theScreen.windowPointer, ...
-                   self.textureInfo(self.slideNumber), ...
-                   [], ... % possibly set source rect
-                   destinationRect, ...
-                   self.rotation, ...
-                   self.filterMode);
-                % other args:
-                % [, globalAlpha] [, modulateColor] 
-                % [, textureShader] [, specialFlags] [, auxParameters]);                
+                if isempty(self.width) && isempty(self.height)
+                    position = [self.x self.y];
+                    
+                else
+                    if self.isFlippedHorizontal
+                        w = -self.width;
+                    else
+                        w = self.width;
+                    end
+                    
+                    if self.isFlippedVertical
+                        h = -self.height;
+                    else
+                        h = self.height;
+                    end
+                    
+                    position = [self.x self.y, w, h];
+                end
+                
+                dotsMglSmoothness('textures', double(self.isSmooth));
+                mglBltTexture( ...
+                    self.textureInfo(self.slideNumber), ...
+                    position, ...
+                    0, ...
+                    0, ...
+                    self.rotation);
             end
         end
         
