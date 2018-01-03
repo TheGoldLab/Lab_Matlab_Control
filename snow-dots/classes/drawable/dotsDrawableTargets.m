@@ -49,6 +49,7 @@ classdef dotsDrawableTargets < dotsDrawable
             self.width, ...
             self.height);
          
+         % use Screen convenience routines for squares/ovals
          switch(self.targetType)
             
             case 'FillRect'
