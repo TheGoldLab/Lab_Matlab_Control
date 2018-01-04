@@ -11,7 +11,7 @@ end
 %sc=dotsTheScreen.theObject;
 %sc.reset('displayIndex', 2);
 
-dotsTheScreen.reset('displayIndex', 0);
+dotsTheScreen.reset('displayIndex', 2);
 dotsTheScreen.openWindow();
 
 % create a targets object
