@@ -234,7 +234,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          
          if ~isempty(self.newGammaTable)
             % load a stimulus-appropriate gamma table
-            mglSetGammaTable(self.newGammaTable);
+            mglSetGammaTable(self.newGammaTable');
          end
       end
       
@@ -405,11 +405,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Makes a gamma table using the optiCAL device from Cambridge Research
       % Systems. Easist way to call this is:
       %  dotsTheScreen.reset('gammaTableFileName', 'make');
-      %
-      %  Note that this will put a file in your current working directory
-      %  that contains the new gamma table. If you want to keep using this
-      %  table by default, just make sure that it lives somewhere on your
-      %  Matlab path.
       % 
       % This function assumes that:
       %   1. the optiCAL device is connected to the host computer using
@@ -454,7 +449,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             targetSize = 20;
          end
          
-         
          % set up gamma table arrays
          maxV                    = tableSize-1;
          nominalLuminanceValues  = 0:maxV;
@@ -462,7 +456,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          
          % start with a nominal gamma table
          self.gammaTableFileName = 'none';
-         self.newGammaTable      = repmat(nominalLuminanceValues, 3, 1)./maxV;
+         self.newGammaTable      = repmat(nominalLuminanceValues, 1, 3)./maxV;
          
          % Open a window
          self.openWindow();
@@ -505,15 +499,13 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % make the gamma table
          maxLum     = max(measuredLuminanceValues);
          scaledLum  = linspace(0, maxLum, tableSize);
-         gammaTable = zeros(3, tableSize);
+         self.newGammaTable = zeros(3, tableSize);
          for ii = 2:tableSize
-            gammaTable(:,ii) = nominalLuminanceValues( ...
+            self.newGammaTable(:,ii) = nominalLuminanceValues( ...
                find(measuredLuminanceValues>=scaledLum(ii),1,'first'))./maxV.*[1 1 1]';
          end
          
-         % save the new gamma table
-         self.newGammaTable = gammaTable;
-         
+         % save the new
          % save to file
          self.saveGammaTableToMatFile(fileName)
       end
