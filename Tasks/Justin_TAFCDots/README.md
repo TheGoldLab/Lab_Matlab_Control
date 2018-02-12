@@ -127,7 +127,7 @@ The experimental paradigm of this is heavily updated from the similarly named no
 
 Experimental paradigm:
 
-![Experimental paradigm](https://raw.githubusercontent.com/TheGoldLab/Lab-Matlab-Control/master/Tasks/Justin/images/EP.png "Experiment")
+![Experimental paradigm](https://raw.githubusercontent.com/TheGoldLab/Lab-Matlab-Control/master/Tasks/Justin_TAFCDots/images/EP.png "Experiment")
 
 This is a visualization of the trial paradigm. This is similar to the non-Eyelinker version of this experimental paradigm. Artificial changepoints are still set for low hazard trials. Details for all of these are set in scriptRun.m
 
