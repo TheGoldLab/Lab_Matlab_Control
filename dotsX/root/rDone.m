@@ -35,7 +35,11 @@ global ROOT_STRUCT
 
 % call root method with 'clear' flag
 rBatch('root', [], 'clear');
-ROOT_STRUCT.HIDxInit = HIDx('close');
+
+% conditionally close HIDx
+if isfield(ROOT_STRUCT, 'HIDxInit')
+    ROOT_STRUCT.HIDxInit = HIDx('close');
+end
 
 if ROOT_STRUCT.screenMode == 2
     if ~nargin || isempty(remote_call) || remote_call == 2

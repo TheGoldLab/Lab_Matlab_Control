@@ -300,7 +300,7 @@ classdef AInScan1208FS < handle
         % necessary, with stopScan().  Get scan data in a useable form with
         % getScanWaveform().
         % @details
-        % Returns a positive timestamp for when the "prepare" command was
+        % Returns a positive tchannelsimestamp for when the "prepare" command was
         % acknowleged by the device, as measured with the host CPU clock.
         % This timestamp corresponds to a USB frame and has 1ms
         % granularity.  Returns a negative value if there was an error.
