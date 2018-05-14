@@ -104,8 +104,7 @@ classdef dotsClientEnsemble < topsEnsemble
             end
             self.openSocket();
         end
-        
-        
+                
         % Start invoking the Matlab profiler during transactions.
         % @param varargin optional configuraiton arguments to pass to
         % profile()

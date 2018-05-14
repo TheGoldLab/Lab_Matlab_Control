@@ -1,0 +1,400 @@
+function state = movingDotsTaskPupilLabs(defaultCoherence, referenceRT, ...
+   blockSpecs, sendTTLs, remoteInfo)
+% function state = movingDotsTaskPupilLabs(defaultCoherence, referenceRT, ...
+%  blockSpecs, sendTTLs, remoteInfo)
+%
+%
+% This function runs the actual experiment. This is a combination of the
+% functions that do the coherence task and the SAT/BIAS task because both
+% should be run in the pre-op session. Therefore, it would be easier to
+% have just one file that does the entire experiment, with appropriate
+% flags that control which stimuli get presented. This script uses the
+% topsStateMachine to control the flow of the experiment.
+%
+% Inputs:
+%  defaultCoherence   - either a scalar value (in fraction coherence) or
+%                          'adaptive', which is a flag indicating to use
+%                          adaptive Quest method to determine threshold
+%  defaultRT          - either a scalar value (in sec) or 'adaptive', which
+%                          is a flag indicating to use meanRT block
+%  blockSpecs         - cell array indicating set of SAT/Bias blocks to use
+%                          each pair is:
+%                         1 : <SAT instruction key, 'S'=Speed, 'A'=Accuracy,
+%                             'N'=Neutral, 'X'=None><BIAS stimulus key,
+%                             'L'=More left, 'R'=More right, 'N'=Neutral>
+%                         2 : <number of trials>
+%  sendTTLs           - flag, set to true to send TTL pulses via the PMD
+%  remoteInfo         - cell array {<clientIP>, <clientPort>, <serverIP>,
+%                          <serverPort>} or true (use defaults) or false
+%
+% Outputs:
+%   state  -  A topsGroupedList object containing experimental parameters
+%             as well as data recorded during the experiment.
+%
+% 10/2/17    xd  wrote it
+
+% parse arguments
+if nargin < 1 || isempty(defaultCoherence)
+   defaultCoherence = 'adaptive';
+end
+
+if nargin < 2 || isempty(referenceRT)
+   referenceRT = 'adaptive';
+end
+
+if nargin < 3 || isempty(blockSpecs)
+   blockSpecs = {'SN' 20 'AN' 20};
+end
+
+if nargin < 4 || isempty(sendTTLs)
+   sendTTLs = false;
+end
+
+if nargin < 5 || isempty(remoteInfo) || (islogical(remoteInfo) && remoteInfo)
+   remoteInfo = {true '192.168.1.1', 40000, '192.168.1.2', 40001};
+elseif iscell(remoteInfo)
+   remoteInfo = cat(2, {true}, remoteInfo);
+else
+   remoteInfo = {false};
+end
+
+%% FOR DEBUGGING
+defaultCoherence = 'adaptive';
+referenceRT = 'adaptive';
+blockSpecs = {'SN' 20 'AN' 20};
+sendTTLs = false;
+remoteInfo = {false};
+
+%% Create a topsGroupedList
+%
+% This is a versatile data structure that will allow us to pass the state
+% of the state machine around as it advances.
+state = topsGroupedList();
+
+%% Experimental logic flags
+%
+% A series of logic flags will be used to control which stimuli are
+% presented during the experiment. These flags determine which states the
+% state machine is allowed to enter. Note that if all flags are set to
+% true, the order of will be QUEST -> meanRT -> coherence -> SAT/BIAS.
+% Disabling any part will not change the relative order of the presentation
+% of the different experimental stages.
+state{'Inputs'}{'defaultCoherence'} = defaultCoherence;
+state{'Inputs'}{'defaultRT'} = referenceRT;
+state{'Inputs'}{'blockSpecs'} = blockSpecs;
+state{'Inputs'}{'sentTTLs'} = sendTTLs;
+state{'Inputs'}{'remoteInfo'} = remoteInfo;
+
+%% Create timing parameters
+%
+% These pararmeters determine how long different parts of the task
+% presentation should take. These are kept the same across trials. All
+% fields values are in seconds.
+
+state{'Timing'}{'timeBetweenInstructionsAndFixationOnset'} = 0.2;
+state{'Timing'}{'minTargetForeperiod'} = 0.2;
+state{'Timing'}{'maxTargetForeperiod'} = 1.0;
+state{'Timing'}{'meanTargetForeperiod'} = 0.5;
+state{'Timing'}{'feedback'} = 0.65;
+state{'Timing'}{'rest'} = 0.5;
+state{'Timing'}{'fixationCueFixationDuration'} = 0.200;
+state{'Timing'}{'fixationTimeout'} = 5;
+state{'Timing'}{'dotsTimeout'} = 5;
+state{'Timing'}{'targetFixationDuration'} = 0.125;
+state{'Timing'}{'pauseForTargetFixation'} = 0.125;
+state{'Timing'}{'instructionPresentation'} = 5;
+state{'Timing'}{'speedContextTemporalThreshold'} = 1;
+
+%% General Stimulus Params
+%
+% These parameters are shared across the different types of stimulus. These
+% essentially dictate things like size of stimulus and location on screen.
+
+% Size of the fixation cue in dva. Additionally, we will want to store the
+% pixel coordinates for the center of the screen to use in comparisons with
+% Eyelink samples later.
+state{'FixationCue'}{'size'} = 5/2;
+state{'FixationCue'}{'xDVA'} = 0;
+state{'FixationCue'}{'yDVA'} = 0;
+
+% Position (horizontal distance from center of screen) and size of the
+% saccade targets in dva. Similar to the fixation cue, we also want to
+% store the pixel positions for these.
+state{'SaccadeTarget'}{'offset'} = 10;
+state{'SaccadeTarget'}{'size'}   = 3/2;
+state{'SaccadeTarget'}{'rightXDVA'} = state{'FixationCue'}{'xDVA'} + state{'SaccadeTarget'}{'offset'};
+state{'SaccadeTarget'}{'leftXDVA'}  = state{'FixationCue'}{'xDVA'} - state{'SaccadeTarget'}{'offset'};
+state{'SaccadeTarget'}{'rightYDVA'} = state{'FixationCue'}{'yDVA'};
+state{'SaccadeTarget'}{'leftYDVA'}  = state{'FixationCue'}{'yDVA'};
+
+% Parameters for the moving dots stimuli that will be shared across every
+% trial. Also store the pixel position for the center of the stimuli.
+state{'MovingDots'}{'stencilNumber'} = 1;
+state{'MovingDots'}{'pixelSize'} = 6;
+state{'MovingDots'}{'diameter'} = 10;
+state{'MovingDots'}{'density'} = 150;
+state{'MovingDots'}{'speed'} = 3;
+state{'MovingDots'}{'xDVA'} = 0;
+state{'MovingDots'}{'yDVA'} = 0;
+
+%% Add task types to cell array to be stored in state container
+%  based on certain defaults. Save the defaults, along with counters
+%  to keep track of task progress.
+%
+taskArray = {};
+state{'task'}{'directions'} = [0 180];
+state{'task'}{'referenceCoherence'} = defaultCoherence;
+state{'task'}{'referenceRT'} = referenceRT;
+state{'task'}{'taskCounter'} = 1;
+state{'task'}{'trialCounter'} = 1;
+state{'task'}{'repeatTrial'} = false;
+
+%% QUEST
+%
+% These parameters control how the QUEST adaptive threshold measurements
+% behave. The parameters are fed into the QUEST function that comes with
+% psychtoolbox. See that function for more details.
+if ischar(defaultCoherence) && strcmp(defaultCoherence, 'adaptive')
+   
+   stimRange = 0:1:100;
+   thresholdRange = 0:50;
+   slopeRange = 2:5;
+   guessRate = 0.5;
+   lapseRange = 0.00:0.01:0.05;
+   
+   state{'Quest'}{'trialsPerCoherence'} = 40;   % Target number of trials
+   questData = qpParams('stimParamsDomainList',{stimRange}, ...
+      'psiParamsDomainList',{thresholdRange, slopeRange, guessRate, lapseRange});
+   state{'Quest'}{'object'}  = qpInitialize(questData);
+   state{'Quest'}{'results'} = cell(state{'Quest'}{'trialsPerCoherence'},1);
+   
+   taskArray = cat(2, taskArray, {'Quest'; ...
+      createTrials(state{'task'}{'directions'}, nan, [], ...
+      state{'Quest'}{'trialsPerCoherence'}, [])});
+end
+
+%% Mean RT
+%
+% For the SAT/BIAS condition, we may also need to find out the mean RT of
+% the subject to the threshold coherence (if this value is not known
+% already). The parameters in this section allows us to either set the mean
+% RT or to set how many trials it should take to determine the mean RT.
+if ischar(referenceRT) && strcmp(referenceRT, 'adaptive')
+   
+   state{'MeanRT'}{'trialsPerCoherence'} = 20;
+   
+   taskArray = cat(2, taskArray, {'meanRT'; ...
+      createTrials(state{'task'}{'directions'}, nan, [], ...
+      state{'MeanRT'}{'trialsPerCoherence'}, [])});
+end
+
+%% Test block (SAT/BIAS/etc)
+%
+% We define some parameters that describe the task and use the blockSpecs
+%  provided as input (see comments at the top). The stimulus is hardcoded
+%  to appear at the center of the screen.
+if ~isempty(blockSpecs)
+   
+   state{'testBlock'}{'trialsPerCoherence'} = 30;
+   state{'testBlock'}{'mocsCoherences'} = [0 3.2 6.4 12.8 25.6 51.2];
+   state{'testBlock'}{'biasedPriors'} = [20 80];
+   state{'testBlock'}{'randomizePerBlock'} = true;
+   
+   % check for keywords
+   if ischar(defaultCoherence)
+      if strcmp(defaultCoherence, 'adaptive')
+         coherences = nan;
+      else % if strcmp(defaultCoherence, 'mocs')
+         % for method of constant stimulus ('mocs')
+         coherences = state{'testBlock'}{'mocsCoherences'};
+      end
+   else
+      coherences = defaultCoherence;
+   end
+   
+   % loop through the blockSpecs cell array, adding trials per block
+   for bb = 1:2:length(blockSpecs)
+      
+      % parse name
+      switch blockSpecs{bb}(1)
+         case {'L'}
+            priors = fliplr(state{'testBlock'}{'biasedPriors'});
+         case {'R'}
+            priors = state{'testBlock'}{'biasedPriors'};
+         otherwise
+            priors = [50 50];
+      end
+      
+      % parse trial number arg
+      if ~isempty(blockSpecs{bb+1})
+         state{'testBlock'}{'trialsPerCoherence'} = blockSpecs{bb+1};
+      end
+      
+      % make trial block
+      taskArray = cat(2, taskArray, {blockSpecs{bb}; ...
+         createTrials(state{'task'}{'directions'}, ...
+         coherences, priors, ...
+         state{'testBlock'}{'trialsPerCoherence'}, ...
+         state{'testBlock'}{'randomizePerBlock'})});
+   end
+end
+
+%% Save block structure
+state{'task'}{'taskArray'} = taskArray;
+
+%% Graphics
+%
+% We will also pregenerate and store the graphics objects in the state
+% topsGroupedList object. This will allow us to quickly gather the frames
+% that need to be presented during the experiment. These basic frames are
+% created in an external function so that the code organization is a bit
+% easier to follow.
+createGraphicsObjects(state);
+screenEnsemble = state{'graphics'}{'screenEnsemble'};
+
+%% User input : pupil labs or keyboard
+%
+%ui = dotsReadableEyePupilLabs();
+if false %ui.isAvailable
+%    
+%    % set remote info, for showing calibration on the appropriate screen
+%    ui.ensembleRemoteInfo = remoteInfo;
+%    
+%    % set screen width, height for calibration routine
+%    ui.windowRect = getObjectProperty(state{'graphics'}{'screenEnsemble'}, 'windowRect');
+%    
+%    % calibrate
+%    ui.calibrate();
+%    
+%    % Add gaze windows for fixation cue, two targets
+%    state{'PupilLabs'}{'fixationCueW'} = acceptibleFixationCueErrorRadius^2;
+%    state{'PupilLabs'}{'saccadeTargetErrorRad2'} = acceptibleSaccadeTargetErrorRadius^2;
+%    state{'PupilLabs'}{'stimulusErrorRad2'} = acceptibleStimulusErrorRadius^2;
+%    
+%    fixationCue = state{'graphics'}{'fixationCue'};
+%    saccadeTargets = state{'graphics'}{'saccadeTargets'};
+%    
+%    
+%    saccadeTargets.xCenter = [-saccadeTargetoffset saccadeTargetoffset];
+%    saccadeTargets.yCenter = [0 0];
+%    saccadeTargets.nSides  = 100;
+%    saccadeTargets.height  = [1 1] * saccadeTargetSize;
+%    saccadeTargets.width   = [1 1] * saccadeTargetSize;
+%    
+%    
+%    % Create a fixation cue scaled by its size parameter
+%    fixationCue = dotsDrawableTargets();
+%    fixationCue.xCenter = [0 0];
+%    fixationCue.yCenter = [0 0];
+%    fixationCue.width   = [1 0.1] * fixationSize;
+%    fixationCue.height  = [0.1 1] * fixationSize;
+%    fixationCue.nSides  = 4;
+%    
+%    
+%    ui.addGazeWindow('fixationWindow', 'brfix', ...
+%       [fixationCue.xCenter(1) fixationCue.xCenter(2)], ...
+%       
+%    
+%    
+%    center, ...
+%       diameter, isInverted, isActive)
+%    % These values represent the radius of acceptible error of fixation for
+%    % subjects to make for each part of the trial. Units are in degrees visual
+%    % angle.
+%    acceptibleFixationCueErrorRadius = 8;
+%    acceptibleSaccadeTargetErrorRadius = 10;
+%    acceptibleStimulusErrorRadius = 8;
+%    
+%    state{'PupilLabs'}{'fixationCueErrorRad2'} = acceptibleFixationCueErrorRadius^2;
+%    state{'PupilLabs'}{'saccadeTargetErrorRad2'} = acceptibleSaccadeTargetErrorRadius^2;
+%    state{'PupilLabs'}{'stimulusErrorRad2'} = acceptibleStimulusErrorRadius^2;
+%    
+%    uiMap = []; % dummy for now
+else
+   
+    % fallback on keyboard inputs
+    kb = dotsReadableHIDKeyboard();
+    ui = kb;
+    
+    % Define keypress events
+    kb.defineCalibratedEvent('KeyboardF', 'madeChoice', 1, true);
+    kb.defineCalibratedEvent('KeyboardJ', 'madeChoice', 2, true);
+    kb.defineCalibratedEvent('KeyboardSpacebar', 'presentStimulus', [], true);   
+end
+state{'input'}{'controller'} = ui;
+%state{'input'}{'mapping'} = uiMap;
+
+%% TTL Output (to sync with neural data acquisition system)
+if sendTTLs
+   state{'dOut'}{'dOutObject'} = dotsDOut1208FS;
+   state{'dOut'}{'timeBetweenTTLPulses'} = 0.001; % in sec
+end
+
+%% State machine
+%
+% Define the state machine and transitions
+
+% Some convenient variables
+tip = 1; %state{'Timing'}{'instructionPresentation'};
+tw1 = 2; %state{'Timing'}{'timeBetweenInstructionsAndFixationOnset'};
+
+% blank the screen
+blanks = {@callObjectMethod, screenEnsemble, @blank};
+
+% show the instructions
+instructionsEnsemble = state{'graphics'}{'instructionsEnsemble'};
+showi = {@instructionsEnsemble.runBriefly};
+
+% The state machine
+trialStates = {...
+   'name'                  'entry'                   'input'               'timeout'   'exit'  'next'      ; ...
+   'startTrial'            {}                        {}                    0           {}       ''           ;  ...
+   'showInstructions'      showi                     {}                    tip         blanks  'wait1'      ; ...
+   'wait1'                 {}                        {}                    tw1         {}      'waitForFixation' ; ...
+   'waitForFixation'       {@XDshowFixation state}   {@getNextEvent ui}    0           {}      'noFixation' ; ...
+   'showStimulus'          {@disp 'made it!'}        {}                    0           {}      'done'       ; ...
+   'noFixation'            {@disp 'no fixation'}     {}                    0           {}      'done'       ; ...
+   };
+   
+% functions for the beginning and end of each trial
+
+% 
+% fixedStates = {...
+%    'name'                     'entry'                             'input'                       'next'                ; ...
+%    'prepareStimulus'          {@prepareStimulus state}            {}                            'presentInstructions' ; ...
+%    'presentInstructions'      {@presentInstructions state}        {}                            'presentFixation'     ; ...
+%    'waitForFixation'          {@presentFixationCue state}                                  {}   ''                    ; ...
+%    'presentStimulus'          {}                                  {@presentStimulus state}      ''                    ; ...
+%    '
+%    'updateStatus'             {@updateStatus state}               {}                            'presentFeedback'     ; ...
+%    'presentFeedback'          {@presentFeedback state}            {}                            'finishTrial'         ; ...
+%    'finishTrial'              {@finishTrial state}                {}                            ''                    ; ...
+% };
+
+% Put stuff together so that it will run
+stateMachine = topsStateMachine();
+stateMachine.addMultipleStates(trialStates);
+stateMachine.transitionFevalable = {@transitioning};
+stateMachine.startFevalable = {@XDstartTrial, state};
+%stateMachine.finishFevalable = {@finishTrial, state};
+state{'task'}{'stateMachine'} = stateMachine;
+
+trialConcurrents = topsConcurrentComposite('run() concurrently:');
+trialConcurrents.addChild(trialCalls);
+trialConcurrents.addChild(preparationMachine);
+trialConcurrents.addChild(drawables);
+trialConcurrents.addChild(screen);
+
+
+maintask = topsTreeNode('dotsTask');
+maintask.iterations = 1;
+maintask.startFevalable = {@callObjectMethod, screenEnsemble, @open};
+maintask.finishFevalable = {@callObjectMethod, screenEnsemble, @close};
+maintask.addChild(stateMachine);
+maintask.addChild(screenEnsemble);
+
+maintask.run();
+% dotsTheScreen.closeWindow();      
+      
+end
+

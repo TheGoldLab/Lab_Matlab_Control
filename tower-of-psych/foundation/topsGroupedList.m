@@ -92,22 +92,16 @@ classdef topsGroupedList < topsFoundation
                 self.allGroupsMap = containers.Map(group, groupMap, 'uniformValues', false);
                 self.groups = {group};
                 
-                groupIsNew = true;
-                
             elseif self.containsGroup(group)
                 % routine addition
                 groupMap = self.allGroupsMap(group);
                 groupMap(mnemonic) = item;
-                
-                groupIsNew = false;
                 
             else
                 % new group
                 groupMap = containers.Map(mnemonic, item, 'uniformValues', false);
                 self.allGroupsMap(group) = groupMap;
                 self.groups = self.allGroupsMap.keys;
-                
-                groupIsNew = true;
             end
         end
         
@@ -125,7 +119,7 @@ classdef topsGroupedList < topsFoundation
             groupMap = self.allGroupsMap(group);
             keys = groupMap.keys;
             vals = groupMap.values;
-            isItem = logical(zeros(size(keys)));
+            isItem = false(size(keys));
             for ii = 1:length(keys)
                 isItem(ii) = isequal(vals{ii}, item);
             end

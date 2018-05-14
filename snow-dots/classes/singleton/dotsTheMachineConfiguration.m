@@ -433,7 +433,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             else
                 group = class(object);
             end
-            
+                        
             % any defaults for this class?
             if self.settings.containsGroup(group);
                 [items, mnemonics] = ...

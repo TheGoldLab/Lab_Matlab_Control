@@ -100,7 +100,7 @@ classdef topsRunnable < topsFoundation
         % @param fevalable fevalable cell array specifying a function call
         % @details
         % logFeval is a convenient way to note in topsDataLog that some
-        % funciton call of interest has occurred, and then call the
+        % function call of interest has occurred, and then call the
         % function.  The log entry will contain the name of this
         % topsRunnable object, concatenated with @a fevalName.  It will
         % convert the function handle from the first element of @a

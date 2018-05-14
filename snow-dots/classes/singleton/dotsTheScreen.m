@@ -142,6 +142,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    end
    
    methods
+      
       % Return the current instance to a fresh state, closing the window.
       function initialize(self)
          % may not start out with an open window
@@ -159,7 +160,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % open(), with mglVisualAngleCoordinates()
          self.pixelsPerDegree = self.displayPixels(3) ...
             / (2*(180/pi)*atan2(self.width/2, self.distance));
-         
+
          % utility to manage frame timing
          self.flushGauge = dotsMglFlushGauge();
          self.flushGauge.clockFunction = self.clockFunction;
@@ -274,6 +275,8 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Assigns the same struct to lastFrameInfo.
       function frameInfo = nextFrame(self, doClear)
          
+         %disp('dotsTheScreen: GETTING NEXT FRAME')
+         
          if nargin < 2
             doClear = true;
          end
@@ -299,6 +302,11 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          self.lastFrameInfo = frameInfo;
       end
       
+      % Gets the current time
+      function time = getCurrentTime(self)
+         time = self.clockFunction();
+      end
+         
       % Swap OpenGL frame buffers twice without drawing.
       % @details
       % Calls for a clear of both OpenGL frame buffers as well as two
@@ -350,8 +358,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % Conditionally get default name
          if isempty(self.gammaTableFileName)
             self.gammaTableFileName = self.getHostGammaTableFilename();
-         end
-         
+         end         
          
          % save it
          if ~isempty(self.gammaTableFileName) && ...
