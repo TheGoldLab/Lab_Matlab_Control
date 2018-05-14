@@ -30,13 +30,10 @@ if nargin >= 4 && ~isempty(datatub)
    drawables.runBriefly();
    
    % Use the screenEmsemble to draw the next frame  
-   screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-   ret = screenEnsemble.callByName('flip');
+   ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
 
    % Save timing information in the trial struct, then re-save
 	task = datatub{'Control'}{'currentTask'};
-   trial = task.nodeData.trialData(task.nodeData.currentTrial);
-   trial.(sprintf('time_screen_%s', eventTag)) = ret.onsetTime;
-   trial.(sprintf('time_local_%s', eventTag)) = mglGetSecs;
-   task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+   task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
+      ret.onsetTime;
 end

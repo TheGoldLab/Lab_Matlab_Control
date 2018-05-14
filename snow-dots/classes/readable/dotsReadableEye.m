@@ -78,7 +78,11 @@ classdef dotsReadableEye < dotsReadable
       % device.
       sampleFrequency;
       
-      % minimum duration of a 
+      % Flag determining whether only to read event data
+      %  see readNewData for details. This defaults to 'true' because
+      %  typically we assume that eye tracking data will be stored
+      %  separately.
+      readEventsOnly = true;
    end
    
    properties (SetAccess = protected)
@@ -131,82 +135,76 @@ classdef dotsReadableEye < dotsReadable
       end
       
       % Add gaze window as a component and associated event
-      % gazeWindowName is used as the event name
-      function addGazeEvent(self, gazeWindowName, eventName, centerXY, ...
-            windowSize, isInverted, historyLength, isActive)
+      % gazeWindowName is unique string identifier
+      % The remaining arguments are key/value pairs:
+      %  eventName   ... Name of event used by dotsReadable.getNextEvent
+      %  centerXY    ... x,y coordinates of center of gaze window
+      %  channelsXY  ... Indices of data channels for x,y position
+      %  windowSize  ... Diameter of circular gaze window
+      %  windowDur   ... How long eye must be in window (msec) for event
+      %  isInverted  ... If true, checking for *out* of window
+      %  isActive    ... Flag indicating if this event is currently active
+      function addGazeWindow(self, gazeWindowName, varargin)
          
-         % check arg
-         if nargin < 4 || isempty(centerXY)
-            centerXY = [0 0];
+         % check if it already exists
+         if isempty(self.gazeEvents) || ...
+               ~any(strcmp(gazeWindowName, {self.gazeEvents.gazeWindowName}))
+            
+            % Add window as "component"
+            numComponents = numel(self.components);
+            ID = numComponents + 1;
+            self.components(ID).ID = ID;
+            self.components(ID).name = eventName;
+            
+            % Add the new gaze window struct to the end of the array
+            index = length(self.gazeEvents) + 1;
+            self.gazeEvents(index) = struct( ...
+               'gazeWindowName', gazeWindowName, ...
+               'ID',             ID, ...
+               'eventName',      [], ...
+               'channelsXY',     [self.xID self.yID], ...
+               'centerXY',       [0 0], ...
+               'windowSize',     1, ...
+               'windowDur',      0.2, ...
+               'eventQueue',     [], ...
+               'isInverted',     false, ...
+               'isActive',       false);
+            
+            % Be nice and keep track of when we need to call
+            % dotsReadable.defineEvent
+            updateEvent = true;
+         else
+            
+            % Use existing gaze window struct
+            index = find(strcmp(gazeWindowName, {self.gazeEvents.gazeWindowName}));
+            
+            % Only if eventName is given
+            updateEvent = any(strcmp('eventName', varargin));
          end
-         if nargin < 5 || isempty(windowSize)
-            windowSize = 1;
+         
+         % Parse args
+         for ii=1:2:nargin-2
+            self.gazeEvents(index).(varargin{ii}) = ...
+               self.gazeEvents(index).(varargin{ii+1});
          end
          
-         % Add window as "component"
-         ID = size(self.components,2) + 1;
-         self.components(numComponents).ID = numComponents;
-         self.components(numComponents).name = eventName;
+         % Check/clear event queue
+         len = self.gazeEvents(index).windowDur*self.sampleFrequency+2;
+         if length(self.gazeEvents(index).eventQueue) ~= len
+            self.gazeEvents(index).eventQueue = nans(len,2);
+         else
+            self.gazeEvents(index).eventQueue(:) = nan;
+         end
          
-         % Make gaze event to store locally, to be able to activate/
-         % deactivate it at will)
-         gazeEventIndex = length(self.gazeEvents) + 1;
-         self.gazeEvents(gazeEventIndex).gazeWindowName = gazeWindowName;
-         self.gazeEvents(gazeEventIndex).eventName = eventName;
-         self.gazeEvents(gazeEventIndex).ID = ID;
-         self.gazeEvents(gazeEventIndex).center = center;
-         self.gazeEvents(gazeEventIndex).diameter = diameter;
-         self.gazeEvents(gazeEventIndex).isInverted = isInverted;
-         self.gazeEvents(gazeEventIndex).isActive = isActive;
-         
-         % Now add it to the dotsReadable event queue
-         defineEvent(self, ID, eventName, 0, diameter, isInverted);         
+         % Now add it to the dotsReadable event queue. We do all the heavy
+         % lifting here, in getNewData, to determine if an event actually
+         % happened. As a consequence, we only send real events and don't
+         % require dotsReadable.detectEvent to make any real comparisons,
+         % which is why we set the min/max values to -/+inf.
+         if updateEvent
+            self.defineEvent(ID, eventName, -inf, inf, false);
+         end
       end
-      
-      % activate
-      function activateGazeWindow(self, gazeWindowName, eventName)
-         
-         % Get event index
-         gazeEventIndex = find(strcmp(gazeWindowName, {self.gazeEvents.name}));
-         
-         % Check if already active
-         if self.gazeEvents(gazeEventIndex).isActive
-            return
-         end
-         
-         % check argument
-         if nargin > 2 || ~isempty(eventName)
-            self.gazeEvents(gazeEventIndex).eventName = eventName;
-         end
-         
-         % Set active flag
-         self.gazeEvents(gazeEventIndex).isActive = true;
-
-         % Re-set dotsReadable event
-         ID = getComponentIDbyName(self, gazeWindowName);
-         self.eventDefinitions(ID).name = self.gazeEvents(gazeEventIndex).eventName;
-         self.eventDefinitions(ID).lowValue = 0;
-         self.eventDefinitions(ID).highValue = self.gazeEvents(gazeEventIndex).diameter;
-         self.eventDefinitions(ID).isInverted = self.gazeEvents(gazeEventIndex).isInverted;
-      end
-      
-      % De-activate
-      function deactivateGazeWindow(self, gazeWindowName)
-
-         % Get event index
-         gazeEventIndex = find(strcmp(gazeWindowName, {self.gazeEvents.name}));
-         
-         % Check if already inactive
-         if ~self.gazeEvents(gazeEventIndex).isActive
-            return
-         end
-
-         % Unset active flag
-         self.gazeEvents(gazeEventIndex).isActive = false;
-
-         % Undefine dotsReadable event
-         undefineEvent(self, self.gazeEvents(gazeEventIndex).ID)
-      end      
    end
    
    methods (Access = protected)
@@ -215,7 +213,7 @@ classdef dotsReadableEye < dotsReadable
       % Use overloaded subclass openComponents Method
       %  to redefine if necessary
       function components = openComponents(self)
-
+         
          % The component names
          names = {'x', 'y', 'pupil'};
          
@@ -241,29 +239,70 @@ classdef dotsReadableEye < dotsReadable
       function newData = readNewData(self)
          
          % get new data
-         newData = self.transformRawData(self.readRawEyeData());
+         rawData = self.transformRawData(self.readRawEyeData());
+         
+         % check whether or not we pass along all the raw data or just the
+         % events
+         if self.readEventsOnly
+            newData = [];
+         else
+            newData = rawData;
+         end
          
          % update gaze window data by computing distance of gaze
          %  to center of each window
          if ~isempty(self.gazeEvents)
             
-            newEvents = [];
+            % Get Logical array of isActive flags
+            LactiveFlags = [self.gazeEvents.isActive];
             
-            % For each active gaze event, update gaze distance queue
-            for gg = find([self.gazeEvents.isActive])
+            % Check for active gazeWindows
+            if ~any(LactiveFlags)
+               return
+            end
+            
+            % NOTE: FOR NOW ASSUME THAT ALL EVENTS USE THE SAME GAZE
+            % CHANNELS!!! THIS CAN/SHOULD BE CHANGED IF MORE FLEXIBILITY IS
+            % NEEDED, BUT FOR NOW IT SERVES TO SPEED THINGS UP
+            activeIndices = find(LactiveFlags);
+            
+            % Get x,y samples ... these should be paired
+            Lx = rawData(:,1) == self.gazeEvents(activeIndices(1)).channelsXY(1);
+            Ly = rawData(:,1) == self.gazeEvents(activeIndices(1)).channelsXY(2);
+            
+            % Check for relevant data
+            if ~any(Lx) || sum(Lx) ~= sum(Ly)
+               if sum(Lx) ~= sum(Ly) % This shouldn't happen
+                  warning('dotsReadableEye.readNewData: error')
+               end
+               return
+            end
+            
+            % collect into [time x y] triplets
+            gazeData = cat(2, rawData(Lx,3), rawData(Lx,2), rawData(Ly,2));
+            numSamples = size(gazeData, 1);
+            
+            % Now loop through each active gaze event and update
+            for gg = 1:length(activeIndices);
                
                ev = self.gazeEvents(gg);
                
-               % Rotate the buffer
-               ev.gazeEventsQueue(1:end-1,:) = ...
-                  ev.gazeEventsQueue(2:end,:);
+               % Calcuate number of samples to add to the buffer
+               bufLen = size(ev.gazeEventsQueue,1);
+               numSamplesToAdd  = min(bufLen, numSamples);
                
-               % Add the new sample as a distance from center
-               ev.gazeEventsQueue(end,:) = [ ...
+               % Rotate the buffer
+               ev.gazeEventsQueue(1:end-numSamplesToAdd,:) = ...
+                  ev.gazeEventsQueue(1+numSamplesToAdd:end,:);
+               
+               % Add the new samples as a distance from center, plus the
+               % timestamp. Buffer rows are [times, distances]
+               inds = (bufLen-numSamplesToAdd+1):bufLen;
+               ev.gazeEventsQueue(end-numSamplesToAdd+1:end,:) = [
+                  gazeData(inds, 1), ...
                   sqrt( ...
-                  (newData(ev.xChannel,2)-ev.centerXY(1)).^2 + ...
-                  (newData(ev.yChannel,2)-ev.centerXY(2)).^2), ...
-                  newData(ev.xChannel,3)];
+                  (gazeData(inds,2)-ev.centerXY(1)).^2 + ...
+                  (gazeData(inds,3)-ev.centerXY(2)).^2)];
                
                % Check for event:
                %  1. current sample is in acceptance window
@@ -271,19 +310,19 @@ classdef dotsReadableEye < dotsReadable
                %  3. earlist sample in acceptance window was at least
                %     historyLength in the past
                %  4. no intervening samples were outside window
-               Lgood = ev.gazeEventsQueue(:,1) <= ev.windowSize;
+               Lgood = ev.gazeEventsQueue(:,2) <= ev.windowSize;
                if ev.isInverted
                   Lgood = ~Lgood;
                end
                if Lgood(end) && any(Lgood(1:end-1))
                   fg = find(Lgood,1);
-                  if (ev.gazeEventsQueue(fg,2) <= ...
-                     (ev.gazeEventsQueue(end,2) - ev.historyLength)) && ...
-                     (all(Lgood(fg:end) | isfinite(ev.gazeEventsQueue(fg:end,1))))
+                  if (ev.gazeEventsQueue(fg,1) <= ...
+                        (ev.gazeEventsQueue(end,1) - ev.windowDur)) && ...
+                        (all(Lgood(fg:end) | ~isfinite(ev.gazeEventsQueue(fg:end,1))))
                      
                      % Add the event to the data stream
                      newData = cat(1, newData, ...
-                        [ev.ID ev.gazeEventsQueue(end,:)]);
+                        [ev.ID ev.gazeEventsQueue(fg,:)]);
                   end
                end
             end
@@ -347,9 +386,5 @@ classdef dotsReadableEye < dotsReadable
          self.yOffset = ...
             (self.xyRect(2)/self.yScale) - self.inputRect(2);
       end
-
-      % Overloaded method for detecting events
-      function isEvent = detectEvents(self, data)
-     
    end
 end

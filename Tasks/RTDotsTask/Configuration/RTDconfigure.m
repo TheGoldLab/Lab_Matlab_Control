@@ -28,6 +28,8 @@ function [datatub, maintask] = RTDconfigure(varargin)
 %                           <BIAS stimulus key, 'L'=More left, 
 %                                'R'=More right, 'N'=Neutral>
 %                     2 : <number of trials>
+%  'gazeWindowSize', - standard size of gaze window, in degrees vis angle
+%  'gazeWindowDur',  - standard duration for gaze window (gaze holding time)
 %  'sendTTLs'     - flag, set to true to send TTL pulses via the PMD
 %  'remoteInfo'   - cell array {<clientIP>, <clientPort>, <serverIP>,
 %                          <serverPort>} or {false} for local
@@ -62,6 +64,7 @@ defaultArguments = { ...
    'referenceRT',          nan; ...
    'trialsPerCoherence',   40; ....
    'taskSpecs',            {'Quest', 40, 'meanRT', 20, 'SN' 20 'AN' 20}; ...
+   'gazeWindowSize',       4; ...
    'sendTTLs',             false; ...
    'remoteInfo',           {true '192.168.1.1', 40000, '192.168.1.2', 40001}; ...
    'displayIndex',         1; ...
@@ -115,9 +118,9 @@ datatub{'SaccadeTarget'}{'size'}   = 3/2;
 % Parameters for the moving dots stimuli that will be shared across every
 % trial. Also store the pixel position for the center of the stimuli.
 datatub{'MovingDots'}{'stencilNumber'} = 1;
-datatub{'MovingDots'}{'pixelSize'} = 6;
-datatub{'MovingDots'}{'diameter'} = 10;
-datatub{'MovingDots'}{'density'} = 150;
+datatub{'MovingDots'}{'pixelSize'} = 5;
+datatub{'MovingDots'}{'diameter'} = 15;
+datatub{'MovingDots'}{'density'} = 120;
 datatub{'MovingDots'}{'speed'} = 3;
 datatub{'MovingDots'}{'xDVA'} = 0;
 datatub{'MovingDots'}{'yDVA'} = 0;
@@ -148,7 +151,8 @@ maintask.startFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsembl
 maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
 datatub{'Control'}{'mainTask'} = maintask;
 
-% Add tasks to the main tree node
+% Add tasks to the main tree node. Here they all use the same stateMachine,
+% but in general that does not have to be the case
 RTDconfigureTasks(maintask, datatub);
 
 %% ---- Configure Data logging

@@ -132,7 +132,9 @@ classdef dotsReadable < handle
          end
          
          %> Remove any stale data
-         self.flushData();
+         if self.isAvailable
+            self.flushData();
+         end
       end
       
       %> Release any resources acquired by initialize().

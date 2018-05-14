@@ -33,7 +33,7 @@ stimulusEnsemble.setObjectProperty('direction', trial.direction, inds(3));
 % Prepare to draw dots stimulus, use return value to sync time
 stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow);
 
-disp(sprintf('COHERENCE=%.2f, DIRECTION=%d', trial.coherence, trial.direction))
+disp(sprintf('RTDstartTrial : COHERENCE=%.2f, DIRECTION=%d', trial.coherence, trial.direction))
 
 %% ---- Set the targets foreperiod
 % Randomly sample a duration from an exponential distribution with bounds
@@ -53,15 +53,20 @@ screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 % Ask for the time from the screen object, but only accept it if it comes
 % quickly
 roundTrip = inf;
-while roundTrip > 0.01
+start = mglGetSecs;
+timeout = false;
+while roundTrip > 0.01 && ~timeout;
    before = mglGetSecs;
    screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);   
-   after = mglGetSecs;
-   roundTrip = after - before;
+   roundTrip = mglGetSecs - before;
+   timeout = (after-start) > 0.5;
 end
+trial.time_eye_trialStart    = ui.getDeviceTime();
 trial.time_screen_trialStart = screenTime;
-trial.time_local_trialStart = after;
-trial.time_eye_trialStart = ui.getDeviceTime();
+trial.time_local_trialStart  = mean([before after]);
+if timeout
+   trial.time_is_confident = false;
+end
 
 %% ---- Conditionally send TTL pulses with info about task, trial counters
 if datatub{'Input'}{'sendTTLs'}

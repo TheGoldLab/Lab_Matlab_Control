@@ -22,7 +22,29 @@ trial = task.nodeData.trialData(task.nodeData.currentTrial);
 %     the UI data
 topsDataLog.logDataInGroup(trial, 'trial');
 
-%% ---- Check for good response
+%% ---- Save times
+% use the screen ensemble to get the (possibly remote) screen time
+screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
+
+% Ask for the time from the screen object, but only accept it if it comes
+% quickly
+roundTrip = inf;
+start = mglGetSecs;
+timeout = false;
+while roundTrip > 0.01 && ~timeout;
+   before = mglGetSecs;
+   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);   
+   roundTrip = mglGetSecs - before;
+   timeout = (after-start) > 0.5;
+end
+trial.time_eye_trialFinish    = ui.getDeviceTime();
+trial.time_screen_trialFinish = screenTime;
+trial.time_local_trialFinish  = mean([before after]);
+if timeout
+   trial.time_is_confident = false;
+end
+
+%% ---- Check for good response to prepare for next trial
 if ~isfinite(trial.choice) || trial.choice < 0
  
    % NO CHOICE
@@ -50,3 +72,4 @@ else
       task.isRunning = false;
    end
 end
+

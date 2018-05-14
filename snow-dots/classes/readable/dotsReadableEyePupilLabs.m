@@ -418,6 +418,13 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Therefore, you must ensure that the software is up and running
          % for this function to work properly.
          
+         % Dumb check for zmq library for communicating with the pupil-labs
+         % device
+         if ~exist('matlab-zmq', 'dir')
+            isOpen = false;
+            return
+         end
+         
          % Set up a ZMQ context that will be used for managing all our
          % communications with PupilLabs
          self.zmqContext = zmq.core.ctx_new();

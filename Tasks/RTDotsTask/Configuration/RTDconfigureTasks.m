@@ -58,8 +58,7 @@ for tt = 1:2:length(taskSpecs)
    % Case on task type
    if strcmp(name, 'Quest')
 
-      %% Quest block!
-      
+      % Quest block!      
       % Will use Quest to determine coherences for the other blocks
       coherences = nan;
       
@@ -90,8 +89,7 @@ for tt = 1:2:length(taskSpecs)
             
    elseif strcmp(name, 'meanRT')
       
-      %% meanRT block!
-
+      % meanRT block!
       % Will use meanRT to determine referenceRT for the other blocks
       referenceRT = nan;
 
@@ -110,8 +108,7 @@ for tt = 1:2:length(taskSpecs)
       
    else
 
-      %% Standard test block, with SAT/BIAS conditions!
-      
+      % Standard test block, with SAT/BIAS conditions!      
       % Parse instructions
       instructions = {[], []};
       

@@ -8,6 +8,15 @@ function RTDconfigureGraphics(datatub)
 % 5/11/18 written by jig
 
 %% ---- Screen ensemble for controlling drawing
+% 
+% NOTE: you can use the screen ensemble 'flip' method defined below to
+% return a structure of timestamps (see dotsTheScreen.nextFrame for
+% details) describing the time of drawing. Most importantly, setting up the
+% ensemble in this way (using the dotsEnsembleUtilities) means that the
+% flipping can be either local or remote but will return the times
+% appropriate to the CPU where the flipping occurred. Here a such a command
+% would be:
+%   ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
 remoteInfo = datatub{'Input'}{'remoteInfo'};
 screen = dotsTheScreen.theObject();
 screen.displayIndex = datatub{'Input'}{'displayIndex'};
@@ -42,7 +51,7 @@ datatub{'Graphics'}{'fixationCue'} = fixationCue;
 % be determined by a variable contained in the state object.
 saccadeTargets = dotsDrawableTargets();
 saccadeTargets.xCenter = datatub{'FixationCue'}{'xDVA'} + datatub{'SaccadeTarget'}{'offset'}.*[-1 1];
-saccadeTargets.yCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
+saccadeTargets.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
 saccadeTargets.nSides  = 100;
 saccadeTargets.height  = [1 1] * datatub{'SaccadeTarget'}{'size'};
 saccadeTargets.width   = [1 1] * datatub{'SaccadeTarget'}{'size'};
