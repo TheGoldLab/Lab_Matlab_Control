@@ -8,13 +8,13 @@
 
 %% Start dots
 s = dotsTheScreen.theObject;
-s.displayIndex = 2;
+s.displayIndex = 1;
 s.openWindow();
 
 %% Start server
 server = dotsEnsembleServer(clientIP,clientPort,serverIP,serverPort);
 try
-   server.run();   
+   server.run();
 catch   
    disp('SERVER ERROR')
 end

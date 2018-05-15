@@ -57,17 +57,17 @@ start = mglGetSecs;
 timeout = false;
 while roundTrip > 0.01 && ~timeout;
    before = mglGetSecs;
-   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);   
-   roundTrip = mglGetSecs - before;
+   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
+   after = mglGetSecs;
+   roundTrip = after - before;
    timeout = (after-start) > 0.5;
 end
-trial.time_eye_trialStart    = ui.getDeviceTime();
-trial.time_screen_trialStart = screenTime;
-trial.time_local_trialStart  = mean([before after]);
+trial.time_eye_trialFinish    = ui.getDeviceTime();
+trial.time_screen_trialFinish = screenTime;
+trial.time_local_trialFinish  = mean([before after]);
 if timeout
    trial.time_is_confident = false;
 end
-
 %% ---- Conditionally send TTL pulses with info about task, trial counters
 if datatub{'Input'}{'sendTTLs'}
    timeBetweenTTLPulses = datatub{'dOut'}{'timeBetweenTTLPulses'};

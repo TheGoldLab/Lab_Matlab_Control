@@ -319,11 +319,13 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
         % host, suitable for automatic loading.
         function hostFile = getHostFilename()
             if isunix()
-                [stat,h] = unix('hostname -s');
+                % jig changed this 5/15/2018
+                % [stat,h] = unix('hostname -s');
+                [~,name] = system('scutil --get ComputerName');
             else
-                h = 'windows';
+                name = 'windows';
             end
-            hostFile = sprintf('dots_%s_MachineConfig.xml', deblank(h));
+            hostFile = sprintf('dots_%s_MachineConfig.xml', deblank(name));
         end
         
         % Get the value of a default setting by name.

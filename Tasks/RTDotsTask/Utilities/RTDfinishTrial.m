@@ -25,16 +25,18 @@ topsDataLog.logDataInGroup(trial, 'trial');
 %% ---- Save times
 % use the screen ensemble to get the (possibly remote) screen time
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
+ui = datatub{'Control'}{'ui'};
 
 % Ask for the time from the screen object, but only accept it if it comes
 % quickly
 roundTrip = inf;
 start = mglGetSecs;
 timeout = false;
-while roundTrip > 0.01 && ~timeout;
+while roundTrip > 0.006 && ~timeout;
    before = mglGetSecs;
-   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);   
-   roundTrip = mglGetSecs - before;
+   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
+   after = mglGetSecs;
+   roundTrip = after - before;
    timeout = (after-start) > 0.5;
 end
 trial.time_eye_trialFinish    = ui.getDeviceTime();

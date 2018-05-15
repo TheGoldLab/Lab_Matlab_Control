@@ -35,8 +35,8 @@ function [datatub, maintask] = RTDconfigure(varargin)
 %                          communication parameters
 %  'displayIndex' - see dotsTheScreen (0:small window; 1=main window;
 %                          2:secondary window)
-%  'filepath'     - <string> where to put the data files
-%  'filename'     - <string> name. Note that when pupil labs is used,
+%  'filePath'     - <string> where to put the data files
+%  'fileName'     - <string> name. Note that when pupil labs is used,
 %                          a second file is created with name
 %                          <filename>_pupil
 %
@@ -55,6 +55,15 @@ function [datatub, maintask] = RTDconfigure(varargin)
 % of the state machine around as it advances.
 datatub = topsGroupedList();
 
+%% ---- Make machine-specific data file path
+[~,machineName] = system('scutil --get ComputerName');
+switch deblank(machineName)
+    case {'GoldLabMacbookPro'}
+        filePath = '/Users/lab/ActiveFiles/Data/RTDdata';
+    otherwise
+        filePath = '/Users/jigold/GoldWorks/Local/Data/Projects/RTDots';
+end
+
 %% ---- Parse arguments
 c = clock;
 defaultArguments = { ...
@@ -69,8 +78,8 @@ defaultArguments = { ...
    'sendTTLs',             false; ...
    'useRemote',            false; ...
    'displayIndex',         1; ...
-   'filepath',             '/Users/jigold/GoldWorks/Local/Data/Projects/RTDots'; ...
-   'filename',             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', c(1), c(2), c(3), c(4), c(5)); ...
+   'filePath',             filePath; ...
+   'fileName',             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', c(1), c(2), c(3), c(4), c(5)); ...
    };
 
 % Arguments are property/value pairs
@@ -141,7 +150,7 @@ end
 if datatub{'Input'}{'useRemote'}
    [clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
    datatub{'Input'}{'remoteInfo'} = { ...
-      clientIP, clientPort, serverIP, serverPort};
+      true, clientIP, clientPort, serverIP, serverPort};
 else
    datatub{'Input'}{'remoteInfo'} = {false};
 end
@@ -156,11 +165,9 @@ RTDconfigureUI(datatub);
 RTDconfigureStateMachine(datatub);
 
 %% ---- Configure Tasks
-% Set up the main tree node
+% Set up the main tree node and save it
 maintask = topsTreeNode('dotsTask');
 maintask.iterations = 1; % Go once through the set of tasks
-
-% a bunch of calls to start and stop
 %maintask.startFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @open};
 %maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
 datatub{'Control'}{'mainTask'} = maintask;
@@ -172,7 +179,7 @@ RTDconfigureTasks(maintask, datatub);
 %% ---- Configure Data logging
 topsDataLog.flushAllData(); % Flush stale data, just in case
 topsDataLog.logDataInGroup(struct(datatub), 'datatub');
-topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filepath'}, datatub{'Input'}{'filename'}));
+topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, datatub{'Input'}{'fileName'}));
 topsDataLog.flushAllData(); % Flush again to keep memory demands low
 
 end

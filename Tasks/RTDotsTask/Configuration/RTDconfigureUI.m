@@ -46,8 +46,8 @@ kb.defineCalibratedEvent('KeyboardD', 'done', 1, true);
 datatub{'Control'}{'keyboard'} = kb;
 
 %% ---- Try to get pupil labs device
-pl = dotsReadableEyePupilLabs();
-if pl.isAvailable
+%pl = dotsReadableEyePupilLabs();
+if false %pl.isAvailable
     
     % Set remote info, for showing calibration on the appropriate screen
     pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
