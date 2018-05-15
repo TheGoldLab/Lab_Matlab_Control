@@ -31,8 +31,8 @@ function [datatub, maintask] = RTDconfigure(varargin)
 %  'gazeWindowSize', - standard size of gaze window, in degrees vis angle
 %  'gazeWindowDur',  - standard duration for gaze window (gaze holding time)
 %  'sendTTLs'     - flag, set to true to send TTL pulses via the PMD
-%  'remoteInfo'   - cell array {<clientIP>, <clientPort>, <serverIP>,
-%                          <serverPort>} or {false} for local
+%  'useRemote'    - true or false. If true, use RTDconfigureIPs to set
+%                          communication parameters
 %  'displayIndex' - see dotsTheScreen (0:small window; 1=main window;
 %                          2:secondary window)
 %  'filepath'     - <string> where to put the data files
@@ -67,7 +67,7 @@ defaultArguments = { ...
    'gazeWindowSize',       4; ...
    'gazeWindowDur',        0.2; ...
    'sendTTLs',             false; ...
-   'remoteInfo',           {true '192.168.1.1', 40000, '192.168.1.2', 40001}; ...
+   'useRemote',            false; ...
    'displayIndex',         1; ...
    'filepath',             '/Users/jigold/GoldWorks/Local/Data/Projects/RTDots'; ...
    'filename',             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', c(1), c(2), c(3), c(4), c(5)); ...
@@ -136,6 +136,17 @@ if datatub{'Input'}{'sendTTLs'}
 end
 
 %% ---- Configure Graphics
+%
+% First check for local/remote graphics
+if datatub{'Input'}{'useRemote'}
+   [clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
+   datatub{'Input'}{'remoteInfo'} = { ...
+      clientIP, clientPort, serverIP, serverPort};
+else
+   datatub{'Input'}{'remoteInfo'} = {false};
+end
+   
+% Set up graphics objects
 RTDconfigureGraphics(datatub);
 
 %% ---- Configure User input : pupil labs or keyboard

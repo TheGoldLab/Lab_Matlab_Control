@@ -1,13 +1,10 @@
-%% MovingDotsPupilLabsServer
+%% RTDserver
 %
 % Run this on the server machine to allow it to accept connections. Make
 % sure IP addresses match between both computers.
 
-%% Set IP addresses
-clientIP = '158.130.221.199';
-clientPort = 30000;
-serverIP = '158.130.217.154';
-serverPort = 30001;
+%% Get IP addresses
+[clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
 
 %% Start dots
 s = dotsTheScreen.theObject;
@@ -16,4 +13,8 @@ s.openWindow();
 
 %% Start server
 server = dotsEnsembleServer(clientIP,clientPort,serverIP,serverPort);
-server.run();
+try
+   server.run();   
+catch   
+   disp('SERVER ERROR')
+end
