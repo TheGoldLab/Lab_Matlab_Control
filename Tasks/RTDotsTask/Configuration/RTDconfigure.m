@@ -60,6 +60,8 @@ datatub = topsGroupedList();
 switch deblank(machineName)
     case {'GoldLabMacbookPro'}
         filePath = '/Users/lab/ActiveFiles/Data/RTDdata';
+    case {'LabMacMini'}
+        filePath = '/Users/neurosurgery/ActiveFiles/Data/RTDdata';
     otherwise
         filePath = '/Users/jigold/GoldWorks/Local/Data/Projects/RTDots';
 end

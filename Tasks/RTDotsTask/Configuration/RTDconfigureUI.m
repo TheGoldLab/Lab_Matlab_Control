@@ -26,6 +26,9 @@ elseif any([infoStruct.ProductID]==610)
     % use built-in keboard, old macBook Pro
     matching.ProductID = 610;
     matching.PrimaryUsage = 6;
+elseif any([infoStruct.ProductID]==50475)
+    matching.ProductID = 50475;
+    matching.PrimaryUsage = 6;    
 end
 
 % fallback on keyboard inputs
@@ -41,6 +44,10 @@ kb.isAutoRead = true;
 kb.defineCalibratedEvent('KeyboardQ', 'quit', 1, true);
 kb.defineCalibratedEvent('KeyboardP', 'pause', 1, true);
 kb.defineCalibratedEvent('KeyboardD', 'done', 1, true);
+
+% For checking
+% [a,b,c,d] = kb.waitForKeyPress(kb, 'KeyboardQ',10)
+
 
 % Save the keyboard
 datatub{'Control'}{'keyboard'} = kb;
