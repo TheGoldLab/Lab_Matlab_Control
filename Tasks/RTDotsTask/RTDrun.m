@@ -23,7 +23,36 @@ arguments = { ...
 [datatub, maintask] = RTDconfigure(arguments{:});
 
 %% ---- RUN IT
-maintask.run();
+% Moved open/close screen here because we also want to check whether or not
+% to calibrate the eye tracker, which requires the screen
+
+% get the screen ensemble
+screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
+
+try    
+    
+    % Open the screen
+    screenEnsemble.callObjectMethod(@open);
+    
+    % Check to calibrate pupil-lab device   
+    ui = datatub{'Control'}{'ui'};
+    if isa(ui, 'dotsReadableEyePupilLabs')
+        ui.calibrate();
+    end
+
+    % Run the task
+    maintask.run();
+    
+    % Close the screen
+    screenEnsemble.callObjectMethod(@close);
+    
+%maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
+
+catch
+    
+    % Close the screen
+    screenEnsemble.callObjectMethod(@close);
+end
 
 %% ---- Save the data
 topsDataLog.writeDataFile();

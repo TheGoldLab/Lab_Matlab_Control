@@ -129,12 +129,7 @@ classdef dotsReadable < handle
             for id = self.getComponentIDs()
                self.undefineEvent(id);
             end
-         end
-         
-         %> Remove any stale data
-         if self.isAvailable
-            self.flushData();
-         end
+         end         
       end
       
       %> Release any resources acquired by initialize().

@@ -298,7 +298,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % make ensemble
          calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble( ...
-            'calibrationEnsemble', self.remoteInfo{:});
+            'calibrationEnsemble', self.ensembleRemoteInfo{:});
          
          % Create a white background. This is necessary because the
          % PupilLab software recognizes calibration markers on a white
@@ -511,7 +511,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          if self.getRawEyeData
 
             % Make all the components
-            components = struct('ID', num2cell(1:size(names,1)), 'name', names);
+            components = struct('ID', num2cell(1:size(names,2)), 'name', names);
 
             % Save raw eye IDs
             self.pXIDs = [find(strcmp('pupil0 x', names)) find(strcmp('pupil1 x', names))];
@@ -521,7 +521,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          else
             
             % Just make the gaze components
-            components = struct('ID', num2cell(1:3), 'name', names);            
+            components = struct('ID', num2cell(1:3), 'name', names(1:3));      
          end
                   
          % Alwats save gaze IDs
@@ -592,6 +592,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                newData(self.pCIDs(id+1),:) = [self.pCIDs(id+1) confidence time];
             end
          end
+         
+         newData
       end
       
       % Transform the normalized x/y eye data into screen coordinates

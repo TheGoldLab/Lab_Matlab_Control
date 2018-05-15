@@ -15,13 +15,17 @@ function RTDconfigureUI(datatub)
 mexHID('initialize');
 infoStruct = mexHID('summarizeDevices');
 if any([infoStruct.VendorID]==1008)
-   % use attached keboard
-   matching.VendorID = 1008;
-   matching.ProductID = 36;
-else
-   % use built-in keboard
-   matching.ProductID = 632;
-   matching.PrimaryUsage = 6;
+    % use attached keboard
+    matching.VendorID = 1008;
+    matching.ProductID = 36;
+elseif any([infoStruct.ProductID]==632)
+    % use built-in keboard, new macBook Pro
+    matching.ProductID = 632;
+    matching.PrimaryUsage = 6;
+elseif any([infoStruct.ProductID]==610)
+    % use built-in keboard, old macBook Pro
+    matching.ProductID = 610;
+    matching.PrimaryUsage = 6;
 end
 
 % fallback on keyboard inputs
@@ -44,60 +48,64 @@ datatub{'Control'}{'keyboard'} = kb;
 %% ---- Try to get pupil labs device
 pl = dotsReadableEyePupilLabs();
 if pl.isAvailable
-   
-   % Set remote info, for showing calibration on the appropriate screen
-   pl.ensembleRemoteInfo = remoteInfo;
-   
-   % Set screen width, height for calibration routine
-   pl.windowRect = getObjectProperty( ...
-      datatub{'graphics'}{'screenEnsemble'}, 'windowRect');
-   
-   % Calibrate
-   pl.calibrate();
-   
-   % Define gazeWindows based on fp and two targets
-   windowSize = datatub{'Input'}{'gazeWindowSize'};
-   windowDur  = datatub{'Input'}{'gazeWindowDur'};
-   fpx        = datatub{'FixationCue'}{'xDVA'};
-   fpy        = datatub{'FixationCue'}{'yDVA'};
-   offset     = datatub{'SaccadeTarget'}{'offset'};
-   
-   % Fixation window
-   pl.addGazeWindow('fpWindow', ...
-      'eventName',   'holdFixation', ...
-      'centerXY',    [fpx fpy], ...
-      'channelsXY',  [pl.gXID pl.gYID], ...
-      'windowSize',  windowSize, ...
-      'windowDur',   windowDur);
-   
-   % Left target window
-   pl.addGazeWindow('t1Window', ...
-      'eventName',   'choseLeft', ...
-      'centerXY',    [fpx-offset fpy], ...
-      'channelsXY',  [pl.gXID pl.gYID], ...
-      'windowSize',  windowSize, ...
-      'windowDur',   windowDur);
-   
-   % Right target window
-   pl.addGazeWindow('t2Window', ...
-      'eventName',   'choseRight', ...
-      'centerXY',    [fpx+offset fpy], ...
-      'channelsXY',  [pl.gXID pl.gYID], ...
-      'windowSize',  windowSize, ...
-      'windowDur',   windowDur);
-   
-   % Define keypress event to trigger calibration
-   kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
-
+    
+    % Set remote info, for showing calibration on the appropriate screen
+    pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
+    
+    % Set screen width, height for calibration routine
+    pl.windowRect = [0 0 1920 1080];
+    % jig TODO
+    % getObjectProperty( ...
+    %    datatub{'Graphics'}{'screenEnsemble'}, 'windowRect')
+    
+    % Define gazeWindows based on fp and two targets
+    windowSize = datatub{'Input'}{'gazeWindowSize'};
+    windowDur  = datatub{'Input'}{'gazeWindowDur'};
+    fpx        = datatub{'FixationCue'}{'xDVA'};
+    fpy        = datatub{'FixationCue'}{'yDVA'};
+    offset     = datatub{'SaccadeTarget'}{'offset'};
+    
+    % Fixation window
+    pl.addGazeWindow('fpWindow', ...
+        'eventName',   'holdFixation', ...
+        'centerXY',    [fpx fpy], ...
+        'channelsXY',  [pl.gXID pl.gYID], ...
+        'windowSize',  windowSize, ...
+        'windowDur',   windowDur);
+    
+    % Left target window
+    pl.addGazeWindow('t1Window', ...
+        'eventName',   'choseLeft', ...
+        'centerXY',    [fpx-offset fpy], ...
+        'channelsXY',  [pl.gXID pl.gYID], ...
+        'windowSize',  windowSize, ...
+        'windowDur',   windowDur);
+    
+    % Right target window
+    pl.addGazeWindow('t2Window', ...
+        'eventName',   'choseRight', ...
+        'centerXY',    [fpx+offset fpy], ...
+        'channelsXY',  [pl.gXID pl.gYID], ...
+        'windowSize',  windowSize, ...
+        'windowDur',   windowDur);
+    
+    % Save it
+    ui = pl;
+    
+    % Define keypress event to trigger calibration
+    kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
+    
 else
-   
-   % Otherwise use the keyboard
-   
-   % Define task events
-   kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
-   kb.defineCalibratedEvent('KeyboardJ', 'choseRight', 2, true);
-   kb.defineCalibratedEvent('KeyboardSpacebar', 'holdFixation', [], true);
-   ui = kb;
+    
+    % Otherwise use the keyboard
+    
+    % Define task events
+    kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
+    kb.defineCalibratedEvent('KeyboardJ', 'choseRight', 2, true);
+    kb.defineCalibratedEvent('KeyboardSpacebar', 'holdFixation', [], true);
+
+    % Save it
+    ui = kb;
 end
 
 % Save the active ui device
@@ -105,7 +113,7 @@ datatub{'Control'}{'ui'} = ui;
 
 %datatub{'input'}{'mapping'} = uiMap;
 
-% 
+%
 % % make a call list so this can be added to a concurrentComposite
 % uiCallList = topsCallList('read ui');
 % uiCallList.addCall({@read, ui}, 'read input');
