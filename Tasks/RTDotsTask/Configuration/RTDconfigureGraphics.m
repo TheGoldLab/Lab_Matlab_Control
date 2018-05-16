@@ -39,8 +39,8 @@ datatub{'Graphics'}{'screenEnsemble'} = screenEnsemble;
 fixationCue = dotsDrawableTargets();
 fixationCue.xCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
 fixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
-fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.1];
-fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.1 1];
+fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.05];
+fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.05 1];
 fixationCue.nSides  = 4;
 datatub{'Graphics'}{'fixationCue'} = fixationCue;
 

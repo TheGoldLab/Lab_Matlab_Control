@@ -15,6 +15,7 @@ clear all
 arguments = { ...
    'taskSpecs',            {'Quest' 40 'SN' 20 'AN' 20}, ...
    'sendTTLs',             false, ...
+   'useEyeTracking',       false, ...
    'displayIndex',         1, ... % 0=small, 1=main
    'useRemote',            true, ...
    };
@@ -35,14 +36,14 @@ screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
     % Open the screen
     screenEnsemble.callObjectMethod(@open);
     
-    % Wait for the remote screen to start up
-%    if datatub{'Input'}{'useRemote'}
-%        pause(10);
-%    end
-    
     % Check to calibrate pupil-lab device   
     ui = datatub{'Control'}{'ui'};
     if isa(ui, 'dotsReadableEyePupilLabs')
+
+        % Get remote screen rect info
+        pl.windowRect = screenEnsemble.getObjectProperty('windowRect');
+        
+        % This does both internal calibration and mapping to snow-dots
         ui.calibrate();
     end
 
@@ -52,13 +53,11 @@ screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
     % Close the screen
     screenEnsemble.callObjectMethod(@close);
     
-%maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
-% 
-% catch
-%     
-%     % Close the screen
-%     screenEnsemble.callObjectMethod(@close);
-% end
+%catch
+    
+    % Close the screen
+%    screenEnsemble.callObjectMethod(@close);
+%end
 
 %% ---- Save the data
 topsDataLog.writeDataFile();

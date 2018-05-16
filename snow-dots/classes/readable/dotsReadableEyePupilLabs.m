@@ -147,6 +147,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             val = 0.0;
          end
          
+         self.refreshSocket();
+         
          % Convert val to a string and send it over the ZMQ network. We
          % receive a message from the network because Pupil Remote
          % provides a response signal.
@@ -158,6 +160,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Get the current time value on the PupilLabs software and
       % returns it as a numeric value. Units are in seconds.
       function time = getDeviceTime(self)
+          self.refreshSocket();
+          
          zmq.core.send(self.req,uint8('t'));
          time = str2double(char(zmq.core.recv(self.req)));
       end
@@ -178,7 +182,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % make calibration ensemble
          calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble(...
-            'calibEnsemble', self.remoteInfo{:});
+            'calibEnsemble', self.ensembleRemoteInfo{:});
          calibrationEnsemble.automateObjectMethod('draw', ...
             @dotsDrawable.drawFrame, {}, [], true);
          
@@ -218,7 +222,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                data(jj,:) = dataMatrix([self.gXID, self.gYID],2)';
             end
             
-            fprintf('Finished collecting data for cue %d\n',ii);
+            sprintf('Finished collecting data for cue %d\n',ii);
             fixationData{ii} = data;
          end
          
@@ -395,8 +399,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             end
          end
          calibrationEnsemble.finish();
-         warning('on','zmq:core:recv:bufferTooSmall');
-         
+         warning('on','zmq:core:recv:bufferTooSmall');         
       end
       
       % calibrate
@@ -505,13 +508,13 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          names = { ...
             'gaze x', 'gaze y', 'gaze confidence'...
             'pupil0 x', 'pupil0 y', 'pupil0 size', 'pupil0 confidence'...
-            'pupil1 x', 'pupil1 y', 'pupil1 size', 'pupil1 confidence'};
+            'pupil1 x', 'pupil1 y', 'pupil1 size', 'pupil1 confidence'}';
          
          % Check whether getting all data or just gaze
          if self.getRawEyeData
 
             % Make all the components
-            components = struct('ID', num2cell(1:size(names,2)), 'name', names);
+            components = struct('ID', num2cell((1:size(names,2))'), 'name', names);
 
             % Save raw eye IDs
             self.pXIDs = [find(strcmp('pupil0 x', names)) find(strcmp('pupil1 x', names))];
@@ -521,7 +524,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          else
             
             % Just make the gaze components
-            components = struct('ID', num2cell(1:3), 'name', names(1:3));      
+            components = struct('ID', num2cell((1:3)'), 'name', names(1:3));      
          end
                   
          % Alwats save gaze IDs
@@ -553,7 +556,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          dataStruct = struct(data);
          
          % Format data according to the dotsReadable format.
-         dataLen = length(self.components);
+         dataLen = length(self.components)-length(self.gazeEvents);
          newData = cat(2, repmat(self.blankID, dataLen, 1), nans(dataLen,2));
          
          % Here we extract the gaze data. These will be in PupilLab

@@ -136,7 +136,7 @@ classdef topsTreeNode < topsRunnableComposite
             
             % Attempt to clean up despite error
             try
-               self.finish;
+               self.finish();
                
             catch finishErr
                

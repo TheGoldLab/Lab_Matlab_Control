@@ -48,63 +48,63 @@ kb.defineCalibratedEvent('KeyboardD', 'done', 1, true);
 % For checking
 % [a,b,c,d] = kb.waitForKeyPress(kb, 'KeyboardQ',10)
 
-
 % Save the keyboard
 datatub{'Control'}{'keyboard'} = kb;
 
 %% ---- Try to get pupil labs device
-%pl = dotsReadableEyePupilLabs();
-if false %pl.isAvailable
+ui = [];
+if datatub{'Input'}{'useEyeTracking'} 
     
-    % Set remote info, for showing calibration on the appropriate screen
-    pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
-    
-    % Set screen width, height for calibration routine
-    pl.windowRect = [0 0 1920 1080];
-    % jig TODO
-    % getObjectProperty( ...
-    %    datatub{'Graphics'}{'screenEnsemble'}, 'windowRect')
-    
-    % Define gazeWindows based on fp and two targets
-    windowSize = datatub{'Input'}{'gazeWindowSize'};
-    windowDur  = datatub{'Input'}{'gazeWindowDur'};
-    fpx        = datatub{'FixationCue'}{'xDVA'};
-    fpy        = datatub{'FixationCue'}{'yDVA'};
-    offset     = datatub{'SaccadeTarget'}{'offset'};
-    
-    % Fixation window
-    pl.addGazeWindow('fpWindow', ...
-        'eventName',   'holdFixation', ...
-        'centerXY',    [fpx fpy], ...
-        'channelsXY',  [pl.gXID pl.gYID], ...
-        'windowSize',  windowSize, ...
-        'windowDur',   windowDur);
-    
-    % Left target window
-    pl.addGazeWindow('t1Window', ...
-        'eventName',   'choseLeft', ...
-        'centerXY',    [fpx-offset fpy], ...
-        'channelsXY',  [pl.gXID pl.gYID], ...
-        'windowSize',  windowSize, ...
-        'windowDur',   windowDur);
-    
-    % Right target window
-    pl.addGazeWindow('t2Window', ...
-        'eventName',   'choseRight', ...
-        'centerXY',    [fpx+offset fpy], ...
-        'channelsXY',  [pl.gXID pl.gYID], ...
-        'windowSize',  windowSize, ...
-        'windowDur',   windowDur);
-    
-    % Save it
-    ui = pl;
-    
-    % Define keypress event to trigger calibration
-    kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
-    
-else
-    
-    % Otherwise use the keyboard
+    % Get the pupl labs eye tracking object
+    pl = dotsReadableEyePupilLabs();
+
+    % Make sure it's working
+    if pl.isAvailable
+        
+        % Set remote info, for showing calibration on the appropriate screen
+        pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
+        
+        % Define gazeWindows based on fp and two targets
+        windowSize = datatub{'Input'}{'gazeWindowSize'};
+        windowDur  = datatub{'Input'}{'gazeWindowDur'};
+        fpx        = datatub{'FixationCue'}{'xDVA'};
+        fpy        = datatub{'FixationCue'}{'yDVA'};
+        offset     = datatub{'SaccadeTarget'}{'offset'};
+        
+        % Fixation window
+        pl.addGazeWindow('fpWindow', ...
+            'eventName',   'holdFixation', ...
+            'centerXY',    [fpx fpy], ...
+            'channelsXY',  [pl.gXID pl.gYID], ...
+            'windowSize',  windowSize, ...
+            'windowDur',   windowDur);
+        
+        % Left target window
+        pl.addGazeWindow('t1Window', ...
+            'eventName',   'choseLeft', ...
+            'centerXY',    [fpx-offset fpy], ...
+            'channelsXY',  [pl.gXID pl.gYID], ...
+            'windowSize',  windowSize, ...
+            'windowDur',   windowDur);
+        
+        % Right target window
+        pl.addGazeWindow('t2Window', ...
+            'eventName',   'choseRight', ...
+            'centerXY',    [fpx+offset fpy], ...
+            'channelsXY',  [pl.gXID pl.gYID], ...
+            'windowSize',  windowSize, ...
+            'windowDur',   windowDur);
+        
+        % Save it
+        ui = pl;
+        
+        % Define keypress event to trigger calibration
+        kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
+    end
+end
+
+%% --- Otherwise use the keyboard
+if isempty(ui)
     
     % Define task events
     kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
@@ -117,12 +117,3 @@ end
 
 % Save the active ui device
 datatub{'Control'}{'ui'} = ui;
-
-%datatub{'input'}{'mapping'} = uiMap;
-
-%
-% % make a call list so this can be added to a concurrentComposite
-% uiCallList = topsCallList('read ui');
-% uiCallList.addCall({@read, ui}, 'read input');
-% datatub{'Control'}{'uiCallList'} = uiCallList;
-

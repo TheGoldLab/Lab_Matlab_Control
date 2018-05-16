@@ -28,6 +28,7 @@ function [datatub, maintask] = RTDconfigure(varargin)
 %                           <BIAS stimulus key, 'L'=More left, 
 %                                'R'=More right, 'N'=Neutral>
 %                     2 : <number of trials>
+%  'useEyeTracking', - flag if eye tracking (pupil labs) is used
 %  'gazeWindowSize', - standard size of gaze window, in degrees vis angle
 %  'gazeWindowDur',  - standard duration for gaze window (gaze holding time)
 %  'sendTTLs'     - flag, set to true to send TTL pulses via the PMD
@@ -75,6 +76,7 @@ defaultArguments = { ...
    'referenceRT',          nan; ...
    'trialsPerCoherence',   40; ....
    'taskSpecs',            {'Quest', 40, 'meanRT', 20, 'SN' 20 'AN' 20}; ...
+   'useEyeTracking',       true; ...
    'gazeWindowSize',       4; ...
    'gazeWindowDur',        0.2; ...
    'sendTTLs',             false; ...
@@ -117,7 +119,7 @@ datatub{'Timing'}{'InterTrialInterval'} = 2.0;
 % Size of the fixation cue in dva. Additionally, we will want to store the
 % pixel coordinates for the center of the screen to use in comparisons with
 % Eyelink samples later.
-datatub{'FixationCue'}{'size'} = 5/2;
+datatub{'FixationCue'}{'size'} = 1;
 datatub{'FixationCue'}{'xDVA'} = 0;
 datatub{'FixationCue'}{'yDVA'} = 0;
 
@@ -125,14 +127,14 @@ datatub{'FixationCue'}{'yDVA'} = 0;
 % saccade targets in dva. Similar to the fixation cue, we also want to
 % store the pixel positions for these.
 datatub{'SaccadeTarget'}{'offset'} = 10;
-datatub{'SaccadeTarget'}{'size'}   = 3/2;
+datatub{'SaccadeTarget'}{'size'}   = 1.5;
 
 % Parameters for the moving dots stimuli that will be shared across every
 % trial. Also store the pixel position for the center of the stimuli.
 datatub{'MovingDots'}{'stencilNumber'} = 1;
-datatub{'MovingDots'}{'pixelSize'} = 5;
-datatub{'MovingDots'}{'diameter'} = 15;
-datatub{'MovingDots'}{'density'} = 120;
+datatub{'MovingDots'}{'pixelSize'} = 6;
+datatub{'MovingDots'}{'diameter'} = 8;
+datatub{'MovingDots'}{'density'} = 150;
 datatub{'MovingDots'}{'speed'} = 3;
 datatub{'MovingDots'}{'xDVA'} = 0;
 datatub{'MovingDots'}{'yDVA'} = 0;
