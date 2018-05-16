@@ -62,9 +62,10 @@ while roundTrip > 0.01 && ~timeout;
    roundTrip = after - before;
    timeout = (after-start) > 0.5;
 end
-trial.time_eye_trialFinish    = ui.getDeviceTime();
-trial.time_screen_trialFinish = screenTime;
-trial.time_local_trialFinish  = mean([before after]);
+trial.time_eye_trialStart    = ui.getDeviceTime();
+disp(trial.time_eye_trialStart)
+trial.time_screen_trialStart = screenTime;
+trial.time_local_trialStart  = mean([before after]);
 if timeout
    trial.time_is_confident = false;
 end

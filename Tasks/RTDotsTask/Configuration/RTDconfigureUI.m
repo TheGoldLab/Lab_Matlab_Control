@@ -37,9 +37,6 @@ kb = dotsReadableHIDKeyboard(matching);
 % Define keypress events, undefine the rest
 kb.setEventActiveFlag([], false);
 
-% Automatically read during getNextEvent calls
-kb.isAutoRead = true;
-
 % Define keypress events
 kb.defineCalibratedEvent('KeyboardQ', 'quit', 1, true);
 kb.defineCalibratedEvent('KeyboardP', 'pause', 1, true);
@@ -114,6 +111,9 @@ if isempty(ui)
     % Save it
     ui = kb;
 end
+
+% Automatically read during getNextEvent calls
+ui.isAutoRead = true;
 
 % Save the active ui device
 datatub{'Control'}{'ui'} = ui;

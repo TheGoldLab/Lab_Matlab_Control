@@ -56,7 +56,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       calibSize = 1;
       
       % communiation timeout, in ms
-      timeout = 1000;
+      timeout = 5000;
       
       % flag to tell pupil labs to record data
       autoRecord = true;
@@ -147,8 +147,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             val = 0.0;
          end
          
-         self.refreshSocket();
-         
          % Convert val to a string and send it over the ZMQ network. We
          % receive a message from the network because Pupil Remote
          % provides a response signal.
@@ -158,12 +156,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       end
       
       % Get the current time value on the PupilLabs software and
-      % returns it as a numeric value. Units are in seconds.
+      % returns it as a numeric value. Units are in seconds. Also measures
+      % round-trip time
       function time = getDeviceTime(self)
-          self.refreshSocket();
-          
-         zmq.core.send(self.req,uint8('t'));
-         time = str2double(char(zmq.core.recv(self.req)));
+          self.refreshSocket();          
+          zmq.core.send(self.req,uint8('t'));
+          time = str2double(char(zmq.core.recv(self.req)));
       end
       
       % Report round-trip time of communication channel
@@ -278,7 +276,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          %             p = transFix + repmat(self.translation,4,1);
          %             plot(p(:,1),p(:,2));
-         pause(1);
+         pause(0.2);
+
       end
       
       % calibratePupilLab
@@ -298,7 +297,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Send calibration command to tell PupilLabs to start the
          % calibration process.
          zmq.core.send(self.req,uint8('C'));
-         % char(zmq.core.recv(self.req));
+         char(zmq.core.recv(self.req));
          
          % make ensemble
          calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble( ...
@@ -364,7 +363,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             end
             calibrationEnsemble.finish();
             
-            pause(0.25);
+            pause(0.5);
          end
          
          % Create a stop calibration target which is identical to the
@@ -439,7 +438,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % Set timeouts to avoid blocking if there are commumication issues
          zmq.core.setsockopt(self.req,'ZMQ_SNDTIMEO',self.timeout);
-         zmq.core.setsockopt(self.req,'ZMQ_RCVTIMEO',self.timeout);
+         %zmq.core.setsockopt(self.req,'ZMQ_RCVTIMEO',self.timeout);
          
          % Open the communication channel
          isOpen = ~zmq.core.connect(self.req,['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
@@ -468,8 +467,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             self.gaze = zmq.core.socket(self.zmqContext,'ZMQ_SUB');
             
             % Set timeouts to avoid blocking if there are commumication issues
-            zmq.core.setsockopt(self.gaze,'ZMQ_SNDTIMEO',self.timeout);
-            zmq.core.setsockopt(self.gaze,'ZMQ_RCVTIMEO',self.timeout);
+            %zmq.core.setsockopt(self.gaze,'ZMQ_SNDTIMEO',self.timeout);
+            %zmq.core.setsockopt(self.gaze,'ZMQ_RCVTIMEO',self.timeout);
             
             % Connect to the sub socket
             isOpen = ~zmq.core.connect(self.gaze,self.pupilLabSubAddress);
@@ -594,9 +593,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                newData(self.pDIDs(id+1),:) = [self.pDIDs(id+1) pupilSize time];
                newData(self.pCIDs(id+1),:) = [self.pCIDs(id+1) confidence time];
             end
-         end
-         
-         newData
+         end        
       end
       
       % Transform the normalized x/y eye data into screen coordinates

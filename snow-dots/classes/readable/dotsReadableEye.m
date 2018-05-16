@@ -164,9 +164,9 @@ classdef dotsReadableEye < dotsReadable
                     'eventName',      [], ...
                     'channelsXY',     [self.xID self.yID], ...
                     'centerXY',       [0 0], ...
-                    'windowSize',     1, ...
+                    'windowSize',     3, ...
                     'windowDur',      0.2, ...
-                    'eventQueue',     [], ...
+                    'sampleBuffer',   [], ...
                     'isInverted',     false, ...
                     'isActive',       false));
                 
@@ -187,12 +187,12 @@ classdef dotsReadableEye < dotsReadable
                 self.gazeEvents(index).(varargin{ii}) = varargin{ii+1};
             end
             
-            % Check/clear event queue
+            % Check/clear sample buffer
             len = self.gazeEvents(index).windowDur*self.sampleFrequency+2;
-            if length(self.gazeEvents(index).eventQueue) ~= len
-                self.gazeEvents(index).eventQueue = nans(len,2);
+            if length(self.gazeEvents(index).sampleBuffer) ~= len
+                self.gazeEvents(index).sampleBuffer = nans(len,2);
             else
-                self.gazeEvents(index).eventQueue(:) = nan;
+                self.gazeEvents(index).sampleBuffer(:) = nan;
             end
             
             % Now add it to the dotsReadable event queue. We do all the heavy
@@ -200,10 +200,12 @@ classdef dotsReadableEye < dotsReadable
             % happened. As a consequence, we only send real events and don't
             % require dotsReadable.detectEvent to make any real comparisons,
             % which is why we set the min/max values to -/+inf.
-            if updateEvent
+            if true %updateEvent
                 eventName = self.gazeEvents(index).eventName;
+                ID = self.gazeEvents(index).ID;
                 self.components(ID).name = eventName;
-                self.defineEvent(ID, eventName, -inf, inf, false);
+                self.defineEvent(ID, eventName, -inf, inf, ...
+                    self.gazeEvents(index).isActive);
             end
         end
     end
@@ -286,20 +288,21 @@ classdef dotsReadableEye < dotsReadable
                 % Now loop through each active gaze event and update
                 for gg = 1:length(activeIndices);
                     
+                    disp(sprintf('checking <%s>', self.gazeEvents(gg).gazeWindowName))
                     ev = self.gazeEvents(gg);
                     
                     % Calcuate number of samples to add to the buffer
-                    bufLen = size(ev.gazeEventsQueue,1);
-                    numSamplesToAdd  = min(bufLen, numSamples);
+                    bufLen = size(ev.sampleBuffer,1);
+                    numSamplesToAdd = min(bufLen, numSamples);
                     
                     % Rotate the buffer
-                    ev.gazeEventsQueue(1:end-numSamplesToAdd,:) = ...
-                        ev.gazeEventsQueue(1+numSamplesToAdd:end,:);
+                    ev.sampleBuffer(1:end-numSamplesToAdd,:) = ...
+                        ev.sampleBuffer(1+numSamplesToAdd:end,:);
                     
                     % Add the new samples as a distance from center, plus the
                     % timestamp. Buffer rows are [times, distances]
-                    inds = (bufLen-numSamplesToAdd+1):bufLen;
-                    ev.gazeEventsQueue(end-numSamplesToAdd+1:end,:) = [
+                    inds = (numSamples-numSamplesToAdd+1):numSamples;
+                    ev.sampleBuffer(end-numSamplesToAdd+1:end,:) = [
                         gazeData(inds, 1), ...
                         sqrt( ...
                         (gazeData(inds,2)-ev.centerXY(1)).^2 + ...
@@ -311,21 +314,25 @@ classdef dotsReadableEye < dotsReadable
                     %  3. earlist sample in acceptance window was at least
                     %     historyLength in the past
                     %  4. no intervening samples were outside window
-                    Lgood = ev.gazeEventsQueue(:,2) <= ev.windowSize;
                     if ev.isInverted
-                        Lgood = ~Lgood;
+                        Lgood = ev.sampleBuffer(:,2) > ev.windowSize;
+                    else
+                        Lgood = ev.sampleBuffer(:,2) <= ev.windowSize;
                     end
                     if Lgood(end) && any(Lgood(1:end-1))
                         fg = find(Lgood,1);
-                        if (ev.gazeEventsQueue(fg,1) <= ...
-                                (ev.gazeEventsQueue(end,1) - ev.windowDur)) && ...
-                                (all(Lgood(fg:end) | ~isfinite(ev.gazeEventsQueue(fg:end,1))))
+                        if (ev.sampleBuffer(fg,1) <= ...
+                                (ev.sampleBuffer(end,1) - ev.windowDur)) %&& ...
+%                                (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,1))))
                             
                             % Add the event to the data stream
                             newData = cat(1, newData, ...
-                                [ev.ID ev.gazeEventsQueue(fg,:)]);
+                                [ev.ID ev.sampleBuffer(fg,[2 1])]);
                         end
                     end
+                    
+                    % Save the event struct back in the object
+                    self.gazeEvents(gg)=ev;
                 end
             end
         end

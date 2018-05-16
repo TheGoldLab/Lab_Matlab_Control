@@ -15,6 +15,9 @@ port = 0;
 timestamp = dOutObject.sendStrobedWord(word, port);
 
 % send short "high-low" pulses of TTL-level voltage from each of two output
+
+
+
 % ports (if available)
 timestamp = dOutObject.sendTTLPulse(0);
 timestamp = dOutObject.sendTTLPulse(1);

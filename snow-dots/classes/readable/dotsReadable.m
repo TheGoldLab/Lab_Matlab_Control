@@ -762,7 +762,7 @@ classdef dotsReadable < handle
          end
          
          %> Get the event definition for each incoming ID
-         definitions = self.eventDefinitions(data(:,1));
+         definitions = self.eventDefinitions(data(:,1))
          
          %> Get all the new data values
          newValues = data(:,2)';
@@ -774,7 +774,10 @@ classdef dotsReadable < handle
          isActive = [definitions.isActive];
          
          isInRange = (newValues <= highs) & (newValues >= lows);
-         isEvent = isActive & xor(isInRange, isInverted);          
+         isEvent = isActive & xor(isInRange, isInverted);    
+         
+         disp(data(:,2))
+         disp(isEvent)
       end
       
       %> Resize and optionally clear the event queue (used internally).
