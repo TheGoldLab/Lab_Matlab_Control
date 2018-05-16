@@ -100,7 +100,7 @@ classdef topsCallList < topsConcurrent
         % calls have the same name, @a isActive will be applied to all of
         % them.
         function setActiveByName(self, isActive, name)
-            [index selector] = ...
+            [~, selector] = ...
                 topsFoundation.findStructName(self.calls, name);
             [self.calls(selector).isActive] = deal(isActive);
         end
@@ -127,7 +127,7 @@ classdef topsCallList < topsConcurrent
             end
             
             % invoke the call
-            [index selector] = ...
+            [~, selector] = ...
                 topsFoundation.findStructName(self.calls, name);
             if any(selector)
                 call = self.calls(selector);

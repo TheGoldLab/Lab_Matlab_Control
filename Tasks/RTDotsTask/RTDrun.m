@@ -30,15 +30,15 @@ arguments = { ...
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 
 % Use error-catching
-try    
+%try    
     
     % Open the screen
     screenEnsemble.callObjectMethod(@open);
     
     % Wait for the remote screen to start up
-    if datatub{'Input'}{'useRemote'}
-        pause(10);
-    end
+%    if datatub{'Input'}{'useRemote'}
+%        pause(10);
+%    end
     
     % Check to calibrate pupil-lab device   
     ui = datatub{'Control'}{'ui'};
@@ -53,12 +53,12 @@ try
     screenEnsemble.callObjectMethod(@close);
     
 %maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
-
-catch
-    
-    % Close the screen
-    screenEnsemble.callObjectMethod(@close);
-end
+% 
+% catch
+%     
+%     % Close the screen
+%     screenEnsemble.callObjectMethod(@close);
+% end
 
 %% ---- Save the data
 topsDataLog.writeDataFile();

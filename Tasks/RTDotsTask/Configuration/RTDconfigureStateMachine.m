@@ -14,7 +14,7 @@ function RTDconfigureStateMachine(datatub)
 % The screen and drawable objects
 stimulusEnsemble = datatub{'Graphics'}{'stimulusEnsemble'};
 feedbackEnsemble = datatub{'Graphics'}{'feedbackEnsemble'};
-fi = datatub{'Graphics'}{'feedbackText ind'};
+fi = datatub{'Graphics'}{'feedback ind'};
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 sis = datatub{'Graphics'}{'stimulus inds'};
 
@@ -52,7 +52,7 @@ iti = datatub{'Timing'}{'InterTrialInterval'};
 trialStates = {...
    'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
    'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
-   'waitForFixation'   gwfxw    chkuif   tft        {}      'done'            ; ...
+   'waitForFixation'   gwfxw    chkuif   tft        {}      'blank'           ; ...
    'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...   
    'showTargets'       showt    chkuib   1          gwts    'showDots'        ; ...   
    'showDots'          showd    chkuic   dtt        hided   'noChoice'        ; ...   
@@ -78,14 +78,13 @@ datatub{'Control'}{'stateMachine'} = stateMachine;
 %% ---- Make a concurrent composite to interleave run calls
 stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
 stateMachineComposite.addChild(stateMachine);
-stateMachineComposite.addChild(stimulusEnsemble, false);
-stateMachineComposite.addChild(screenEnsemble, false);
+stateMachineComposite.addChild(stimulusEnsemble);
+stateMachineComposite.addChild(screenEnsemble);
 
 %% ---- Set up ensemble activation list. See activateEnsemblesByState for details.
-activeList = {{stimulusEnsemble, screenEnsemble}, {'showDots'}};
+activeList = {{stimulusEnsemble, 'draw'; screenEnsemble, 'flip'}, {'showDots'}};
 stateMachine.addSharedFevalableWithName( ...
-   {@activateEnsemblesByState stateMachineComposite activeList}, ...
-   'activateEnsembles', 'entry');
+   {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
 
 %% ---- Save the topsConcurrentComposite
 datatub{'Control'}{'stateMachineComposite'} = stateMachineComposite;

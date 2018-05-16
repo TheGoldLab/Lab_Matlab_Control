@@ -55,7 +55,7 @@ if ~isfinite(trial.choice) || trial.choice < 0
 
    % Randomize current direction and save it in the current trial
    %  inside the task array, which is where we'll look for it later
-   directions = datatub{'Task'}{'directions'};
+   directions = datatub{'Input'}{'directions'};
    task.nodeData.trialData(task.nodeData.currentTrial).direction = ...
       directions(randperm(length(directions),1));  
 else

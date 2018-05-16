@@ -37,8 +37,8 @@ end
 if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{2})
    
    % Call runBriefly for the instruction ensemble
-   instructionsEnsemble.runBriefly();
-   
+   instructionsEnsemble.callObjectMethod(@mayDrawNow);
+
    % Use the screenEmsemble to draw the next frame
    screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
    screenEnsemble.callObjectMethod(@nextFrame);
@@ -47,5 +47,5 @@ if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{2})
    pause(datatub{'Timing'}{'showInstructions'});
    
    % Blank
-   screenEnsemble.callObjectMethod(@blank);   
+   screenEnsemble.callObjectMethod(@blank);      
 end

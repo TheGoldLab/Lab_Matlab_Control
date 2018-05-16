@@ -13,7 +13,7 @@ task.nodeData.trialData(task.nodeData.currentTrial).choice = value;
 
 %% ---- Get the feedback drawable
 feedbackEnsemble = datatub{'Graphics'}{'feedbackEnsemble'};
-ind = datatub{'Graphics'}{'feedbackText ind'};
+ind = datatub{'Graphics'}{'feedback ind'};
 
 %% ---- Give appropriate feedback
 if value<0

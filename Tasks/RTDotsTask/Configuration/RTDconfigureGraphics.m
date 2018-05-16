@@ -72,8 +72,8 @@ datatub{'Graphics'}{'movingDotsStimulus'} = movingDotStim;
 % Make and save the fixation/targets/dots ensemble
 [ensemble, inds] = RTDmakeDrawableEnsemble('stimulus', ...
    {fixationCue, saccadeTargets, movingDotStim}, remoteInfo);
-datatub{'Graphics'}{'stimulus inds'} = inds;
 datatub{'Graphics'}{'stimulusEnsemble'} = ensemble;
+datatub{'Graphics'}{'stimulus inds'} = inds;
 
 %% ---- SAT/BIAS instructions
 %
@@ -86,8 +86,8 @@ BIAStext.y = -datatub{'Text'}{'yPosition'};
 % Make and save the ensemble
 [ensemble, inds] = RTDmakeDrawableEnsemble('instructions', ...
    {SATtext, BIAStext}, remoteInfo);
-datatub{'Graphics'}{'instruction inds'} = inds;
 datatub{'Graphics'}{'instructionsEnsemble'} = ensemble;
+datatub{'Graphics'}{'instruction inds'} = inds;
 
 %% ---- Feedback strings
 % 
@@ -97,5 +97,6 @@ feedbackText = dotsDrawableText();
 % Make and save the ensemble
 [ensemble, ind] = RTDmakeDrawableEnsemble('feedback', ...
    {feedbackText}, remoteInfo);
-datatub{'Graphics'}{'feedbackText ind'} = ind;
 datatub{'Graphics'}{'feedbackEnsemble'} = ensemble;
+datatub{'Graphics'}{'feedback ind'} = ind;
+
