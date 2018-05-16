@@ -6,11 +6,6 @@
 %% Get IP addresses
 [clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
 
-%% Start dots
-s = dotsTheScreen.theObject;
-s.displayIndex = 1;
-s.openWindow();
-
 %% Start server
 server = dotsEnsembleServer(clientIP,clientPort,serverIP,serverPort);
 try
