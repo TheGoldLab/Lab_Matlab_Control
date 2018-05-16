@@ -79,7 +79,7 @@ for tt = 1:2:length(taskSpecs)
          min(100, max(0, qpQuery(taskData))), [], trialsPerCoherence);
 
       % Choose the set of instructions
-      instructions = {SATstrings{1}, []};
+      instructions = {SATstrings{3}, BIASstrings{3}};
       
       % Make a quest callList to update quest status between trials
       questCallList = topsCallList('questCallList');
@@ -98,7 +98,7 @@ for tt = 1:2:length(taskSpecs)
          [], trialsPerCoherence, []);
    
       % Choose the set of instructions
-      instructions = {SATstrings{1}, []};
+      instructions = {SATstrings{3}, BIASstrings{3}};
 
       % Make a quest callList to update quest status between trials
       meanRTCallList = topsCallList('meanRTCallList');

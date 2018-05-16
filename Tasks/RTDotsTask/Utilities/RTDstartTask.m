@@ -34,7 +34,7 @@ for ii = 1:2 % two possible text objects
 end
 
 %% ---- Possibly draw, wait, blank
-if ~isempty(instructionStrings{1}) && ~isempty(instructionStrings{2})
+if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{2})
    
    % Call runBriefly for the instruction ensemble
    instructionsEnsemble.runBriefly();

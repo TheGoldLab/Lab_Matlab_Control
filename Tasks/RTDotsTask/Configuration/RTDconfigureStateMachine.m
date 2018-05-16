@@ -14,6 +14,7 @@ function RTDconfigureStateMachine(datatub)
 % The screen and drawable objects
 stimulusEnsemble = datatub{'Graphics'}{'stimulusEnsemble'};
 feedbackEnsemble = datatub{'Graphics'}{'feedbackEnsemble'};
+fi = datatub{'Graphics'}{'feedbackText ind'};
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 sis = datatub{'Graphics'}{'stimulus inds'};
 
@@ -31,7 +32,7 @@ showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2:3), datatub, 'fixOn'};
 showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targsOn'}; 
 showd  = {@RTDsetVisible, stimulusEnsemble, sis(3), []}; 
 hided  = {@RTDsetVisible, stimulusEnsemble, [], sis([1 3]), datatub, 'dotsOff'};
-showfb = {@RTDsetVisible, feedbackEnsemble, [], [], datatub, 'fdbkOn'};
+showfb = {@RTDsetVisible, feedbackEnsemble, fi, [], datatub, 'fdbkOn'};
 abrt   = {@RTDabort, datatub};
 calpl  = {@calibrate, ui};
 sch    = @(x)cat(2, {@RTDsetChoice, datatub}, x);
@@ -39,8 +40,6 @@ fg     = @(x,y,z){@RTDsetGazeWindow, ui, x, y, z};
 gwfxw  = fg('fpWindow', false, true);
 gwfxh  = fg('fpWindow', true, true);
 gwts   = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [false true false]);
-t      = true; % for readabilty below
-f      = false;
 
 % Timing variables
 tft = datatub{'Timing'}{'fixationTimeout'};

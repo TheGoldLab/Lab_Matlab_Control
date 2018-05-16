@@ -15,8 +15,8 @@ clear all
 arguments = { ...
    'taskSpecs',            {'Quest' 40 'SN' 20 'AN' 20}, ...
    'sendTTLs',             false, ...
-   'displayIndex',         0, ...
-   'useRemote',            false, ...
+   'displayIndex',         0, ... % 0=small, 1=main
+   'useRemote',            true, ...
    };
 
 %% ---- Configure experiment
@@ -26,13 +26,19 @@ arguments = { ...
 % Moved open/close screen here because we also want to check whether or not
 % to calibrate the eye tracker, which requires the screen
 
-% get the screen ensemble
+% Get the screen ensemble
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 
+% Use error-catching
 try    
     
     % Open the screen
     screenEnsemble.callObjectMethod(@open);
+    
+    % Wait for the remote screen to start up
+    if datatub{'Input'}{'useRemote'}
+        pause(10);
+    end
     
     % Check to calibrate pupil-lab device   
     ui = datatub{'Control'}{'ui'};

@@ -1,3 +1,5 @@
+
+
 function RTDsetVisible(drawables, inds_on, inds_off, datatub, eventTag)
 % function RTDsetVisible(ensemble, inds_on, inds_off, datatub, eventTag)
 %
@@ -15,25 +17,25 @@ function RTDsetVisible(drawables, inds_on, inds_off, datatub, eventTag)
 
 % Turn on
 if nargin >= 2 && ~isempty(inds_on)
-      drawables.setObjectProperty('isVisible', true, inds_on);
+    drawables.setObjectProperty('isVisible', true, inds_on);
 end
 
 % Turn off
 if nargin >= 3 && ~isempty(inds_off)
-      drawables.setObjectProperty('isVisible', false, inds_off);
+    drawables.setObjectProperty('isVisible', false, inds_off);
 end
 
 % Possibly draw now
 if nargin >= 4 && ~isempty(datatub)
-   
-   % Call runBriefly for the drawable ensemble
-   drawables.runBriefly();
-   
-   % Use the screenEmsemble to draw the next frame  
-   ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
-
-   % Save timing information in the trial struct, then re-save
-	task = datatub{'Control'}{'currentTask'};
-   task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
-      ret.onsetTime;
+        
+    % Call runBriefly for the drawable ensemble
+    drawables.runBriefly();
+    
+    % Use the screenEmsemble to draw the next frame
+    ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
+    
+    % Save timing information in the trial struct, then re-save
+    task = datatub{'Control'}{'currentTask'};
+    task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
+        ret.onsetTime;
 end
