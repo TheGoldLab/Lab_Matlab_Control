@@ -35,19 +35,14 @@ q = qpUpdate(q, trial.coherence, trial.correct + 1);
 % Re-save Quest object
 task.nodeData.taskData = q;
 
-% Update the next coherence
-if task.nodeData.currentTrial >= size(task.nodeData.trialData,1)
-   
-   % task done, use final threshold as reference
-   psiParamsIndex = qpListMaxArg(q.posterior);
-   psiParamsQuest = q.psiParamsDomain(psiParamsIndex,:);
-   datatub{'Task'}{'referenceCoherence'} = psiParamsQuest(1);
-else
-   
-   % task ongoing, use next guess bounded between 0 and 100
-   task.nodeData.trialData(task.nodeData.currentTrial).coherence = ...
-      min(100, max(0, qpQuery(q)));
-end
+% Update next guess, bounded between 0 and 100
+task.nodeData.trialData(task.nodeData.currentTrial).coherence = ...
+    min(100, max(0, qpQuery(q)));
+
+% Set reference coherence to current threshold
+psiParamsIndex = qpListMaxArg(q.posterior);
+psiParamsQuest = q.psiParamsDomain(psiParamsIndex,:);
+datatub{'Task'}{'referenceCoherence'} = psiParamsQuest(1);
    
 % Possibly update reference RT
 if ~isfinite(datatub{'Input'}{'referenceRT'})

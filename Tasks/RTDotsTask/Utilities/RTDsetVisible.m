@@ -30,11 +30,9 @@ if nargin >= 4 && ~isempty(datatub)
         
     % Call runBriefly for the drawable ensemble
     callObjectMethod(drawables, @mayDrawNow);
-    %drawables.runBriefly();
     
     % Use the screenEmsemble to draw the next frame
     ret = callObjectMethod(datatub{'Graphics'}{'screenEnsemble'}, @nextFrame);
-    %ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
     
     % Save timing information in the trial struct, then re-save
     task = datatub{'Control'}{'currentTask'};

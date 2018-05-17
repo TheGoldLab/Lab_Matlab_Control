@@ -118,8 +118,8 @@ classdef topsTreeNode < topsRunnableComposite
                
                for jj = childSequence
                   if self.isRunning
-                     disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d', ...
-                        self.name, self.children{jj}.name, self.isRunning))
+                     % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d', ...
+                     %   self.name, self.children{jj}.name, self.isRunning))
                      self.children{jj}.caller = self;
                      self.children{jj}.run();
                      self.children{jj}.caller = [];

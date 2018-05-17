@@ -33,8 +33,6 @@ stimulusEnsemble.setObjectProperty('direction', trial.direction, inds(3));
 % Prepare to draw dots stimulus, use return value to sync time
 stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow);
 
-disp(sprintf('RTDstartTrial : COHERENCE=%.2f, DIRECTION=%d', trial.coherence, trial.direction))
-
 %% ---- Set the targets foreperiod
 % Randomly sample a duration from an exponential distribution with bounds
 task.nodeData.stateMachine.editStateByName('showTargets', 'timeout', ...
@@ -45,6 +43,8 @@ task.nodeData.stateMachine.editStateByName('showTargets', 'timeout', ...
 %% ---- Flush the UI
 ui = datatub{'Control'}{'ui'};
 ui.flushData();
+kb = datatub{'Control'}{'keyboard'};
+kb.flushData();
 
 %% ---- Save times
 % use the screen ensemble to get the (possibly remote) screen time
@@ -63,12 +63,10 @@ while roundTrip > 0.01 && ~timeout;
    timeout = (after-start) > 0.5;
 end
 trial.time_eye_trialStart    = ui.getDeviceTime();
-disp(trial.time_eye_trialStart)
 trial.time_screen_trialStart = screenTime;
 trial.time_local_trialStart  = mean([before after]);
-if timeout
-   trial.time_is_confident = false;
-end
+trial.time_screen_roundTrip  = roundTrip;
+
 %% ---- Conditionally send TTL pulses with info about task, trial counters
 if datatub{'Input'}{'sendTTLs'}
    timeBetweenTTLPulses = datatub{'dOut'}{'timeBetweenTTLPulses'};
@@ -78,4 +76,10 @@ end
 
 %% ---- Re-save the trial
 task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+
+%% ---- Show information about the task/trial
+disp(sprintf('%s (%d/%d): trial %d of %d, coh=%d, dir=%d', ...    
+    task.name, task.nodeData.taskNumber, length(task.caller.children), ...
+    task.nodeData.currentTrial, size(task.nodeData.trialData, 1), ...
+    trial.coherence, trial.direction))
 

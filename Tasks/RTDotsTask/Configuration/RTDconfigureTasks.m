@@ -28,10 +28,14 @@ stateMachine = datatub{'Control'}{'stateMachine'};
 stateMachineComposite = datatub{'Control'}{'stateMachineComposite'};
 
 % The standard "nodeData" struct to add to each task (topsTreeNode)
+taskNumber = 1; % for feedback (see RTDstartTrial)
 nodeData = struct( ...
    'stateMachine', stateMachine, ...
+   'taskNumber', 0, ...
    'taskData',  [], ...
    'trialData', [], ...
+   'totalCorrect', 0, ...
+   'totalError', 0, ...   
    'currentTrial', 1, ...
    'repeatTrial', false);
 
@@ -142,16 +146,18 @@ for tt = 1:2:length(taskSpecs)
 
    % Make the task
    task = maintask.newChildNode(name);
-   task.startFevalable     = {@RTDstartTask, datatub, task, instructions};
-   task.finishFevalable    = {@RTDfinishTask};
-   task.nodeData           = nodeData;
-   task.nodeData.trialData = trialData;
-   task.nodeData.taskData  = taskData;
-   task.iterations         = inf;
+   task.startFevalable      = {@RTDstartTask, datatub, task, instructions};
+   task.finishFevalable     = {@RTDfinishTask};
+   task.nodeData            = nodeData;
+   task.nodeData.taskNumber = taskNumber;
+   task.nodeData.trialData  = trialData;
+   task.nodeData.taskData   = taskData;
+   task.iterations          = inf;
    task.addChild(stateMachineComposite);
    for cc = 1:length(children)
       task.addChild(children{cc});
    end
+   taskNumber = taskNumber + 1;
 end
 
 % use

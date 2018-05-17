@@ -169,17 +169,10 @@ classdef dotsReadableEye < dotsReadable
                     'sampleBuffer',   [], ...
                     'isInverted',     false, ...
                     'isActive',       false));
-                
-                % Be nice and keep track of when we need to call
-                % dotsReadable.defineEvent
-                updateEvent = true;
             else
                 
                 % Use existing gaze window struct
                 index = find(strcmp(gazeWindowName, {self.gazeEvents.gazeWindowName}));
-                
-                % Only if eventName is given
-                updateEvent = any(strcmp('eventName', varargin));
             end
             
             % Parse args
@@ -195,19 +188,29 @@ classdef dotsReadableEye < dotsReadable
                 self.gazeEvents(index).sampleBuffer(:) = nan;
             end
             
-            % Now add it to the dotsReadable event queue. We do all the heavy
-            % lifting here, in getNewData, to determine if an event actually
-            % happened. As a consequence, we only send real events and don't
-            % require dotsReadable.detectEvent to make any real comparisons,
-            % which is why we set the min/max values to -/+inf.
-            if true %updateEvent
-                eventName = self.gazeEvents(index).eventName;
-                ID = self.gazeEvents(index).ID;
-                self.components(ID).name = eventName;
-                self.defineEvent(ID, eventName, -inf, inf, ...
-                    self.gazeEvents(index).isActive);
-            end
+            % Now add it as a new component and to the dotsReadable event 
+            %   queue. We do all the heavy lifting here, in getNewData, to 
+            %   determine if an event actually happened. As a consequence, 
+            %   we only send real events and don't require 
+            %   dotsReadable.detectEvent to make any real comparisons,
+            %   which is why we set the min/max values to -/+inf.
+            eventName = self.gazeEvents(index).eventName;
+            eventID = self.gazeEvents(index).ID;
+            self.components(eventID).name = eventName;
+            self.defineEvent(eventID, eventName, -inf, inf, false, ...
+                self.gazeEvents(index).isActive);
         end
+        
+        % De-activate gaze windows
+        function deactivateEvents(self)
+            
+            % Deactivate the gaze windows
+            [self.gazeEvents.isActive] = deal(false);
+            
+            % Call the readable method to deactivate all the events
+            self.deactivateEvents@dotsReadable();
+        end
+
     end
     
     methods (Access = protected)
@@ -288,8 +291,8 @@ classdef dotsReadableEye < dotsReadable
                 % Now loop through each active gaze event and update
                 for gg = 1:length(activeIndices);
                     
-                    disp(sprintf('checking <%s>', self.gazeEvents(gg).gazeWindowName))
-                    ev = self.gazeEvents(gg);
+                    ev = self.gazeEvents(activeIndices(gg));
+                    % disp(sprintf('checking <%s>', ev.gazeWindowName))
                     
                     % Calcuate number of samples to add to the buffer
                     bufLen = size(ev.sampleBuffer,1);
@@ -300,7 +303,7 @@ classdef dotsReadableEye < dotsReadable
                         ev.sampleBuffer(1+numSamplesToAdd:end,:);
                     
                     % Add the new samples as a distance from center, plus the
-                    % timestamp. Buffer rows are [times, distances]
+                    % timestamp. Buffer rows are [distances times]
                     inds = (numSamples-numSamplesToAdd+1):numSamples;
                     ev.sampleBuffer(end-numSamplesToAdd+1:end,:) = [
                         gazeData(inds, 1), ...
@@ -332,7 +335,7 @@ classdef dotsReadableEye < dotsReadable
                     end
                     
                     % Save the event struct back in the object
-                    self.gazeEvents(gg)=ev;
+                    self.gazeEvents(activeIndices(gg))=ev;
                 end
             end
         end

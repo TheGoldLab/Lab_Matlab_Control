@@ -33,45 +33,61 @@ roundTrip = inf;
 start = mglGetSecs;
 timeout = false;
 while roundTrip > 0.006 && ~timeout;
-   before = mglGetSecs;
-   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
-   after = mglGetSecs;
-   roundTrip = after - before;
-   timeout = (after-start) > 0.5;
+    before = mglGetSecs;
+    screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
+    after = mglGetSecs;
+    roundTrip = after - before;
+    timeout = (after-start) > 0.5;
 end
 trial.time_eye_trialFinish    = ui.getDeviceTime();
 trial.time_screen_trialFinish = screenTime;
 trial.time_local_trialFinish  = mean([before after]);
 if timeout
-   trial.time_is_confident = false;
+    trial.time_is_confident = false;
 end
 
 %% ---- Check for good response to prepare for next trial
 if ~isfinite(trial.choice) || trial.choice < 0
- 
-   % NO CHOICE
-   % Set repeat flag
-   task.nodeData.repeatTrial = true;
-
-   % Randomize current direction and save it in the current trial
-   %  inside the task array, which is where we'll look for it later
-   directions = datatub{'Input'}{'directions'};
-   task.nodeData.trialData(task.nodeData.currentTrial).direction = ...
-      directions(randperm(length(directions),1));  
+    
+    % NO CHOICE
+    % Set repeat flag
+    task.nodeData.repeatTrial = true;
+    
+    % Randomize current direction and save it in the current trial
+    %  inside the task array, which is where we'll look for it later
+    directions = datatub{'Input'}{'directions'};
+    task.nodeData.trialData(task.nodeData.currentTrial).direction = ...
+        directions(randperm(length(directions),1));
+    
+    % Used in performance output, below
+    outcomeStr = 'NO CHOICE';
 else
-   
-   % GOOD CHOICE
-   % Unset repeat flag
-   task.nodeData.repeatTrial = false;
-
-   % Increment trial counter
-   task.nodeData.currentTrial = task.nodeData.currentTrial + 1;
-      
-   % Check for new task
-   if task.nodeData.currentTrial > size(task.nodeData.trialData, 1)
-            
-      % Stop running this task
-      task.isRunning = false;
-   end
+    
+    % GOOD CHOICE
+    % Unset repeat flag
+    task.nodeData.repeatTrial = false;
+    
+    % Increment trial counter
+    task.nodeData.currentTrial = task.nodeData.currentTrial + 1;
+    
+    % Check for new task
+    if task.nodeData.currentTrial > size(task.nodeData.trialData, 1)
+        
+        % Stop running this task
+        task.finish();
+    end
+    
+    % Used in performance output, below
+    if trial.choice == 0
+        outcomeStr = 'ERROR';
+        task.nodeData.totalError = task.nodeData.totalError + 1;
+    else
+        outcomeStr = 'CORRECT';
+        task.nodeData.totalCorrect = task.nodeData.totalCorrect + 1;
+    end
 end
 
+%% ---- Print performance stats
+disp(sprintf('  %s (%d correct, %d error)', ...
+    outcomeStr, task.nodeData.totalCorrect, task.nodeData.totalError))
+disp(' ')

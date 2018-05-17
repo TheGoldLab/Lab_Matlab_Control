@@ -210,6 +210,10 @@ classdef dotsReadable < handle
          topsDataLog.logDataInGroup(data, name);
       end
       
+      %> In case there is a device-specific data file that must be saved
+      function toggleDataFile(self, toggleFlag)
+      end
+      
       %> Get the state of device components as of the given time.
       %> @param time a time in the past to consider instead of the current
       %> time
@@ -388,6 +392,12 @@ classdef dotsReadable < handle
          end         
       end
       
+      % De-activate events as a batch, which is covenient to do at the
+      % beginning of a trial where you want to control them one at a time
+      function deactivateEvents(self)
+          [self.eventDefinitions.isActive] = deal(false);
+      end
+      
       %> Get the next event that was detected in read().
       %> @param isPeek whether to leave the next event in the queue
       %> @details
@@ -414,7 +424,7 @@ classdef dotsReadable < handle
          if nargin < 2 || isempty(isPeek)
             isPeek = false;
          end
-         
+                  
          %> update component data before checking for events
          if self.isAutoRead
             self.read();
@@ -440,8 +450,7 @@ classdef dotsReadable < handle
                   ~any(strcmp(name, acceptedEvents))
                name = '';
                data = zeros(0,3);
-            end
-            
+            end            
          end
       end
       
@@ -479,7 +488,7 @@ classdef dotsReadable < handle
          if any(isEvent)
             IDs = allIDs(isEvent);
             eventData = stateAtTime(IDs,:);
-            [lastTime, lastIndex] = max(eventData(:,2));
+            [~, lastIndex] = max(eventData(:,2));
             lastID = eventData(lastIndex,1);
             lastName = self.eventDefinitions(lastID).name;
             names = {self.eventDefinitions(IDs).name};
@@ -762,7 +771,7 @@ classdef dotsReadable < handle
          end
          
          %> Get the event definition for each incoming ID
-         definitions = self.eventDefinitions(data(:,1))
+         definitions = self.eventDefinitions(data(:,1));
          
          %> Get all the new data values
          newValues = data(:,2)';
@@ -776,8 +785,8 @@ classdef dotsReadable < handle
          isInRange = (newValues <= highs) & (newValues >= lows);
          isEvent = isActive & xor(isInRange, isInverted);    
          
-         disp(data(:,2))
-         disp(isEvent)
+         % disp(data(:,2))
+         % disp(isEvent)
       end
       
       %> Resize and optionally clear the event queue (used internally).

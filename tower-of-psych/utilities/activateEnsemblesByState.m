@@ -13,7 +13,7 @@ function activateEnsemblesByState(activeList, state)
 %
 % Created 5/10/18 by jig
 
-disp(sprintf('Entering state <%s>', state.name))
+% disp(sprintf('Entering state <%s>', state.name))
 
 %% Loop through the specification list
 for ii = 1:size(activeList, 1)

@@ -55,11 +55,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Size of calibration marker (arbitrary units)
       calibSize = 1;
       
-      % communiation timeout, in ms
+      % Communiation timeout, in ms
       timeout = 5000;
       
-      % flag to tell pupil labs to record data
-      autoRecord = true;
+      % Name of pupilLabs datafile 
+      sessionName = [];
    end
    
    properties (SetAccess = protected)
@@ -77,11 +77,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       
       blankID = -1;
       
-      % monitor round-trip time
+      % Monitor round-trip time
       roundTripTime = nan;
       
-      % latest received message
+      % Latest received message
       result;
+      
+      % Are we currently recording?
+      isRecording = false;
    end
    
    properties (Access = private)
@@ -169,10 +172,37 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          time = self.roundTripTime;
       end
       
-%       function data = readAndReturnData(self)
-%          data = self.readNewData();
-%       end
-%       
+      % Overloaded toggleDataFile routing
+      % toggleFlag = true for open, false for close
+      function toggleDataFile(self, toggleFlag)
+          
+          if nargin < 1 || isempty(toggleFlag)
+              toggleFlag = true;
+          end
+          
+          if toggleFlag && ~self.isRecording
+              
+              % Check for filename
+              if isempty(self.sessionName)
+                  str = 'R';
+              else
+                  str = sprintf('R %s', self.sessionName);
+              end
+              
+              % Turn on recording
+              zmq.core.send(self.req, uint8(str));
+              self.result = zmq.core.recv(self.req);
+              self.isRecording = true;
+
+          elseif ~toggleFlag && self.isRecording
+              
+              % Turn off recording
+              zmq.core.send(self.req, uint8('r'));
+              self.result = zmq.core.recv(self.req);
+              self.isRecording = false;
+          end
+      end
+      
       % calibrateSnowDots
       %
       % Calibrate with respect to snow-dots coordinates (deg vis angle)
@@ -363,7 +393,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             end
             calibrationEnsemble.finish();
             
-            pause(0.5);
+            pause(0.55);
          end
          
          % Create a stop calibration target which is identical to the
@@ -398,15 +428,45 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             end
          end
          calibrationEnsemble.finish();
-         warning('on','zmq:core:recv:bufferTooSmall');         
+         warning('on','zmq:core:recv:bufferTooSmall');
       end
       
-      % calibrate
       %  Wrapper function to call both
       %     calibratePupilLab and calibrateSnowDots
       function calibrate(self)
          self.calibratePupilLab();
          self.calibrateSnowDots();
+      end
+      
+      % Convenient set-up routine
+      function setupPupilLabs(self, windowRect, turnOnRecording)
+          
+          % Set window Rect
+          if nargin >= 2 && ~isempty(windowRect)
+              self.windowRect = windowRect;
+          end
+          
+          % Check second arg
+          if nargin < 3 || isempty(turnOnRecording)
+              turnOnRecording = true;
+          end
+          
+          % Turn off recording while calibrating
+          if self.isRecording
+              self.toggleDataFile(false);
+              turnOnRecording = true;
+          end
+          
+          % Calibrate
+          self.calibrate();
+          
+          % Set current device time to zero
+          self.setDeviceTime();
+          
+          % Possibly start recording
+          if turnOnRecording
+              self.toggleDataFile(true)
+          end
       end
    end
    
@@ -452,12 +512,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             self.result = zmq.core.recv(self.req);
             self.roundTripTime = mglGetSecs - now;
             
-            % possibly start recording
-            if self.autoRecord
-               zmq.core.send(self.req, uint8('R'));
-               self.result = zmq.core.recv(self.req);
-            end
-            
             % Query the ZMQ_REQ port for the value of the ZMQ_SUB port.
             zmq.core.send(self.req,uint8('SUB_PORT'));
             subPort = char(zmq.core.recv(self.req));
@@ -481,9 +535,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       function closeDevice(self)
          
          if ~isempty(self.req)
-            
+             
             % possibly turn off recording
-            if self.autoRecord
+            if self.isRecording
                zmq.core.send(self.req, uint8('r'));
                self.result = zmq.core.recv(self.req);
             end

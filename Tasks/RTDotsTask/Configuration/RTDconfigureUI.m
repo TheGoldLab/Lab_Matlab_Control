@@ -37,10 +37,14 @@ kb = dotsReadableHIDKeyboard(matching);
 % Define keypress events, undefine the rest
 kb.setEventActiveFlag([], false);
 
+% Automatically read when checking for events
+kb.isAutoRead = true;
+
 % Define keypress events
 kb.defineCalibratedEvent('KeyboardQ', 'quit', 1, true);
 kb.defineCalibratedEvent('KeyboardP', 'pause', 1, true);
 kb.defineCalibratedEvent('KeyboardD', 'done', 1, true);
+kb.defineCalibratedEvent('KeyboardS', 'skip', 1, true);
 
 % For checking
 % [a,b,c,d] = kb.waitForKeyPress(kb, 'KeyboardQ',10)
@@ -61,6 +65,14 @@ if datatub{'Input'}{'useEyeTracking'}
         % Set remote info, for showing calibration on the appropriate screen
         pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
         
+        % Set the data file to the same name as the current file, with
+        % _pupilLabs suffix
+        [~, name, ~] = fileparts(datatub{'Input'}{'fileName'});
+        pl.sessionName = sprintf('%s_pupilLabs', name);
+
+        % Automatically read during getNextEvent calls
+        pl.isAutoRead = true;
+
         % Define gazeWindows based on fp and two targets
         windowSize = datatub{'Input'}{'gazeWindowSize'};
         windowDur  = datatub{'Input'}{'gazeWindowDur'};
@@ -111,9 +123,6 @@ if isempty(ui)
     % Save it
     ui = kb;
 end
-
-% Automatically read during getNextEvent calls
-ui.isAutoRead = true;
 
 % Save the active ui device
 datatub{'Control'}{'ui'} = ui;

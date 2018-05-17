@@ -1,32 +1,56 @@
-%% RTDrun
+function RTDrun(location)
+%% function RTDrun(location)
 %
 % RTD = Response-Time Dots
 %
-% This script is a wrapper than will execute the function that runs the
-% moving dots task. Once the task has finished, this script will attempt to
-% transfer the data files to a single place
+% This function configures, initializes, runs, and cleans up an RTD
+% experiment.
 %
-% 10/3/17   xd  wrote it
+% 11/17/18   jig wrote it
 
-%% ---- Need to clear everything because globals can exist
-clear all
-clear classes
+%% ---- Clear globals
+clear globals
 
-%% ---- Arguments to RTDconfigure
-arguments = { ...
-   'taskSpecs',            {'Quest' 40 'SN' 20 'AN' 20}, ...
-   'sendTTLs',             false, ...
-   'useEyeTracking',       true, ...
-   'displayIndex',         1, ... % 0=small, 1=main
-   'useRemote',            true, ...
-   };
+%% ---- Set argument list based on location
+%   locations are 'office' (default), 'OR', or 'debug'
+if nargin < 1 || isempty(location)
+    location = 'office';
+end
+
+switch location
+    
+    case {'OR'}        
+        arguments = { ...
+            'taskSpecs',            {'Quest' 60 'SN' 40 'AN' 40}, ...
+            'sendTTLs',             true, ...
+            'useEyeTracking',       true, ...
+            'displayIndex',         1, ... % 0=small, 1=main
+            'useRemote',            true, ...
+            };
+
+    case {'debug'}    
+        arguments = { ...
+            'taskSpecs',            {'Quest' 50 'SN' 50 'AN' 50}, ...
+            'sendTTLs',             false, ...
+            'useEyeTracking',       false, ...
+            'displayIndex',         0, ... % 0=small, 1=main
+            'useRemote',            false, ...
+            };
+        
+    otherwise        
+        arguments = { ...
+            'taskSpecs',            {'Quest' 60 'SN' 60 'AN' 60}, ...
+            'sendTTLs',             false, ...
+            'useEyeTracking',       true, ...
+            'displayIndex',         1, ... % 0=small, 1=main
+            'useRemote',            true, ...
+            };
+end
 
 %% ---- Configure experiment
 [datatub, maintask] = RTDconfigure(arguments{:});
 
-%% ---- RUN IT
-% Moved open/close screen here because we also want to check whether or not
-% to calibrate the eye tracker, which requires the screen
+%% ---- Initialize
 
 % Get the screen ensemble
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
@@ -34,26 +58,19 @@ screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
 % Open the screen
 screenEnsemble.callObjectMethod(@open);
 
-% Check to calibrate pupil-lab device
-ui = datatub{'Control'}{'ui'};
-if isa(ui, 'dotsReadableEyePupilLabs')
-    
-    % Get remote screen rect info
-    pl.windowRect = screenEnsemble.getObjectProperty('windowRect');
-    
-    % This does both internal calibration and mapping to snow-dots
-    ui.calibrate();
-    
-    % Set device time to zero
-    ui.setDeviceTime();
-end
+% Possibly calibrate the eye tracker
+RTDcalibratePupilLabs(datatub);
 
-% Run the task
+%% ---- Run the task
 maintask.run();
 
+%% ---- Clean up
 % Close the screen
 screenEnsemble.callObjectMethod(@close);
 
-%% ---- Save the data
-topsDataLog.writeDataFile();
+% Close the uis
+close(datatub{'Control'}{'ui'});
+close(datatub{'Control'}{'keyboard'});
 
+%save the data
+topsDataLog.writeDataFile();
