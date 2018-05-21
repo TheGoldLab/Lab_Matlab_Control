@@ -100,8 +100,8 @@ end
 % These pararmeters determine how long different parts of the task
 % presentation should take. These are kept the same across trials. All
 % fields values are in seconds.
-datatub{'Timing'}{'showInstructions'} = 3;
-datatub{'Timing'}{'waitAfterInstructions'} = 1;
+datatub{'Timing'}{'showInstructions'} = .3;
+datatub{'Timing'}{'waitAfterInstructions'} = .1;
 datatub{'Timing'}{'fixationTimeout'} = 5;
 datatub{'Timing'}{'holdFixation'} = 0.5;
 datatub{'Timing'}{'showTargetForeperiodMin'} = 0.2;
@@ -109,7 +109,7 @@ datatub{'Timing'}{'showTargetForeperiodMax'} = 1.0;
 datatub{'Timing'}{'showTargetForeperiodMean'} = 0.5;
 datatub{'Timing'}{'dotsTimeout'} = 5;
 datatub{'Timing'}{'showFeedback'} = 1;
-datatub{'Timing'}{'InterTrialInterval'} = 2.0;
+datatub{'Timing'}{'InterTrialInterval'} = .20;
 
 %% ---- General Stimulus Params
 %

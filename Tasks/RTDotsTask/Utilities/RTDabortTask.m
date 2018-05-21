@@ -1,9 +1,9 @@
-function RTDabort(datatub)
-% function RTDabort(datatub)
+function RTDabortTask(datatub)
+% function RTDabortTask(datatub)
 %
 % RTD = Response-Time Dots
 %
-% End the experiment
+% Skip to the end of the current task
 %
 % Inputs:
 %   datatub - A topsGroupedList object containing experimental parameters
@@ -17,6 +17,3 @@ function RTDabort(datatub)
 % turn off current task and main task
 currentTask = datatub{'Control'}{'currentTask'};
 currentTask.finish();
-
-mainTask = datatub{'Control'}{'mainTask'};
-mainTask.finish();

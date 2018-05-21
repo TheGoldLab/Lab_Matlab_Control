@@ -29,7 +29,7 @@ datatub{'Graphics'}{'screen'} = screen;
 datatub{'Graphics'}{'screenEnsemble'} = screenEnsemble;
 
 %% ---- Fixation/Target/Dots ensemble
-
+%
 % Fixation cue
 %
 % Here we create a cross with two thin rectangles. Although this the
@@ -75,28 +75,17 @@ datatub{'Graphics'}{'movingDotsStimulus'} = movingDotStim;
 datatub{'Graphics'}{'stimulusEnsemble'} = ensemble;
 datatub{'Graphics'}{'stimulus inds'} = inds;
 
-%% ---- SAT/BIAS instructions
+%% ---- Text objects for showing instructions/feedback
 %
 % Make two text objects, for SAT and BIAS instructions
-SATtext = dotsDrawableText();
-SATtext.y = datatub{'Text'}{'yPosition'};
-BIAStext = dotsDrawableText();
-BIAStext.y = -datatub{'Text'}{'yPosition'};
+textA   = dotsDrawableText();
+textA.y = datatub{'Text'}{'yPosition'};
+textB   = dotsDrawableText();
+textB.y = -datatub{'Text'}{'yPosition'};
 
 % Make and save the ensemble
-[ensemble, inds] = RTDmakeDrawableEnsemble('instructions', ...
-   {SATtext, BIAStext}, remoteInfo);
-datatub{'Graphics'}{'instructionsEnsemble'} = ensemble;
-datatub{'Graphics'}{'instruction inds'} = inds;
-
-%% ---- Feedback strings
-% 
-% Make a text object, see RTDsetChoice for more details
-feedbackText = dotsDrawableText();
-
-% Make and save the ensemble
-[ensemble, ind] = RTDmakeDrawableEnsemble('feedback', ...
-   {feedbackText}, remoteInfo);
-datatub{'Graphics'}{'feedbackEnsemble'} = ensemble;
-datatub{'Graphics'}{'feedback ind'} = ind;
+[ensemble, inds] = RTDmakeDrawableEnsemble('text', ...
+   {textA, textB}, remoteInfo);
+datatub{'Graphics'}{'textEnsemble'} = ensemble;
+datatub{'Graphics'}{'text inds'} = inds;
 

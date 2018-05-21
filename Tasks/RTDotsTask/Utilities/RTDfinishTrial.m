@@ -24,27 +24,15 @@ topsDataLog.logDataInGroup(trial, 'trial');
 
 %% ---- Save times
 % use the screen ensemble to get the (possibly remote) screen time
-screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-ui = datatub{'Control'}{'ui'};
+[trial.time_local_trialFinish, ...
+   trial.time_screen_trialFinish, ...
+   ~, ...
+   trial.time_ui_trialFinish] = ...
+   RTDsyncTiming( ...
+   datatub{'Graphics'}{'screenEnsemble'}, datatub{'Control'}{'ui'});
 
-% Ask for the time from the screen object, but only accept it if it comes
-% quickly
-roundTrip = inf;
-start = mglGetSecs;
-timeout = false;
-while roundTrip > 0.006 && ~timeout;
-    before = mglGetSecs;
-    screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
-    after = mglGetSecs;
-    roundTrip = after - before;
-    timeout = (after-start) > 0.5;
-end
-trial.time_eye_trialFinish    = ui.getDeviceTime();
-trial.time_screen_trialFinish = screenTime;
-trial.time_local_trialFinish  = mean([before after]);
-if timeout
-    trial.time_is_confident = false;
-end
+%% ---- Re-save the trial
+task.nodeData.trialData(task.nodeData.currentTrial) = trial;
 
 %% ---- Check for good response to prepare for next trial
 if ~isfinite(trial.choice) || trial.choice < 0
@@ -67,16 +55,6 @@ else
     % Unset repeat flag
     task.nodeData.repeatTrial = false;
     
-    % Increment trial counter
-    task.nodeData.currentTrial = task.nodeData.currentTrial + 1;
-    
-    % Check for new task
-    if task.nodeData.currentTrial > size(task.nodeData.trialData, 1)
-        
-        % Stop running this task
-        task.finish();
-    end
-    
     % Used in performance output, below
     if trial.choice == 0
         outcomeStr = 'ERROR';
@@ -85,9 +63,28 @@ else
         outcomeStr = 'CORRECT';
         task.nodeData.totalCorrect = task.nodeData.totalCorrect + 1;
     end
+    
+    % add RT to the outcome string (printed below)
+    outcomeStr = cat(2, outcomeStr, sprintf(', RT=%.2f', ...
+       task.nodeData.trialData(task.nodeData.currentTrial).RT));
+
+    % Increment trial counter
+    task.nodeData.currentTrial = task.nodeData.currentTrial + 1;
+    
+    % Check for new task
+    if task.nodeData.currentTrial > size(task.nodeData.trialData, 1)
+        
+        % Stop running this task
+        task.finish();
+    end    
 end
 
 %% ---- Print performance stats
-disp(sprintf('  %s (%d correct, %d error)', ...
-    outcomeStr, task.nodeData.totalCorrect, task.nodeData.totalError))
+if task.nodeData.currentTrial > 1
+   meanRT = nanmean([task.nodeData.trialData(1:(task.nodeData.currentTrial-1)).RT]);
+else
+   meanRT = 0;
+end
+disp(sprintf('  %s (%d correct, %d error, %.2f mean RT)', ...
+    outcomeStr, task.nodeData.totalCorrect, task.nodeData.totalError, meanRT))
 disp(' ')

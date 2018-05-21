@@ -19,33 +19,36 @@ function RTDstartTask(datatub, taskTreeNode, instructionStrings)
 %% ---- Save the topsTreeNode as the current task
 datatub{'Control'}{'currentTask'} = taskTreeNode;
 
-%% ---- Get instructions ensemble
-instructionsEnsemble = datatub{'Graphics'}{'instructionsEnsemble'};
-
-%% --- Set instruction strings
-inds = datatub{'Graphics'}{'instruction inds'};
-for ii = 1:2 % two possible text objects
-   if isempty(instructionStrings{ii})
-      instructionsEnsemble.setObjectProperty('isVisible', false, inds(ii));
+%% ---- Show intro/transition
+if taskTreeNode.nodeData.taskNumber == 1
+   
+   % Initial instructions
+   if isa(datatub{'Control'}{'ui'}, 'dotsReadableEyePupilLabs')
+      str2 = 'Each trial starts by fixating the central cross';
    else
-      instructionsEnsemble.setObjectProperty('string', instructionStrings{ii}, inds(ii));
-      instructionsEnsemble.setObjectProperty('isVisible', true, inds(ii));
+      str2 = 'Each trial starts by pressing the space bar';
    end
+   RDTshowText(datatub, {'Work at your own pace', str2}, ...
+      datatub{'Timing'}{'showInstructions'});
+   
+else
+   
+   % Give a little break between tasks
+   for timer = 10:-1:1
+      RDTshowText(datatub, {'Well done!' , ...
+         sprintf('Next task starts in: %d', timer)}, 1);
+   end      
 end
 
-%% ---- Possibly draw, wait, blank
-if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{2})
-   
-   % Call runBriefly for the instruction ensemble
-   instructionsEnsemble.callObjectMethod(@mayDrawNow);
+%% ---- Pause between instructions
+pause(1);
 
-   % Use the screenEmsemble to draw the next frame
-   screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-   screenEnsemble.callObjectMethod(@nextFrame);
-
-   % Wait
-   pause(datatub{'Timing'}{'showInstructions'});
-   
-   % Blank
-   screenEnsemble.callObjectMethod(@blank);      
+%% ---- Show instructions
+if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{1})   
+   RDTshowText(datatub, instructionStrings, datatub{'Timing'}{'showInstructions'});
 end
+
+%% ---- Turn off both strings
+RTDsetVisible(datatub{'Graphics'}{'textEnsemble'}, [], ...
+   datatub{'Graphics'}{'text inds'});
+   

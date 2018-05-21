@@ -15,20 +15,23 @@ function RTDconfigureUI(datatub)
 mexHID('initialize');
 infoStruct = mexHID('summarizeDevices');
 if any([infoStruct.VendorID]==1008)
-    % use attached keboard
-    matching.VendorID = 1008;
-    matching.ProductID = 36;
+   % Josh's HP keyboard
+   matching.VendorID = 1008;
+   matching.ProductID = 36;
 elseif any([infoStruct.ProductID]==632)
-    % use built-in keboard, new macBook Pro
-    matching.ProductID = 632;
-    matching.PrimaryUsage = 6;
+   % Josh's macBook pro built-in keboard
+   matching.ProductID = 632;
+   matching.PrimaryUsage = 6;
 elseif any([infoStruct.ProductID]==610)
-    % use built-in keboard, old macBook Pro
-    matching.ProductID = 610;
-    matching.PrimaryUsage = 6;
+   % OR macBook pro built-in keboard
+   matching.ProductID = 610;
+   matching.PrimaryUsage = 6;
 elseif any([infoStruct.ProductID]==50475)
-    matching.ProductID = 50475;
-    matching.PrimaryUsage = 6;    
+   % OR mac mini wireless keyboard
+   matching.ProductID = 50475;
+   matching.PrimaryUsage = 6;
+else
+   matching = [];
 end
 
 % fallback on keyboard inputs
@@ -44,7 +47,7 @@ kb.isAutoRead = true;
 kb.defineCalibratedEvent('KeyboardQ', 'quit', 1, true);
 kb.defineCalibratedEvent('KeyboardP', 'pause', 1, true);
 kb.defineCalibratedEvent('KeyboardD', 'done', 1, true);
-kb.defineCalibratedEvent('KeyboardS', 'skip', 1, true);
+kb.defineCalibratedEvent('KeyboardT', 'skip', 1, true);
 
 % For checking
 % [a,b,c,d] = kb.waitForKeyPress(kb, 'KeyboardQ',10)
@@ -54,74 +57,74 @@ datatub{'Control'}{'keyboard'} = kb;
 
 %% ---- Try to get pupil labs device
 ui = [];
-if datatub{'Input'}{'useEyeTracking'} 
-    
-    % Get the pupl labs eye tracking object
-    pl = dotsReadableEyePupilLabs();
-
-    % Make sure it's working
-    if pl.isAvailable
-        
-        % Set remote info, for showing calibration on the appropriate screen
-        pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
-        
-        % Set the data file to the same name as the current file, with
-        % _pupilLabs suffix
-        [~, name, ~] = fileparts(datatub{'Input'}{'fileName'});
-        pl.sessionName = sprintf('%s_pupilLabs', name);
-
-        % Automatically read during getNextEvent calls
-        pl.isAutoRead = true;
-
-        % Define gazeWindows based on fp and two targets
-        windowSize = datatub{'Input'}{'gazeWindowSize'};
-        windowDur  = datatub{'Input'}{'gazeWindowDur'};
-        fpx        = datatub{'FixationCue'}{'xDVA'};
-        fpy        = datatub{'FixationCue'}{'yDVA'};
-        offset     = datatub{'SaccadeTarget'}{'offset'};
-        
-        % Fixation window
-        pl.addGazeWindow('fpWindow', ...
-            'eventName',   'holdFixation', ...
-            'centerXY',    [fpx fpy], ...
-            'channelsXY',  [pl.gXID pl.gYID], ...
-            'windowSize',  windowSize, ...
-            'windowDur',   windowDur);
-        
-        % Left target window
-        pl.addGazeWindow('t1Window', ...
-            'eventName',   'choseLeft', ...
-            'centerXY',    [fpx-offset fpy], ...
-            'channelsXY',  [pl.gXID pl.gYID], ...
-            'windowSize',  windowSize, ...
-            'windowDur',   windowDur);
-        
-        % Right target window
-        pl.addGazeWindow('t2Window', ...
-            'eventName',   'choseRight', ...
-            'centerXY',    [fpx+offset fpy], ...
-            'channelsXY',  [pl.gXID pl.gYID], ...
-            'windowSize',  windowSize, ...
-            'windowDur',   windowDur);
-        
-        % Save it
-        ui = pl;
-        
-        % Define keypress event to trigger calibration
-        kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
-    end
+if datatub{'Input'}{'useEyeTracking'}
+   
+   % Get the pupl labs eye tracking object
+   pl = dotsReadableEyePupilLabs();
+   
+   % Make sure it's working
+   if pl.isAvailable
+      
+      % Set remote info, for showing calibration on the appropriate screen
+      pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
+      
+      % Set the data file to the same name as the current file, with
+      % _pupilLabs suffix
+      [~, name, ~] = fileparts(datatub{'Input'}{'fileName'});
+      pl.sessionName = sprintf('%s_pupilLabs', name);
+      
+      % Automatically read during getNextEvent calls
+      pl.isAutoRead = true;
+      
+      % Define gazeWindows based on fp and two targets
+      windowSize = datatub{'Input'}{'gazeWindowSize'};
+      windowDur  = datatub{'Input'}{'gazeWindowDur'};
+      fpx        = datatub{'FixationCue'}{'xDVA'};
+      fpy        = datatub{'FixationCue'}{'yDVA'};
+      offset     = datatub{'SaccadeTarget'}{'offset'};
+      
+      % Fixation window
+      pl.addGazeWindow('fpWindow', ...
+         'eventName',   'holdFixation', ...
+         'centerXY',    [fpx fpy], ...
+         'channelsXY',  [pl.gXID pl.gYID], ...
+         'windowSize',  windowSize, ...
+         'windowDur',   windowDur);
+      
+      % Left target window
+      pl.addGazeWindow('t1Window', ...
+         'eventName',   'choseLeft', ...
+         'centerXY',    [fpx-offset fpy], ...
+         'channelsXY',  [pl.gXID pl.gYID], ...
+         'windowSize',  windowSize, ...
+         'windowDur',   windowDur);
+      
+      % Right target window
+      pl.addGazeWindow('t2Window', ...
+         'eventName',   'choseRight', ...
+         'centerXY',    [fpx+offset fpy], ...
+         'channelsXY',  [pl.gXID pl.gYID], ...
+         'windowSize',  windowSize, ...
+         'windowDur',   windowDur);
+      
+      % Save it
+      ui = pl;
+      
+      % Define keypress event to trigger calibration
+      kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
+   end
 end
 
 %% --- Otherwise use the keyboard
 if isempty(ui)
-    
-    % Define task events
-    kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
-    kb.defineCalibratedEvent('KeyboardJ', 'choseRight', 2, true);
-    kb.defineCalibratedEvent('KeyboardSpacebar', 'holdFixation', [], true);
-
-    % Save it
-    ui = kb;
+   
+   % Define task events
+   kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
+   kb.defineCalibratedEvent('KeyboardJ', 'choseRight', 2, true);
+   kb.defineCalibratedEvent('KeyboardSpacebar', 'holdFixation', [], true);
+   
+   % Save it
+   ui = kb;
 end
 
 % Save the active ui device

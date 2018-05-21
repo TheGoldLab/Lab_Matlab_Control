@@ -418,6 +418,8 @@ classdef dotsReadable < handle
       %> @details
       %> If isAutoRead is set to true, invokes read() to update component
       %> data before getting the next event.
+      %> jig added cell array of strings acceptedEvents to list names of
+      %> events that can be used
       function [name, data] = getNextEvent(self, isPeek, acceptedEvents)
          
          % check argument

@@ -83,6 +83,19 @@ classdef dotsReadableEye < dotsReadable
         %  typically we assume that eye tracking data will be stored
         %  separately.
         readEventsOnly = true;
+        
+        % IP/port information for showing calibration graphics on remote
+        % screen (see calibrateEyeSnowDots, below). Cell array of either:
+        %  {false} for local mode, or
+        %  {true <local IP> <local port> <remote IP> <remote port>}
+        ensembleRemoteInfo = {false};
+        
+        % Calibration parameters ... number of samples, then X,Y,size of
+        % fixation point
+        calibrationN      = 500;
+        calibrationFPX    = 10;
+        calibrationFPY    = 5;
+        calibrationFPSize = 1;
     end
     
     properties (SetAccess = protected)
@@ -210,7 +223,119 @@ classdef dotsReadableEye < dotsReadable
             % Call the readable method to deactivate all the events
             self.deactivateEvents@dotsReadable();
         end
+              
+      % calibrateSnowDots
+      %
+      % Calibrate with respect to snow-dots coordinates (deg vis angle)
+      function calibrateEyeSnowDots(self)
+         
+         % Make calibration ensemble
+         calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble(...
+            'calibEnsemble', self.ensembleRemoteInfo{:});
+         
+         % Generate Fixation spots
+         %
+         % We will create a single drawable object to represent the fixation cue.
+         % Then, we simply adjust the location of the cue each time we present it.
+         fixationCue = dotsDrawableTargets();
+         calibrationEnsemble.addObject(fixationCue);
+         
+         % Set up matrices to present cues and collect fixation data
+         FPxy = [ ...
+            -self.calibrationFPX  self.calibrationFPY; 
+             self.calibrationFPX  self.calibrationFPY; 
+             self.calibrationFPX -self.calibrationFPY; 
+            -self.calibrationFPX -self.calibrationFPY]; 
+         numFixations = size(FPxy, 1);
+         fixationData = cell(numFixations, 1);
+         
+         % Loop through the fixations
+         for ii = 1:numFixations
+            
+            % Show the fixation point
+            calibrationEnsemble.setObjectProperty('xCenter',[FPxy(ii,1) FPxy(ii,1)]);
+            calibrationEnsemble.setObjectProperty('yCenter',[FPxy(ii,2) FPxy(ii,2)]);
+            calibrationEnsemble.setObjectProperty('width',[1 0.05] *  self.calibrationFPSize);
+            calibrationEnsemble.setObjectProperty('height',[0.05 1] * self.calibrationFPSize);            
 
+            calibrationEnsemble.callObjectMethod(@prepareToDrawInWindow);
+            calibrationEnsemble.callObjectMethod(@mayDrawNow);
+            
+            % Wait for fixation
+            pause(0.4);
+            
+            % flush the eye data
+            self.flushData();
+            
+            % Collect a bunch of samples
+            data = zeros(self.calibrationN, 2);
+            for jj = 1:self.calibrationN
+               dataMatrix = self.readRawEyeData();
+               data(jj,:) = dataMatrix([self.gXID, self.gYID], 2)';
+            end
+            fixationData{ii} = data;
+            
+            % Turn off fixation point
+            calibrationEnsemble.setObjectProperty('width',[0 0]);
+            calibrationEnsemble.setObjectProperty('height',[0 0]);
+            
+            calibrationEnsemble.callObjectMethod(@prepareToDrawInWindow);
+            calibrationEnsemble.callObjectMethod(@mayDrawNow);
+
+            % wait a moment
+            pause(0.2);
+            sprintf('Finished collecting data for cue %d\n',ii);
+         end
+                  
+         % Find average fixation locations
+         meanFixations = cellfun(@(X)mean(X),fixationData,'UniformOutput',false);
+         meanFixations = cell2mat(meanFixations);
+         meanFixations = [meanFixations; meanFixations(1,:)];
+         meanFixDirVectors = diff(meanFixations);
+         
+         cueVectors = [FPxy; FPxy(1,:)];
+         cueVectors = diff(cueVectors);
+         disp('Finished finding avg location');
+         
+         % Calculate scaling and rotation
+         scaling = nans(size(meanFixDirVectors,1),1);
+         theta   = nans(size(scaling));
+         
+         x = sym('x');
+         for ii = 1:length(scaling)
+            
+            % Find average scaling
+            scaling(ii) = norm(cueVectors(ii,:)) / norm(meanFixDirVectors(ii,:));
+            
+            % Find average rotation
+            normFixDirVector = meanFixDirVectors(ii,:) / norm(meanFixDirVectors(ii,:));
+            normCueVector = cueVectors(ii,:) / norm(cueVectors(ii,:));
+            rot = solve(normCueVector(1) == cos(x) * normFixDirVector(1) - sin(x) * normFixDirVector(2),x);
+            theta(ii) = real(double(rot(end)));
+         end
+         
+         theta = mean(theta);
+         self.scale = mean(scaling);
+         self.rotation = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+         disp('Finished finding rotation matrix');
+         
+         % Calculate average translation
+         translations = zeros(size(scaling,1),2);
+         % figure; hold on;
+         % transFix = zeros(size(translations));
+         for ii = 1:length(translations)
+            srFixation = self.rotation * (self.scale * meanFixations(ii,:))';
+            translations(ii,:) = pos(ii,:) - srFixation';
+            % plot(srFixation(1),srFixation(2),'o');
+            % transFix(ii,:) = srFixation';
+         end
+         self.translation = mean(translations);
+         disp('Finished pupilLabs calibration');
+         
+         % p = transFix + repmat(self.translation,4,1);
+         % plot(p(:,1),p(:,2));
+         pause(0.2);
+      end
     end
     
     methods (Access = protected)
@@ -361,6 +486,7 @@ classdef dotsReadableEye < dotsReadable
         % transformed values.  Assumes data for each component are sorted
         % with the most recent value last.
         function newData = transformRawData(self, newData)
+           
             xSelector = newData(:,1) == self.xID;
             if any(xSelector)
                 transX = self.xScale*(self.xOffset + newData(xSelector,2));

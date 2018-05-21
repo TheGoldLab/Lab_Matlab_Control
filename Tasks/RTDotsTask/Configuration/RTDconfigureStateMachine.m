@@ -12,11 +12,11 @@ function RTDconfigureStateMachine(datatub)
 
 %% ---- Collect convenient variables, etc
 % The screen and drawable objects
+screenEnsemble   = datatub{'Graphics'}{'screenEnsemble'};
 stimulusEnsemble = datatub{'Graphics'}{'stimulusEnsemble'};
-feedbackEnsemble = datatub{'Graphics'}{'feedbackEnsemble'};
-fi = datatub{'Graphics'}{'feedback ind'};
-screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-sis = datatub{'Graphics'}{'stimulus inds'};
+sis              = datatub{'Graphics'}{'stimulus inds'};
+textEnsemble     = datatub{'Graphics'}{'textEnsemble'};
+tis              = datatub{'Graphics'}{'text inds'};
 
 % The user-interface object
 ui = datatub{'Control'}{'ui'};
@@ -24,17 +24,17 @@ kb = datatub{'Control'}{'keyboard'};
 
 % Fevalables for state list
 blanks = {@callObjectMethod, screenEnsemble, @blank};
-chkuif = {@getNextEvent ui false {'holdFixation'}};
-chkuib = {@getNextEvent ui false {'brokeFixation'}};
-chkuic = {@getNextEvent ui false {'choseLeft' 'choseRight'}};
-chkkbd = {@getNextEvent kb false {'done' 'pause' 'calibrate' 'skip' 'quit'}};
+chkuif = {@getNextEvent, ui, false, {'holdFixation'}};
+chkuib = {@getNextEvent, ui, false, {'brokeFixation'}};
+chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseLeft' 'choseRight'}, 'choice'};
+chkkbd = {@getNextEvent kb, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
 showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2:3), datatub, 'fixOn'};
 showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targsOn'}; 
 showd  = {@RTDsetVisible, stimulusEnsemble, sis(3), [], datatub, 'dotsOn'}; 
 hided  = {@RTDsetVisible, stimulusEnsemble, [], sis([1 3]), datatub, 'dotsOff'};
-showfb = {@RTDsetVisible, feedbackEnsemble, fi, [], datatub, 'fdbkOn'};
-abrt   = {@RTDabort, datatub};
-skip   = {@RTDskip, datatub};
+showfb = {@RTDsetVisible, textEnsemble, tis(1), [], datatub, 'fdbkOn'};
+abrt   = {@RTDabortExperiment, datatub};
+skip   = {@RTDabortTask, datatub};
 calpl  = {@RTDcalibratePupilLabs, datatub};
 sch    = @(x)cat(2, {@RTDsetChoice, datatub}, x);
 fg     = @(x,y,z){@RTDsetGazeWindow, ui, x, y, z};
@@ -57,7 +57,7 @@ trialStates = {...
    'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...   
    'showTargets'       showt    chkuib   1          gwts    'preDots'         ; ...   
    'preDots'           {}       {}       0          {}      'showDots'        ; ...
-   'showDots'          showd    chkuic   dtt        hided   'noChoice'        ; ...   
+   'showDots'          showd    chkuic   dtt        hided   'noChoice'        ; ...
    'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
    'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
    'choseLeft'         sch( 0)  {}       0          {}      'blank'           ; ...

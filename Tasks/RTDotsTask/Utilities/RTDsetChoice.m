@@ -1,5 +1,7 @@
 function RTDsetChoice(datatub, value)
 % function RTDsetChoice(datatub, value)
+% 
+% RTD = Response-Time Dots
 %
 % Save choice/RT information and set up feedback
 %
@@ -11,52 +13,50 @@ function RTDsetChoice(datatub, value)
 task = datatub{'Control'}{'currentTask'};
 task.nodeData.trialData(task.nodeData.currentTrial).choice = value;
 
-%% ---- Get the feedback drawable
-feedbackEnsemble = datatub{'Graphics'}{'feedbackEnsemble'};
-ind = datatub{'Graphics'}{'feedback ind'};
-
-%% ---- Give appropriate feedback
+%% ---- Parse choice info
 if value<0
    
-   % No choice
-   feedbackEnsemble.setObjectProperty('string', 'No Choice', ind);
+   % Set feedback for no choice
+   feedbackString = 'No choice';
 else
       
    % get the current trial
    trial = task.nodeData.trialData(task.nodeData.currentTrial);
    
    % Mark as correct/error
-   if (trial.choice==0 && trial.direction==180) || ...
-         (trial.choice==1 && trial.direction==0)
-      trial.correct=1;
+   trial.correct = double( ...
+      (trial.choice==0 && trial.direction==180) || ...
+      (trial.choice==1 && trial.direction==0));
+
+   % Compute/save RT
+   %  Remember that dotsOn time might be from the remote computer, whereas
+   %  sacOn is from the local computer, so we need to account for clock
+   %  differences
+   trial.RT = trial.time_choice - (trial.time_local_trialStart + ...
+      trial.time_dotsOn - trial.time_screen_trialStart);
+      
+   % Re-save the current trial
+   task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+   
+   % Set up feedback string
+   %  First Correct/error
+   if trial.correct
+      feedbackString = 'Correct';
    else
-      trial.correct=0;
+      feedbackString = 'Error';
    end
    
-   % Compute/save RT
-   trial.RT = 0.5; % jig TODO
-
-   % re-save the current trial
-   task.nodeData.trialData(task.nodeData.currentTrial) = trial;
-
-   % Check if in speed task
+   %  Second possibly feedback about speed   
    if task.name(1) == 'S'
-      
-      % Give feedback about speed only
       if trial.RT <= datatub{'Task'}{'referenceRT'}
-         feedbackEnsemble.setObjectProperty('string', 'In time', ind);
+         feedbackString = cat(2, feedbackString, ', in time');
       else
-         feedbackEnsemble.setObjectProperty('string', 'Too slow', ind);
-      end
-      
-   else
-      
-      % Give feedback about correct/error
-      if (value==0 && trial.direction==180) || (value==1 && trial.direction==0)
-         feedbackEnsemble.setObjectProperty('string', 'Correct', ind);
-      else
-         feedbackEnsemble.setObjectProperty('string', 'Error', ind);
+         feedbackString = cat(2, feedbackString, ', too slow');
       end
    end
 end
 
+%% ---- Set the feedback string
+textEnsemble = datatub{'Graphics'}{'textEnsemble'};
+inds = datatub{'Graphics'}{'text inds'};
+textEnsemble.setObjectProperty('string', feedbackString, inds(1));

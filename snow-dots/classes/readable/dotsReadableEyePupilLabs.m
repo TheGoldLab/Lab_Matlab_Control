@@ -33,12 +33,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Port for PupilLab Remote plugin (string)
       pupilLabPort = '50020';
       
-      % IP/port information for showing calibration graphics on remote
-      % screen. Cell array of either:
-      %  {false} for local mode, or
-      %  {true <local IP> <local port> <remote IP> <remote port>}
-      ensembleRemoteInfo = {false};
-      
       % windowRect for showing calibration graphics.. default for
       %  GeChic monitor
       windowRect = [0 0 1920 1080];
@@ -60,6 +54,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       
       % Name of pupilLabs datafile 
       sessionName = [];
+      
+      % Need to keep refreshing the socket to make sure the data arrives
+      %  This is the time, in sec, defining the refresh interval. It is
+      %  checked automatically during readRawData
+      socketRefreshInterval = 1;
    end
    
    properties (SetAccess = protected)
@@ -85,6 +84,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       
       % Are we currently recording?
       isRecording = false;
+      
+      % Keep track of socket refresh
+      lastSocketRefresh = [];
    end
    
    properties (Access = private)
@@ -128,6 +130,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          self.gaze = zmq.core.socket(self.zmqContext,'ZMQ_SUB');
          zmq.core.connect(self.gaze,self.pupilLabSubAddress);
          zmq.core.setsockopt(self.gaze,'ZMQ_SUBSCRIBE','gaze');
+         
+         % Keep track of when this happens
+         self.lastSocketRefresh = mglGetSecs;
       end
       
       % Overloaded flushData method
@@ -201,113 +206,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
               self.result = zmq.core.recv(self.req);
               self.isRecording = false;
           end
-      end
-      
-      % calibrateSnowDots
-      %
-      % Calibrate with respect to snow-dots coordinates (deg vis angle)
-      function calibrateSnowDots(self)
-         
-         % make calibration ensemble
-         calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble(...
-            'calibEnsemble', self.ensembleRemoteInfo{:});
-         calibrationEnsemble.automateObjectMethod('draw', ...
-            @dotsDrawable.drawFrame, {}, [], true);
-         
-         % Generate Fixation spots
-         %
-         % We will create a single drawable object to represent the fixation cue.
-         % Then, we simply adjust the location of the cue each time we present it.
-         fixationCue = dotsDrawableTargets();
-         calibrationEnsemble.addObject(fixationCue);
-         
-         xdist = 10;
-         ydist = 5;
-         pos = [-xdist ydist; xdist ydist; xdist -ydist; -xdist -ydist];
-         
-         % Present cues
-         n = 500;
-         fixationData = cell(size(pos,1),1);
-         for ii = 1:length(fixationData)
-            data = zeros(n,2);
-            
-            calibrationEnsemble.setObjectProperty('width',[0 0]);
-            calibrationEnsemble.setObjectProperty('height',[0 0]);
-            calibrationEnsemble.callObjectMethod(@prepareToDrawInWindow);
-            calibrationEnsemble.run(1);
-            
-            calibrationEnsemble.setObjectProperty('xCenter',[pos(ii,1) pos(ii,1)]);
-            calibrationEnsemble.setObjectProperty('yCenter',[pos(ii,2) pos(ii,2)]);
-            calibrationEnsemble.setObjectProperty('width',[1 0.1] * 3);
-            calibrationEnsemble.setObjectProperty('height',[0.1 1] * 3);
-            
-            calibrationEnsemble.callObjectMethod(@prepareToDrawInWindow);
-            calibrationEnsemble.run(1);
-            
-            self.refreshSocket();
-            for jj = 1:n
-               dataMatrix = self.readRawEyeData();
-               data(jj,:) = dataMatrix([self.gXID, self.gYID],2)';
-            end
-            
-            sprintf('Finished collecting data for cue %d\n',ii);
-            fixationData{ii} = data;
-         end
-         
-         calibrationEnsemble.setObjectProperty('width',[0 0]);
-         calibrationEnsemble.setObjectProperty('height',[0 0]);
-         calibrationEnsemble.callObjectMethod(@prepareToDrawInWindow);
-         calibrationEnsemble.run(1);
-         
-         % Find average fixation location
-         meanFixations = cellfun(@(X)mean(X),fixationData,'UniformOutput',false);
-         meanFixations = cell2mat(meanFixations);
-         meanFixations = [meanFixations; meanFixations(1,:)];
-         meanFixDirVectors = diff(meanFixations);
-         
-         cueVectors = [pos; pos(1,:)];
-         cueVectors = diff(cueVectors);
-         disp('Finished finding avg location');
-         
-         % Calculate scaling and rotation
-         scaling = zeros(size(meanFixDirVectors,1),1);
-         theta   = zeros(size(scaling));
-         
-         x = sym('x');
-         for ii = 1:length(scaling)
-            
-            % Find average scaling
-            scaling(ii) = norm(cueVectors(ii,:)) / norm(meanFixDirVectors(ii,:));
-            
-            % Find average rotation
-            normFixDirVector = meanFixDirVectors(ii,:) / norm(meanFixDirVectors(ii,:));
-            normCueVector = cueVectors(ii,:) / norm(cueVectors(ii,:));
-            rot = solve(normCueVector(1) == cos(x) * normFixDirVector(1) - sin(x) * normFixDirVector(2),x);
-            theta(ii) = real(double(rot(end)));
-         end
-         
-         theta = mean(theta);
-         self.scale = mean(scaling);
-         self.rotation = [cos(theta) -sin(theta); sin(theta) cos(theta)];
-         disp('Finished finding rotation matrix');
-         
-         % Calculate average translation
-         translations = zeros(size(scaling,1),2);
-         % figure; hold on;
-         %             transFix = zeros(size(translations));
-         for ii = 1:length(translations)
-            srFixation = self.rotation * (self.scale * meanFixations(ii,:))';
-            translations(ii,:) = pos(ii,:) - srFixation';
-            %     plot(srFixation(1),srFixation(2),'o');
-            %                 transFix(ii,:) = srFixation';
-         end
-         self.translation = mean(translations);
-         disp('Finished pupilLabs calibration');
-         
-         %             p = transFix + repmat(self.translation,4,1);
-         %             plot(p(:,1),p(:,2));
-         pause(0.2);
-
       end
       
       % calibratePupilLab
@@ -435,7 +333,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       %     calibratePupilLab and calibrateSnowDots
       function calibrate(self)
          self.calibratePupilLab();
-         self.calibrateSnowDots();
+         self.calibrateEyeSnowDots();
       end
       
       % Convenient set-up routine
@@ -596,6 +494,15 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          %
          % We convert it to the dotsReadable format depending on what
          % value the dataTypeSelector flag is set to.
+         
+         % Possibly refresh the socket
+         if ~isempty(self.refreshSocketInterval)
+            if isempty(self.lastSocketRefresh) || ...
+                  ((mglGetSecs - self.lastSocketRefresh) > ...
+                  self.socketRefreshInterval)
+               self.refreshSocket();
+            end
+         end
          
          % The first message tells us what type of data it is. The
          % second msg will actually give us the data.
