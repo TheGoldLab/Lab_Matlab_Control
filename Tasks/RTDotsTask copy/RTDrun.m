@@ -9,28 +9,9 @@ function RTDrun(location)
 % 11/17/18   jig wrote it
 
 %% ---- Clear globals
-% 
-% umm, duh
 clear globals
 
-%% ---- Create a topsGroupedList
-%
-% This is a versatile data structure that will allow us to pass all 
-%  relevant variables to the state machine as it advances
-datatub = topsGroupedList();
-
-%% ---- Set up the main tree node and save it
-%
-% We set this up here because we might have multiple task configuration
-% files (see below) that each add chidren to it
-maintask = topsTreeNode('dotsTask');
-maintask.iterations = 1; % Go once through the set of tasks
-%maintask.startFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @open};
-%maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
-datatub{'Control'}{'mainTask'} = maintask;
-
 %% ---- Set argument list based on location
-%
 %   locations are 'office' (default), 'OR', or 'debug'
 if nargin < 1 || isempty(location)
     location = 'office';
@@ -58,7 +39,7 @@ switch location
         
     otherwise        
         arguments = { ...
-            'taskSpecs',            {'Quest' 40 'SN' 50 'AN' 50}, ...
+            'taskSpecs',            {'Quest' 60 'SN' 60 'AN' 60}, ...
             'sendTTLs',             false, ...
             'useEyeTracking',       true, ...
             'displayIndex',         1, ... % 0=small, 1=main
@@ -67,14 +48,9 @@ switch location
 end
 
 %% ---- Configure experiment
-RTDconfigure(maintask, datatub, arguments{:});
+[datatub, maintask] = RTDconfigure(arguments{:});
 
 %% ---- Initialize
-%
-% Start data logging
-topsDataLog.flushAllData(); % Flush stale data, just in case
-topsDataLog.logDataInGroup(struct(datatub), 'datatub');
-topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, datatub{'Input'}{'fileName'}));
 
 % Get the screen ensemble
 screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
@@ -89,7 +65,6 @@ RTDcalibratePupilLabs(datatub);
 maintask.run();
 
 %% ---- Clean up
-%
 % Close the screen
 screenEnsemble.callObjectMethod(@close);
 

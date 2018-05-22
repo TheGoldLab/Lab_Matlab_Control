@@ -55,29 +55,17 @@ kb.flushData();
 
 %% ---- Conditionally send TTL pulses with info about task, trial counters
 if datatub{'Input'}{'sendTTLs'}
-   dOut            = datatub{'dOut'}{'dOutObject'};
-   channel         = datatub{'dOut'}{'TTLChannel'};
-   timeBetweenTTLs = datatub{'Input'}{'timeBetweeenTTLs'};
-   
-   % Send pulses corresponding to the task number
-   for pp = 1:task.nodeData.taskNumber
-      dOut.sendTTLPulse(channel);
-      pause(timeBetweenTTLs);
-   end
-   
-   % Send pulses corresponding to the trial number mod 3 (just cuz)
-   %  flip order to end with pulse and save the time
-   for pp = 1:task.nodeData.currentTrial
-      pause(timeBetweenTTLs);
-      trial.time_TTLFinish = dOut.sendTTLPulse(channel);
-   end
+   timeBetweenTTLPulses = datatub{'dOut'}{'timeBetweenTTLPulses'};
+   trial.time_TTLBlock = sendTTLPulses(taskCounter, timeBetweenTTLPulses);
+   trial.time_TTLTrial = sendTTLPulses(mod(trialCounter,3), timeBetweenTTLPulses);
 end
 
 %% ---- Re-save the trial
 task.nodeData.trialData(task.nodeData.currentTrial) = trial;
 
 %% ---- Show information about the task/trial
-disp(sprintf('%s (%d/%d): trial %d of %d, coh=%.1f, dir=%d', ...    
+disp(sprintf('%s (%d/%d): trial %d of %d, coh=%d, dir=%d', ...    
     task.name, task.nodeData.taskNumber, length(task.caller.children), ...
     task.nodeData.currentTrial, size(task.nodeData.trialData, 1), ...
     trial.coherence, trial.direction))
+

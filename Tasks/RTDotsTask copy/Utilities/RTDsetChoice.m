@@ -40,7 +40,7 @@ else
    
    % Set up feedback string
    %  First Correct/error
-   if trial.correct == 1
+   if trial.correct
       feedbackString = 'Correct';
    else
       feedbackString = 'Error';

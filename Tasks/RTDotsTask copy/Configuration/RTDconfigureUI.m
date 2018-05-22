@@ -4,10 +4,8 @@ function RTDconfigureUI(datatub)
 % RTD = Response-Time Dots
 %
 % Configure user-interface objects:
-%  1. Always puts a keyboard ui in datatub{'Control'}{'keyboard'} to check
-%        for input between trials
-%  2. Use either pupil labs (default) or keyboard (fallback) to get choice
-%        data. Stored in datatub{'Control'}{'ui'}.
+%  1. Pupil labs
+%  2. keyboard (fallback)
 %
 % 5/11/18 written by jig
 

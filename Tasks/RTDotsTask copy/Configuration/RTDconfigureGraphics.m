@@ -17,17 +17,7 @@ function RTDconfigureGraphics(datatub)
 % appropriate to the CPU where the flipping occurred. Here a such a command
 % would be:
 %   ret = callByName(datatub{'Graphics'}{'screenEnsemble'}, 'flip');
-
-% First check for local/remote graphics
-if datatub{'Input'}{'useRemote'}
-   [clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
-   remoteInfo = {true, clientIP, clientPort, serverIP, serverPort};
-else
-   remoteInfo = {false};
-end
-datatub{'Input'}{'remoteInfo'} = remoteInfo;
-
-% Set up the screen object and ensemble
+remoteInfo = datatub{'Input'}{'remoteInfo'};
 screen = dotsTheScreen.theObject();
 screen.displayIndex = datatub{'Input'}{'displayIndex'};
 screenEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', remoteInfo{:});
@@ -52,6 +42,7 @@ fixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
 fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.05];
 fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.05 1];
 fixationCue.nSides  = 4;
+datatub{'Graphics'}{'fixationCue'} = fixationCue;
 
 % Saccade targets
 %
@@ -64,6 +55,7 @@ saccadeTargets.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
 saccadeTargets.nSides  = 100;
 saccadeTargets.height  = [1 1] * datatub{'SaccadeTarget'}{'size'};
 saccadeTargets.width   = [1 1] * datatub{'SaccadeTarget'}{'size'};
+datatub{'Graphics'}{'saccadeTargets'} = saccadeTargets;
 
 % Dots stimulus
 %
@@ -75,6 +67,7 @@ movingDotStim.density = datatub{'MovingDots'}{'density'};
 movingDotStim.speed = datatub{'MovingDots'}{'speed'};
 movingDotStim.xCenter = datatub{'MovingDots'}{'xDVA'};
 movingDotStim.yCenter = datatub{'MovingDots'}{'yDVA'};
+datatub{'Graphics'}{'movingDotsStimulus'} = movingDotStim;
 
 % Make and save the fixation/targets/dots ensemble
 [ensemble, inds] = RTDmakeDrawableEnsemble('stimulus', ...

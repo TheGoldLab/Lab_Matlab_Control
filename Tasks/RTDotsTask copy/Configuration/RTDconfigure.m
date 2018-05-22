@@ -1,26 +1,18 @@
-function RTDconfigure(maintask, datatub, varargin)
-% function RTDconfigure(maintask, datatub, varargin)
+function [datatub, maintask] = RTDconfigure(varargin)
+% function [datatub, maintask] = RTDconfigure(varargin)
 %
 % RTD = Response-Time Dots
 %
 % Configure the RTD experiment, which consists of a combination of 
 %  multiple different tasks:
-%  1. Quest       - Adaptive procedure to determine psychophysical 
-%                    threshold for coherence
-%  2. MeanRT      - Determine mean RT for speed-accuracy trade-off 
-%                    (SAT) feedback
-%  3. test        - RT dots with SAT and bias manipulations. see
-%                    blockSpects below for details
-%  4. VGS/MGS     - Visually and memory-guided saccade tassk
+%  1. Quest             - Adaptive procedure to determine psychophysical 
+%                          threshold for coherence
+%  2. MeanRT            - Determine mean RT for speed-accuracy trade-off 
+%                          (SAT) feedback
+%  3. test              - RT dots with SAT and bias manipulations. see
+%                          blockSpects below for details
 %
-% Inputs:
-%   datatub       -  A topsGroupedList object containing experimental 
-%                    parameters as well as data recorded during the 
-%                    experiment.
-%   maintask      - the topsTreeNode object to run
-%
-%  plus varargin, which are property/value pairs:
-%  
+% Inputs are property/value pairs:
 %  'coherences'   - coherences to use in non-Quest blocks. If Quest
 %                     is used, this is overridedn
 %  'directions'   - dot directions 
@@ -49,8 +41,20 @@ function RTDconfigure(maintask, datatub, varargin)
 %                          a second file is created with name
 %                          <filename>_pupil
 %
+% Outputs:
+%   datatub             -  A topsGroupedList object containing experimental 
+%                          parameters as well as data recorded during the 
+%                          experiment.
+%   maintask            - the topsTreeNode object to run
+%
 % 5/11/18   updated by jig
 % 10/2/17   xd wrote it
+
+%% ---- Create a topsGroupedList
+%
+% This is a versatile data structure that will allow us to pass the state
+% of the state machine around as it advances.
+datatub = topsGroupedList();
 
 %% ---- Make machine-specific data file path
 [~,machineName] = system('scutil --get ComputerName');
@@ -83,7 +87,7 @@ defaultArguments = { ...
    };
 
 % Arguments are property/value pairs
-for ii = 1:2:nargin-2
+for ii = 1:2:nargin
    defaultArguments{strcmp(varargin{ii}, defaultArguments(:,1)),2} = varargin{ii+1};
 end
 
@@ -96,8 +100,8 @@ end
 % These pararmeters determine how long different parts of the task
 % presentation should take. These are kept the same across trials. All
 % fields values are in seconds.
-datatub{'Timing'}{'showInstructions'} = 3.0;
-datatub{'Timing'}{'waitAfterInstructions'} = 0.5;
+datatub{'Timing'}{'showInstructions'} = .3;
+datatub{'Timing'}{'waitAfterInstructions'} = .1;
 datatub{'Timing'}{'fixationTimeout'} = 5;
 datatub{'Timing'}{'holdFixation'} = 0.5;
 datatub{'Timing'}{'showTargetForeperiodMin'} = 0.2;
@@ -105,7 +109,7 @@ datatub{'Timing'}{'showTargetForeperiodMax'} = 1.0;
 datatub{'Timing'}{'showTargetForeperiodMean'} = 0.5;
 datatub{'Timing'}{'dotsTimeout'} = 5;
 datatub{'Timing'}{'showFeedback'} = 1;
-datatub{'Timing'}{'InterTrialInterval'} = 1;
+datatub{'Timing'}{'InterTrialInterval'} = .20;
 
 %% ---- General Stimulus Params
 %
@@ -140,92 +144,46 @@ datatub{'Text'}{'yPosition'} = 4;
 
 %% ---- TTL Output (to sync with neural data acquisition system)
 if datatub{'Input'}{'sendTTLs'}
-   datatub{'dOut'}{'dOutObject'} = ...
-      feval(dotsTheMachineConfiguration.getDefaultValue('dOutClassName'));
-   datatub{'dOut'}{'timeBetweenTTLPulses'} = 0.01; % in sec
-   datatub{'dOut'}{'TTLChannel'} = 0; % 0 (pin 13) or 1 (pin 14)
+   datatub{'dOut'}{'dOutObject'} = dotsDOut1208FS;
+   datatub{'dOut'}{'timeBetweenTTLPulses'} = 0.001; % in sec
 end
 
 %% ---- Configure Graphics
+%
+% First check for local/remote graphics
+if datatub{'Input'}{'useRemote'}
+   [clientIP, clientPort, serverIP, serverPort] = RTDconfigureIPs;
+   datatub{'Input'}{'remoteInfo'} = { ...
+      true, clientIP, clientPort, serverIP, serverPort};
+else
+   datatub{'Input'}{'remoteInfo'} = {false};
+end
+   
+% Set up graphics objects
 RTDconfigureGraphics(datatub);
 
 %% ---- Configure User input : pupil labs or keyboard
 RTDconfigureUI(datatub);
 
-%% ---- Configure Tasks + State Machines
-%
-% Only make these if necessary
-datatub{'Control'}{'dotsStateMachine'} = [];
-datatub{'Control'}{'saccadeStateMachine'} = [];
+%% ---- Configure State Machine
+RTDconfigureStateMachine(datatub);
 
-% Set up references that may or may not be overriden by Quest/MeanRT tasks
-datatub{'Task'}{'referenceRT'} = datatub{'Input'}{'referenceRT'};
-datatub{'Task'}{'referenceCoherence'} = datatub{'Input'}{'coherences'};
+%% ---- Configure Tasks
+% Set up the main tree node and save it
+maintask = topsTreeNode('dotsTask');
+maintask.iterations = 1; % Go once through the set of tasks
+%maintask.startFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @open};
+%maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
+datatub{'Control'}{'mainTask'} = maintask;
 
-% The standard "nodeData" struct to add to each task (topsTreeNode)
-taskNumber = 1; % for feedback (see RTDstartTrial)
-nodeData = struct( ...
-   'stateMachine', [], ...
-   'taskNumber', 0, ...
-   'taskData',  [], ...
-   'trialData', [], ...
-   'totalCorrect', 0, ...
-   'totalError', 0, ...
-   'currentTrial', 1, ...
-   'repeatTrial', false);
+% Add tasks to the main tree node. Here they all use the same stateMachine,
+% but in general that does not have to be the case
+RTDconfigureTasks(maintask, datatub);
 
-% Loop through the taskSpecs array, making and adding tasks
-taskSpecs = datatub{'Input'}{'taskSpecs'};
-for tt = 1:2:length(taskSpecs)
-      
-   % Parse the name and trial numbers from sequential arguments
-   name = taskSpecs{tt};
-   trialsPerCoherence  = taskSpecs{tt+1};
-   if isempty(trialsPerCoherence)
-      trialsPerCoherence = datatub{'Input'}{'trialsPerCoherence'};
-   end
-   
-   % Make the task with some defaults
-   task = maintask.newChildNode(name);
-   task.finishFevalable     = {@RTDfinishTask};
-   task.nodeData            = nodeData;
-   task.nodeData.taskNumber = taskNumber;
-   task.iterations          = inf;
-   taskNumber = taskNumber + 1;
-  
-   % Add task-specific information, depending on the named type
-   switch (name)
-      
-      case {'MGS', 'VGS'}
-         
-         % Saccade task!
-         %
-         % Configure saccade state machine if it doesn't exist
-         if isempty(datatub{'Control'}{'saccadeStateMachine'})
-            RTDconfigureSaccadeStateMachine(datatub);
-         end
-         
-         % Add state machine information
-         task.nodeData.stateMachine = datatub{'Control'}{'saccadeStateMachine'};
-         task.addChild(datatub{'Control'}{'saccadeStateMachineComposite'});
-         
-         % Configure saccade task
-         RTDconfigureSaccadeTask(task, datatub, trialsPerCoherence);
-              
-      otherwise
-         
-         % Dots task!
-         %
-         % Configure dots state machine if it doesn't exist
-         if isempty(datatub{'Control'}{'dotsStateMachine'})
-            RTDconfigureDotsStateMachine(datatub);
-         end
+%% ---- Configure Data logging
+topsDataLog.flushAllData(); % Flush stale data, just in case
+topsDataLog.logDataInGroup(struct(datatub), 'datatub');
+topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, datatub{'Input'}{'fileName'}));
+topsDataLog.flushAllData(); % Flush again to keep memory demands low
 
-         % Add state machine information
-         task.nodeData.stateMachine = datatub{'Control'}{'dotsStateMachine'};
-         task.addChild(datatub{'Control'}{'dotsStateMachineComposite'});
-
-         % Configure dots task
-         RTDconfigureDotsTask(task, datatub, trialsPerCoherence);         
-   end
 end

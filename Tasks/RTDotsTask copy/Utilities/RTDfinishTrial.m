@@ -56,7 +56,7 @@ else
     task.nodeData.repeatTrial = false;
     
     % Used in performance output, below
-    if trial.correct == 0
+    if trial.choice == 0
         outcomeStr = 'ERROR';
         task.nodeData.totalError = task.nodeData.totalError + 1;
     else
