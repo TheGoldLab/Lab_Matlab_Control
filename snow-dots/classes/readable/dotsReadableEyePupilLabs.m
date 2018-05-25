@@ -63,9 +63,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Indices for the various data components. g is for gaze while p is
       % for pupil. For the pupil indices, the first one corresponds to
       % pupil0 in PupilLab and the second one corresponds to pupil1.
-      gXID = [];
-      gYID = [];
-      gCID = [];
+      cID = [];
       
       pXIDs = [];
       pYIDs = [];
@@ -91,9 +89,20 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       
       % Variables for controlling the connection between Matlab and
       % PupilLabs.
+      
+      % IP/port
       pupilLabSubAddress;
+      
+      % ZMQ context that will be used for managing all our
+      % communications with PupilLabs
       zmqContext;
+      
+      % The port associated with the communicatoin socket for control
+      % commands
       reqPort = [];
+
+      % The port associated with the communicatoin socket for getting
+      % gaze data
       gazePort = [];
    end
    
@@ -340,13 +349,16 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
          warning('on','zmq:core:recv:bufferTooSmall');
          
+         % Pause a moment
+         pause(0.4);
+         
          % Re-set device time
          self.setDeviceTime();
          
          % Call dotsReadableEye.calibrateDevice routine for general
          % eye-tracking calibration, including tranforming to snow-dots
          % coordinates
-         self@dotsReadableEye.calibrateDevice();
+         self.calibrateDevice@dotsReadableEye;
       end
       
       % Overloaded recordDeviceOn function
@@ -406,9 +418,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
          
          % Alwats save gaze IDs
-         self.gXID = find(strcmp('gaze x', names));
-         self.gYID = find(strcmp('gaze y', names));
-         self.gCID = find(strcmp('gaze confidence', names));
+         self.xID = find(strcmp('gaze x', names));
+         self.yID = find(strcmp('gaze y', names));
+         self.cID = find(strcmp('gaze confidence', names));
 
          % Make a blank data matrix of the correct size. When data come in,
          % we just copy and fill this
@@ -461,9 +473,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          confidence = dataStruct.confidence;
          
          % Set the data
-         newData(self.gXID,:) = [self.gXID gazePos(1) time];
-         newData(self.gYID,:) = [self.gYID gazePos(2) time];
-         newData(self.gCID,:) = [self.gCID confidence time];
+         newData(self.xID,:) = [self.xID gazePos(1) time];
+         newData(self.yID,:) = [self.yID gazePos(2) time];
+         newData(self.cID,:) = [self.cID confidence time];
          
          % Conveniently, the gaze data struct contains the raw data
          %  for each individual eye used to determine the gaze. Thus,
@@ -494,9 +506,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       function newData = transformRawData(self, newData)
          
          % Transform gaze x,y
-         newData([self.gXID, self.gYID], 2) = ...
+         newData([self.xID, self.yID], 2) = ...
             self.translation' + self.rotation * self.scale * ...
-            newData([self.gXID, self.gYID], 2);
+            newData([self.xID, self.yID], 2);
 
          % check for all data
          if self.getRawEyeData

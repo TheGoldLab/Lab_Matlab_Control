@@ -42,10 +42,11 @@ abrt   = {@RTDabortExperiment, datatub};
 skip   = {@RTDabortTask, datatub};
 calpl  = {@calibrate, ui};
 sch    = @(x)cat(2, {@RTDsetDotsChoice, datatub}, x);
-fg     = @(x,y,z){@RTDsetGazeWindow, ui, x, y, z};
-gwfxw  = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [true false false]);
-gwfxh  = fg('fpWindow', true, true);
-gwts   = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [false true true]);
+sgw    = @dotsReadableEye.setGazeWindows;
+gwfxw  = {sgw, ui, {'fpWindow', 'isActive', true}};
+gwfxh  = {sgw, ui, {'fpWindow', 'isInverted', true, 'setToGaze', true}};
+gwts   = {sgw, ui, {'fpWindow', 'isActive', false}, ...
+    {'t1Window', 'isActive', true}, {'t2Window', 'isActive', true}};
 
 % Timing variables
 tft = datatub{'Timing'}{'fixationTimeout'};

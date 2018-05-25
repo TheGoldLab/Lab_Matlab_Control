@@ -44,8 +44,8 @@ else
    %  Remember that dotsOn time might be from the remote computer, whereas
    %  sacOn is from the local computer, so we need to account for clock
    %  differences
-   trial.RT = trial.time_choice - (trial.time_local_trialStart + ...
-      trial.time_dotsOn - trial.time_screen_trialStart);
+   trial.RT = (trial.time_choice - trial.time_local_trialStart) - ...
+       (trial.time_dotsOn - trial.time_screen_trialStart);
    
    % Set up feedback string
    %  First Correct/error

@@ -34,11 +34,11 @@ else
    feedbackString = 'Correct';
    
    % Compute/save RT
-   %  Remember that dotsOn time might be from the remote computer, whereas
-   %  sacOn is from the local computer, so we need to account for clock
-   %  differences
-   trial.RT = trial.time_choice - (trial.time_local_trialStart + ...
-      trial.time_fixOff - trial.time_screen_trialStart);
+   %  Remember that time_choice time is from the UI, whereas
+   %    fixOff is from the remote computer, so we need to 
+   %    account for clock differences
+   trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
+       (trial.time_fixOff - trial.time_screen_trialStart);   
 end
 
 %% ---- Re-save the current trial

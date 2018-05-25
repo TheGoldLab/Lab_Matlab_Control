@@ -30,6 +30,7 @@ datatub{'Control'}{'startCallList'} = startCallList();
 
 finishCallList = topsCallList();
 finishCallList.alwaysRunning = false;
+finishCallList.invertOrder = true;
 datatub{'Control'}{'finishCallList'} = finishCallList();
 
 %% ---- Set up the main tree node and save it

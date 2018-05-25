@@ -31,7 +31,7 @@ kb = datatub{'Control'}{'keyboard'};
 blanks = {@callObjectMethod, screenEnsemble, @blank};
 chkuif = {@getNextEvent, ui, false, {'holdFixation'}};
 chkuib = {@getNextEvent, ui, false, {'brokeFixation'}};
-chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseLeft'}, 'choice'};
+chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseTarget'}, 'choice'};
 chkkbd = {@getNextEvent kb, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
 showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2), datatub, 'fixOn'};
 showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targOn'};
@@ -42,10 +42,10 @@ abrt   = {@RTDabortExperiment, datatub};
 skip   = {@RTDabortTask, datatub};
 calpl  = {@calibrate, ui};
 sch    = @(x)cat(2, {@RTDsetSaccadeChoice, datatub}, x);
-fg     = @(x,y,z){@RTDsetGazeWindow, ui, x, y, z};
-gwfxw  = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [true false false]);
-gwfxh  = fg('fpWindow', true, true);
-gwt    = fg({'fpWindow' 't1Window'}, [false false], [false true]);
+sgw    = @dotsReadableEye.setGazeWindows;
+gwfxw  = {sgw, ui, {'fpWindow', 'isActive', true}};
+gwfxh  = {sgw, ui, {'fpWindow', 'isInverted', true, 'setToGaze', true}};
+gwt    = {sgw, ui, {'fpWindow', 'isActive', false}, {'tcWindow', 'isActive', true}};
 
 % Timing variables
 tft = datatub{'Timing'}{'fixationTimeout'};
@@ -72,7 +72,7 @@ trialStates = {...
    'hideFix'           hidefx   chkuic   sto        {}      'noChoice'        ; ...    
    'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
    'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
-   'choseLeft'         sch( 1)  {}       0          {}      'blank'           ; ...
+   'choseTarget'       sch( 1)  {}       0          {}      'blank'           ; ...
    'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
    'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
    'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...

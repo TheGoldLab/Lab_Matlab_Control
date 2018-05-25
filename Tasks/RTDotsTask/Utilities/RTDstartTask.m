@@ -19,6 +19,9 @@ function RTDstartTask(datatub, taskTreeNode, instructionStrings)
 %% ---- Save the topsTreeNode as the current task
 datatub{'Control'}{'currentTask'} = taskTreeNode;
 
+%% ---- Clear all the gaze windows
+deactivateEvents(datatub{'Control'}{'ui'});
+
 %% ---- Show intro/transition
 if taskTreeNode.nodeData.taskNumber == 1
    

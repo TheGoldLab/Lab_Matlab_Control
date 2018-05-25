@@ -38,6 +38,9 @@ classdef topsCallList < topsConcurrent
         
         % true or false, whether to run indefinitely
         alwaysRunning = true;
+        
+        % true or false, invert order of calls
+        invertOrder = false;
     end
     
     methods
@@ -146,8 +149,14 @@ classdef topsCallList < topsConcurrent
             if ~isempty(self.calls)
                 isActive = [self.calls.isActive];
                 fevalables = {self.calls(isActive).fevalable};
-                for ii = 1:length(fevalables)
-                    feval(fevalables{ii}{:});
+                if self.invertOrder
+                    for ii = length(fevalables):-1:1
+                        feval(fevalables{ii}{:});
+                    end
+                else
+                    for ii = 1:length(fevalables)
+                        feval(fevalables{ii}{:});
+                    end
                 end
                 self.isRunning = self.isRunning && self.alwaysRunning;
             end

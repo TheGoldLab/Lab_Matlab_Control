@@ -90,7 +90,7 @@ classdef dotsDrawable < handle
          % swap OpenGL frame buffers twice
          theScreen = dotsTheScreen.theObject();
          
-         if nargin < 1 || isempty(backgroundColor)
+         if nargin < 2 || isempty(backgroundColor)
             frameInfo = theScreen.blank();
          else
             frameInfo = theScreen.blank(backgroundColor);
