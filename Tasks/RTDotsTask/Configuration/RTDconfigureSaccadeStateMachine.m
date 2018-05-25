@@ -1,9 +1,9 @@
-function RTDconfigureDotsStateMachine(datatub)
-% function RTDconfigureDotsStateMachine(datatub)
+function RTDconfigureSaccadeStateMachine(datatub)
+% function RTDconfigureSaccadeStateMachine(datatub)
 %
 % RTD = Response-Time Dots
 %
-% Configure state machine (flow control)
+% Configure state machine (flow control) for VS and MGS saccade tasks
 %
 % Inputs:
 %  datatub ... tub o' data
@@ -18,8 +18,8 @@ function RTDconfigureDotsStateMachine(datatub)
 %% ---- Collect convenient variables, etc
 % The screen and drawable objects
 screenEnsemble   = datatub{'Graphics'}{'screenEnsemble'};
-stimulusEnsemble = datatub{'Graphics'}{'dotsStimuliEnsemble'};
-sis              = datatub{'Graphics'}{'dotsStimuli inds'};
+stimulusEnsemble = datatub{'Graphics'}{'saccadeStimuliEnsemble'};
+sis              = datatub{'Graphics'}{'saccadeStimuli inds'};
 textEnsemble     = datatub{'Graphics'}{'textEnsemble'};
 tis              = datatub{'Graphics'}{'text inds'};
 
@@ -31,42 +31,48 @@ kb = datatub{'Control'}{'keyboard'};
 blanks = {@callObjectMethod, screenEnsemble, @blank};
 chkuif = {@getNextEvent, ui, false, {'holdFixation'}};
 chkuib = {@getNextEvent, ui, false, {'brokeFixation'}};
-chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseLeft' 'choseRight'}, 'choice'};
+chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseLeft'}, 'choice'};
 chkkbd = {@getNextEvent kb, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
-showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2:3), datatub, 'fixOn'};
-showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targsOn'};
-showd  = {@RTDsetVisible, stimulusEnsemble, sis(3), [], datatub, 'dotsOn'};
-hided  = {@RTDsetVisible, stimulusEnsemble, [], sis([1 3]), datatub, 'dotsOff'};
+showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2), datatub, 'fixOn'};
+showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targOn'};
+hidet  = {@RTDsetVisible, stimulusEnsemble, [], sis(2), datatub, 'targOff'};
+hidefx = {@RTDsetVisible, stimulusEnsemble, [], sis(1), datatub, 'fixOff'};
 showfb = {@RTDsetVisible, textEnsemble, tis(1), [], datatub, 'fdbkOn'};
 abrt   = {@RTDabortExperiment, datatub};
 skip   = {@RTDabortTask, datatub};
 calpl  = {@calibrate, ui};
-sch    = @(x)cat(2, {@RTDsetDotsChoice, datatub}, x);
+sch    = @(x)cat(2, {@RTDsetSaccadeChoice, datatub}, x);
 fg     = @(x,y,z){@RTDsetGazeWindow, ui, x, y, z};
 gwfxw  = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [true false false]);
 gwfxh  = fg('fpWindow', true, true);
-gwts   = fg({'fpWindow' 't1Window' 't2Window'}, [false false false], [false true true]);
+gwt    = fg({'fpWindow' 't1Window'}, [false false], [false true]);
 
 % Timing variables
 tft = datatub{'Timing'}{'fixationTimeout'};
 tfh = datatub{'Timing'}{'holdFixation'};
-dtt = datatub{'Timing'}{'dotsTimeout'};
+vtd = datatub{'Timing'}{'VGSTargetDuration'};
+mtd = datatub{'Timing'}{'MGSTargetDuration'};
+mdd = datatub{'Timing'}{'MGSDelayDuration'};
+sto = datatub{'Timing'}{'saccadeTimeout'};
 tsf = datatub{'Timing'}{'showFeedback'};
 iti = datatub{'Timing'}{'InterTrialInterval'};
 
 %% ---- Make the state machine
+%
+% Note that the startTrial routine sets the target location and the 'next'
+% state after holdFixation, based on VGS vs MGS task
 trialStates = {...
    'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
    'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
    'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
-   'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...
-   'showTargets'       showt    chkuib   1          gwts    'preDots'         ; ...
-   'preDots'           {}       {}       0          {}      'showDots'        ; ...
-   'showDots'          showd    chkuic   dtt        hided   'noChoice'        ; ...
+   'holdFixation'      gwfxh    chkuib   tfh        {}      'showTarget'      ; ... % Branch here
+   'VGSshowTarget'     showt    chkuib   vtd        gwt     'hideFix'         ; ... % VGS
+   'MGSshowTarget'     showt    chkuib   mtd        {}      'MGSdelay'        ; ... % MGS
+   'MGSdelay'          hidet    chkuib   mdd        gwt     'hideFix'         ; ...
+   'hideFix'           hidefx   chkuic   sto        {}      'noChoice'        ; ...    
    'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
    'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
-   'choseLeft'         sch( 0)  {}       0          {}      'blank'           ; ...
-   'choseRight'        sch( 1)  {}       0          {}      'blank'           ; ...
+   'choseLeft'         sch( 1)  {}       0          {}      'blank'           ; ...
    'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
    'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
    'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
@@ -78,26 +84,19 @@ trialStates = {...
    };
 
 %% ---- Put stuff together in a stateMachine so that it will run
-dotsStateMachine = topsStateMachine();
-dotsStateMachine.addMultipleStates(trialStates);
-dotsStateMachine.startFevalable = {@RTDstartTrial, datatub};
-dotsStateMachine.finishFevalable = {@RTDfinishTrial, datatub};
+saccadeStateMachine = topsStateMachine();
+saccadeStateMachine.addMultipleStates(trialStates);
+saccadeStateMachine.startFevalable = {@RTDstartTrial, datatub};
+saccadeStateMachine.finishFevalable = {@RTDfinishTrial, datatub};
 
-% Set up ensemble activation list. See activateEnsemblesByState for details.
-% Note that the predots state is what allows us to get a good timestamp
-%   of the dots onset... we start the flipping before, so the dots will start
-%   as soon as we send the isVisible command in the entry fevalable of showDots
-activeList = {{stimulusEnsemble, 'draw'; screenEnsemble, 'flip'}, ...
-   {'preDots' 'showDots'}};
-dotsStateMachine.addSharedFevalableWithName( ...
-   {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
+% For debugging
+%saccadeStateMachine.addSharedFevalableWithName( ...
+%   {@showStateInfo}, 'debugStates', 'entry');
 
 %% ---- Make a concurrent composite to interleave run calls
-dotsStateMachineComposite = topsConcurrentComposite('stateMachine Composite');
-dotsStateMachineComposite.addChild(dotsStateMachine);
-dotsStateMachineComposite.addChild(stimulusEnsemble);
-dotsStateMachineComposite.addChild(screenEnsemble);
+saccadeStateMachineComposite = topsConcurrentComposite('stateMachine Composite');
+saccadeStateMachineComposite.addChild(saccadeStateMachine);
 
 %% ---- Save the stateMachine and Composite in the tub
-datatub{'Control'}{'dotsStateMachine'} = dotsStateMachine;
-datatub{'Control'}{'dotsStateMachineComposite'} = dotsStateMachineComposite;
+datatub{'Control'}{'saccadeStateMachine'} = saccadeStateMachine;
+datatub{'Control'}{'saccadeStateMachineComposite'} = saccadeStateMachineComposite;

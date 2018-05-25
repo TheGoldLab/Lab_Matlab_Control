@@ -26,9 +26,6 @@ end
 % Possibly draw now
 if nargin >= 4 && ~isempty(datatub)
         
-    % Call runBriefly for the drawable ensemble
-    callObjectMethod(drawables, @mayDrawNow);
-    
     % Use the screenEmsemble to draw the next frame. This returns a struct
     % with args:
     %   - onsetTime: estimated onset time for this frame, which
@@ -40,7 +37,7 @@ if nargin >= 4 && ~isempty(datatub)
     %   past
     %   - isTight: whether this frame and the previous frame were
     %   adjacent (false if a frame was skipped)
-    ret = callObjectMethod(datatub{'Graphics'}{'screenEnsemble'}, @nextFrame);
+    ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, {}, [], true);
     
     % Save timing information in the trial struct, then re-save
     task = datatub{'Control'}{'currentTask'};

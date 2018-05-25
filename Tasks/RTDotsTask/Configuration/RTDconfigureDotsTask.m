@@ -19,6 +19,11 @@ function RTDconfigureDotsTask(task, datatub, trialsPerCoherence)
 %
 % 5/11/18 written by jig
 
+%% ---- Check arg
+if isempty(trialsPerCoherence)
+   trialsPerCoherence = datatub{'Input'}{'trialsPerCoherence'};
+end
+
 %% ---- Instruction strings. 
 %
 % Define them here so they can be consistent across task types

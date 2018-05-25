@@ -57,68 +57,79 @@ kb.defineCalibratedEvent('KeyboardT', 'skip', 1, true);
 % Save the keyboard
 datatub{'Control'}{'keyboard'} = kb;
 
-%% ---- Try to get pupil labs device
+%% ---- Use named input device
 ui = [];
-if datatub{'Input'}{'useEyeTracking'}
+if strcmp(datatub{'Input'}{'uiDevice'}, 'dotsReadableEyePupilLabs') || ...
+      strcmp(datatub{'Input'}{'uiDevice'}, 'dotsReadableEyeMouseSimulator')
    
    % Get the pupl labs eye tracking object
-   pl = dotsReadableEyePupilLabs();
+   ui = eval(datatub{'Input'}{'uiDevice'});
    
    % Make sure it's working
-   if pl.isAvailable
-      
-      % Set remote info, for showing calibration on the appropriate screen
-      pl.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
-      
-      % Set the data file to the same name as the current file, with
-      % _pupilLabs suffix
-      [~, name, ~] = fileparts(datatub{'Input'}{'fileName'});
-      pl.sessionName = sprintf('%s_pupilLabs', name);
-      
-      % Automatically read during getNextEvent calls
-      pl.isAutoRead = true;
-      
-      % Define gazeWindows based on fp and two targets
-      windowSize = datatub{'Input'}{'gazeWindowSize'};
-      windowDur  = datatub{'Input'}{'gazeWindowDur'};
-      fpx        = datatub{'FixationCue'}{'xDVA'};
-      fpy        = datatub{'FixationCue'}{'yDVA'};
-      offset     = datatub{'SaccadeTarget'}{'offset'};
-      
-      % Fixation window
-      pl.addGazeWindow('fpWindow', ...
-         'eventName',   'holdFixation', ...
-         'centerXY',    [fpx fpy], ...
-         'channelsXY',  [pl.gXID pl.gYID], ...
-         'windowSize',  windowSize, ...
-         'windowDur',   windowDur);
-      
-      % Left target window
-      pl.addGazeWindow('t1Window', ...
-         'eventName',   'choseLeft', ...
-         'centerXY',    [fpx-offset fpy], ...
-         'channelsXY',  [pl.gXID pl.gYID], ...
-         'windowSize',  windowSize, ...
-         'windowDur',   windowDur);
-      
-      % Right target window
-      pl.addGazeWindow('t2Window', ...
-         'eventName',   'choseRight', ...
-         'centerXY',    [fpx+offset fpy], ...
-         'channelsXY',  [pl.gXID pl.gYID], ...
-         'windowSize',  windowSize, ...
-         'windowDur',   windowDur);
-      
-      % Save it
-      ui = pl;
-      
-      % Define keypress event to trigger calibration
-      kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
+   if ~ui.isAvailable
+      ui = dotsReadableEyeMouseSimulator();
    end
-end
-
-%% --- Otherwise use the keyboard
-if isempty(ui)
+   
+   % Set remote info, for showing calibration on the appropriate screen
+   ui.ensembleRemoteInfo = datatub{'Input'}{'remoteInfo'};
+   
+   % Set the data file to the same name as the current file, with
+   % _pupilLabs suffix
+   [~, name, ~] = fileparts(datatub{'Input'}{'fileName'});
+   ui.filename = sprintf('%s_pupilLabs', name);
+   
+   % Automatically read during getNextEvent calls
+   ui.isAutoRead = true;
+   
+   % Define gazeWindows based on fp and two targets
+   windowSize = datatub{'Input'}{'gazeWindowSize'};
+   windowDur  = datatub{'Input'}{'gazeWindowDur'};
+   fpx        = datatub{'FixationCue'}{'xDVA'};
+   fpy        = datatub{'FixationCue'}{'yDVA'};
+   offset     = datatub{'SaccadeTarget'}{'offset'};
+   
+   % Fixation window
+   ui.addGazeWindow('fpWindow', ...
+      'eventName',   'holdFixation', ...
+      'centerXY',    [fpx fpy], ...
+      'channelsXY',  [ui.gXID ui.gYID], ...
+      'windowSize',  windowSize, ...
+      'windowDur',   windowDur);
+   
+   % Left target window
+   ui.addGazeWindow('t1Window', ...
+      'eventName',   'choseLeft', ...
+      'centerXY',    [fpx-offset fpy], ...
+      'channelsXY',  [ui.gXID ui.gYID], ...
+      'windowSize',  windowSize, ...
+      'windowDur',   windowDur);
+   
+   % Right target window
+   ui.addGazeWindow('t2Window', ...
+      'eventName',   'choseRight', ...
+      'centerXY',    [fpx+offset fpy], ...
+      'channelsXY',  [ui.gXID ui.gYID], ...
+      'windowSize',  windowSize, ...
+      'windowDur',   windowDur);
+   
+   % Define keypress event to trigger calibration
+   kb.defineCalibratedEvent('KeyboardC', 'calibrate', 1, true);
+   
+   % Add start/finish fevalables to the main topsTreeNode
+   %  START calibration, recording
+   addCall(datatub{'Control'}{'startCallList'}, ...
+      {@calibrate, ui}, 'calibrate pupilLab');
+   addCall(datatub{'Control'}{'startCallList'}, ...
+      {@record, ui, true}, 'start recording pupilLab');
+   
+   %  Finish calibration, recording
+   addCall(datatub{'Control'}{'finishCallList'}, ...
+      {@record, ui, false}, 'finish recording pupilLab');
+   addCall(datatub{'Control'}{'finishCallList'}, ...
+      {@close, ui}, 'close pupilLab');
+   
+else
+   %% --- Otherwise use the keyboard
    
    % Define task events
    kb.defineCalibratedEvent('KeyboardF', 'choseLeft', 1, true);
@@ -131,3 +142,7 @@ end
 
 % Save the active ui device
 datatub{'Control'}{'ui'} = ui;
+
+% Add a maintask finish fevalable to close the kb
+addCall(datatub{'Control'}{'finishCallList'}, ...
+   {@close, kb}, 'close keyboard');

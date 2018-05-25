@@ -17,20 +17,13 @@ function eventName = RTDgetAndSaveNextEvent(datatub, acceptedEvents, eventTag)
 %% ---- Call dotsReadable.getNext
 %
 % data has the form [ID, value, time]
-[name, data] = getNextEvent(datatub{'Control'}{'ui'}, [], acceptedEvents);
+[eventName, data] = getNextEvent(datatub{'Control'}{'ui'}, [], acceptedEvents);
 
-if isempty(name)
-   
-   % Return blank string
-   eventName = '';
-else
-
-   % Return the event name 
-   eventName = name;
+if ~isempty(eventName)
    
    % Store the timing data
-    task = datatub{'Control'}{'currentTask'};
-    task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
-        data(3);
+   task = datatub{'Control'}{'currentTask'};
+   task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
+      data(3);
 end
 

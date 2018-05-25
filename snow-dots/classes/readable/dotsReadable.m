@@ -12,6 +12,8 @@ classdef dotsReadable < handle
    %> must redefine the following methods in order to read actual data:
    %>   - openDevice()
    %>   - closeDevice()
+   %>   - calibrateDevice()
+   %>   - recordDevice()
    %>   - openComponents()
    %>   - closeComponents()
    %>   - readNewData()
@@ -61,7 +63,6 @@ classdef dotsReadable < handle
       isAvailable = false;
       
       %> struct array with details about each component
-      %> 
       components;
       
       %> matrix of ID, latest value, and latest time indexed by ID
@@ -81,6 +82,12 @@ classdef dotsReadable < handle
       
       %> any function that returns the current time as a number
       clockFunction;
+      
+      %> name of the data file for devices that store their own data
+      filename;
+      
+      %> controls whether or not to stop recording during calibration
+      recordDuringCalibration = false;
    end
    
    properties (SetAccess = protected)
@@ -96,6 +103,9 @@ classdef dotsReadable < handle
       
       %> possibly keep track of device clock
       deviceResetTime;
+      
+      %> keep track of whether device is currenly writing to a data file
+      isRecording=false;
    end
    
    methods
@@ -129,7 +139,59 @@ classdef dotsReadable < handle
             for id = self.getComponentIDs()
                self.undefineEvent(id);
             end
-         end         
+         end
+      end
+      
+      %> Calibrate the device
+      function calibrate(self)
+         
+         % Check to pause data recording
+         if ~self.recordDuringCalibration && self.isRecording
+            self.record(false);
+            restartRecording = true;
+         else
+            restartRecording = false;
+         end
+         
+         % Call device-specific calibration routine
+         self.calibrateDevice();
+         
+         % Log a time maker that we just calibrated the device
+         name = [class(self) '_calibration'];
+         data = mglGetSecs;
+         topsDataLog.logDataInGroup(data, name);
+ 
+         % Possibly restart recording
+         if restartRecording
+            self.record(true);
+         end
+      end
+      
+      %> Open/close data file associated with the device
+      %> Arguments:
+      %>    onFlag ... true to turn on (default), false to turn off
+      %>    filename ... string name of the file
+      function record(self, onFlag, filename)
+         
+         if nargin < 2 || isempty(onFlag)
+            onFlag = true;
+         end
+         
+         if nargin >=3 && ~isempty(filename)
+            self.filename = filename;
+         end
+         
+         % Check for on/off
+         if onFlag && ~self.isRecording
+            
+            % use overloaded recordDevice for device-specific calls
+            self.isRecording = self.recordDeviceOn();
+            
+         elseif ~onFlag && self.isRecording
+            
+            % use overloaded recordDevice for device-specific calls
+            self.isRecording = self.recordDeviceOff();
+         end
       end
       
       %> Release any resources acquired by initialize().
@@ -204,14 +266,10 @@ classdef dotsReadable < handle
       %> logData() saves all properties of a dotsReadable object as a
       %> struct in topsDataLog, using the class's name as the data group
       %> name.
-      function logData(self)         
+      function logData(self)
          name = class(self);
          data = struct(self);
          topsDataLog.logDataInGroup(data, name);
-      end
-      
-      %> In case there is a device-specific data file that must be saved
-      function toggleDataFile(self, toggleFlag)
       end
       
       %> Get the state of device components as of the given time.
@@ -351,7 +409,7 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).isInverted = isInverted;
          self.eventDefinitions(index).isActive = isActive;
       end
-       
+      
       %> Delete the event for one of the input components.
       %> @param ID one of the integer IDs in components
       %> @details
@@ -362,7 +420,7 @@ classdef dotsReadable < handle
       %> updated by jig 5/5/2018
       %>    Can give ID as 2nd argument for backwards compatibility
       function undefineEvent(self, componentNameOrID)
- 
+         
          % nameOrID string or numeric ID for the component
          if ischar(componentNameOrID)
             index = self.getComponentIDbyName(componentNameOrID);
@@ -375,7 +433,7 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).lowValue = nan;
          self.eventDefinitions(index).highValue = nan;
          self.eventDefinitions(index).isInverted = false;
-         self.eventDefinitions(index).isActive = false;         
+         self.eventDefinitions(index).isActive = false;
       end
       
       % Turn on/off isActive flag
@@ -389,13 +447,13 @@ classdef dotsReadable < handle
             self.eventDefinitions(self.getComponentIDbyName(componentNameOrID)).isActive = activeFlag;
          elseif isnumeric(componentNameOrID)
             self.eventDefinitions(componentNameOrID).isActive = activeFlag;
-         end         
+         end
       end
       
       % De-activate events as a batch, which is covenient to do at the
       % beginning of a trial where you want to control them one at a time
       function deactivateEvents(self)
-          [self.eventDefinitions.isActive] = deal(false);
+         [self.eventDefinitions.isActive] = deal(false);
       end
       
       %> Get the next event that was detected in read().
@@ -426,7 +484,7 @@ classdef dotsReadable < handle
          if nargin < 2 || isempty(isPeek)
             isPeek = false;
          end
-                  
+         
          %> update component data before checking for events
          if self.isAutoRead
             self.read();
@@ -441,7 +499,7 @@ classdef dotsReadable < handle
             data = zeros(0,3);
             
          else
-            %> get queued data from hitory
+            %> get queued data from history
             %>   look up the event name for convenience
             data = self.history(historyIndex, :);
             ID = data(1);
@@ -452,7 +510,7 @@ classdef dotsReadable < handle
                   ~any(strcmp(name, acceptedEvents))
                name = '';
                data = zeros(0,3);
-            end            
+            end
          end
       end
       
@@ -556,7 +614,7 @@ classdef dotsReadable < handle
             time = time - self.deviceResetTime;
          end
       end
-
+      
       %> Set the device time
       function setDeviceTime(self, val)
          
@@ -706,6 +764,23 @@ classdef dotsReadable < handle
          self.isAvailable = false;
       end
       
+      %> Calibrate the device (for subclasses).
+      %> @details
+      %> Subclasses must redefine calibrateDevice(). It should
+      %> be safe to call calibrateDevice() multiple times in a row.
+      function calibrateDevice(self)
+      end
+      
+      %> Turn on data recording from the device (for subclasses).
+      function isRecording = recordDeviceOn(self)
+         isRecording = false; % overriden by device-specific subclass
+      end
+      
+      %> Turn off data recording from the device (for subclasses).
+      function isRecording = recordDeviceOff(self)
+         isRecording = false; % overriden by device-specific subclass
+      end
+      
       %> Locate and acquire device components (for subclasses).
       %> @details
       %> Subclasses must redefine openComponents().  They should expect
@@ -778,14 +853,14 @@ classdef dotsReadable < handle
          %> Get all the new data values
          newValues = data(:,2)';
          
-         %> compare incoming values to event definitions         
+         %> compare incoming values to event definitions
          lows = [definitions.lowValue];
          highs = [definitions.highValue];
          isInverted = [definitions.isInverted];
          isActive = [definitions.isActive];
          
          isInRange = (newValues <= highs) & (newValues >= lows);
-         isEvent = isActive & xor(isInRange, isInverted);    
+         isEvent = isActive & xor(isInRange, isInverted);
          
          % disp(data(:,2))
          % disp(isEvent)

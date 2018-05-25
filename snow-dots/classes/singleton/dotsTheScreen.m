@@ -48,7 +48,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
         foregroundColor;
         
         % a background color, [L] [LA] [RGB] [RGBA], 0-255
-        backgroundColor;
+        backgroundColor = [0 0 0];
         
         % function that returns the current time as a number
         clockFunction;
@@ -287,8 +287,9 @@ classdef dotsTheScreen < dotsAllSingletonObjects
                 [frameInfoData{1:4}] = self.flushGauge.flush();
                 
                 if doClear
-                    % clear, for the next frame of graphics
-                    mglClearScreen();
+
+                   % clear, for the next frame of graphics
+                   mglClearScreen(self.backgroundColor);
                 end                
             else
                 
@@ -327,22 +328,26 @@ classdef dotsTheScreen < dotsAllSingletonObjects
         %   adjacent (false if a frame was skipped)
         %   .
         % Assigns the same struct to lastFrameInfo.
-        function frameInfo = blank(self)
-            
-            if self.getDisplayNumber() >= 0
-                % flush, clear, swap buffers twice
-                [frameInfoData{1:4}] = self.flushGauge.blank();
-                
-            else
-                % placeholder frame data
-                frameInfoData = {nan, nan, nan, false};
-            end
-            
-            % report data for the last frame
-            frameInfoNames = ...
-                {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
-            frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
-            self.lastFrameInfo = frameInfo;
+        function frameInfo = blank(self, backgroundColor)
+           
+           if nargin > 1 && ~isempty(backgroundColor)
+              self.backgroundColor = backgroundColor;
+           end
+           
+           if self.getDisplayNumber() >= 0
+              % flush, clear, swap buffers twice
+              [frameInfoData{1:4}] = self.flushGauge.blank(self.backgroundColor);
+              
+           else
+              % placeholder frame data
+              frameInfoData = {nan, nan, nan, false};
+           end
+           
+           % report data for the last frame
+           frameInfoNames = ...
+              {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
+           frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
+           self.lastFrameInfo = frameInfo;
         end
         
         % Save gamma-correction data in newGammaTable to a .mat file.

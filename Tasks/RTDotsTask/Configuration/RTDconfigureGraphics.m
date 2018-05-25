@@ -38,6 +38,12 @@ screenEnsemble.automateObjectMethod('flip', @nextFrame);
 datatub{'Graphics'}{'screen'} = screen;
 datatub{'Graphics'}{'screenEnsemble'} = screenEnsemble;
 
+% add start/finish fevalables to the main topsTreeNode
+addCall(datatub{'Control'}{'startCallList'}, ...
+   {@callObjectMethod, screenEnsemble, @open}, 'openScreen');
+addCall(datatub{'Control'}{'finishCallList'}, ...
+   {@callObjectMethod, screenEnsemble, @close}, 'closeScreen');
+
 %% ---- Fixation/Target/Dots ensemble
 %
 % Fixation cue
@@ -49,11 +55,11 @@ datatub{'Graphics'}{'screenEnsemble'} = screenEnsemble;
 fixationCue = dotsDrawableTargets();
 fixationCue.xCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
 fixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
-fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.05];
-fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.05 1];
+fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.1];
+fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.1 1];
 fixationCue.nSides  = 4;
 
-% Saccade targets
+% Two saccade targets, for dots task
 %
 % The saccade targets will be two circles to the left and the right of the
 % stimulus/fixation cue. The separation from the center of the screen will
@@ -64,6 +70,16 @@ saccadeTargets.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
 saccadeTargets.nSides  = 100;
 saccadeTargets.height  = [1 1] * datatub{'SaccadeTarget'}{'size'};
 saccadeTargets.width   = [1 1] * datatub{'SaccadeTarget'}{'size'};
+
+% One saccade targets, for saccade task
+%
+% The saccade targets will be two circles to the left and the right of the
+% stimulus/fixation cue. The separation from the center of the screen will
+% be determined by a variable contained in the state object.
+saccadeTarget = dotsDrawableTargets();
+saccadeTarget.nSides  = 100;
+saccadeTarget.height  = datatub{'SaccadeTarget'}{'size'};
+saccadeTarget.width   = datatub{'SaccadeTarget'}{'size'};
 
 % Dots stimulus
 %
@@ -76,11 +92,17 @@ movingDotStim.speed = datatub{'MovingDots'}{'speed'};
 movingDotStim.xCenter = datatub{'MovingDots'}{'xDVA'};
 movingDotStim.yCenter = datatub{'MovingDots'}{'yDVA'};
 
-% Make and save the fixation/targets/dots ensemble
-[ensemble, inds] = RTDmakeDrawableEnsemble('stimulus', ...
+% Make and save the fixation/targets/dots ensemble for the dots task
+[ensemble, inds] = RTDmakeDrawableEnsemble('dotsStimuli', ...
    {fixationCue, saccadeTargets, movingDotStim}, remoteInfo);
-datatub{'Graphics'}{'stimulusEnsemble'} = ensemble;
-datatub{'Graphics'}{'stimulus inds'} = inds;
+datatub{'Graphics'}{'dotsStimuliEnsemble'} = ensemble;
+datatub{'Graphics'}{'dotsStimuli inds'} = inds;
+
+% Make and save the fixation/target ensemble for the saccade task
+[ensemble, inds] = RTDmakeDrawableEnsemble('saccadeStimuli', ...
+   {fixationCue, saccadeTarget}, remoteInfo);
+datatub{'Graphics'}{'saccadeStimuliEnsemble'} = ensemble;
+datatub{'Graphics'}{'saccadeStimuli inds'} = inds;
 
 %% ---- Text objects for showing instructions/feedback
 %

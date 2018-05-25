@@ -17,7 +17,20 @@ clear globals
 %
 % This is a versatile data structure that will allow us to pass all 
 %  relevant variables to the state machine as it advances
+% 
+% We also start by making topsCallLists for the main task start and
+%  finish fevalables. These can be filled in by various configuration
+%  subroutines so we don't need to know where what has and has not been
+%  added/configured
 datatub = topsGroupedList();
+
+startCallList = topsCallList();
+startCallList.alwaysRunning = false;
+datatub{'Control'}{'startCallList'} = startCallList();
+
+finishCallList = topsCallList();
+finishCallList.alwaysRunning = false;
+datatub{'Control'}{'finishCallList'} = finishCallList();
 
 %% ---- Set up the main tree node and save it
 %
@@ -25,12 +38,14 @@ datatub = topsGroupedList();
 % files (see below) that each add chidren to it
 maintask = topsTreeNode('dotsTask');
 maintask.iterations = 1; % Go once through the set of tasks
-%maintask.startFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @open};
-%maintask.finishFevalable = {@callObjectMethod, datatub{'Graphics'}{'screenEnsemble'}, @close};
+maintask.startFevalable = {@run, startCallList};
+maintask.finishFevalable = {@run, finishCallList};
 datatub{'Control'}{'mainTask'} = maintask;
 
-%% ---- Set argument list based on location
+%% ---- Configure experiment
 %
+%
+% Set argument list based on location
 %   locations are 'office' (default), 'OR', or 'debug'
 if nargin < 1 || isempty(location)
     location = 'office';
@@ -40,62 +55,45 @@ switch location
     
     case {'OR'}        
         arguments = { ...
-            'taskSpecs',            {'Quest' 60 'SN' 40 'AN' 40}, ...
+            'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
             'sendTTLs',             true, ...
-            'useEyeTracking',       true, ...
             'displayIndex',         1, ... % 0=small, 1=main
             'useRemote',            true, ...
             };
 
     case {'debug'}    
         arguments = { ...
-            'taskSpecs',            {'Quest' 2 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
+            'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 2 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
             'sendTTLs',             false, ...
-            'useEyeTracking',       false, ...
+            'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
             'displayIndex',         0, ... % 0=small, 1=main
             'useRemote',            false, ...
             };
         
     otherwise        
         arguments = { ...
-            'taskSpecs',            {'Quest' 40 'SN' 50 'AN' 50}, ...
+            'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
             'sendTTLs',             false, ...
-            'useEyeTracking',       true, ...
             'displayIndex',         1, ... % 0=small, 1=main
             'useRemote',            true, ...
             };
 end
 
-%% ---- Configure experiment
+% Call the configuration routine
+%
 RTDconfigure(maintask, datatub, arguments{:});
 
-%% ---- Initialize
+%% ---- Start data logging
 %
-% Start data logging
+% Start data logging and save the datatub to the data file
 topsDataLog.flushAllData(); % Flush stale data, just in case
 topsDataLog.logDataInGroup(struct(datatub), 'datatub');
 topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, datatub{'Input'}{'fileName'}));
 
-% Get the screen ensemble
-screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-
-% Open the screen
-screenEnsemble.callObjectMethod(@open);
-
-% Possibly calibrate the eye tracker
-RTDcalibratePupilLabs(datatub);
-
 %% ---- Run the task
+%
 maintask.run();
 
-%% ---- Clean up
+%% ---- Write data log to file
 %
-% Close the screen
-screenEnsemble.callObjectMethod(@close);
-
-% Close the uis
-close(datatub{'Control'}{'ui'});
-close(datatub{'Control'}{'keyboard'});
-
-%save the data
 topsDataLog.writeDataFile();
