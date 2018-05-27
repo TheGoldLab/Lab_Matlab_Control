@@ -19,39 +19,41 @@ function RTDstartTask(datatub, taskTreeNode, instructionStrings)
 %% ---- Save the topsTreeNode as the current task
 datatub{'Control'}{'currentTask'} = taskTreeNode;
 
-%% ---- Clear all the gaze windows
-deactivateEvents(datatub{'Control'}{'ui'});
+% check for good trials
+taskTreeNode.updateTrial();
+if taskTreeNode.trialIndex<1
+   error('RTDstartTask: bad task')
+end
 
-%% ---- Show intro/transition
-if taskTreeNode.nodeData.taskNumber == 1
+%% ---- Show intro/transition and instructions
+% 
+% Show all text with this duration
+instructionDuration = datatub{'Timing'}{'showInstructions'};
+
+if taskTreeNode.taskIndex == 1
    
-   % Initial instructions
-   if isa(datatub{'Control'}{'ui'}, 'dotsReadableEyePupilLabs')
+   % For the first task, give some general instructions
+   if isa(datatub{'Control'}{'userInputDevice'}, 'dotsReadableEye')
       str2 = 'Each trial starts by fixating the central cross';
    else
       str2 = 'Each trial starts by pressing the space bar';
    end
-   RDTshowText(datatub, {'Work at your own pace', str2}, ...
-      datatub{'Timing'}{'showInstructions'});
+   RDTshowText(datatub, {'Work at your own pace', str2}, instructionDuration);
    
 else
    
-   % Give a little break between tasks
+   % Otherwise give a little break between tasks
    for timer = 10:-1:1
       RDTshowText(datatub, {'Well done!' , ...
          sprintf('Next task starts in: %d', timer)}, 1);
    end      
 end
 
-%% ---- Pause between instructions
+% Pause between instructions
 pause(1);
 
-%% ---- Show instructions
+% Show task-specific instructions
 if ~isempty(instructionStrings{1}) || ~isempty(instructionStrings{1})   
-   RDTshowText(datatub, instructionStrings, datatub{'Timing'}{'showInstructions'});
+   RDTshowText(datatub, instructionStrings, instructionDuration);
 end
-
-%% ---- Turn off both strings
-RTDsetVisible(datatub{'Graphics'}{'textEnsemble'}, [], ...
-   datatub{'Graphics'}{'text inds'});
-   
+ 

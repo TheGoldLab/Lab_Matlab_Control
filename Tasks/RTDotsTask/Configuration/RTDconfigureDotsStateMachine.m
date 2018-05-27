@@ -23,8 +23,8 @@ sis              = datatub{'Graphics'}{'dotsStimuli inds'};
 textEnsemble     = datatub{'Graphics'}{'textEnsemble'};
 tis              = datatub{'Graphics'}{'text inds'};
 
-% The user-interface object
-ui = datatub{'Control'}{'ui'};
+% The user-interface objects
+ui = datatub{'Control'}{'userInputDevice'};
 kb = datatub{'Control'}{'keyboard'};
 
 % Fevalables for state list
@@ -38,14 +38,15 @@ showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targsOn'};
 showd  = {@RTDsetVisible, stimulusEnsemble, sis(3), [], datatub, 'dotsOn'};
 hided  = {@RTDsetVisible, stimulusEnsemble, [], sis([1 3]), datatub, 'dotsOff'};
 showfb = {@RTDsetVisible, textEnsemble, tis(1), [], datatub, 'fdbkOn'};
-abrt   = {@RTDabortExperiment, datatub};
-skip   = {@RTDabortTask, datatub};
+abrtf  = @(x)abort(datatub{'Control'}{x});
+abrt   = {abrtf, 'mainTask'};
+skip   = {abrtf 'currentTask'};
 calpl  = {@calibrate, ui};
 sch    = @(x)cat(2, {@RTDsetDotsChoice, datatub}, x);
-sgw    = @dotsReadableEye.setGazeWindows;
-gwfxw  = {sgw, ui, {'fpWindow', 'isActive', true}};
-gwfxh  = {sgw, ui, {'fpWindow', 'isInverted', true, 'setToGaze', true}};
-gwts   = {sgw, ui, {'fpWindow', 'isActive', false}, ...
+dce    = @defineCompoundEvent;
+gwfxw  = {dce, ui, {'fpWindow', 'isActive', true}};
+gwfxh  = {dce, ui, {'fpWindow', 'isInverted', true}};
+gwts   = {dce, ui, {'fpWindow', 'isActive', false}, ...
     {'t1Window', 'isActive', true}, {'t2Window', 'isActive', true}};
 
 % Timing variables

@@ -11,26 +11,21 @@ function RTDsetSaccadeChoice(datatub, value)
 % The task is a topsTreeNode. The useful data are in thisTask.nodeData.
 %  See RTDConfigureTasks for details
 task = datatub{'Control'}{'currentTask'};
-trial = task.nodeData.trialData(task.nodeData.currentTrial);
+trial = task.trialData(task.trialIndex);
 trial.correct = value;
 
 %% ---- Parse choice info
 if value<0
    
    % NO CHOICE
-   % Set repeat flag
-   task.nodeData.repeatTrial = true;
-   
+   %
    % Set feedback for no choice
    feedbackString = 'No choice';
 else
    
    % GOOD CHOICE
-   % Unset repeat flag
-   task.nodeData.repeatTrial = false;
-   
+   %
    % Set feedback
-   task.nodeData.totalCorrect = task.nodeData.totalCorrect + 1;
    feedbackString = 'Correct';
    
    % Compute/save RT
@@ -42,14 +37,13 @@ else
 end
 
 %% ---- Re-save the current trial
-task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+task.trialData(task.trialIndex) = trial;
 
-%% ---- Set the feedback string
+%% ---- Show the feedback string
 textEnsemble = datatub{'Graphics'}{'textEnsemble'};
 inds = datatub{'Graphics'}{'text inds'};
 textEnsemble.setObjectProperty('string', feedbackString, inds(1));
 
 %% --- Print feedback in the command window
-disp(sprintf('  %s, RT=%.2f (mean RT=%.2f)', ...
-   feedbackString, trial.RT, ...
-   nanmean([task.nodeData.trialData(1:task.nodeData.currentTrial).RT])))
+disp(sprintf('  %s, RT=%.2f (mean RT=%.2f)', feedbackString, ...
+   trial.RT, nanmean([task.trialData.RT])))

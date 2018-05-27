@@ -51,6 +51,9 @@ classdef topsTreeNode < topsRunnableComposite
       
       % For any data used for this node
       nodeData = [];
+      
+      % Flag determining stopping behavior. If true, finish all children
+      finishChildren = true;
    end
    
    properties (Hidden)
@@ -76,6 +79,15 @@ classdef topsTreeNode < topsRunnableComposite
          self.addChild(child);
       end
       
+      % Create a new topsTreeNodeTask child and add it beneath this node.
+      % @param name optional name for the new child node
+      % @details
+      % Returns a new topsTreeNode which is a child of this node.
+      function child = newChildNodeTask(self, varargin)
+         child = topsTreeNodeTask(varargin{:});
+         self.addChild(child);
+      end
+      
       % Recursively run(), starting with this node.
       % @details
       % Begin traversing the tree with this node as the topmost node.
@@ -98,6 +110,13 @@ classdef topsTreeNode < topsRunnableComposite
       % Then finishFevalables will tend to happen last, with children
       % finishing before higher nodes.
       function run(self)
+         
+         % Check for valid iterations -- we might set this to 0 to abort
+         if self.iterations <= 0
+            return
+         end
+         
+         % Run the start fevalable
          self.start();
          
          % recursive
@@ -117,16 +136,14 @@ classdef topsTreeNode < topsRunnableComposite
                end
                
                for jj = childSequence
-                  if self.isRunning
-                     % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d', ...
-                     %   self.name, self.children{jj}.name, self.isRunning))
-                     self.children{jj}.caller = self;
-                     self.children{jj}.run();
-                     self.children{jj}.caller = [];
-                  end
+                  % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d, iterations=%d', ...
+                  %   self.name, self.children{jj}.name, self.isRunning, self.iterations))
+                  self.children{jj}.caller = self;
+                  self.children{jj}.run();
+                  self.children{jj}.caller = [];
                end
             end
-            
+         
          catch recurErr
             
             % Give an error
@@ -149,6 +166,23 @@ classdef topsTreeNode < topsRunnableComposite
          end
          
          self.finish();
+      end
+      
+      % Convenient routine to abort running self and children
+      function abort(self)
+         
+         % Stop self from running
+         self.isRunning = false;
+         self.iterations = 0;
+         
+         % Stop children from running any further
+         for ii = 1:length(self.children)
+            if isa(self.children{ii}, 'topsTreeNode')
+               self.children{ii}.abort();
+            else
+               self.children{ii}.isRunning = false;
+            end
+         end
       end
    end
 end

@@ -478,35 +478,38 @@ classdef (Sealed) topsDataLog < topsGroupedList
       
       % Convenient routine to make a FIRA-like ecodes struct from a set of
       % trial structures found in a data file
-      % NOTE: this only works if entries in the structures are scalars 
-      %  (includig nans)
       function ecodes = parseEcodes(group, fileWithPath)
          
          % get the log struct
          if nargin < 2 || isempty(fileWithPath)
             logStruct = topsDataLog.getSortedDataStruct();
          else
-            logStruct = topsDataLog.readDataFile(fileWithPath);
+            logStruct = topsDataLog.readDataFile();
          end
          
          % Find the structs in the named group
-         groupInds = find(strcmp(group, {logStruct.group}));
+         groupInds = find(strcmp('trial', {logStruct.group}));
 
          % check for struct data
          if ~isempty(groupInds)
             
+            % each struct is a separate trial
+            numTrials = length(groupInds);
+   
+            %  Names are the fieldnames of the common trial data structure
+            names = fieldnames(logStruct(groupInds(1)).item)';
+   
             % Make the FIRA ecodes struct
-            %  Names is list of fieldnames (data columns)
             %  Types are ignored
-            %  data is the matrix, rows are trials, columns are fieldnames
+            %  data is the matrix, rows are trials
             ecodes = struct( ...
-               'name', {fieldnames(logStruct(groupInds(1)).item)'}, ...
+               'name', {names}, ...
                'type', [], ...
-               'data', cell2mat(permute(struct2cell(...
-               [logStruct(groupInds).item]),[3 1 2])));            
-         else
-            ecodes = [];
-         end
-      end
+               'data', nans(numTrials, length(names)));
+   
+   trials = [dataStruct(trialGroupInds).item];
+
+   for tt = 1:numTrials
+      FIRA
    end
 end

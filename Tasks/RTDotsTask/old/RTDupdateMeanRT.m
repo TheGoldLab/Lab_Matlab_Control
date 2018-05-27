@@ -18,4 +18,4 @@ task = datatub{'Control'}{'currentTask'};
 
 %% ---- Update reference RT
 datatub{'Task'}{'referenceRT'} = nanmedian( ...
-   [task.nodeData.trialData(1:task.nodeData.currentTrial).RT]);
+   [task.trialData(1:min(numel(task.trialData), task.trialCount)).RT]);

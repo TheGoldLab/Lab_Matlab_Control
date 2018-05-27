@@ -43,3 +43,6 @@ pause(instructionDuration);
 
 % Blank
 screenEnsemble.callObjectMethod(@blank);
+
+%% ---- set both visible flags to false
+textEnsemble.setObjectProperty('isVisible', false, inds);

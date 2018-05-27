@@ -11,30 +11,21 @@ function RTDsetDotsChoice(datatub, value)
 % The task is a topsTreeNode. The useful data are in thisTask.nodeData.
 %  See RTDConfigureTasks for details
 task = datatub{'Control'}{'currentTask'};
-trial = task.nodeData.trialData(task.nodeData.currentTrial);
-task.nodeData.trialData(task.nodeData.currentTrial).choice = value;
-   
+trial = task.trialData(task.trialIndex);
+trial.choice = value;
+
 %% ---- Parse choice info
 if value<0
    
    % NO CHOICE
-   % Set repeat flag
-   task.nodeData.repeatTrial = true;
-   
+   %
    % Set feedback for no choice
    feedbackString = 'No choice';
-   
-   % Randomize current direction and save it in the current trial
-   %  inside the task array, which is where we'll look for it later
-   directions = datatub{'Input'}{'directions'};
-   trial.direction = directions(randperm(length(directions),1));
-   
+
 else
    
    % GOOD CHOICE
-   % Unset repeat flag
-   task.nodeData.repeatTrial = false;
-   
+   %
    % Mark as correct/error
    trial.correct = double( ...
       (trial.choice==0 && trial.direction==180) || ...
@@ -51,10 +42,8 @@ else
    %  First Correct/error
    if trial.correct == 1
       feedbackString = 'Correct';
-      task.nodeData.totalError = task.nodeData.totalError + 1;
    else
       feedbackString = 'Error';
-      task.nodeData.totalCorrect = task.nodeData.totalCorrect + 1;
    end
    
    %  Second possibly feedback about speed
@@ -68,7 +57,7 @@ else
 end
 
 %% ---- Re-save the current trial
-task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+task.trialData(task.trialIndex) = trial;
    
 %% ---- Set the feedback string
 textEnsemble = datatub{'Graphics'}{'textEnsemble'};
@@ -76,7 +65,8 @@ inds = datatub{'Graphics'}{'text inds'};
 textEnsemble.setObjectProperty('string', feedbackString, inds(1));
 
 %% --- Print feedback in the command window
-disp(sprintf('  %s, RT=%.2f (%d correct, %d error, %.2f mean RT)', ...
-   feedbackString, trial.RT, task.nodeData.totalCorrect, ...
-   task.nodeData.totalError, ...
-   nanmean([task.nodeData.trialData(1:task.nodeData.currentTrial).RT])))
+disp(sprintf('  %s, RT=%.2f (%d correct, %d error, mean RT=%.2f)', ...
+   feedbackString, trial.RT, ...
+   sum([task.trialData.correct]==1), ...
+   sum([task.trialData.correct]==0), ...
+   nanmean([task.trialData.RT])))

@@ -15,13 +15,24 @@ function RTDstartTrial(datatub)
 % The task is a topsTreeNode. The useful data are in thisTask.nodeData.
 %  See RTDConfigureTasks for details
 task = datatub{'Control'}{'currentTask'};
-trial = task.nodeData.trialData(task.nodeData.currentTrial);
+trial = task.trialData(task.trialIndex);
 
 %% --- Get ui objects
-ui = datatub{'Control'}{'ui'};
+ui = datatub{'Control'}{'userInputDevice'};
 kb = datatub{'Control'}{'keyboard'};
 
-if strcmp(task.nodeData.taskType, 'dots')
+%% ---- Print useful information
+% Show information about the task/trial
+msg = sprintf('%s (%d/%d): trial %d of %d, dir=%d', ...
+   task.name, task.taskIndex, length(task.caller.children), ...
+   task.trialCount, numel(task.trialData)*task.trialIterations, ...
+   trial.direction);
+    
+%% ---- Task-specific preparations 
+% 
+% Note that we could have different startTrial functions for each task, but
+%  it is nice to see everything in one file
+if strcmp(task.taskData.taskType, 'dots')
     
     %% ---- Prepare dots task
     %
@@ -36,31 +47,20 @@ if strcmp(task.nodeData.taskType, 'dots')
     stimulusEnsemble.setObjectProperty('coherence', trial.coherence, inds(3));
     stimulusEnsemble.setObjectProperty('direction', trial.direction, inds(3));
     
-    % Set the fixation spot to be small and white
-    stimulusEnsemble.setObjectProperty('width', ...
-        datatub{'FixationCue'}{'size'}.*[1 0.1], inds(1));
-    stimulusEnsemble.setObjectProperty('height', ...
-        datatub{'FixationCue'}{'size'}.*[0.1 1], inds(1));
-    stimulusEnsemble.setObjectProperty('colors', ...
-        [1 1 1], inds(1));
-    
     % Prepare to draw dots stimulus, use return value to sync time
     stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow);
     
     % Set the targets foreperiod
     % Randomly sample a duration from an exponential distribution with bounds
-    task.nodeData.stateMachine.editStateByName('showTargets', 'timeout', ...
+    task.taskData.stateMachine.editStateByName('showTargets', 'timeout', ...
         datatub{'Timing'}{'showTargetForeperiodMin'} + ...
         min(exprnd(datatub{'Timing'}{'showTargetForeperiodMean'}), ...
         datatub{'Timing'}{'showTargetForeperiodMax'}));
     
-    % Show information about the task/trial
-    disp(sprintf('%s (%d/%d): trial %d of %d, coh=%.1f, dir=%d', ...
-        task.name, task.nodeData.taskNumber, length(task.caller.children), ...
-        task.nodeData.currentTrial, size(task.nodeData.trialData, 1), ...
-        trial.coherence, trial.direction))
+    % Add information about the coherence
+    msg = sprintf('%s, coh=%.1f', msg, trial.coherence);
     
-else % if strcmp(task.nodeData.taskType, 'saccade')
+else % if strcmp(task.taskData.taskType, 'saccade')
     
     %% ---- Prepare saccade task
     %
@@ -75,32 +75,22 @@ else % if strcmp(task.nodeData.taskType, 'saccade')
     stimulusEnsemble.setObjectProperty('xCenter', x, inds(2));
     stimulusEnsemble.setObjectProperty('yCenter', y, inds(2));
     
-    % Set the fixation spot to be large and red
-    stimulusEnsemble.setObjectProperty('width', ...
-        datatub{'FixationCue'}{'size'}.*[1 0.3], inds(1));
-    stimulusEnsemble.setObjectProperty('height', ...
-        datatub{'FixationCue'}{'size'}.*[0.3 1], inds(1));
-    stimulusEnsemble.setObjectProperty('colors', ...
-        [1 0 0], inds(1));
-    
-    % Update gaze windows
-    ui.addGazeWindow('tcWindow', ...
-        'centerXY',    [x y]);
+    % Update gaze window
+    ui.defineCompoundEvent('tcWindow', 'centerXY', [x y]);
     
     % Update stateMachine to jump to VGS-/MGS- specific states
-    editStateByName(task.nodeData.stateMachine, 'holdFixation', ...
-        'next', [task.name 'showTarget']);
-    
-    % Show information about the task/trial
-    disp(sprintf('%s (%d/%d): trial %d of %d, dir=%d', ...
-        task.name, task.nodeData.taskNumber, length(task.caller.children), ...
-        task.nodeData.currentTrial, size(task.nodeData.trialData, 1), ...
-        trial.direction))
+    editStateByName(task.taskData.stateMachine, 'holdFixation', ...
+        'next', [task.name 'showTarget']);    
 end
 
-%% ---- Flush the UI
-ui.flushData();
+%% ---- Show the message
+disp(' ');
+disp(msg)
+
+%% ---- Flush the UI and deactivate all compound events (gaze windows)
 kb.flushData();
+ui.flushData();
+ui.deactivateCompoundEvents();
 
 %% ---- Save times
 [trial.time_local_trialStart, trial.time_screen_trialStart, ...
@@ -114,18 +104,18 @@ if datatub{'Input'}{'sendTTLs'}
     timeBetweenTTLs = datatub{'Input'}{'timeBetweeenTTLs'};
     
     % Send pulses corresponding to the task number
-    for pp = 1:task.nodeData.taskNumber
+    for pp = 1:task.taskNumber
         dOut.sendTTLPulse(channel);
         pause(timeBetweenTTLs);
     end
     
     % Send pulses corresponding to the trial number mod 3 (just cuz)
     %  flip order to end with pulse and save the time
-    for pp = 1:task.nodeData.currentTrial
+    for pp = 1:task.trialCount
         pause(timeBetweenTTLs);
         trial.time_TTLFinish = dOut.sendTTLPulse(channel);
     end
 end
 
 %% ---- Re-save the trial
-task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+task.trialData(task.trialIndex) = trial;

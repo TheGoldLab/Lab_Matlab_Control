@@ -43,6 +43,8 @@ addCall(datatub{'Control'}{'startCallList'}, ...
    {@callObjectMethod, screenEnsemble, @open}, 'openScreen');
 addCall(datatub{'Control'}{'finishCallList'}, ...
    {@callObjectMethod, screenEnsemble, @close}, 'closeScreen');
+addCall(datatub{'Control'}{'finishCallList'}, ...
+   {@RDTshowText, datatub, {'All done', 'Thank you!'}, 10}, 'finalMessage');
 
 %% ---- Fixation/Target/Dots ensemble
 %
@@ -52,12 +54,21 @@ addCall(datatub{'Control'}{'finishCallList'}, ...
 % presentation of the fixation cue only needs one frame, we will still wrap
 % it in a topsEnsemble object. This makes the stimulus presentation code
 % that interacts with these graphics objects much cleaner.
-fixationCue = dotsDrawableTargets();
-fixationCue.xCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
-fixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
-fixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.1];
-fixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.1 1];
-fixationCue.nSides  = 4;
+% Make two separate versions for use with saccade/dots tasks
+smallFixationCue = dotsDrawableTargets();
+smallFixationCue.xCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
+smallFixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
+smallFixationCue.width   = datatub{'FixationCue'}{'size'}.*[1 0.1];
+smallFixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.1 1];
+smallFixationCue.nSides  = 4;
+
+largeFixationCue = dotsDrawableTargets();
+largeFixationCue.xCenter = datatub{'FixationCue'}{'xDVA'}.*[1 1];
+largeFixationCue.yCenter = datatub{'FixationCue'}{'yDVA'}.*[1 1];
+largeFixationCue.width   = datatub{'FixationCue'}{'size'}.*[1.5 0.2];
+largeFixationCue.height  = datatub{'FixationCue'}{'size'}.*[0.2 1.5];
+largeFixationCue.colors  = [1 0 0];
+largeFixationCue.nSides  = 4;
 
 % Two saccade targets, for dots task
 %
@@ -94,13 +105,13 @@ movingDotStim.yCenter = datatub{'MovingDots'}{'yDVA'};
 
 % Make and save the fixation/targets/dots ensemble for the dots task
 [ensemble, inds] = RTDmakeDrawableEnsemble('dotsStimuli', ...
-   {fixationCue, saccadeTargets, movingDotStim}, remoteInfo);
+   {smallFixationCue, saccadeTargets, movingDotStim}, remoteInfo);
 datatub{'Graphics'}{'dotsStimuliEnsemble'} = ensemble;
 datatub{'Graphics'}{'dotsStimuli inds'} = inds;
 
 % Make and save the fixation/target ensemble for the saccade task
 [ensemble, inds] = RTDmakeDrawableEnsemble('saccadeStimuli', ...
-   {fixationCue, saccadeTarget}, remoteInfo);
+   {largeFixationCue, saccadeTarget}, remoteInfo);
 datatub{'Graphics'}{'saccadeStimuliEnsemble'} = ensemble;
 datatub{'Graphics'}{'saccadeStimuli inds'} = inds;
 

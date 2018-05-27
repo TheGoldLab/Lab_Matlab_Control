@@ -9,15 +9,15 @@ function RTDrun(location)
 % 11/17/18   jig wrote it
 
 %% ---- Clear globals
-% 
+%
 % umm, duh
 clear globals
 
 %% ---- Create a topsGroupedList
 %
-% This is a versatile data structure that will allow us to pass all 
+% This is a versatile data structure that will allow us to pass all
 %  relevant variables to the state machine as it advances
-% 
+%
 % We also start by making topsCallLists for the main task start and
 %  finish fevalables. These can be filled in by various configuration
 %  subroutines so we don't need to know where what has and has not been
@@ -49,35 +49,35 @@ datatub{'Control'}{'mainTask'} = maintask;
 % Set argument list based on location
 %   locations are 'office' (default), 'OR', or 'debug'
 if nargin < 1 || isempty(location)
-    location = 'office';
+   location = 'office';
 end
 
 switch location
-    
-    case {'OR'}        
-        arguments = { ...
-            'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
-            'sendTTLs',             true, ...
-            'displayIndex',         1, ... % 0=small, 1=main
-            'useRemote',            true, ...
-            };
-
-    case {'debug'}    
-        arguments = { ...
-            'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 2 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
-            'sendTTLs',             false, ...
-            'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
-            'displayIndex',         0, ... % 0=small, 1=main
-            'useRemote',            false, ...
-            };
-        
-    otherwise        
-        arguments = { ...
-            'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
-            'sendTTLs',             false, ...
-            'displayIndex',         1, ... % 0=small, 1=main
-            'useRemote',            true, ...
-            };
+   
+   case {'OR'}
+      arguments = { ...
+         'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
+         'sendTTLs',             true, ...
+         'displayIndex',         1, ... % 0=small, 1=main
+         'useRemote',            true, ...
+         };
+      
+   case {'debug'}
+      arguments = { ...
+         'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 6 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
+         'sendTTLs',             false, ...
+         'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
+         'displayIndex',         0, ... % 0=small, 1=main
+         'useRemote',            false, ...
+         };
+      
+   otherwise
+      arguments = { ...
+         'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
+         'sendTTLs',             false, ...
+         'displayIndex',         1, ... % 0=small, 1=main
+         'useRemote',            true, ...
+         };
 end
 
 % Call the configuration routine
@@ -89,7 +89,8 @@ RTDconfigure(maintask, datatub, arguments{:});
 % Start data logging and save the datatub to the data file
 topsDataLog.flushAllData(); % Flush stale data, just in case
 topsDataLog.logDataInGroup(struct(datatub), 'datatub');
-topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, datatub{'Input'}{'fileName'}));
+topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, 'Raw', ...
+   datatub{'Input'}{'fileName'}));
 
 %% ---- Run the task
 %

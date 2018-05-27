@@ -41,6 +41,6 @@ if nargin >= 4 && ~isempty(datatub)
     
     % Save timing information in the trial struct, then re-save
     task = datatub{'Control'}{'currentTask'};
-    task.nodeData.trialData(task.nodeData.currentTrial).(sprintf('time_%s', eventTag)) = ...
+    task.trialData(task.trialIndex).(sprintf('time_%s', eventTag)) = ...
         ret.onsetTime;
 end

@@ -16,30 +16,21 @@ function RTDfinishTrial(datatub)
 % The task is a topsTreeNode. The useful data are in thisTask.nodeData.
 %  See RTDConfigureTasks for details
 task  = datatub{'Control'}{'currentTask'};
-trial = task.nodeData.trialData(task.nodeData.currentTrial);
-
-%% ---- Always save the current trial in the DataLog
-%  We do this even if no choice was made, in case later we want to re-parse
-%     the UI data
-topsDataLog.logDataInGroup(trial, 'trial');
+trial = task.trialData(task.trialIndex);
 
 %% ---- Save times
 % use the screen ensemble to get the (possibly remote) screen time
 [trial.time_local_trialFinish, trial.time_screen_trialFinish, ~, ...
    trial.time_ui_trialFinish] = RTDsyncTiming( ...
-   datatub{'Graphics'}{'screenEnsemble'}, datatub{'Control'}{'ui'});
-task.nodeData.trialData(task.nodeData.currentTrial) = trial;
+   datatub{'Graphics'}{'screenEnsemble'}, datatub{'Control'}{'userInputDevice'});
+task.trialData(task.trialIndex) = trial;
 
-%% ---- Check for good response to prepare for next trial
-if trial.correct >= 0
-    
-    % Increment trial counter
-    task.nodeData.currentTrial = task.nodeData.currentTrial + 1;
-    
-    % Check for new task
-    if task.nodeData.currentTrial > size(task.nodeData.trialData, 1)
-        
-        % Stop running this task
-        task.finish();
-    end    
-end
+%% ---- Save the current trial in the DataLog
+%  We do this even if no choice was made, in case later we want to re-parse
+%     the UI data
+topsDataLog.logDataInGroup(trial, 'trial');
+
+%% ---- Call task.incrementTrialIndex to find the next trial
+%
+% Argument is a flag indicating whether or not to repeat the trial
+task.updateTrial(trial.correct<0)

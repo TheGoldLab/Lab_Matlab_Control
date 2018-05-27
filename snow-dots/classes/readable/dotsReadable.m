@@ -13,6 +13,7 @@ classdef dotsReadable < handle
    %>   - openDevice()
    %>   - closeDevice()
    %>   - calibrateDevice()
+   %>   - defineCompoundEvent() -> Optional, see example in dotsReadableEye
    %>   - recordDevice()
    %>   - openComponents()
    %>   - closeComponents()
@@ -143,7 +144,7 @@ classdef dotsReadable < handle
       end
       
       %> Calibrate the device
-      function calibrate(self)
+      function calibrate(self, varargin)
          
          % Check to pause data recording
          if ~self.recordDuringCalibration && self.isRecording
@@ -154,7 +155,7 @@ classdef dotsReadable < handle
          end
          
          % Call device-specific calibration routine
-         self.calibrateDevice();
+         self.calibrateDevice(varargin{:});
          
          % Log a time maker that we just calibrated the device
          name = [class(self) '_calibration'];
@@ -410,6 +411,12 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).isActive = isActive;
       end
       
+      % defineCompoundEvent
+      %
+      % This should be defined by subclasses, if needed
+      function defineCompoundEvent(self, varargin)
+      end
+         
       %> Delete the event for one of the input components.
       %> @param ID one of the integer IDs in components
       %> @details
@@ -436,24 +443,32 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).isActive = false;
       end
       
-      % Turn on/off isActive flag
-      function setEventActiveFlag(self, componentNameOrID, activeFlag)
-         
-         % nameOrID string or numeric ID for the component
-         if isempty(componentNameOrID)
-            % if componentNameOrID is empty, apply to all
-            [self.eventDefinitions(:).isActive] = deal(activeFlag);
-         elseif ischar(componentNameOrID)
-            self.eventDefinitions(self.getComponentIDbyName(componentNameOrID)).isActive = activeFlag;
-         elseif isnumeric(componentNameOrID)
-            self.eventDefinitions(componentNameOrID).isActive = activeFlag;
-         end
+      % Activate all events
+      %
+      %  To do this separately for each event, call defineEvent and set
+      %  isActive flag to true
+      function activateEvents(self)         
+         [self.eventDefinitions(:).isActive] = deal(true);
       end
       
-      % De-activate events as a batch, which is covenient to do at the
-      % beginning of a trial where you want to control them one at a time
+      % Deactivate all events
+      %
+      %  To do this separately for each event, call defineEvent and set
+      %  isActive flag to true
       function deactivateEvents(self)
-         [self.eventDefinitions.isActive] = deal(false);
+         [self.eventDefinitions(:).isActive] = deal(false);
+      end
+      
+      % Activate all compound events
+      %
+      %  Define in subclasses
+      function activateCompoundEvents(self)         
+      end
+      
+      % Deactivate all compound events
+      %
+      %  Define in subclasses
+      function deactivateCompoundEvents(self)
       end
       
       %> Get the next event that was detected in read().
@@ -768,7 +783,7 @@ classdef dotsReadable < handle
       %> @details
       %> Subclasses must redefine calibrateDevice(). It should
       %> be safe to call calibrateDevice() multiple times in a row.
-      function calibrateDevice(self)
+      function calibrateDevice(self, varargin)
       end
       
       %> Turn on data recording from the device (for subclasses).

@@ -23,8 +23,8 @@ sis              = datatub{'Graphics'}{'saccadeStimuli inds'};
 textEnsemble     = datatub{'Graphics'}{'textEnsemble'};
 tis              = datatub{'Graphics'}{'text inds'};
 
-% The user-interface object
-ui = datatub{'Control'}{'ui'};
+% The user-interface objects
+ui = datatub{'Control'}{'userInputDevice'};
 kb = datatub{'Control'}{'keyboard'};
 
 % Fevalables for state list
@@ -34,18 +34,19 @@ chkuib = {@getNextEvent, ui, false, {'brokeFixation'}};
 chkuic = {@RTDgetAndSaveNextEvent, datatub, {'choseTarget'}, 'choice'};
 chkkbd = {@getNextEvent kb, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
 showfx = {@RTDsetVisible, stimulusEnsemble, sis(1), sis(2), datatub, 'fixOn'};
-showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targOn'};
-hidet  = {@RTDsetVisible, stimulusEnsemble, [], sis(2), datatub, 'targOff'};
+showt  = {@RTDsetVisible, stimulusEnsemble, sis(2), [], datatub, 'targsOn'};
+hidet  = {@RTDsetVisible, stimulusEnsemble, [], sis(2), datatub, 'targsOff'};
 hidefx = {@RTDsetVisible, stimulusEnsemble, [], sis(1), datatub, 'fixOff'};
 showfb = {@RTDsetVisible, textEnsemble, tis(1), [], datatub, 'fdbkOn'};
-abrt   = {@RTDabortExperiment, datatub};
-skip   = {@RTDabortTask, datatub};
+abrtf  = @(x)abort(datatub{'Control'}{x});
+abrt   = {abrtf, 'mainTask'};
+skip   = {abrtf 'currentTask'};
 calpl  = {@calibrate, ui};
 sch    = @(x)cat(2, {@RTDsetSaccadeChoice, datatub}, x);
-sgw    = @dotsReadableEye.setGazeWindows;
-gwfxw  = {sgw, ui, {'fpWindow', 'isActive', true}};
-gwfxh  = {sgw, ui, {'fpWindow', 'isInverted', true, 'setToGaze', true}};
-gwt    = {sgw, ui, {'fpWindow', 'isActive', false}, {'tcWindow', 'isActive', true}};
+dce    = @defineCompoundEvent;
+gwfxw  = {dce, ui, {'fpWindow', 'isActive', true}};
+gwfxh  = {dce, ui, {'fpWindow', 'isInverted', true}};
+gwt    = {dce, ui, {'fpWindow', 'isActive', false}, {'tcWindow', 'isActive', true}};
 
 % Timing variables
 tft = datatub{'Timing'}{'fixationTimeout'};

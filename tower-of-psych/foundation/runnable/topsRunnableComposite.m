@@ -60,6 +60,6 @@ classdef topsRunnableComposite < topsRunnable
       % Check if child is there
       function selector = isChild(self, child)
          selector = topsFoundation.cellContains(self.children, child);
-      end      
+      end
    end
 end

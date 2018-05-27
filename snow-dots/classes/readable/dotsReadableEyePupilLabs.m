@@ -60,21 +60,25 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
    end
    
    properties (SetAccess = protected)
-      % Indices for the various data components. g is for gaze while p is
-      % for pupil. For the pupil indices, the first one corresponds to
-      % pupil0 in PupilLab and the second one corresponds to pupil1.
+      
+      % Data index for gaze signal confidence
       cID = [];
       
+      % Data index for eye x, left and right eye
       pXIDs = [];
+      
+      % Data index for eye y, left and right eye
       pYIDs = [];
+      
+      % Data index for pupil diameter, left and right eye
       pDIDs = [];
+      
+      % Data index for data confidence, left and right eye
       pCIDs = [];
       
+      % dummy index
       blankID = -1;
       
-      % blank data matrix
-      blankData = [];
-
       % Monitor round-trip time
       roundTripTime = nan;
       
@@ -87,23 +91,20 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
    
    properties (Access = private)
       
-      % Variables for controlling the connection between Matlab and
-      % PupilLabs.
-      
-      % IP/port
+      % Communication IP/port information
       pupilLabSubAddress;
       
-      % ZMQ context that will be used for managing all our
-      % communications with PupilLabs
+      % ZMQ context used to manage communications with PupilLabs
       zmqContext;
       
-      % The port associated with the communicatoin socket for control
-      % commands
+      % Communication port for control commands
       reqPort = [];
 
-      % The port associated with the communicatoin socket for getting
-      % gaze data
+      % Communication port for obtaining data
       gazePort = [];
+      
+      % blank data matrix, to compute once and copy when we get data
+      blankData = [];
    end
    
    %% Public methods
@@ -506,29 +507,32 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       function newData = transformRawData(self, newData)
          
          % Transform gaze x,y
-         newData([self.xID, self.yID], 2) = ...
-            self.translation' + self.rotation * self.scale * ...
-            newData([self.xID, self.yID], 2);
-
+         newData = self.transformRawData@dotsReadableEye(newData);
+         
          % check for all data
          if self.getRawEyeData
             
-            % Transform pupil0 x,y
-            newData([self.pXID(1), self.pYID(1)], 2) = ...
-               self.translation' + self.rotation * self.scale * ...
-               newData([self.pXIDs(1), self.pYIDs(1)], 2);
-            
-            % Transform pupil1 x,y
-            newData([self.pXID(2), self.pYID(2)], 2) = ...
-               self.translation' + self.rotation * self.scale * ...
-               newData([self.pXID(2), self.pYID(2)], 2);
-         end
+            % Transform left eye x,y: scale, rotate, then offset
+            newData([self.pXIDs(1), self.pYIDs(1)], 2) = ...
+               [self.xyScale(1).*newData(self.pXIDs(1),2) ...
+               self.xyScale(2).*newData(self.pYIDs(1),2)] * ...
+               self.rotation + self.xyOffset;
+
+            % Transform right eye x,y: scale, rotate, then offset
+            newData([self.pXIDs(2), self.pYIDs(2)], 2) = ...
+               [self.xyScale(1).*newData(self.pXIDs(2),2) ...
+               self.xyScale(2).*newData(self.pYIDs(2),2)] * ...
+               self.rotation + self.xyOffset;
+         end            
       end
       
+      % Override default setupCoordinateRectTransform function
+      %  from dotsReadableEye because we do our own calibration here and
+      %  don't want to use those transformations
       function setupCoordinateRectTransform(self)
-         % Have this function do nothing.
       end
       
+      % Close the communication channels with pupilLab
       function closeDevice(self)
          
          if ~isempty(self.reqPort)
@@ -539,11 +543,13 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                self.result = zmq.core.recv(self.reqPort);
             end
             
-            % Disconnect and close the sockets
-            zmq.core.disconnect(self.reqPort, ['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
-            zmq.core.close(self.reqPort);
+            % Disconnect and close the data port
             zmq.core.disconnect(self.gazePort, self.pupilLabSubAddress);
             zmq.core.close(self.gazePort);
+            
+            % Disconnect and close the control port
+            zmq.core.disconnect(self.reqPort, ['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
+            zmq.core.close(self.reqPort);
             
             % Close the context
             % zmq.core.ctx_shutdown(self.zmqContext);
