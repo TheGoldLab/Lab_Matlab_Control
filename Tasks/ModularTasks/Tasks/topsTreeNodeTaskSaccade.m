@@ -303,7 +303,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          if self.sendTTLs
             
             % Send TTLs mod trial count
-            sendTTLsequence(mod(self.trialCount,4)+1);
+            [trial.time_TTLStart, trial.time_TTLFinish] = ...
+               sendTTLsequence(mod(self.trialCount,4)+1);
          end
          
          % Re-save the trial

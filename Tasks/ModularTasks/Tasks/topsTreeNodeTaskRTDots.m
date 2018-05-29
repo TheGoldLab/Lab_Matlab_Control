@@ -78,7 +78,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % columns are:
       %  1. Window name
       %  2. Event name
-      %  3. Graphical object index where the window is centered
+      %  3. Graphical object indices ([object item]) where the window is centered
       gazeWindows = { ...
          'fixWindow',  'holdFixation', [1 1]; ...
          'trg1Window', 'choseLeft',    [2 1]; ...
@@ -163,8 +163,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       stateMachineComposite = [];
       
       % Quest object from mQUESTplus
-      quest = [];
-      
+      quest = [];      
    end
    
    methods
@@ -343,7 +342,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          if self.sendTTLs
             
             % Send TTLs mod trial count
-            sendTTLsequence(mod(self.trialCount,4)+1);
+            [trial.time_TTLStart, trial.time_TTLFinish] = ...
+               sendTTLsequence(mod(self.trialCount,4)+1);
          end
          
          % Re-save the trial
@@ -515,8 +515,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          for ff = fieldnames(self.targetsProperties)'
             targets.(ff{:}) = self.targetsProperties.(ff{:});
          end
-         targets.xCenter = [fixation.xCenter-self.targetDistance ...
-            fixation.xCenter+self.targetDistance];
+         targets.xCenter = [ ...
+            fixation.xCenter-self.trialProperties.targetDistance ...
+            fixation.xCenter+self.trialProperties.targetDistance];
          targets.yCenter = fixation.yCenter.*[1 1];
          
          %  3. Random-dot stimulus
