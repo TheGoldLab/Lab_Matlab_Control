@@ -93,12 +93,6 @@ classdef dotsReadableEye < dotsReadable
       % object
       screenEnsemble = [];
       
-      % IP/port information for showing calibration graphics on remote
-      % screen (see calibrateEyeSnowDots, below). Cell array of either:
-      %  {false} for local mode, or
-      %  {true <local IP> <local port> <remote IP> <remote port>}
-      ensembleRemoteInfo = {false};
-      
       % Flag to show eye position and gaze window in a matlab fig
       showGazeMonitor = false;
       
@@ -215,7 +209,7 @@ classdef dotsReadableEye < dotsReadable
          end
          
          % first argument is the name
-         name = varargin{1}
+         name = varargin{1};
          
          % check if it already exists
          if isempty(self.gazeEvents) || ~any(strcmp(name, {self.gazeEvents.name}))
@@ -280,10 +274,10 @@ classdef dotsReadableEye < dotsReadable
       % Activate gaze windows
       function activateCompoundEvents(self)
          
-         % Deactivate all of the gaze windows
+         % Activate all of the gaze windows
          [self.gazeEvents.isActive] = deal(true);
          
-         % Hide the gazeMonitor windows
+         % Show the gazeMonitor windows
          if self.showGazeMonitor
             for ii = 1:length(self.gazeEvents)
                self.updateGazeMonitorWindow(ii);
@@ -303,6 +297,20 @@ classdef dotsReadableEye < dotsReadable
                self.updateGazeMonitorWindow(ii);
             end
          end
+      end
+      
+      % Delete all compoundEvents
+      function clearCompoundEvents(self)
+         
+         % Deactivate the current gaze events so the monitor window is
+         % appropriately cleared
+         self.deactivateCompoundEvents;
+         
+         % Now clear them
+         self.gazeEvents = [];
+         
+         % Now clear the associated events
+         self.clearEvents();
       end
       
       % Open the gaze monitor
@@ -416,22 +424,16 @@ classdef dotsReadableEye < dotsReadable
             return
          end
          
-         % Otherwise do full calibration
-         % Make a drawing ensemble for the calibration target
-         calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble( ...
-            'calibrationEnsemble',self.ensembleRemoteInfo{:});
-         
-         % Start with blank screen
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-        
-         % Show instructions, then blank the screen
+         % Show instructions between blank screen2
          text   = dotsDrawableText();
          text.string = 'Look at each object and try not to blink';
-         index = calibrationEnsemble.addObject(text);
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         textEnsemble = makeDrawableEnsemble(...
+            'calibrationEnsemble', {text}, self.screenEnsemble);
+         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
+         pause(0.25);
+         textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
          pause(3.0);
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-         calibrationEnsemble.removeObject(index);
+         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
                   
          % Generate Fixation target (cross)
          %
@@ -439,12 +441,10 @@ classdef dotsReadableEye < dotsReadable
          % Then, we simply adjust the location of the cue each time we present it.
          fixationCue = dotsDrawableTargets();
          fixationCue.width  = [1 0.1] * self.calibrationFPSize;
-         fixationCue.height = [0.1 1] * self.calibrationFPSize;
-         calibrationEnsemble.addObject(fixationCue);
+         fixationCue.height = [0.1 1] * self.calibrationFPSize;        
+         calibrationEnsemble = makeDrawableEnsemble(...
+            'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
          
-         self.calibrationFPX    = 10;
-         self.calibrationFPY    = 5;
-
          % Set up matrices to present cues and collect fixation data
          targetXY = [ ...
             -self.calibrationFPX  self.calibrationFPY;

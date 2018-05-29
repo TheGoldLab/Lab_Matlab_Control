@@ -132,10 +132,7 @@ classdef dotsReadable < handle
          self.isAvailable = isOpen && ~isempty(self.components);
          
          %> Make/clear array of event definitions
-         names = {'name', 'ID', 'lowValue', 'highValue', 'isInverted', 'isActive'};
-         padded = cell(1, 2*numel(names));
-         padded(1:2:end) = names;
-         self.eventDefinitions = struct(padded{:});
+         self.clearEvents()         
          if self.isAvailable
             for id = self.getComponentIDs()
                self.undefineEvent(id);
@@ -459,6 +456,14 @@ classdef dotsReadable < handle
          [self.eventDefinitions(:).isActive] = deal(false);
       end
       
+      % Clear the event definitions
+      function clearEvents(self)
+         names = {'name', 'ID', 'lowValue', 'highValue', 'isInverted', 'isActive'};
+         padded = cell(1, 2*numel(names));
+         padded(1:2:end) = names;
+         self.eventDefinitions = struct(padded{:});
+      end
+      
       % Activate all compound events
       %
       %  Define in subclasses
@@ -469,6 +474,10 @@ classdef dotsReadable < handle
       %
       %  Define in subclasses
       function deactivateCompoundEvents(self)
+      end
+      
+      % Delete all compoundEvents
+      function clearCompoundEvents(self)
       end
       
       %> Get the next event that was detected in read().

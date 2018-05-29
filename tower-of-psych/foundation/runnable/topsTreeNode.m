@@ -50,10 +50,7 @@ classdef topsTreeNode < topsRunnableComposite
       iterationMethod = 'sequential';
       
       % For any data used for this node
-      nodeData = [];
-      
-      % Flag determining stopping behavior. If true, finish all children
-      finishChildren = true;
+      nodeData = [];      
    end
    
    properties (Hidden)
@@ -76,15 +73,6 @@ classdef topsTreeNode < topsRunnableComposite
       % Returns a new topsTreeNode which is a child of this node.
       function child = newChildNode(self, varargin)
          child = topsTreeNode(varargin{:});
-         self.addChild(child);
-      end
-      
-      % Create a new topsTreeNodeTask child and add it beneath this node.
-      % @param name optional name for the new child node
-      % @details
-      % Returns a new topsTreeNode which is a child of this node.
-      function child = newChildNodeTask(self, varargin)
-         child = topsTreeNodeTask(varargin{:});
          self.addChild(child);
       end
       
@@ -136,11 +124,14 @@ classdef topsTreeNode < topsRunnableComposite
                end
                
                for jj = childSequence
-                  % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d, iterations=%d', ...
-                  %   self.name, self.children{jj}.name, self.isRunning, self.iterations))
-                  self.children{jj}.caller = self;
-                  self.children{jj}.run();
-                  self.children{jj}.caller = [];
+                  % jig added condition so abort happens gracefully
+                  if self.isRunning
+                     % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d, iterations=%d', ...
+                     %   self.name, self.children{jj}.name, self.isRunning, self.iterations))
+                     self.children{jj}.caller = self;
+                     self.children{jj}.run();
+                     self.children{jj}.caller = [];
+                  end
                end
             end
          
@@ -169,11 +160,18 @@ classdef topsTreeNode < topsRunnableComposite
       end
       
       % Convenient routine to abort running self and children
-      function abort(self)
+      function abort(self, abortCaller)
+         
+         % flag to abort the whole kaboodle
+         if nargin > 1 && abortCaller
+            if ~isempty(self.caller)
+               abort(self.caller, abortCaller);
+               return
+            end
+         end
          
          % Stop self from running
          self.isRunning = false;
-         self.iterations = 0;
          
          % Stop children from running any further
          for ii = 1:length(self.children)
