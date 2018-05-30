@@ -266,10 +266,22 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          zmq.core.send(self.reqPort,uint8('C'));
          self.result = zmq.core.recv(self.reqPort);
          
-         % Make a drawing ensemble for the calibration target
-         calibrationEnsemble = dotsEnsembleUtilities.makeEnsemble( ...
-            'calibrationEnsemble',self.ensembleRemoteInfo{:});
+         % Show instructions between blank screen2
+         text   = dotsDrawableText();
+         text.string = 'Please look at each object';
+         textEnsemble = makeDrawableEnsemble(...
+             'textEnsemble', {text}, self.screenEnsemble);
+         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
+         pause(0.25);
+         textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         pause(3.0);
+         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
+         pause(0.25);
          
+         % Make a drawing ensemble for the calibration target
+         calibrationEnsemble = makeDrawableEnsemble(...
+            'calibrationEnsemble', {}, self.screenEnsemble);
+
          % Generate calibration target location and sizes
          xDist = self.calibDeltaX;
          yDist = self.calibDeltaY;

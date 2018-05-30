@@ -75,7 +75,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 3;
+      fixWindowSize  = 4;
       fixWindowDur   = 0.2;
       trgWindowSize  = 3;
       trgWindowDur   = 0.2;
@@ -185,7 +185,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             self.userInput.clearCompoundEvents();
             
             % Now set up new ones
-            for ii = 1:size(self.gazeWindows, 2)
+            for ii = 1:size(self.gazeWindows, 1)
                
                % Get the name
                name = self.gazeWindows{ii,1};
@@ -211,8 +211,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             end
             
             % Now set the keyboard calibration event
-            kb.defineCalibratedEvent(self.calibrationEvent{1}, ...
-               self.calibrationEvent{2}, 1, true);
+            self.keyboard.defineCalibratedEvent( ...
+                self.calibrationEvent{1}, ...
+                self.calibrationEvent{2}, ...
+                1, true);
             
          elseif isa(self.userInput, 'dotsReadableHIDKeyboard')
             
@@ -482,9 +484,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          calpl  = {@calibrate, self.userInput};
          sch    = @(x)cat(2, {@setSaccadeChoice, self}, x);
          dce    = @defineCompoundEvent;
-         gwfxw  = {dce, self.userInput, {'fpWindow', 'isActive', true}};
-         gwfxh  = {dce, self.userInput, {'fpWindow', 'isInverted', true}};
-         gwt    = {dce, self.userInput, {'fpWindow', 'isActive', false}, {'tcWindow', 'isActive', true}};
+         gwfxw  = {dce, self.userInput, {'fixWindow', ...
+             'eventName', 'holdFixation', 'isInverted', false, 'isActive', true}};
+         gwfxh  = {dce, self.userInput, {'fixWindow', ...
+             'eventName', 'brokeFixation', 'isInverted', true}};
+         gwt    = {dce, self.userInput, {'fixWindow', 'isActive', false}, ...
+             {'trgWindow', 'isActive', true}};
          
          % Timing variables
          tft = self.timing.fixationTimeout;

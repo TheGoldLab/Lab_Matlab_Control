@@ -12,6 +12,7 @@ function DBSrun(location)
 %
 % umm, duh
 clear globals
+clear classes
 
 %% ---- Create a topsGroupedList
 %
@@ -68,15 +69,15 @@ switch location
          'sendTTLs',             false, ...
          'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
          'displayIndex',         0, ... % 0=small, 1=main
-         'useRemoteDrawing',     false, ...
+         'useRemoteDrawing',     true, ...
          };
       
    otherwise
       arguments = { ...
          'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
          'sendTTLs',             false, ...
-         'displayIndex',         1, ... % 0=small, 1=main
-         'useRemoteDrawing',     true, ...
+         'displayIndex',         0, ... % 0=small, 1=main
+         'useRemoteDrawing',     false, ...
          };
 end
 

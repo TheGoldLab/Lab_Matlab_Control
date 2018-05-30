@@ -275,8 +275,10 @@ classdef dotsReadableEye < dotsReadable
       function activateCompoundEvents(self)
          
          % Activate all of the gaze windows
-         [self.gazeEvents.isActive] = deal(true);
-         
+         if ~isempty(self.gazeEvents)
+             [self.gazeEvents.isActive] = deal(true);
+         end
+                  
          % Show the gazeMonitor windows
          if self.showGazeMonitor
             for ii = 1:length(self.gazeEvents)
@@ -289,7 +291,9 @@ classdef dotsReadableEye < dotsReadable
       function deactivateCompoundEvents(self)
          
          % Deactivate all of the gaze windows
-         [self.gazeEvents.isActive] = deal(false);
+         if ~isempty(self.gazeEvents)
+             [self.gazeEvents.isActive] = deal(false);
+         end
          
          % Hide the gazeMonitor windows
          if self.showGazeMonitor
@@ -424,17 +428,6 @@ classdef dotsReadableEye < dotsReadable
             return
          end
          
-         % Show instructions between blank screen2
-         text   = dotsDrawableText();
-         text.string = 'Look at each object and try not to blink';
-         textEnsemble = makeDrawableEnsemble(...
-            'calibrationEnsemble', {text}, self.screenEnsemble);
-         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-         pause(0.25);
-         textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-         pause(3.0);
-         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-                  
          % Generate Fixation target (cross)
          %
          % We will create a single drawable object to represent the fixation cue.
@@ -464,7 +457,7 @@ classdef dotsReadableEye < dotsReadable
             calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             
             % Wait for fixation
-            pause(0.4);
+            pause(0.3);
             
             % flush the eye data
             self.flushData();
@@ -476,13 +469,13 @@ classdef dotsReadableEye < dotsReadable
             end
             
             % Get median values
-            gazeXY(:,2) = nanmedian(gazeRawXY);
+            gazeXY(ii,:) = nanmedian(gazeRawXY);
             
             % Briefly blank the screen
             calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
             
             % wait a moment
-            pause(0.25);
+            pause(0.3);
          end
          
          % Get vectors connecting each point
@@ -512,7 +505,17 @@ classdef dotsReadableEye < dotsReadable
          
          % Calculate average x,y offset
          self.xyOffset = mean(targetXY -  ...
-            [self.xScale.*gazeXY(:,1) self.yScale.*gazeXY(:,2)] * self.rotation);
+            [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
+            self.rotation);
+        
+        % For debugging
+        %         figure
+        %         hold on
+        %         plot(targetXY(:,1), targetXY(:,2), 'ro');
+        %         transformedData = ...
+        %             [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
+        %             self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
+        %         plot(transformedData(:,1), transformedData(:,2), 'ko');
       end
       
       % Close the components and release the resources.
@@ -571,7 +574,7 @@ classdef dotsReadableEye < dotsReadable
             
             % disp(gazeData(end,2:3))
             % Possibly update monitor window
-            if self.self.showGazeMonitor
+            if self.showGazeMonitor
                set(self.gazeMonitorDataHandle, ...
                   'XData', gazeData(end,2), 'YData', gazeData(end,3));
                drawnow;
@@ -722,13 +725,20 @@ classdef dotsReadableEye < dotsReadable
             
             % Draw the circle now
             th = (0:pi/50:2*pi)';
+            if self.gazeEvents(index).isInverted
+                lineStyle = ':';
+            else
+                lineStyle = '-';
+            end
             set(self.gazeEvents(index).gazeWindowHandle, ...
                'XData', ...
                self.gazeEvents(index).windowSize * cos(th) + ...
                self.gazeEvents(index).centerXY(1), ...
                'YData', ...
                self.gazeEvents(index).windowSize * sin(th) + ...
-               self.gazeEvents(index).centerXY(2));
+               self.gazeEvents(index).centerXY(2), ...
+               'LineStyle', ...
+               lineStyle);
             drawnow;
          else
             

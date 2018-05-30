@@ -12,14 +12,8 @@ function DBSconfigureUserInput(datatub)
 % Get the keyboard
 kb = DBSmatchingKeyboard();
 
-% Automatically read when checking for events
-kb.isAutoRead = true;
-
 % Add a maintask finish fevalable to close the kb
 addCall(datatub{'Control'}{'finishCallList'}, {@close, kb}, 'close keyboard');
-
-% Save it in the tub
-datatub{'Control'}{'keyboard'} = kb;
 
 %% ---- Try to use tne named input device as primary input
 if strcmp(datatub{'Input'}{'uiDevice'}, 'dotsReadableEyePupilLabs') || ...
@@ -32,12 +26,9 @@ if strcmp(datatub{'Input'}{'uiDevice'}, 'dotsReadableEyePupilLabs') || ...
    if ~ui.isAvailable
       ui = dotsReadableEyeMouseSimulator();
    end
-   
-   % Automatically read during getNextEvent calls
-   ui.isAutoRead = true;
-   
+      
    % Add the screenEnsemble for calibration drawing
-   ui.screenEnsemble = screenEnsemble;
+   ui.screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
    
    % Set up the eye position monitor
    ui.openGazeMonitor();
@@ -51,14 +42,19 @@ if strcmp(datatub{'Input'}{'uiDevice'}, 'dotsReadableEyePupilLabs') || ...
    addCall(datatub{'Control'}{'startCallList'}, {@calibrate, ui}, 'calibrate eye');
    addCall(datatub{'Control'}{'startCallList'}, {@record, ui, true}, 'start recording eye');
    
-   %  Finish calibration, recording
-   addCall(datatub{'Control'}{'finishCallList'}, {@record, ui, false}, 'finish recording eye');
+   %  Finish calibration, recording (done in reverse order)
    addCall(datatub{'Control'}{'finishCallList'}, {@close, ui}, 'close eye');   
+   addCall(datatub{'Control'}{'finishCallList'}, {@record, ui, false}, 'finish recording eye');
 else
    
    % Otherwise use the keyboard
    ui = kb;
 end
 
-% Save the ui device
+% Set both to autoRead (read during getNextEvent calls)
+%   and save to the tub
+ui.isAutoRead = true;
+kb.isAutoRead = true;
 datatub{'Control'}{'userInputDevice'} = ui;
+datatub{'Control'}{'keyboard'} = kb;
+
