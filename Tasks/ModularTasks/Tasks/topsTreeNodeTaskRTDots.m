@@ -87,9 +87,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 3;
+      fixWindowSize  = 5;
       fixWindowDur   = 0.2;
-      trgWindowSize  = 3;
+      trgWindowSize  = 5;
       trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
@@ -218,6 +218,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             % First clear existing
             self.userInput.clearCompoundEvents();
             
+            % Want to keep recording during re-centering
+            self.userInput.recordDuringCalibration = true;
+            
             % Now set up new ones
             for ii = 1:size(self.gazeWindows, 2)
                
@@ -245,7 +248,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             end
             
             % Now set the keyboard calibration event
-            kb.defineCalibratedEvent(self.calibrationEvent{1}, ...
+            self.keyboard.defineCalibratedEvent(self.calibrationEvent{1}, ...
                self.calibrationEvent{2}, 1, true);
             
          elseif isa(self.userInput, 'dotsReadableHIDKeyboard')
@@ -622,7 +625,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          blanks = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.userInput, false, {'holdFixation'}};
-         chkuib = {@getNextEvent, self.userInput, false, {'brokeFixation'}};
+         chkuib = {};%{@getNextEvent, self.userInput, false, {'brokeFixation'}};
          chkuic = {@getAndSaveNextEvent, self, {'choseLeft' 'choseRight'}, 'choice'};
          chkkbd = {@getNextEvent self.keyboard, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
          showfx = {@setVisible, self, self.stimulusEnsemble, 1, 2:3, 'fixOn'};

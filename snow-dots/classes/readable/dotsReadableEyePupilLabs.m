@@ -251,7 +251,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       %  Run pupil labs internal calibration routines with respect
       %   to world camera, then call dotsReadableEye.calibrateDevice
       %   to transform into snow-dots coordinates
-      function calibrateDevice(self)
+      function calibrateDevice(self, varargin)
+         
+         % If any argument given, revert to dotsReadableEye calibrateDevice
+         % Routine (used for special case of recentering)
+         if nargin >= 2 && strcmp(varargin{1}, 'recenter')
+             self.calibrateDevice@dotsReadableEye(varargin{:});
+             return
+         end
          
          % Pointer subscribe to calibration notification channel. This will give
          % us information about the calibration routine as it progresses

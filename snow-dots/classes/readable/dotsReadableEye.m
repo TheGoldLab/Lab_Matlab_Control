@@ -97,10 +97,10 @@ classdef dotsReadableEye < dotsReadable
       showGazeMonitor = false;
       
       % Number of samples to collect for calibration offset
-      offsetN = 50;
+      offsetCalibrationN = 30;
       
       % Number of samples to collect for full calibation
-      calibrationN = 500;
+      calibrationN = 100;
       
       % x offset for calibration target grid
       calibrationFPX = 10;
@@ -110,6 +110,10 @@ classdef dotsReadableEye < dotsReadable
       
       % Size of calibration target
       calibrationFPSize = 2;
+      
+      % Tolerance for using calibration values -- determined by
+      % trial-and-error
+      calibrationTolerance = 0.0001;
    end
    
    properties (SetAccess = protected)
@@ -410,21 +414,21 @@ classdef dotsReadableEye < dotsReadable
          
          % Check for special case of recentering
          if nargin > 1 && strcmp(varargin{1}, 'recenter')
-            if nargin > 2 || ~isempty(varargin{2})
+            if nargin > 2 && ~isempty(varargin{2})
                currentXY = varargin{2};
             else
                currentXY = [0 0];
             end
             
             % Collect transformed x,y data
-            gazeXY = nans(self.offsetN, 2);
-            for ii = 1:self.offsetN
+            gazeXY = nans(self.offsetCalibrationN, 2);
+            for ii = 1:self.offsetCalibrationN
                dataMatrix = self.transformRawData(self.readRawEyeData());
                gazeXY(ii,:) = dataMatrix([self.xID, self.yID], 2)';
             end
  
             % Now add the offsets
-            self.xyOffset = self.xyOffset + median(gazeXY) - currentXY;
+            self.xyOffset = self.xyOffset + currentXY - median(gazeXY);
             return
          end
          
@@ -447,14 +451,20 @@ classdef dotsReadableEye < dotsReadable
          numFixations = size(targetXY, 1);
          
          % Loop through the fixations and collect eye position data
-         gazeRawXY = nans(self.calibrationN, 2);
+         gazeRawXY = nans(self.calibrationN, 2, numFixations);
          gazeXY = nans(numFixations, 2);
-         for ii = 1:numFixations
+         fixationNumber = 1;
+         notDone = true;
+         
+         while notDone
             
             % Show the fixation point
-            calibrationEnsemble.setObjectProperty('xCenter', [targetXY(ii,1) targetXY(ii,1)]);
-            calibrationEnsemble.setObjectProperty('yCenter', [targetXY(ii,2) targetXY(ii,2)]);
-            calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            calibrationEnsemble.setObjectProperty('xCenter', ...
+                [targetXY(fixationNumber,1) targetXY(fixationNumber,1)]);
+            calibrationEnsemble.setObjectProperty('yCenter', ...
+                [targetXY(fixationNumber,2) targetXY(fixationNumber,2)]);
+            calibrationEnsemble.callObjectMethod( ...
+                @dotsDrawable.drawFrame, {}, [], true);
             
             % Wait for fixation
             pause(0.3);
@@ -465,17 +475,29 @@ classdef dotsReadableEye < dotsReadable
             % Collect a bunch of samples
             for jj = 1:self.calibrationN
                dataMatrix = self.readRawEyeData();
-               gazeRawXY(jj,:) = dataMatrix([self.xID, self.yID], 2)';
+               gazeRawXY(jj,:,fixationNumber) = dataMatrix([self.xID, self.yID], 2)';
             end
             
-            % Get median values
-            gazeXY(ii,:) = nanmedian(gazeRawXY);
-            
             % Briefly blank the screen
-            calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
+            calibrationEnsemble.callObjectMethod( ...
+                @dotsDrawable.blankScreen, {}, [], true);
             
             % wait a moment
             pause(0.3);
+            
+            % Check if good
+            disp([var(gazeRawXY(:,1,fixationNumber)) var(gazeRawXY(:,2,fixationNumber))])
+            if all(var(gazeRawXY(:,:,fixationNumber))< self.calibrationTolerance)
+                
+                % Get median values
+                gazeXY(fixationNumber,:) = nanmedian(gazeRawXY(:,:,fixationNumber));
+                
+                fixationNumber = fixationNumber + 1;
+                
+                if fixationNumber > 4
+                    notDone = false;
+                end
+            end
          end
          
          % Get vectors connecting each point
@@ -508,14 +530,23 @@ classdef dotsReadableEye < dotsReadable
             [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
             self.rotation);
         
-        % For debugging
-        %         figure
-        %         hold on
-        %         plot(targetXY(:,1), targetXY(:,2), 'ro');
-        %         transformedData = ...
-        %             [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
-        %             self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
-        %         plot(transformedData(:,1), transformedData(:,2), 'ko');
+        % Check tolerance
+        transformedData = ...
+            [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
+            self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
+        
+        %        For debugging
+        figure
+        hold on
+        plot(targetXY(:,1), targetXY(:,2), 'ro');
+        plot(transformedData(:,1), transformedData(:,2), 'ko');
+
+        % check for accuracy
+        errors = (sqrt(sum((targetXY-transformedData).^2,2)));
+        if max(errors) > 3
+            % try again
+            self.calibrateDevice@dotsReadableEye();
+        end
       end
       
       % Close the components and release the resources.

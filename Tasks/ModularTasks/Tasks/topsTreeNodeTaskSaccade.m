@@ -78,7 +78,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % three characters as a tag to know which ones to set
       fixWindowSize  = 4;
       fixWindowDur   = 0.2;
-      trgWindowSize  = 3;
+      trgWindowSize  = 5;
       trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
@@ -185,6 +185,9 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             % First clear existing
             self.userInput.clearCompoundEvents();
             
+            % Want to keep recording during re-centering
+            self.userInput.recordDuringCalibration = true;
+            
             % Now set up new ones
             for ii = 1:size(self.gazeWindows, 1)
                
@@ -275,7 +278,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          self.stimulusEnsemble.setObjectProperty('yCenter', y, 2);
          
          % Update gaze window
-         self.userInput.defineCompoundEvent('tcWindow', 'centerXY', [x y]);
+         self.userInput.defineCompoundEvent('trgWindow', 'centerXY', [x y]);
          
          % Update stateMachine to jump to VGS-/MGS- specific states
          editStateByName(self.stateMachine, 'holdFixation', 'next', ...
@@ -472,7 +475,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % Fevalables for state list
          blanks = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.userInput, false, {'holdFixation'}};
-         chkuib = {@getNextEvent, self.userInput, false, {'brokeFixation'}};
+         chkuib = {}; %{@getNextEvent, self.userInput, false, {'brokeFixation'}};
          chkuic = {@getAndSaveNextEvent, self, {'choseTarget'}, 'choice'};
          chkkbd = {@getNextEvent self.keyboard, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
          showfx = {@setVisible, self, self.stimulusEnsemble, 1, 2, 'fixOn'};
