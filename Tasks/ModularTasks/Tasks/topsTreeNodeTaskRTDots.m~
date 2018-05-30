@@ -1,7 +1,7 @@
-classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
-   % @class topsTreeNodeTaskSaccade
+classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
+   % @class topsTreeNodeTaskRTDots
    %
-   % Visually and Memory guided saccade tasks
+   % Response-time dots (RTD) task
    %
    % Typically you would:
    %
@@ -22,29 +22,39 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Trial properties. Note: can set coherences = 'Quest'
       trialProperties = struct( ...
-         'trialsPerDirection', 10, ...
-         'directions',         0:45:315, ...
-         'targetDistance',     8);
+         'trialsPerCoherence', 10, ...
+         'directions',         [0 180], ...
+         'coherences',         [0 3.2 6.4 12.8 25.6 51.2], ...
+         'directionPriors',    [50 50], ...
+         'targetDistance',     10);
       
       % The fixation point
       fixationProperties = struct( ...
-         'xCenter',           0, ...
-         'yCenter',           0, ...
-         'width',             1.5.*[1.0 0.2], ...
-         'height',            1.5.*[0.2 1.0], ...
-         'colors',            [1 0 0]);
+         'xCenter',        0, ...
+         'yCenter',        0, ...
+         'width',          1.0.*[1.0 0.1], ...
+         'height',         1.0.*[0.1 1.0], ...
+         'colors',         [1 1 1]);
       
-      % The target
-      targetProperties = struct( ...
-         'xCenter',           0, ...
-         'yCenter',           0, ...
-         'width',             1.5, ...
-         'height',            1.5);
+      % The targets
+      targetsProperties = struct( ...
+         'width',          1.5.*[1 1], ...
+         'height',         1.5.*[1 1]);
       
-      % y-offset for the two default text objects
-      textProperties = struct( ...
+      % The dots stimulus
+      dotsProperties = struct( ...
+         'xCenter',        0, ...
+         'yCenter',        0, ...
+         'stencilNumber',  1, ...
+         'pixelSize',      6, ...
+         'diameter',       8, ...
+         'density',        150, ...
+         'speed',          3);
+      
+      % The text object used for feedback (can be given separately)
+       textProperties = struct( ...
          'textOffset',        5);
-      
+           
       % Task timing, all in sec
       timing = struct( ...
          'showInstructions',         3.0, ...
@@ -53,10 +63,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'holdFixation',             0.5, ...
          'showFeedback',             1.0, ...
          'InterTrialInterval',       1.0, ...
-         'VGSTargetDuration',        1.0, ...
-         'MGSTargetDuration',        0.25, ...
-         'MGSDelayDuration',         0.75, ...
-         'saccadeTimeout',           5.0);
+         'showTargetForeperiodMin',  0.2, ...
+         'showTargetForeperiodMax',  1.0, ...
+         'showTargetForeperiodMean', 0.5, ...
+         'dotsTimeout',              5.0);
       
       % Default user input. For now can be:
       %  'dotsReadableEyePupilLabs'
@@ -69,14 +79,15 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % columns are:
       %  1. Window name
       %  2. Event name
-      %  3. Graphical object index where the window is centered
+      %  3. Graphical object indices ([object item]) where the window is centered
       gazeWindows = { ...
-         'fixWindow', 'holdFixation', [1 1]; ...
-         'trgWindow', 'choseTarget',  [2 1]};
+         'fixWindow',  'holdFixation', [1 1]; ...
+         'trg1Window', 'choseLeft',    [2 1]; ...
+         'trg2Window', 'choseRight',   [2 2]};
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 4;
+      fixWindowSize  = 3;
       fixWindowDur   = 0.2;
       trgWindowSize  = 3;
       trgWindowDur   = 0.2;
@@ -89,7 +100,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % dotsReadableHIDKeyboard
       keyboardEvents = { ...
          'KeyboardSpacebar',  'holdFixation'; ...
-         'KeyboardT',         'choseTarget'};
+         'KeyboardF',         'choseLeft'; ...
+         'KeyboardJ',         'choseRight'};
       
       % Information to set up default keyboard events
       % Columns are:
@@ -103,8 +115,16 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Instruction strings to show at the beginning of the task
       instructionStrings = { ...
-         'When the fixation spot disappears', ...
-         'Look at the visual target'};
+         'Be as fast and accurate as possible', ...
+         'BOTH directions equally likely'};
+      
+      % Quest properties
+      questProperties = struct( ...
+         'stimRange',         0:100, ...
+         'thresholdRange',    0:50, ...
+         'slopeRange',        2:5, ...
+         'guessRate',         0.5, ...
+         'lapseRange',        0.00:0.01:0.05);
       
       % Information for sending TTLs at the beginning of each trial
       sendTTLs = false;
@@ -119,7 +139,17 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % The keyboard device. This is always used for flow-control commands
       % given between trials, even if this is not the primary userInput
       % device
-      keyboard = [];      
+      keyboard = [];
+      
+      % references to topsGroupedList holding coherence, RT referents that
+      % are updated by Quest
+      groupList = [];
+      
+      % coherence ref tags {<group>, <tag>}
+      coherenceRef = {};
+      
+      % RT ref tags {<group>, <tag>}
+      RTRef = {};      
    end
    
    properties (SetAccess = protected)
@@ -131,7 +161,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       stateMachine = [];
       
       % The state machine concurrent composite, created locally
-      stateMachineComposite = [];      
+      stateMachineComposite = [];
+      
+      % Quest object from mQUESTplus
+      quest = [];      
    end
    
    methods
@@ -140,7 +173,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % @param name optional name for this object
       % @details
       % If @a name is provided, assigns @a name to this object.
-      function self = topsTreeNodeTaskSaccade(varargin)
+      function self = topsTreeNodeTaskRTDots(varargin)
          self = self@topsTreeNodeTask(varargin{:});
       end
       
@@ -186,7 +219,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             self.userInput.clearCompoundEvents();
             
             % Now set up new ones
-            for ii = 1:size(self.gazeWindows, 1)
+            for ii = 1:size(self.gazeWindows, 2)
                
                % Get the name
                name = self.gazeWindows{ii,1};
@@ -212,10 +245,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             end
             
             % Now set the keyboard calibration event
-            self.keyboard.defineCalibratedEvent( ...
-                self.calibrationEvent{1}, ...
-                self.calibrationEvent{2}, ...
-                1, true);
+            kb.defineCalibratedEvent(self.calibrationEvent{1}, ...
+               self.calibrationEvent{2}, 1, true);
             
          elseif isa(self.userInput, 'dotsReadableHIDKeyboard')
             
@@ -263,31 +294,37 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % Get the current trial
          trial = self.getTrial();
          
-         % ---- Prepare saccade task
+         % ---- Set dots properties
          %
-         % Turn on t1 only, set location
+         % Possibly use reference coherence (e.g., from Quest)
+         if ~isfinite(trial.coherence)
+            trial.coherence = ...
+               self.groupList{self.coherenceRef{1}}{self.coherenceRef{2}};
+         end
          
-         % Get x,y location of center of target
-         targetOffset = self.trialProperties.targetDistance;
-         x = self.fixationProperties.xCenter + targetOffset * cosd(trial.direction);
-         y = self.fixationProperties.yCenter + targetOffset * sind(trial.direction);
-         self.stimulusEnsemble.setObjectProperty('xCenter', x, 2);
-         self.stimulusEnsemble.setObjectProperty('yCenter', y, 2);
+         % Save the coherence and direction to the dots object
+         %  in the stimulus ensemble
+         self.stimulusEnsemble.setObjectProperty('coherence', trial.coherence, 3);
+         self.stimulusEnsemble.setObjectProperty('direction', trial.direction, 3);
          
-         % Update gaze window
-         self.userInput.defineCompoundEvent('tcWindow', 'centerXY', [x y]);
+         % Prepare to draw dots stimulus
+         self.stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow);
          
-         % Update stateMachine to jump to VGS-/MGS- specific states
-         editStateByName(self.stateMachine, 'holdFixation', 'next', ...
-            [self.name 'showTarget']);
+         % ---- Set the targets foreperiod
+         %
+         % Randomly sample a duration from an exponential distribution with bounds
+         self.stateMachine.editStateByName('showTargets', 'timeout', ...
+            self.timing.showTargetForeperiodMin + ...
+            min(exprnd(self.timing.showTargetForeperiodMean), ...
+            self.timing.showTargetForeperiodMax));
          
          % ---- Show information about the task/trial
          %
          disp(' ');
-         disp(sprintf('%s (%d/%d): trial %d of %d, dir=%d', ...
+         disp(sprintf('%s (%d/%d): trial %d of %d, dir=%d, coh=%.1f', ...
             self.name, self.taskID, length(self.caller.children), ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction))
+            trial.direction, trial.coherence))
          
          % ---- Flush the UI and deactivate all compound events (gaze windows)
          %
@@ -343,8 +380,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       %% Set Choice method
       %
-      % Save choice/RT information and set up feedback
-      function setSaccadeChoice(self, value)
+      % Save choice/RT information and set up feedback for the dots task
+      function setDotsChoice(self, value)
          
          % ---- Get current task/trial and save the choice
          trial = self.getTrial();
@@ -357,30 +394,90 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             %
             % Set feedback for no choice
             feedbackString = 'No choice';
+            
          else
-   
+            
             % GOOD CHOICE
             %
-            % Set feedback
-            feedbackString = 'Correct';
+            % Mark as correct/error
+            trial.correct = double( ...
+               (trial.choice==0 && trial.direction==180) || ...
+               (trial.choice==1 && trial.direction==0));
             
             % Compute/save RT
-            %  Remember that time_choice time is from the UI, whereas
-            %    fixOff is from the remote computer, so we need to
-            %    account for clock differences
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_fixOff - trial.time_screen_trialStart);
+            %  Remember that dotsOn time might be from the remote computer, whereas
+            %  sacOn is from the local computer, so we need to account for clock
+            %  differences
+            trial.RT = (trial.time_choice - trial.time_local_trialStart) - ...
+               (trial.time_dotsOn - trial.time_screen_trialStart);
+            
+            % Set up feedback string
+            %  First Correct/error
+            if trial.correct == 1
+               feedbackString = 'Correct';
+            else
+               feedbackString = 'Error';
+            end
+            
+            %  Second possibly feedback about speed
+            if self.name(1) == 'S'
+               RTRefValue = self.groupList{self.RTRef{1}}{self.RTRef{2}};
+               if isfinite(RTRefValue)
+                  if trial.RT <= RTRefValue
+                     feedbackString = cat(2, feedbackString, ', in time');
+                  else
+                     feedbackString = cat(2, feedbackString, ', too slow');
+                  end
+               end
+            end
          end
-
+         
          % ---- Re-save the trial
          self.setTrial(trial);
-
+         
          % ---- Set the feedback string
          self.textEnsemble.setObjectProperty('string', feedbackString, 1);
-
+         
          % --- Print feedback in the command window
-         disp(sprintf('  %s, RT=%.2f (mean RT=%.2f)', feedbackString, ...
-            trial.RT, nanmean([self.trialData.RT])))
+         disp(sprintf('  %s, RT=%.2f (%d correct, %d error, mean RT=%.2f)', ...
+            feedbackString, trial.RT, ...
+            sum([self.trialData.correct]==1), ...
+            sum([self.trialData.correct]==0), ...
+            nanmean([self.trialData.RT])))
+      end
+      
+      %% updateQuest method
+      %
+      function updateQuest(self)
+         
+         % check for bad trial
+         previousTrial = self.getTrial(self.trialCount-1);
+         if isempty(previousTrial) || previousTrial.choice < 0
+            return
+         end
+         
+         % Update Quest (expects 1=error, 2=correct)
+         self.quest = qpUpdate(self.quest, previousTrial.coherence, ...
+            previousTrial.correct + 1);
+         
+         % Update next guess, bounded between 0 and 100, if there is a next trial
+         val = min(100, max(0, qpQuery(self.quest)));
+         if self.trialCount > 0
+            self.trialData(self.trialIndices(self.trialCount)).coherence = val;
+         end
+         
+         % Set reference coherence to current threshold
+         psiParamsIndex = qpListMaxArg(self.quest.posterior);
+         psiParamsQuest = self.quest.psiParamsDomain(psiParamsIndex,:);
+         if psiParamsQuest(1) > 0
+            val = psiParamsQuest(1);
+         end
+         self.groupList{self.coherenceRef{1}}{self.coherenceRef{2}} = val;
+         
+         % Update reference RT ... could do this by picking only
+         % most-recent trials but for now using all
+         self.groupList{self.RTRef{1}}{self.RTRef{2}} = ...
+            nanmedian([self.trialData.RT]);
       end
    end
    
@@ -405,7 +502,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % ---- Configure the graphics objects
          %
-         % Create a stimulus ensemble consisting of two objects:
+         % Create a stimulus ensemble consisting of three objects:
          %  1. Fixation cue
          fixation = dotsDrawableTargets();
          fixation.nSides  = 4;
@@ -413,16 +510,29 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             fixation.(ff{:}) = self.fixationProperties.(ff{:});
          end
          
-         %  2. One target
-         target = dotsDrawableTargets();
-         target.nSides = 100;
-         for ff = fieldnames(self.targetProperties)'
-            target.(ff{:}) = self.targetProperties.(ff{:});
+         %  2. Two targets (left and right)
+         targets = dotsDrawableTargets();
+         targets.nSides = 100;
+         for ff = fieldnames(self.targetsProperties)'
+            targets.(ff{:}) = self.targetsProperties.(ff{:});
+         end
+         targets.xCenter = [ ...
+            fixation.xCenter-self.trialProperties.targetDistance ...
+            fixation.xCenter+self.trialProperties.targetDistance];
+         targets.yCenter = fixation.yCenter.*[1 1];
+         
+         %  3. Random-dot stimulus
+         dots = dotsDrawableDotKinetogram();
+         for ff = fieldnames(self.dotsProperties)'
+            dots.(ff{:}) = self.dotsProperties.(ff{:});
          end
          
          % create the ensemble
          self.stimulusEnsemble = makeDrawableEnsemble( ...
-            'Saccade', {fixation, target}, self.screenEnsemble);
+            'RTDots', {fixation, targets, dots}, self.screenEnsemble);
+         
+         % Automate drawing (for dots)
+         self.stimulusEnsemble.automateObjectMethod('draw', @mayDrawNow);
          
          % ---- Configure the text ensemble
          %
@@ -457,68 +567,106 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %
       function configureTrials(self)
          
-         % make array of directions
-         directions = repmat(self.trialProperties.directions, ...
-            self.trialProperties.trialsPerDirection, 1);
+         % check for special case of Quest
+         if strcmp(self.trialProperties.coherences, 'Quest')
+            
+            % Initialize and save Quest object
+            self.quest = qpInitialize(qpParams( ...
+               'stimParamsDomainList', { ...
+               self.questProperties.stimRange}, ...
+               'psiParamsDomainList',  { ...
+               self.questProperties.thresholdRange, ...
+               self.questProperties.slopeRange, ...
+               self.questProperties.guessRate, ...
+               self.questProperties.lapseRange}));
+            
+            % Collect information to make trials
+            cohs = min(100, max(0, qpQuery(self.quest)));
+            
+            % Make a quest callList to update quest status between trials
+            questCallList = topsCallList('questCallList');
+            questCallList.alwaysRunning = false;
+            questCallList.addCall({@updateQuest, self}, 'update');
+            self.addChild(questCallList);
+         else
+            
+            % Use the given coherences
+            cohs = self.trialProperties.coherences;
+         end
+         
+         % Make array of directions, scaled by priors and num trials
+         directionPriors = self.trialProperties.directionPriors./...
+            (sum(self.trialProperties.directionPriors));
+         directionArray = cat(1, ...
+            repmat(self.trialProperties.directions(1), ...
+            round(directionPriors(1).*self.trialProperties.trialsPerCoherence), 1), ...
+            repmat(self.trialProperties.directions(2), ...
+            round(directionPriors(2).*self.trialProperties.trialsPerCoherence), 1));
+         
+         % Make grid of directions, coherences
+         [directionGrid, coherenceGrid] = meshgrid(directionArray, cohs);
+         
+         % Add structure array to the task's trialData
+         % See getTaskDefaultDotsTrialData for details
          self.trialData = dealMat2Struct(self.trialData(1), ...
-            'trialIndex', 1:numel(directions), ...
-            'direction', directions);
+            'trialIndex', 1:numel(directionGrid), ...
+            'direction', directionGrid(:)', ...
+            'coherence', coherenceGrid(:)');
       end
       
       %% configureStateMachine method
       %
       function configureStateMachine(self)
-                  
-         % Fevalables for state list
+         
+         % ---- Fevalables for state list
+         %
          blanks = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.userInput, false, {'holdFixation'}};
          chkuib = {@getNextEvent, self.userInput, false, {'brokeFixation'}};
-         chkuic = {@getAndSaveNextEvent, self, {'choseTarget'}, 'choice'};
+         chkuic = {@getAndSaveNextEvent, self, {'choseLeft' 'choseRight'}, 'choice'};
          chkkbd = {@getNextEvent self.keyboard, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
-         showfx = {@setVisible, self, self.stimulusEnsemble, 1, 2, 'fixOn'};
+         showfx = {@setVisible, self, self.stimulusEnsemble, 1, 2:3, 'fixOn'};
          showt  = {@setVisible, self, self.stimulusEnsemble, 2, [], 'targsOn'};
-         hidet  = {@setVisible, self, self.stimulusEnsemble, [], 2, 'targsOff'};
-         hidefx = {@setVisible, self, self.stimulusEnsemble, [], 1, 'fixOff'};
+         showd  = {@setVisible, self, self.stimulusEnsemble, 3, [], 'dotsOn'};
+         hided  = {@setVisible, self, self.stimulusEnsemble, [], [1 3], 'dotsOff'};
          showfb = {@setVisible, self, self.textEnsemble, 1, [], 'fdbkOn'};
          abrt   = {@abort, self, true};
          skip   = {@abort, self};
          calpl  = {@calibrate, self.userInput};
-         sch    = @(x)cat(2, {@setSaccadeChoice, self}, x);
+         sch    = @(x)cat(2, {@setDotsChoice, self}, x);
          dce    = @defineCompoundEvent;
          gwfxw  = {dce, self.userInput, {'fixWindow', ...
-             'eventName', 'holdFixation', 'isInverted', false, 'isActive', true}};
+            'eventName', 'holdFixation', 'isInverted', false, 'isActive', true}};
          gwfxh  = {dce, self.userInput, {'fixWindow', ...
-             'eventName', 'brokeFixation', 'isInverted', true}};
+            'eventName', 'brokeFixation', 'isInverted', true}};
          gwt    = {dce, self.userInput, {'fixWindow', 'isActive', false}, ...
-             {'trgWindow', 'isActive', true}};
-         caleye = {@calibrate, self.userInput, 'recenter'};
+            {'trg1Window', 'isActive', true}, {'trg2Window', 'isActive', true}};
 
-         % Timing variables
+         
+         
+         
+         % ---- Timing variables
+         %
          tft = self.timing.fixationTimeout;
          tfh = self.timing.holdFixation;
-         vtd = self.timing.VGSTargetDuration;
-         mtd = self.timing.MGSTargetDuration;
-         mdd = self.timing.MGSDelayDuration;
-         sto = self.timing.saccadeTimeout;
+         dtt = self.timing.dotsTimeout;
          tsf = self.timing.showFeedback;
          iti = self.timing.InterTrialInterval;
          
-         %% ---- Make the state machine
+         % ---- Make the state machine
          %
-         % Note that the startTrial routine sets the target location and the 'next'
-         % state after holdFixation, based on VGS vs MGS task
          trialStates = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
-            'waitForFixation'   gwfxw    chkuif   tft        caleye  'blankNoFeedback' ; ...
-            'holdFixation'      gwfxh    chkuib   tfh        {}      'showTarget'      ; ... % Branch here
-            'VGSshowTarget'     showt    chkuib   vtd        gwt     'hideFix'         ; ... % VGS
-            'MGSshowTarget'     showt    chkuib   mtd        {}      'MGSdelay'        ; ... % MGS
-            'MGSdelay'          hidet    chkuib   mdd        gwt     'hideFix'         ; ...
-            'hideFix'           hidefx   chkuic   sto        {}      'noChoice'        ; ...
+            'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
+            'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...
+            'showTargets'       showt    chkuib   1          gwts    'preDots'         ; ...
+            'preDots'           {}       {}       0          {}      'showDots'        ; ...
+            'showDots'          showd    chkuic   dtt        hided   'noChoice'        ; ...
             'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
             'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
-            'choseTarget'       sch( 1)  {}       0          {}      'blank'           ; ...
+            'choseLeft'         sch( 0)  {}       0          {}      'blank'           ; ...
+            'choseRight'        sch( 1)  {}       0          {}      'blank'           ; ...
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
@@ -529,19 +677,30 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             'quit'              abrt     {}       0          {}      ''                ; ...
             };
          
-         %% ---- Put stuff together in a stateMachine so that it will run
+         % ---- Put stuff together in a stateMachine so that it will run
+         %
          self.stateMachine = topsStateMachine();
          self.stateMachine.addMultipleStates(trialStates);
          self.stateMachine.startFevalable = {@self.startTrial};
          self.stateMachine.finishFevalable = {@self.finishTrial};
          
-         % For debugging
-         %self.stateMachine.addSharedFevalableWithName( ...
-         %   {@showStateInfo}, 'debugStates', 'entry');
+         % ---- Set up ensemble activation list.
+         %
+         % See activateEnsemblesByState for details.
+         % Note that the predots state is what allows us to get a good timestamp
+         %   of the dots onset... we start the flipping before, so the dots will start
+         %   as soon as we send the isVisible command in the entry fevalable of showDots
+         activeList = {{self.stimulusEnsemble, 'draw'; self.screenEnsemble, 'flip'}, ...
+            {'preDots' 'showDots'}};
+         self.stateMachine.addSharedFevalableWithName( ...
+            {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
          
-         %% ---- Make a concurrent composite to interleave run calls
+         % ---- Make a concurrent composite to interleave run calls
+         %
          self.stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
          self.stateMachineComposite.addChild(self.stateMachine);
+         self.stateMachineComposite.addChild(self.stimulusEnsemble);
+         self.stateMachineComposite.addChild(self.screenEnsemble);
          
          % Add it as a child to the task
          self.addChild(self.stateMachineComposite);

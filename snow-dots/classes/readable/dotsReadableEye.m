@@ -615,19 +615,37 @@ classdef dotsReadableEye < dotsReadable
                %     historyLength in the past
                %  4. no intervening samples were outside window
                if ev.isInverted
+                  
+                  % Looking for ALL samples outside window
                   Lgood = ev.sampleBuffer(:,2) > ev.windowSize;
+
+                  if Lgood(end) && any(Lgood(1:end-1))
+                     fg = find(Lgood,1);
+                     if (ev.sampleBuffer(fg,1) <= ...
+                           (ev.sampleBuffer(end,1) - ev.windowDur)) && ...
+                           (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
+                        
+                        % Add the event to the data stream
+                        newData = cat(1, newData, ...
+                           [ev.ID ev.sampleBuffer(fg,[2 1])]);
+                     end
+                  end
+                  
                else
+                  
+                  % Looking for first/last samples indide window
                   Lgood = ev.sampleBuffer(:,2) <= ev.windowSize;
-               end
-               if Lgood(end) && any(Lgood(1:end-1))
-                  fg = find(Lgood,1);
-                  if (ev.sampleBuffer(fg,1) <= ...
-                        (ev.sampleBuffer(end,1) - ev.windowDur)) %&& ...
-                     %  (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,1))))
-                     
-                     % Add the event to the data stream
-                     newData = cat(1, newData, ...
-                        [ev.ID ev.sampleBuffer(fg,[2 1])]);
+
+                  if Lgood(end) && any(Lgood(1:end-1))
+                     fg = find(Lgood,1);
+                     if (ev.sampleBuffer(fg,1) <= ...
+                           (ev.sampleBuffer(end,1) - ev.windowDur)) %&& ...
+                        %  (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
+                        
+                        % Add the event to the data stream
+                        newData = cat(1, newData, ...
+                           [ev.ID ev.sampleBuffer(fg,[2 1])]);
+                     end
                   end
                end
                

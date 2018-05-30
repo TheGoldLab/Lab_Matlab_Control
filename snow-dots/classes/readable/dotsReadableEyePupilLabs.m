@@ -362,8 +362,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
          warning('on','zmq:core:recv:bufferTooSmall');
          
-         % Pause a moment
-         pause(0.4);
+         % Pause a moment to let pupilLabs get out of calibration mode
+         pause(2.0);
          
          % Re-set device time
          self.setDeviceTime();
