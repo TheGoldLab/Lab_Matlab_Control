@@ -76,9 +76,9 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 6;
+      fixWindowSize  = 8;
       fixWindowDur   = 0.2;
-      trgWindowSize  = 6;
+      trgWindowSize  = 8;
       trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
@@ -349,9 +349,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % Save choice/RT information and set up feedback
       function setSaccadeChoice(self, value)
          
-         % ---- Get current task/trial and save the choice
+         % ---- Get current task/trial and save the choice/correct flag
          trial = self.getTrial();
          trial.choice = value;
+         trial.correct = value;
          
          % ---- Parse choice info
          if value<0

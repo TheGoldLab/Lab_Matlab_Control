@@ -87,9 +87,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 6;
+      fixWindowSize  = 8;
       fixWindowDur   = 0.2;
-      trgWindowSize  = 6;
+      trgWindowSize  = 8;
       trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
@@ -388,6 +388,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Get current task/trial and save the choice
          trial = self.getTrial();
+         trial.correct = value;
          trial.choice = value;
          
          % ---- Parse choice info
@@ -411,7 +412,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             %  Remember that dotsOn time might be from the remote computer, whereas
             %  sacOn is from the local computer, so we need to account for clock
             %  differences
-            trial.RT = (trial.time_choice - trial.time_local_trialStart) - ...
+            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
                (trial.time_dotsOn - trial.time_screen_trialStart);
             
             % Set up feedback string
