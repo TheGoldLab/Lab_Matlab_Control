@@ -71,15 +71,15 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %  2. Event name
       %  3. Graphical object index where the window is centered
       gazeWindows = { ...
-         'fixWindow',         'holdFixation', [1 1]; ...
-         'trgWindow',         'choseTarget',  [2 1]};
+         'fixWindow', 'holdFixation', [1 1]; ...
+         'trgWindow', 'choseTarget',  [2 1]};
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize = 8;
-      fixWindowDur  = 0.2;
-      trgWindowSize = 8;
-      trgWindowDur  = 0.2;
+      fixWindowSize  = 8;
+      fixWindowDur   = 0.2;
+      trgWindowSize  = 8;
+      trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
       calibrationEvent = { ...

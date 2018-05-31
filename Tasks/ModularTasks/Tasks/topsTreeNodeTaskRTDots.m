@@ -378,7 +378,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Update to the next trial.
          %
          %  Argument is a flag indicating whether or not to repeat the trial
-         self.setNextTrial(trial.correct<0)
+         self.setNextTrial(~(trial.correct>=0));
       end
       
       %% Set Choice method
