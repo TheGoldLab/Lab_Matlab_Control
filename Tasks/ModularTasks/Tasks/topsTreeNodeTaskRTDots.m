@@ -87,9 +87,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 5;
+      fixWindowSize  = 6;
       fixWindowDur   = 0.2;
-      trgWindowSize  = 5;
+      trgWindowSize  = 6;
       trgWindowDur   = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
@@ -455,7 +455,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % check for bad trial
          previousTrial = self.getTrial(self.trialCount-1);
-         if isempty(previousTrial) || previousTrial.choice < 0
+         if isempty(previousTrial) || previousTrial.correct < 0
             return
          end
          

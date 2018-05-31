@@ -143,14 +143,6 @@ classdef dotsReadable < handle
       %> Calibrate the device
       function calibrate(self, varargin)
          
-         % Check to pause data recording
-         if ~self.recordDuringCalibration && self.isRecording
-            self.record(false);
-            restartRecording = true;
-         else
-            restartRecording = false;
-         end
-         
          % Call device-specific calibration routine
          self.calibrateDevice(varargin{:});
          
@@ -158,11 +150,6 @@ classdef dotsReadable < handle
          name = [class(self) '_calibration'];
          data = mglGetSecs;
          topsDataLog.logDataInGroup(data, name);
- 
-         % Possibly restart recording
-         if restartRecording
-            self.record(true);
-         end
       end
       
       %> Open/close data file associated with the device

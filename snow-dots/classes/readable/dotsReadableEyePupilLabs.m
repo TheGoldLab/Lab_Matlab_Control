@@ -259,6 +259,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
              self.calibrateDevice@dotsReadableEye(varargin{:});
              return
          end
+          
+         % Check to pause data recording
+         if ~self.recordDuringCalibration && self.isRecording
+            self.record(false);
+            restartRecording = true;
+         else
+            restartRecording = false;
+         end
          
          % Pointer subscribe to calibration notification channel. This will give
          % us information about the calibration routine as it progresses
@@ -379,6 +387,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % eye-tracking calibration, including tranforming to snow-dots
          % coordinates
          self.calibrateDevice@dotsReadableEye;
+         
+         % Possibly restart recording
+         if restartRecording
+            self.record(true);
+         end
       end
       
       % Overloaded recordDeviceOn function

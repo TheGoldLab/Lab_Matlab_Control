@@ -100,7 +100,7 @@ classdef dotsReadableEye < dotsReadable
       offsetCalibrationN = 30;
       
       % Number of samples to collect for full calibation
-      calibrationN = 100;
+      fullCalibrationN = 100;
       
       % x offset for calibration target grid
       calibrationFPX = 10;
@@ -113,8 +113,16 @@ classdef dotsReadableEye < dotsReadable
       
       % Tolerance for using calibration values -- determined by
       % trial-and-error
-      calibrationTolerance = 0.0001;
-   end
+      calibrationOffsetTolerance = 0.0001;
+
+      % Tolerance for using calibration values -- determined by
+      % trial-and-error
+      calibrationTransformTolerance = 3.0;
+      
+      % number of times to try calibrating before giving a message if it
+      % keeps failing (not within tolerances
+      numberCalibrationTries = 5;
+end
    
    properties (SetAccess = protected)
       
@@ -412,8 +420,11 @@ classdef dotsReadableEye < dotsReadable
       %   [current_gaze_x current_gaze_y]
       function calibrateDevice(self, varargin)
          
-         % Check for special case of recentering
+         % Check for special case of recentering -- just check eye position
+         % and update self.xyOffset values
          if nargin > 1 && strcmp(varargin{1}, 'recenter')
+             
+            % Find screen coordinates to calibrate with respect to
             if nargin > 2 && ~isempty(varargin{2})
                currentXY = varargin{2};
             else
@@ -427,126 +438,168 @@ classdef dotsReadableEye < dotsReadable
                gazeXY(ii,:) = dataMatrix([self.xID, self.yID], 2)';
             end
  
-            % Now add the offsets
-            self.xyOffset = self.xyOffset + currentXY - median(gazeXY);
+            % Now add the offsets if within tolerance
+            if var(gazeXY) < self.calibrationOffsetTolerance
+                self.xyOffset = self.xyOffset + currentXY - median(gazeXY);
+            end
+            
+            % Don't do the remaining calibration
             return
          end
          
-         % Generate Fixation target (cross)
-         %
-         % We will create a single drawable object to represent the fixation cue.
-         % Then, we simply adjust the location of the cue each time we present it.
-         fixationCue = dotsDrawableTargets();
-         fixationCue.width  = [1 0.1] * self.calibrationFPSize;
-         fixationCue.height = [0.1 1] * self.calibrationFPSize;        
-         calibrationEnsemble = makeDrawableEnsemble(...
-            'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
+         checkCalibrationCounter = 1;
+         isCalibrated = false;
          
-         % Set up matrices to present cues and collect fixation data
-         targetXY = [ ...
-            -self.calibrationFPX  self.calibrationFPY;
-            self.calibrationFPX  self.calibrationFPY;
-            self.calibrationFPX -self.calibrationFPY;
-            -self.calibrationFPX -self.calibrationFPY];
-         numFixations = size(targetXY, 1);
-         
-         % Loop through the fixations and collect eye position data
-         gazeRawXY = nans(self.calibrationN, 2, numFixations);
-         gazeXY = nans(numFixations, 2);
-         fixationNumber = 1;
-         notDone = true;
-         
-         while notDone
-            
-            % Show the fixation point
-            calibrationEnsemble.setObjectProperty('xCenter', ...
-                [targetXY(fixationNumber,1) targetXY(fixationNumber,1)]);
-            calibrationEnsemble.setObjectProperty('yCenter', ...
-                [targetXY(fixationNumber,2) targetXY(fixationNumber,2)]);
-            calibrationEnsemble.callObjectMethod( ...
-                @dotsDrawable.drawFrame, {}, [], true);
-            
-            % Wait for fixation
-            pause(0.3);
-            
-            % flush the eye data
-            self.flushData();
-            
-            % Collect a bunch of samples
-            for jj = 1:self.calibrationN
-               dataMatrix = self.readRawEyeData();
-               gazeRawXY(jj,:,fixationNumber) = dataMatrix([self.xID, self.yID], 2)';
-            end
-            
-            % Briefly blank the screen
-            calibrationEnsemble.callObjectMethod( ...
-                @dotsDrawable.blankScreen, {}, [], true);
-            
-            % wait a moment
-            pause(0.3);
-            
-            % Check if good
-            disp([var(gazeRawXY(:,1,fixationNumber)) var(gazeRawXY(:,2,fixationNumber))])
-            if all(var(gazeRawXY(:,:,fixationNumber))< self.calibrationTolerance)
-                
-                % Get median values
-                gazeXY(fixationNumber,:) = nanmedian(gazeRawXY(:,:,fixationNumber));
-                
-                fixationNumber = fixationNumber + 1;
-                
-                if fixationNumber > 4
-                    notDone = false;
-                end
-            end
+         while ~isCalibrated && ...
+                 checkCalibrationCounter < self.numberCalibrationTries
+             
+             % Generate Fixation target (cross)
+             %
+             % We will create a single drawable object to represent the fixation cue.
+             % Then, we simply adjust the location of the cue each time we present it.
+             fixationCue = dotsDrawableTargets();
+             fixationCue.width  = [1 0.1] * self.calibrationFPSize;
+             fixationCue.height = [0.1 1] * self.calibrationFPSize;
+             calibrationEnsemble = makeDrawableEnsemble(...
+                 'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
+             
+             % Set up matrices to present cues and collect fixation data
+             targetXY = [ ...
+                 -self.calibrationFPX  self.calibrationFPY;
+                 self.calibrationFPX  self.calibrationFPY;
+                 self.calibrationFPX -self.calibrationFPY;
+                 -self.calibrationFPX -self.calibrationFPY];
+             numFixations = size(targetXY, 1);
+             
+             % Loop through the fixations and collect eye position data
+             gazeRawXY = nans(self.fullCalibrationN, 2);
+             gazeXY = nans(numFixations, 2);
+             fixi = 1;
+             isSampled = false;
+             checkFixationcounter = 1;
+             
+             while ~isSampled && ...
+                     checkFixationcounter < ...
+                     self.numberCalibrationTries*numFixations
+                 
+                 % Show the fixation point
+                 calibrationEnsemble.setObjectProperty('xCenter', ...
+                     [targetXY(fixi,1) targetXY(fixi,1)]);
+                 calibrationEnsemble.setObjectProperty('yCenter', ...
+                     [targetXY(fixi,2) targetXY(fixi,2)]);
+                 calibrationEnsemble.callObjectMethod( ...
+                     @dotsDrawable.drawFrame, {}, [], true);
+                 
+                 % Wait for fixation
+                 pause(0.3);
+                 
+                 % flush the eye data
+                 self.flushData();
+                 
+                 % Collect a bunch of samples
+                 for jj = 1:self.fullCalibrationN
+                     dataMatrix = self.readRawEyeData();
+                     gazeRawXY(jj,:) = dataMatrix([self.xID, self.yID], 2)';
+                 end
+                 
+                 % wait a moment
+                 pause(0.2);                 
+
+                 % Briefly blank the screen
+                 calibrationEnsemble.callObjectMethod( ...
+                     @dotsDrawable.blankScreen, {}, [], true);
+                 
+                 % wait a moment
+                 pause(0.3);                 
+                 
+                 % Check if good
+                 % disp([var(gazeRawXY(:,1)) var(gazeRawXY(:,2))])
+                 if all(var(gazeRawXY) < self.calibrationOffsetTolerance)
+                     
+                     % Get median values
+                     gazeXY(fixi,:) = nanmedian(gazeRawXY);
+                     
+                     % Get the next fixation
+                     fixi = fixi + 1;
+                     
+                     % Done!
+                     if fixi > 4
+                         isSampled = true;
+                     end
+                 end
+                 
+                 % Update the counter
+                 checkFixationcounter = checkFixationcounter + 1;
+             end
+             
+             % Get vectors connecting each point
+             diffTargetXY    = diff([targetXY; targetXY(1,:)]);
+             lenDiffTargetXY = sqrt(sum(diffTargetXY.^2,2));
+             diffGazeXY      = diff([gazeXY; gazeXY(1,:)]);
+             lenDiffGazeXY   = sqrt(sum(diffGazeXY.^2,2));
+             
+             % Select x,y directions
+             Lx = diffTargetXY(:,1)~=0;
+             Ly = diffTargetXY(:,2)~=0;
+             
+             % Calculate average x,y scaling
+             self.xyScale = [ ...
+                 mean(lenDiffTargetXY(Lx,:) ./ lenDiffGazeXY(Lx,:)) ...
+                 mean(lenDiffTargetXY(Ly,:) ./ lenDiffGazeXY(Ly,:))];
+             
+             % Calculate average rotation
+             angs = nans(numFixations, 1);
+             for ii = 1:numFixations
+                 u = [diffTargetXY(ii,:) 0];
+                 v = [diffGazeXY(ii,:) 0];
+                 angs(ii) = atan2(norm(cross(u,v)),dot(u,v));
+             end
+             ang = mean(angs);
+             self.rotation = [cos(ang) -sin(ang); sin(ang) cos(ang)];
+             
+             % Calculate average x,y offset
+             self.xyOffset = mean(targetXY -  ...
+                 [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
+                 self.rotation);
+             
+             % Check tolerance
+             transformedData = ...
+                 [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
+                 self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
+             
+             % For debugging
+             %              figure
+             %              hold on
+             %              plot(targetXY(:,1), targetXY(:,2), 'ro');
+             %              plot(transformedData(:,1), transformedData(:,2), 'ko');
+             
+             % disp(sqrt(sum((targetXY-transformedData).^2,2)))
+             % check for accuracy
+             if all(sqrt(sum((targetXY-transformedData).^2,2)) < ...
+                     self.calibrationTransformTolerance)
+                 
+                 % Done!
+                 isCalibrated = true;
+             end
          end
          
-         % Get vectors connecting each point
-         diffTargetXY    = diff([targetXY; targetXY(1,:)]);
-         lenDiffTargetXY = sqrt(sum(diffTargetXY.^2,2));
-         diffGazeXY      = diff([gazeXY; gazeXY(1,:)]);
-         lenDiffGazeXY   = sqrt(sum(diffGazeXY.^2,2));
-         
-         % Select x,y directions
-         Lx = diffTargetXY(:,1)~=0;
-         Ly = diffTargetXY(:,2)~=0;
-
-         % Calculate average x,y scaling
-         self.xyScale = [ ...
-            mean(lenDiffTargetXY(Lx,:) ./ lenDiffGazeXY(Lx,:)) ...
-            mean(lenDiffTargetXY(Ly,:) ./ lenDiffGazeXY(Ly,:))];
-         
-         % Calculate average rotation
-         angs = nans(numFixations, 1);
-         for ii = 1:numFixations
-            u = [diffTargetXY(ii,:) 0];
-            v = [diffGazeXY(ii,:) 0];
-            angs(ii) = atan2(norm(cross(u,v)),dot(u,v));
+         % Check if failed
+         if ~isCalibrated
+             
+             % Get input
+             str = input('dotsReadableEye calibration failed: <r>etry or <a>bort?', 's');
+             
+             switch(str)
+                 
+                 case {'r' 'R'}
+                     % Try again (possibly after adjusting glasses)
+                     self.calibrateDevice();
+    
+                 otherwise
+                     % Abort! (TODO!)
+                     self.close();
+             end
          end
-         ang = mean(angs);
-         self.rotation = [cos(ang) -sin(ang); sin(ang) cos(ang)];
-         
-         % Calculate average x,y offset
-         self.xyOffset = mean(targetXY -  ...
-            [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
-            self.rotation);
-        
-        % Check tolerance
-        transformedData = ...
-            [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
-            self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
-        
-        %        For debugging
-        figure
-        hold on
-        plot(targetXY(:,1), targetXY(:,2), 'ro');
-        plot(transformedData(:,1), transformedData(:,2), 'ko');
-
-        % check for accuracy
-        errors = (sqrt(sum((targetXY-transformedData).^2,2)));
-        if max(errors) > 3
-            % try again
-            self.calibrateDevice@dotsReadableEye();
-        end
       end
       
       % Close the components and release the resources.
@@ -607,7 +660,8 @@ classdef dotsReadableEye < dotsReadable
             % Possibly update monitor window
             if self.showGazeMonitor
                set(self.gazeMonitorDataHandle, ...
-                  'XData', gazeData(end,2), 'YData', gazeData(end,3));
+                  'XData', gazeData(end,2), ...
+                  'YData', gazeData(end,3));
                drawnow;
             end
             
