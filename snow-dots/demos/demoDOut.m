@@ -19,8 +19,12 @@ timestamp = dOutObject.sendStrobedWord(word, port);
 
 
 % ports (if available)
-timestamp = dOutObject.sendTTLPulse(0);
-timestamp = dOutObject.sendTTLPulse(1);
+for ii = 1:100
+    timestamp = dOutObject.sendTTLPulse(0);
+    %timestamp = dOutObject.sendTTLPulse(1);
+    pause(.3)
+end
+
 
 % specify an arbitrary sequence of TTL-level voltages to output.  True
 % corresponds to "high" and false to "low".
@@ -30,7 +34,10 @@ signal(end) = false;
 % output the whole sequence of TTL-level voltages from each of two output
 % ports (if available).  Use different arbitrary sample output frequencies
 % to output the same sequence at different rates.
-frequency = 100;
-timestamp = dOutObject.sendTTLSignal(0, signal, frequency);
+for ii = 1:100
+    frequency = 100;
+    timestamp = dOutObject.sendTTLSignal(0, signal, frequency);
+end
+
 frequency = 1000;
 timestamp = dOutObject.sendTTLSignal(1, signal, frequency);
