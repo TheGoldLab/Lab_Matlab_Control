@@ -1,196 +1,113 @@
-function DBSconfigureTasks(maintask, datatub)
-% function DBSconfigureTasks(maintask, datatub)
+function DBSconfigureTasks(mainTreeNode, datatub)
+% function DBSconfigureTasks(mainTreeNode, datatub)
 %
-% configuration routine for topsTreeNodeTask classes
+% This function sets up tasks for a DBS experiment. Uses the 'taskSpecs'
+%  cell array stored in the datatub, of the form:
+%     {<TaskType1> <trialsPerCondition1> <TaskType2> <trialsPerCondition2>
+%     <etc>}
 %
-% Separated from DBSconfigure for readability
+% Arguments:
+%  mainTreeNode ... the topsTreeNode at the top of the hierarchy
+%  datatub      ... the topsGroupedList that holds task variables
+
+%% ---- Set defaults properties common to both tasks
+commonProperties = { ...
+   {'drawables', 'settings', 'targetDistance'}, datatub{'Settings'}{'targetDistance'}, ...
+   {'settings',  'sendTTLs'},                   datatub{'Settings'}{'sendTTLs'},       ...
+   {'readables', 'userInput'},                  datatub{'Control'}{'userInputDevice'}, ...
+   {'drawables', 'screenEnsemble'},             datatub{'Graphics'}{'screenEnsemble'}, ...
+   {'drawables', 'textEnsemble'},               datatub{'Graphics'}{'textEnsemble'},   ...
+   'trialData',                                 DBSconfigureTrialData(), ...
+   };
+
+% gazeWindows for dotsReadableEyePupilLabs inputs
+gw = @(i,n) cat(2, {'readables', 'gazeWindows'}, {i, n});
+gazeWindows = { ...
+   gw(1, 'windowSize'),                         datatub{'Settings'}{'fixWindowSize'},  ...
+   gw(1, 'windowDur'),                          datatub{'Settings'}{'fixWindowDur'},  ...
+   gw(2, 'windowSize'),                         datatub{'Settings'}{'trgWindowSize'},  ...
+   gw(2, 'windowDur'),                          datatub{'Settings'}{'trgWindowDur'},  ...
+   gw(3, 'windowSize'),                         datatub{'Settings'}{'trgWindowSize'},  ...
+   gw(3, 'windowDur'),                          datatub{'Settings'}{'trgWindowDur'}};
+
+%% ---- Make call list to show text between tasks
 %
-% 5/28/18 created by jig
+% Welcome call list
+welcome = topsCallList();
+welcome.alwaysRunning = false;
+welcome.addCall({@drawTextEnsemble, datatub{'Graphics'}{'textEnsemble'}, { ...
+   'Work at your own pace', ...
+   'Each trial starts by fixating the central cross'}, 2, 1}, 'text');
 
-%% ---- Configure Tasks + State Machines
-%
-% list of all possible task names, to get IDs
-taskNames = {'VGS' 'MGS' 'Quest' 'NN' 'NL' 'NR' 'SN' 'SL' 'SR' ...
-   'AN' 'AL' 'AR'};
-
-% Feedback strings
-SATstrings = { ...
-   'S' 'Be as fast as possible'; ...
-   'A' 'Be as accurate as possible'; ...
-   'N' 'Be as fast and accurate as possible'};
-
-BIASstrings = { ...
-   'L' 'LEFT is more likely'; ...
-   'R' 'RIGHT is more likely'; ...
-   'N' 'BOTH directions equally likely'};
-
-% Objects used below
-screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
-textEnsemble   = datatub{'Graphics'}{'textEnsemble'};
-ui             = datatub{'Control'}{'userInputDevice'};
-kb             = datatub{'Control'}{'keyboard'};
-
-% Make a call list to show countdown timer between tasks
+% Countdown call list
 countdown = topsCallList();
 countdown.alwaysRunning = false;
 for ii = 1:10
-   countdown.addCall({@drawTextEnsemble, textEnsemble, ...
-      {'Well done!', sprintf('Next task starts in: %d', 10-ii+1)}, 1}, ...
+   countdown.addCall({@drawTextEnsemble, datatub{'Graphics'}{'textEnsemble'}, ...
+      {'Well done!', sprintf('Next task starts in: %d', 10-ii+1)}, 1, 0}, ...
       sprintf('c_%d', ii));
 end
 countdown.addCall({@pause, 1}, 'pause');
 
-% Loop through the taskSpecs array, making and adding tasks
-taskSpecs = datatub{'Input'}{'taskSpecs'};
-taskNumber = 1; % for feedback (see RTDstartTrial)
-for tt = 1:2:length(taskSpecs)
+%% ---- Loop through the task specs array, making tasks with appropriate arg lists
+%
+taskSpecs = datatub{'Settings'}{'taskSpecs'};
+noDots = true;
+taskID = 1;
+for ii = 1:2:length(taskSpecs)
    
-   % Parse the name and trial numbers from sequential arguments
-   name = taskSpecs{tt};
-   trialsPerCondition = taskSpecs{tt+1};
+   % Get ID from index in list of task names
+   taskTypeID = find(strcmp(taskSpecs{ii}, {'VGS' 'MGS' 'Quest' 'NN' 'NL' 'NR' ...
+      'SN' 'SL' 'SR' 'AN' 'AL' 'AR'}),1);
    
-   % Add task-specific information, depending on the named type
-   switch (name)
+   switch taskSpecs{ii}
       
-      case {'VGS', 'MGS'}
+      case {'VGS' 'MGS'}
          
-         % Saccade task!
-         %
-         task = topsTreeNodeTaskSaccade(name);
-
-         % Set instruction strings
-         if strcmp(name, 'VGS')
-            task.instructionStrings = { 'When the fixation spot disappears', ...
-               'Look at the visual target'};      
-         else
-            task.instructionStrings = { 'When the fixation spot disappears', ...
-               'Look at the remebered location of the visual target'};
-         end
-         
-         % check to update task/trial properties
-         task.setIfNotEmpty({'trialProperties', 'targetDistance'}, datatub{'Input'}{'targetDistance'});
-         task.setIfNotEmpty({'trialProperties', 'directions'}, datatub{'Input'}{'saccadeDirections'});
-         task.setIfNotEmpty({'trialProperties', 'trialsPerDirection'}, trialsPerCondition);
-
+         % Make Saccade task with name, numTrials, and args
+         task = topsTreeNodeTaskSaccade.getStandardConfiguration( ...
+            taskSpecs{ii}, taskSpecs{ii+1}, commonProperties{:}, ...
+            gazeWindows{1:8}, 'taskID', taskID, 'taskTypeID', taskTypeID, ...
+            {'settings' 'directions'}, datatub{'Settings'}{'saccadeDirections'});
+            
       otherwise
-                  
-         % Dots task!
-         %
-         task = topsTreeNodeTaskRTDots(name);
          
-         % Check for Quest
-         if strcmp(name, 'Quest')
-            
-            % Send flag to use Quest for coherence
-            task.trialProperties.coherences = 'Quest';
+         % Make RTDots task with name, numTrials, and args
+         task = topsTreeNodeTaskRTDots.getStandardConfiguration( ...
+            taskSpecs{ii}, taskSpecs{ii+1}, commonProperties{:}, ...
+            gazeWindows{:}, 'taskID', taskID, 'taskTypeID', taskTypeID, ...
+            {'settings' 'coherences'}, datatub{'Settings'}{'coherences'}, ...
+            {'settings' 'referenceRT'}, datatub{'Settings'}{'referenceRT'});                     
 
-            % Signals all other tasks to use the Quest coherence
-            datatub{'Input'}{'coherences'} = nan;
-            
-            % Use Neutral specs
-            name = 'NN';
-         else
-            
-            % check to update coherences
-            task.setIfNotEmpty({'trialProperties', 'coherences'}, datatub{'Input'}{'coherences'});
+         % Add special instructions for first dots task
+         if noDots
+            task.drawables.settings.textStrings = cat(1, ...
+               {'When flickering dots appear, decide their overall direction', ...
+               'of motion, then look at the target in that direction'}, ...
+               task.drawables.settings.textStrings);
+            noDots = false;
          end
          
-         % check to update dot directions, trials per coherence
-         task.setIfNotEmpty({'trialProperties', 'directions'}, datatub{'Input'}{'dotDirections'});
-         task.setIfNotEmpty({'trialProperties', 'trialsPerCoherence'}, trialsPerCondition);
-
-         % Parse name for task specifications (see comments at the top)
-         task.instructionStrings = { ...
-            SATstrings{strcmp(name(1), SATstrings(:,1)), 2}, ...
-            BIASstrings{strcmp(name(2), BIASstrings(:,1)), 2} };
-         
-         % Parse name for biases
-         priors = datatub{'Input'}{'biasedPriors'};
-         if name(2) == 'L'
-            task.trialProperties.directionPriors = [max(priors) min(priors)];
-         elseif name(2) == 'R'
-            task.trialProperties.directionPriors = [min(priors) max(priors)];
-         end
-         
-         % Set referents for coherence, RT
-         task.groupList = datatub;
-         task.coherenceRef = {'Control', 'referenceCoherence'};
-         task.RTRef = {'Control', 'referenceRT'};
+         % Special case of quest ... use output as coh/RT refs
+         if strcmp(taskSpecs{ii}, 'Quest')
+            datatub{'Settings'}{'coherences'} = task;
+            datatub{'Settings'}{'referenceRT'} = task;
+         end         
    end
-   
-   % check to update other properties
-   props = {'fixWindowSize', 'fixWindowDur', 'trgWindowSize', ...
-      'trgWindowDur', 'sendTTLs'};
-   for jj = 1:length(props)
-      task.setIfNotEmpty(props{jj}, datatub{'Input'}{props{jj}});
-   end
-   
-   % Add the standard trial data
-   task.trialData = struct( ...
-      'taskID', find(strcmp(name, taskNames)), ...
-      'trialIndex', nan, ...
-      'direction', nan, ...
-      'coherence', nan, ...
-      'choice', -3, ...
-      'RT', nan, ...
-      'correct', -3, ...
-      'time_screen_roundTrip', 0, ...
-      'time_local_trialStart', nan, ...
-      'time_ui_trialStart', nan, ...
-      'time_screen_trialStart', nan, ...
-      'time_TTLStart', nan, ...
-      'time_TTLFinish', nan, ...
-      'time_fixOn', nan, ...
-      'time_targsOn', nan, ...
-      'time_dotsOn', nan, ...
-      'time_targsOff', nan, ...
-      'time_fixOff', nan, ...
-      'time_choice', nan, ...
-      'time_dotsOff', nan, ...
-      'time_fdbkOn', nan, ...
-      'time_local_trialFinish', nan, ...
-      'time_ui_trialFinish', nan, ...
-      'time_screen_trialFinish', nan);
-   
-   % Set remaining task properties
-   task.screenEnsemble = screenEnsemble;
-   task.textEnsemble   = textEnsemble;
-   task.keyboard       = kb;
-   task.userInput      = ui;
-   task.iterations     = inf;
-   task.taskID         = taskNumber;
-   
-   % call the configure command
-   task.configure();
    
    % Add some fevalables to show instructions/feedback before/after tasks
-   if taskNumber == 1
-      
-      % Initial instructions
-      if isa(ui, 'dotsReadableEye')
-         str2 = 'Each trial starts by fixating the central cross';
-      else
-         str2 = 'Each trial starts by pressing the space bar';
-      end
-      welcome = topsCallList();
-      welcome.alwaysRunning = false;
-      welcome.addCall({@drawTextEnsemble, textEnsemble, ...
-         {'Work at your own pace', str2}, 2}, 'text');
-      welcome.addCall({@pause, 1}, 'pause');
-      task.startFevalable = {@run, welcome};      
+   if ii == 1 
+      task.startFevalable = {@run, welcome};
    else
-      
-      % show a countdown
       task.startFevalable = {@run, countdown};
    end
    
-   % increment the counter
-   taskNumber = taskNumber + 1;
+   % update the unique ID
+   taskID = taskID + 1;
    
-   % add the task
-   maintask.addChild(task);
+   % Add as child to the maintask. Have it loop forever until explicitly
+   % aborted by the task logic
+   task.iterations = inf;
+   mainTreeNode.addChild(task);   
+   
 end
-
-% Set up references that may or may not be overriden by Quest/MeanRT tasks
-datatub{'Control'}{'referenceRT'} = datatub{'Input'}{'referenceRT'};
-datatub{'Control'}{'referenceCoherence'} = datatub{'Input'}{'coherences'};

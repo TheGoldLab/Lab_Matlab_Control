@@ -211,7 +211,7 @@ classdef topsGroupedList < topsFoundation
             groupMap = self.allGroupsMap(group);
             item = groupMap(mnemonic);
         end
-        
+ 
         % Get list items with {} syntax.
         % For topsGroupedList l,
         %   - item = l{g}{m} is the same as 

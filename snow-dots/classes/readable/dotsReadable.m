@@ -89,6 +89,9 @@ classdef dotsReadable < handle
       
       %> controls whether or not to stop recording during calibration
       recordDuringCalibration = false;
+      
+      % Flag to use GUI for feedback, etc.
+      useGUI = false;
    end
    
    properties (SetAccess = protected)
@@ -143,8 +146,24 @@ classdef dotsReadable < handle
       %> Calibrate the device
       function calibrate(self, varargin)
          
-         % Call device-specific calibration routine
-         self.calibrateDevice(varargin{:});
+         % Call device-specific calibration routine and check status
+         while self.calibrateDevice(varargin{:}) < 1
+            
+            if self.useGUI
+               
+               % Use diaglog window
+               answer = questdlg('Calibration failed. Re-position and Retry?', ...
+                  'Calibration failure', 'Retry', 'Abort', 'Retry');               
+            else
+               
+               % Keyboard
+               answer = input('Calibration failed. [R]etry or [A]bort?', 's');
+            end
+            
+            if ~any(strcmp(answer, {'Retry' 'R' 'r'}))
+               error('Calibration failed!')
+            end
+         end
          
          % Log a time maker that we just calibrated the device
          name = [class(self) '_calibration'];
@@ -584,7 +603,11 @@ classdef dotsReadable < handle
       %> Returns an array of component IDs, which are unique, small,
       %> positive integers which identify device components.
       function IDs = getComponentIDs(self)
-         IDs = [self.components.ID];
+         if isempty(self.components)
+            IDs = [];
+         else            
+            IDs = [self.components.ID];
+         end
       end
       
       %> Get ID of component by name
@@ -779,7 +802,9 @@ classdef dotsReadable < handle
       %> @details
       %> Subclasses must redefine calibrateDevice(). It should
       %> be safe to call calibrateDevice() multiple times in a row.
-      function calibrateDevice(self, varargin)
+      function status = calibrateDevice(self, varargin)
+         disp('Calibrate!')
+         status = 1;
       end
       
       %> Turn on data recording from the device (for subclasses).

@@ -71,15 +71,15 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %  2. Event name
       %  3. Graphical object index where the window is centered
       gazeWindows = { ...
-         'fixWindow', 'holdFixation', [1 1]; ...
-         'trgWindow', 'choseTarget',  [2 1]};
+         'fixWindow',         'holdFixation', [1 1]; ...
+         'trgWindow',         'choseTarget',  [2 1]};
       
       % Sizes and durations of the gaze windows. Note that we use the first
       % three characters as a tag to know which ones to set
-      fixWindowSize  = 8;
-      fixWindowDur   = 0.2;
-      trgWindowSize  = 8;
-      trgWindowDur   = 0.2;
+      fixWindowSize = 8;
+      fixWindowDur  = 0.2;
+      trgWindowSize = 8;
+      trgWindowDur  = 0.2;
       
       % Keyboard event to trigger dotsReadableEye.calibrate()
       calibrationEvent = { ...
@@ -119,7 +119,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % The keyboard device. This is always used for flow-control commands
       % given between trials, even if this is not the primary userInput
       % device
-      keyboard = [];      
+      keyboard = [];
+      
+      % The primary user input device
+      userInput = [];
    end
    
    properties (SetAccess = protected)
@@ -144,22 +147,18 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          self = self@topsTreeNodeTask(varargin{:});
       end
       
-      %% Configuration method
-      function configure(self)
-         
-         % Do these separately for readability
-         self.configureDrawables();
-         self.configureReadables();
-         self.configureTrials();
-         self.configureStateMachine();         
-      end
-      
       %% Overloaded start task method
       function start(self)
          
          % Do some bookkeeping
          self.start@topsRunnable();
          
+         % Configure each element - separated for readability
+         self.configureDrawables();
+         self.configureReadables();
+         self.configureTrials();
+         self.configureStateMachine();         
+
          % ---- Set the keyboard events
          %
          % First deactivate all events
@@ -476,13 +475,13 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          blanks = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.userInput, false, {'holdFixation'}};
          chkuib = {}; %{@getNextEvent, self.userInput, false, {'brokeFixation'}};
-         chkuic = {@getAndSaveNextEvent, self, {'choseTarget'}, 'choice'};
+         chkuic = {@getEventWithTimestamp, self, self.userInput, {'choseTarget'}, 'choice'};
          chkkbd = {@getNextEvent self.keyboard, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
-         showfx = {@setVisible, self, self.stimulusEnsemble, 1, 2, 'fixOn'};
-         showt  = {@setVisible, self, self.stimulusEnsemble, 2, [], 'targsOn'};
-         hidet  = {@setVisible, self, self.stimulusEnsemble, [], 2, 'targsOff'};
-         hidefx = {@setVisible, self, self.stimulusEnsemble, [], 1, 'fixOff'};
-         showfb = {@setVisible, self, self.textEnsemble, 1, [], 'fdbkOn'};
+         showfx = {@drawWithTimestamp, self, self.stimulusEnsemble, 1, 2, 'fixOn'};
+         showt  = {@drawWithTimestamp, self, self.stimulusEnsemble, 2, [], 'targsOn'};
+         hidet  = {@drawWithTimestamp, self, self.stimulusEnsemble, [], 2, 'targsOff'};
+         hidefx = {@drawWithTimestamp, self, self.stimulusEnsemble, [], 1, 'fixOff'};
+         showfb = {@drawWithTimestamp, self, self.textEnsemble, 1, [], 'fdbkOn'};
          abrt   = {@abort, self, true};
          skip   = {@abort, self};
          calpl  = {@calibrate, self.userInput};

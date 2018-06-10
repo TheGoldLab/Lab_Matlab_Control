@@ -53,6 +53,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Communiation timeout, in ms
       timeout = 5000;
       
+      % Calibration timeout, in sec
+      calibrationTimeout = 20;
+      
       % Need to keep refreshing the socket to make sure the data arrives
       %  This is the time, in sec, defining the refresh interval. It is
       %  checked automatically during readRawData
@@ -251,13 +254,15 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       %  Run pupil labs internal calibration routines with respect
       %   to world camera, then call dotsReadableEye.calibrateDevice
       %   to transform into snow-dots coordinates
-      function calibrateDevice(self, varargin)
+      % 
+      % Returns status: 0 for error, 1 for good calibration
+      function status = calibrateDevice(self, varargin)
          
          % If any argument given, revert to dotsReadableEye calibrateDevice
          % Routine (used for special case of recentering)
          if nargin >= 2 && strcmp(varargin{1}, 'recenter')
-             self.calibrateDevice@dotsReadableEye(varargin{:});
-             return
+            status = self.calibrateDevice@dotsReadableEye(varargin{:});
+            return
          end
           
          % Check to pause data recording
@@ -282,16 +287,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          self.result = zmq.core.recv(self.reqPort);
          
          % Show instructions between blank screen2
-         text   = dotsDrawableText();
-         text.string = 'Please look at each object';
-         textEnsemble = makeDrawableEnsemble(...
-             'textEnsemble', {text}, self.screenEnsemble);
-         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-         pause(0.25);
-         textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-         pause(3.0);
-         textEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
-         pause(0.25);
+         drawTextEnsemble(makeTextEnsemble( ...
+            'textEnsemble', 1, [], self.screenEnsemble), ...
+            {'Please look at each object'}, 3, 0.3);
          
          % Make a drawing ensemble for the calibration target
          calibrationEnsemble = makeDrawableEnsemble(...
@@ -342,10 +340,18 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             
             % Wait for PupilLab calibration sample done message
             msg = [];
-            while isempty(strfind(msg, 'marker_sample_completed')) || ...
-                  isempty(strfind(msg, 'timestamp'))
+            endTime = mglGetSecs() + self.calibrationTimeout;
+            while (isempty(strfind(msg, 'marker_sample_completed')) || ...
+                  isempty(strfind(msg, 'timestamp'))) && ...
+                  mglGetSecs() < endTime
                msg = char(zmq.core.recv(calNotify,500));
                % disp(sprintf('msg is <%s>', msg))
+            end
+            
+            % Check for timeout
+            if isempty(msg)
+               status = 0;
+               return
             end
             
             % wait a bit between targets
@@ -372,10 +378,17 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Wait for 'stopped' message from PupilLab
          warning('off','zmq:core:recv:bufferTooSmall');
          msg = [];
-         while isempty(strfind(msg, 'stopped'))
+         endTime = mglGetSecs() + self.calibrationTimeout;
+         while isempty(strfind(msg, 'stopped')) && mglGetSecs() < endTime
             msg = char(zmq.core.recv(calNotify,500));
          end
          warning('on','zmq:core:recv:bufferTooSmall');
+         
+         % Check for timeout
+         if isempty(msg)
+            status = 0;
+            return
+         end
          
          % Pause a moment to let pupilLabs get out of calibration mode
          pause(2.0);
@@ -386,7 +399,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Call dotsReadableEye.calibrateDevice routine for general
          % eye-tracking calibration, including tranforming to snow-dots
          % coordinates
-         self.calibrateDevice@dotsReadableEye;
+         status = self.calibrateDevice@dotsReadableEye;
          
          % Possibly restart recording
          if restartRecording

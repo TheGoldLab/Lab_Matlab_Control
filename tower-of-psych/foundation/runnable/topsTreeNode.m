@@ -50,12 +50,24 @@ classdef topsTreeNode < topsRunnableComposite
       iterationMethod = 'sequential';
       
       % For any data used for this node
-      nodeData = [];      
+      nodeData = [];
+      
+      % Abort experiment
+      abortFlag=false;
+      
+      % Pause experiment
+      pauseFlag=false;
+      
+      % Skip to next task
+      skipFlag=false;
    end
    
    properties (Hidden)
       % cell array of strings for supported iterationMethods
       validIterationMethods = {'sequential', 'random'};
+      
+      % handle to taskGui interface
+      taskGuiHandle = [];
    end
    
    methods
@@ -74,6 +86,66 @@ classdef topsTreeNode < topsRunnableComposite
       function child = newChildNode(self, varargin)
          child = topsTreeNode(varargin{:});
          self.addChild(child);
+      end
+      
+      % Start the named gui
+      function startGUI(self, name, varargin)
+         
+         if nargin < 2 || isempty(name)
+            name = @taskGUI;
+         end
+         
+         % Start the task gui, sending in args
+         self.taskGuiHandle = feval(name, self, varargin{:});
+      end
+      
+      % Check status flags. Return ~0 if something happened
+      function ret = checkFlags(self, child)
+         
+         % Default return value
+         ret = 0;
+         
+         % Possibly check gui
+         if ~isempty(self.taskGuiHandle)
+            drawnow;
+         end         
+
+         % Pause experiment, wait for ui
+         while self.pauseFlag
+            pause(0.01);            
+         end
+         
+         % Abort experiment
+         if self.abortFlag
+            self.abortFlag=false;
+            self.abort();
+            ret = 1;
+            return
+         end
+         
+         % Skip to next task
+         if self.skipFlag
+            self.skipFlag=false;
+            child.abort();
+            ret = 1;
+            return
+         end
+      end
+      
+      % Convenient routine to abort running self and children
+      function abort(self)
+         
+         % Stop self from running
+         self.isRunning = false;
+         
+         % Stop children from running any further
+         for ii = 1:length(self.children)
+            if isa(self.children{ii}, 'topsTreeNode')
+               self.children{ii}.abort();
+            else
+               self.children{ii}.isRunning = false;
+            end
+         end
       end
       
       % Recursively run(), starting with this node.
@@ -123,16 +195,19 @@ classdef topsTreeNode < topsRunnableComposite
                      childSequence = 1:nChildren;
                end
                
+               % Loop through the children
                for jj = childSequence
+                  
                   % jig added condition so abort happens gracefully
                   if self.isRunning
+                     
                      % disp(sprintf('topsTreeNode: Running <%s> child <%s>, isRunning=%d, iterations=%d', ...
                      %   self.name, self.children{jj}.name, self.isRunning, self.iterations))
                      self.children{jj}.caller = self;
                      self.children{jj}.run();
                      self.children{jj}.caller = [];
                   end
-               end
+               end               
             end
          
          catch recurErr
@@ -158,29 +233,36 @@ classdef topsTreeNode < topsRunnableComposite
          
          self.finish();
       end
+   end
+   
+   methods (Static)
       
-      % Convenient routine to abort running self and children
-      function abort(self, abortCaller)
+      %% ---- Utility for getting standard top-level topsTreeNode
+      %
+      % Creates calls lists as start/finish fevalables, for convenience
+      function [node, startCallList, finishCallList] = createTopNode(name)
          
-         % flag to abort the whole kaboodle
-         if nargin > 1 && abortCaller
-            if ~isempty(self.caller)
-               abort(self.caller, abortCaller);
-               return
-            end
-         end
+         % ---- Create topsCallLists for start/finish fevalables
+         %
+         % These can be filled in by various configuration
+         %  subroutines so we don't need to know where what has and has not been
+         %  added/configured.
+         startCallList = topsCallList();
+         startCallList.alwaysRunning = false;
          
-         % Stop self from running
-         self.isRunning = false;
+         % NOTE that the finishFevalables will run in reverse order!!!!!
+         finishCallList = topsCallList();
+         finishCallList.alwaysRunning = false;
+         finishCallList.invertOrder = true;
          
-         % Stop children from running any further
-         for ii = 1:length(self.children)
-            if isa(self.children{ii}, 'topsTreeNode')
-               self.children{ii}.abort();
-            else
-               self.children{ii}.isRunning = false;
-            end
-         end
+         % ---- Set up the main tree node and save it
+         %
+         % We set this up here because we might have multiple task configuration
+         % files (see below) that each add chidren to it
+         node = topsTreeNode(name);
+         node.iterations = 1; % Go once through the set of tasks
+         node.startFevalable = {@run, startCallList};
+         node.finishFevalable = {@run, finishCallList};
       end
    end
 end

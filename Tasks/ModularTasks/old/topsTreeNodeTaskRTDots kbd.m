@@ -3,16 +3,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    %
    % Response-time dots (RTD) task
    %
-   % For standard configurations, call:
-   %  topsTreeNodeTaskRTDots.getStandardConfiguration
-   % 
-   % Otherwise:
+   % Typically you would:
+   %
    %  1. Create an instance:
    %        task = topsTreeNodeTaskRTDots()
    %  2. Set properties, in particular typically you need to provide:
-   %        task.drawables.screenEnsemble
-   %        task.drawables.textEnsemble
-   %        task.readables.userInput
+   %        task.screenEnsemble
+   %        task.textEnsemble
+   %        task.keyboard
+   %        task.userInput
    %  3. Add this as a child to another topsTreeNode
    %
    % 5/28/18 created by jig
@@ -34,7 +33,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Timing properties
       timing = struct( ...
-         'showInstructions',              3.0, ...
+         'showInstructions',              .30, ...
          'waitAfterInstructions',         0.5, ...
          'fixationTimeout',               5.0, ...
          'holdFixation',                  0.5, ...
@@ -87,21 +86,34 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % Readable settings
       readables = struct( ...
          ...
-         ...   % The readable object
+         ...   % The readable objects
          'userInput',                     [],               ...
+         'keyboard',                      [],               ...
          ...
          ...   % The gaze windows
          'gazeWindows', struct( ...
-         'name',           {'fixWindow', 'trg1Window', 'trg2Window'}, ...
-         'eventName',      {'holdFixation', 'choseLeft', 'choseRight'}, ...
-         'windowSize',     {8, 8, 8}, ...
-         'windowDur',      {0.15, 0.15, 0.15}, ...
-         'objectIndices',  {[1 1], [2 1], [2 2]}), ...
+         'name', ...
+         {'fixWindow', 'trg1Window', 'trg2Window'}, ...
+         'eventName', ...
+         {'holdFixation', 'choseLeft', 'choseRight'}, ...
+         'windowSize', ...
+         {8, 8, 8}, ...
+         'windowDur', ...
+         {0.15, 0.15, 0.15}, ...
+         'objectIndices', ...
+         {[1 1], [2 1], [2 2]}), ...
          ...
          ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the userInput type
          'keyboardEvents', struct( ...
-         'name',        {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}, ...
-         'eventName',   {'holdFixation', 'choseLeft', 'choseRight', 'calibrate'}));
+         'name', ...
+         {'KeyboardQ', 'KeyboardP', 'KeyboardD', 'KeyboardS', 'KeyboardSpacebar', ...
+         'KeyboardF', 'KeyboardJ', 'KeyboardC'}, ...
+         'eventName', ...
+         {'quit', 'pause', 'done', 'skip', 'holdFixation', ...
+         'choseLeft', 'choseRight', 'calibrate'}, ...
+         'uiType', ...
+         {'default', 'default', 'defaut', 'default', 'dotsReadableHIDKeyboard', ...
+         'dotsReadableHIDKeyboard', 'dotsReadableHIDKeyboard', 'dotsReadableEye'}));
       
       % Quest properties
       questSettings = struct( ...
@@ -110,17 +122,20 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'slopeRange',                    2:5,              ...
          'guessRate',                     0.5,              ...
          'lapseRange',                    0.00:0.01:0.05);
+            
+      % Flag indicting whether calibrate() should be called between trials
+      calibrateFlag = false;
    end
    
    properties (SetAccess = protected)
 
       % Flag indicating whether to update drawables between trials; e.g.,
       % after a property value changed
-      updateDrawables = true;
+      updateDrawablesFlag = true;
       
       % Flag indicating whether to update readables between trials; e.g.,
       % after a property value changed
-      updateReadables = true;
+      updateReadablesFlag = true;
 
       % The quest object
       quest = [];
@@ -145,26 +160,21 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % updateDrawables flag
       function set.drawables(self, value)
          self.drawables = value;
-         self.updateDrawables = true;
+         self.updateDrawablesFlag = true;
       end
       
       % Set method for readable properties that updates the
       % updateReadables flag
       function set.readables(self, value)
          self.readables = value;
-         self.updateReadables = true;
+         self.updateReadablesFlag = true;
       end
       
       %% Overloaded start task method
       function start(self)
          
-         % Do some bookkeeping via superclass
-         self.start@topsTreeNodeTask();
-         
-         % Check for abort
-         if ~self.isRunning
-            return
-         end
+         % Do some bookkeeping
+         self.start@topsRunnable();
          
          % Configure each element - separated into different methods for
          % readability
@@ -181,7 +191,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             self.timing.waitAfterInstructions);
          
          % Get the first trial
-         self.prepareForNextTrial();
+         self.setNextTrial();
       end
       
       %% Overloaded finish task method
@@ -197,28 +207,21 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %% Start trial method
       function startTrial(self)
          
-         % ---- Prepare components
+         % ---- Update components
          %
-         self.prepareDrawables();
-         self.prepareReadables();
-         self.prepareStateMachine();
-         self.prepareTrialData();
+         self.updateDrawables();
+         self.updateReadables();
+         self.updateStateMachine();
+         self.updateTrialData('Start');
 
          % ---- Show information about the task/trial
          %
          trial = self.getTrial();         
-         self.showStatus( ...
-            ... % Task info
-            sprintf('%s (task %d/%d): %d correct, %d error, mean RT=%.2f', ...
-            self.name, self.taskID, ...
-            length(self.caller.children), ...
-            sum([self.trialData.correct]==1), ...
-            sum([self.trialData.correct]==0), ...
-            nanmean([self.trialData.RT])), ...
-            ... % Trial info
-            sprintf('Trial %d/%d, dir=%d, coh=%d', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence));
+         self.showStatus(sprintf('%s (task %d/%d): trial %d/%d, dir=%d, coh=%d', ...
+            self.name, find(self==[self.caller.children{:}]), ...
+            length(self.caller.children), self.trialCount, ...
+            numel(self.trialData)*self.trialIterations, ...
+            trial.direction, trial.coherence), true);
       end
       
       %% Finish trial method
@@ -240,8 +243,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %     to re-parse the UI data
          topsDataLog.logDataInGroup(trial, 'trial');
          
+         % Possibly calibrate the primary readable
+         if self.calibrateFlag
+            calibrate(self.readables.userInput);
+            self.calibrateFlag=false;
+         end
+         
          % Call superclass finishTrial method to determine next trial
-         self.prepareForNextTrial();
+         self.finishTrial@topsTreeNodeTask();
       end
       
       %% Set Choice method
@@ -261,15 +270,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             %
             % Set feedback for no choice, repeat trial
             feedbackString = 'No choice';
+            self.repeatTrial = true;
             
          else
             
             % GOOD CHOICE
             %
-
-            % Override repeat trial flag
-            self.repeatTrial = false;
-
             % Mark as correct/error
             trial.correct = double( ...
                (trial.choice==0 && trial.direction==180) || ...
@@ -314,12 +320,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Re-save the trial
          self.setTrial(trial);
                   
-         % --- Show trial feedback
-         self.showStatus([], ...
-            sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, feedbackString, trial.RT));         
-         
+         % --- Print feedback in the command window
+         self.showStatus(sprintf('  %s, RT=%.2f (%d correct, %d error, mean RT=%.2f)', ...
+            feedbackString, trial.RT, ...
+            sum([self.trialData.correct]==1), ...
+            sum([self.trialData.correct]==0), ...
+            nanmean([self.trialData.RT])));
+
          % ---- Set the feedback string
          self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
       end
@@ -369,7 +376,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Possibly use reference coherence (e.g., from Quest)
          if isa(self.settings.coherences, 'topsTreeNodeTaskRTDots')
             trial.coherence = self.settings.coherences.settings.coherences;
-            
             self.setTrial(trial);
          end
 
@@ -379,7 +385,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.drawables.stimulusEnsemble.setObjectProperty('direction', trial.direction, 3);
          
          % possibly update all stimulusEnsemble objects
-         if self.updateDrawables
+         if self.updateDrawablesFlag
             
             % Target locations
             %
@@ -395,7 +401,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             % set updateReadables flag because gaze windows depend on
             % target positions
-            self.updateReadables = true;            
+            self.updateReadablesFlag = true;            
             
             % All other stimulus ensemble properties
             stimulusDrawables = {'fixation' 'targets' 'dots'};
@@ -407,7 +413,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             end
             
             % reset flag
-            self.updateDrawables = false;
+            self.updateDrawablesFlag = false;
          end
          
          % Prepare to draw dots stimulus
@@ -417,34 +423,38 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
        %% Prepare readables for this trial
       %
       function prepareReadables(self)
+         
+         % Possibly reconfigure readables
+         if self.updateReadablesFlag
+
+            % ---- Set the keyboard events
+            %
+            % First deactivate all events
+            self.readables.keyboard.deactivateEvents();
             
-         % Check for major update
-         if self.updateReadables
-            
-            if isa(self.readables.userInput, 'dotsReadableHIDKeyboard')
-               
-               % ---- set keyboard events
-               %
-               % First deactivate all events
-               self.readables.userInput.deactivateEvents();
-               
-               % Now add given events. Note that the third and fourth arguments
-               %  to defineCalibratedEvent are Calibrated value and isActive --
-               %  we could make those user controlled.
-               for ii = 1:length(self.readables.keyboardEvents)
-                  self.readables.userInput.defineCalibratedEvent( ...
+            % Now add given events. Note that the third and fourth arguments
+            %  to defineCalibratedEvent are Calibrated value and isActive -- 
+            %  we could make those user controlled.
+             for ii = 1:length(self.readables.keyboardEvents)
+               if any(strcmp(self.readables.keyboardEvents(ii).uiType, ...
+                     {'default', class(self.readables.userInput)}))
+                  self.readables.keyboard.defineCalibratedEvent( ...
                      self.readables.keyboardEvents(ii).name, ...
                      self.readables.keyboardEvents(ii).eventName, ...
                      1, true);
                end
-               
-            elseif isa(self.readables.userInput, 'dotsReadableEye')
+            end
             
-               % ---- Set gazeWindows
+            % ---- Set the userInput events
+            %
+            %  Here we need to case on the kind of userInput object
+            if isa(self.readables.userInput, 'dotsReadableEye')
+               
+               % For eye trackers, set gaze windows
                %
                % First clear existing
                self.readables.userInput.clearCompoundEvents();
-
+               
                % get target x,y positions
                xs = self.drawables.stimulusEnsemble.getObjectProperty('xCenter');
                ys = self.drawables.stimulusEnsemble.getObjectProperty('yCenter');
@@ -463,13 +473,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                      'windowDur',   gw.windowDur);
                end
             end
-            
-            % Unset the flag
-            self.updateReadables = false;
          end
-         
+            
          % ---- Flush the UI and deactivate all compound events (gaze windows)
          %
+         self.readables.keyboard.flushData();
          self.readables.userInput.flushData();
          self.readables.userInput.deactivateCompoundEvents();
       end
@@ -481,22 +489,35 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Get the current trial
          trial = self.getTrial();
          
-         % ---- Set repeat flag, which must be overridden
-         self.repeatTrial = true;
-         
          % ---- Get synchronization times
          %
-         [trial.time_local_trialStart, ...
-            trial.time_screen_trialStart, ...
-            trial.time_screen_roundTrip, ...
-            trial.time_ui_trialStart] = ...
-            syncTiming(self.drawables.screenEnsemble, ...
-            self.readables.userInput);
+         [localT, screenT, screenRT, uiT] = ...
+            syncTiming(self.drawables.screenEnsemble, self.readables.userInput);
          
-         % Conditionally send TTL pulses (mod trial count)
-         if self.settings.sendTTLs
-            [trial.time_TTLStart, trial.time_TTLFinish] = ...
-               sendTTLsequence(mod(self.trialCount,4)+1);
+         % ---- Condition on start/finish
+         %
+         switch startOrFinish
+            
+            case 'Start'
+               
+               % Save times
+               trial.time_local_trialStart = localT;
+               trial.time_screen_trialStart = screenT;
+               trial.time_screen_roundTrip = screenRT;
+               trial.time_ui_trialStart = uiT;
+ 
+               % Conditionally send TTL pulses (mod trial count)
+               if self.settings.sendTTLs
+                  [trial.time_TTLStart, trial.time_TTLFinish] = ...
+                     sendTTLsequence(mod(self.trialCount,4)+1);
+               end
+               
+            otherwise % 'finish'
+               
+               % Save times
+               trial.time_local_trialFinish = localT;
+               trial.time_screen_trialFinish = screenT;
+               trial.time_ui_trialFinish = uiT;
          end
          
          % ---- Re-save the trial
@@ -568,7 +589,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % Create the two readables (if not given)
       function initializeReadables(self)
 
-         % Set user input device -- default to keyboard
+         % Keyboard
+         if isempty(self.readables.keyboard)
+            self.readables.keyboard = DBSmatchingKeyboard();
+         end
+         
+         % Primary user input device -- default to keyboard
          if isempty(self.readables.userInput)
             self.readables.userInput = dotsReadableHIDKeyboard();
          end
@@ -593,7 +619,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             % Collect information to make trials
             cohs = min(100, max(0, qpQuery(self.quest)));
-            self.settings.coherences = cohs;
             
             % Make a quest callList to update quest status between trials
             questCallList = topsCallList('questCallList');
@@ -626,7 +651,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Fill in the trialData with relevant information
          self.trialData = dealMat2Struct(self.trialData(1), ...
-            'taskID', repmat(self.taskTypeID,1,numel(directionGrid)), ...
+            'taskID', repmat(self.taskID,1,numel(directionGrid)), ...
             'trialIndex', 1:numel(directionGrid), ...
             'direction', directionGrid(:)', ...
             'coherence', coherenceGrid(:)');
@@ -642,12 +667,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          chkuif = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib = {};%{@getNextEvent, self.userInput, false, {'brokeFixation'}};
          chkuic = {@getEventWithTimestamp, self, self.readables.userInput, {'choseLeft' 'choseRight'}, 'choice'};
+         chkkbd = {@getNextEvent self.readables.keyboard, false, {'done' 'pause' 'calibrate' 'skip' 'quit'}};
          showfx = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 1, 2:3, 'fixOn'};
          showt  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
          showd  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 3, [], 'dotsOn'};
          hided  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], [1 3], 'dotsOff'};
          showfb = {@drawWithTimestamp, self, self.drawables.textEnsemble, 1, [], 'fdbkOn'};
-         pse    = {@pause 0.005};
+         abrt   = {@abort, self, true};
+         skip   = {@abort, self};
+         calpl  = {@calibrate, self.readables.userInput};
          sch    = @(x)cat(2, {@setDotsChoice, self}, x);
          dce    = @defineCompoundEvent;
          gwfxw  = {dce, self.readables.userInput, {'fixWindow', ...
@@ -683,7 +711,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
-            'done'              pse      {}       iti        {}      ''                ; ...
+            'done'              {}       chkkbd   iti        {}      ''                ; ...
+            'pause'             {}       chkkbd   inf        {}      ''                ; ...
+            'calibrate'         calpl    {}       0          {}      ''                ; ...
+            'skip'              skip     {}       0          {}      ''                ; ...
+            'quit'              abrt     {}       0          {}      ''                ; ...
             };
          
          % ---- Put stuff together in a stateMachine so that it will run
@@ -732,7 +764,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Get the task object, with optional property/value pairs
          task = topsTreeNodeTaskRTDots(name, varargin{:});
          
-         % Set block size
          if ~isempty(trialsPerCoherence)
             task.settings.trialsPerCoherence = trialsPerCoherence;
          end
@@ -752,16 +783,19 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             'R' 'RIGHT is more likely'                   [min(dp) max(dp)]; ...
             'N' 'BOTH directions equally likely'         [50 50]};
          
-         % For instructions
          if strcmp(name, 'Quest')
             name = 'NN';
+            str = {'When flickering dots appear, decide their overall direction', ...
+               'of motion, then look at the target in that direction'};
+         else
+            str = {};
          end
          
          % Set strings, priors based on type
          Lsat  = strcmp(name(1), SATsettings(:,1));
          Lbias = strcmp(name(2), BIASsettings(:,1));
-         task.drawables.settings.textStrings = ...
-            {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
+         task.drawables.settings.textStrings = cat(1, str, ...
+            {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}});
          task.settings.referenceRT     = SATsettings{Lsat, 3};
          task.settings.directionPriors = BIASsettings{Lbias, 3};
       end

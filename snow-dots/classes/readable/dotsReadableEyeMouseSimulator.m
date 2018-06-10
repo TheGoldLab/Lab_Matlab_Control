@@ -18,7 +18,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
       mouseScaleFactor = 10;
    end
    
-   %% Public methods
+   %% Public method
    methods
       
       % Constructor method
@@ -26,7 +26,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          self = self@dotsReadableEye();
          
          % get the mouse object
-         if nargin < 1 || isempty(matching)
+         if nargin < 1 || isempty(matching)            
             self.HIDmouse = dotsReadableHIDMouse();
          else
             self.HIDmouse = dotsReadableHIDMouse(matching);
@@ -36,6 +36,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          % button press
          self.HIDmouseComponentIDs = getComponentIDs(self.HIDmouse);
 
+         
          % set a dummy sample frequency
          if nargin < 2 || isempty(frequency)
             self.sampleFrequency = 200;
@@ -52,6 +53,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          
          % Read from the mouse
          self.HIDmouse.read();
+         pause(0.001);
          
          % Check for button press
          if getValue(self.HIDmouse, self.HIDmouseComponentIDs(3))

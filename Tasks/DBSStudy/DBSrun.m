@@ -1,5 +1,5 @@
-function DBSrun(location)
-%% function DBSrun(location)
+function [mainTreeNode, datatub] = DBSrun(location, useGUI)
+%% function [mainTreeNode, datatub] = DBSrun(location, useGUI)
 %
 % DBSrun = Response-Time Dots
 %
@@ -13,40 +13,8 @@ function DBSrun(location)
 % umm, duh
 clear globals
 
-%% ---- Create a topsGroupedList
+%% ---- Configure experiment based on location
 %
-% This is a versatile data structure that will allow us to pass all
-%  relevant variables to the state machine as it advances
-%
-% We also start by making topsCallLists for the main task start and
-%  finish fevalables. These can be filled in by various configuration
-%  subroutines so we don't need to know where what has and has not been
-%  added/configured
-datatub = topsGroupedList();
-
-startCallList = topsCallList();
-startCallList.alwaysRunning = false;
-datatub{'Control'}{'startCallList'} = startCallList();
-
-finishCallList = topsCallList();
-finishCallList.alwaysRunning = false;
-finishCallList.invertOrder = true;
-datatub{'Control'}{'finishCallList'} = finishCallList();
-
-%% ---- Set up the main tree node and save it
-%
-% We set this up here because we might have multiple task configuration
-% files (see below) that each add chidren to it
-maintask = topsTreeNode('dotsTask');
-maintask.iterations = 1; % Go once through the set of tasks
-maintask.startFevalable = {@run, startCallList};
-maintask.finishFevalable = {@run, finishCallList};
-datatub{'Control'}{'mainTask'} = maintask;
-
-%% ---- Configure experiment
-%
-%
-% Set argument list based on location
 %   locations are 'office' (default), 'OR', or 'debug'
 if nargin < 1 || isempty(location)
    location = 'office';
@@ -55,59 +23,44 @@ end
 switch location
    
    case {'OR'}
-      arguments = { ...
+      arglist = { ...
          'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
          'sendTTLs',             true, ...
-         'displayIndex',         1, ... % 0=small, 1=main
-         'useRemoteDrawing',     true, ...
          };
             
    case {'search'}
-      arguments = { ...
-         'taskSpecs',            {'VGS' 1 'NN' 100}, ...
+      arglist = { ...
+         'taskSpecs',            {'VGS' 100 'NN' 100}, ...
          'sendTTLs',             true, ...
          'coherences',           100, ...
-         'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
-         'displayIndex',         1, ... % 0=small, 1=main
-         'useRemoteDrawing',     true, ...
          };
        
    case {'debug'}
-      arguments = { ...
-         'taskSpecs',            {'Quest' 4 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
-...%         'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 6 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
-         'sendTTLs',             true, ...
-         'uiDevice',             'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
+      arglist = { ...
+         'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 6 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
+         'sendTTLs',             false, ...
+         'userInput',            'dotsReadableEyeMouseSimulator', ... %'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
          'displayIndex',         0, ... % 0=small, 1=main
          'useRemoteDrawing',     false, ...
          };
         
-   otherwise
-      arguments = { ...
-         'taskSpecs',            {'Quest' 5 'SN' 5 'AN' 5}, ...
+   otherwise % office
+      arglist = { ...
          'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
-         'sendTTLs',             false, ...
-         'displayIndex',         1, ... % 0=small, 1=main
-         'useRemoteDrawing',     true, ...
          };
 end
 
 % Call the configuration routine
 %
-DBSconfigure(maintask, datatub, arguments{:});
+[mainTreeNode, datatub] =  DBSconfigure(arglist{:});
 
-%% ---- Start data logging
-%
-% Start data logging and save the datatub to the data file
-topsDataLog.flushAllData(); % Flush stale data, just in case
-topsDataLog.logDataInGroup(struct(datatub), 'datatub');
-topsDataLog.writeDataFile(fullfile(datatub{'Input'}{'filePath'}, 'Raw', ...
-   datatub{'Input'}{'fileName'}));
+%% ---- Start the gui or run the task
+if nargin < 2 || isempty(useGUI)
+   useGUI = true;
+end
 
-%% ---- Run the task
-%
-maintask.run();
-
-%% ---- Write data log to file
-%
-topsDataLog.writeDataFile();
+if useGUI
+   mainTreeNode.startGUI('taskGUI', datatub{'Control'}{'userInputDevice'});
+else
+   mainTreeNode.run();
+end
