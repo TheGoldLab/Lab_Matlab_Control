@@ -40,9 +40,9 @@ classdef topsTreeNodeTask < topsTreeNode
       % Array of trial indices, in order of calling
       trialIndices = [];
       
-      % Flags for run-time control. We use flags instead of functions
-      % because we only execute these between trials (see finishTrial,
-      % below).
+      % Status strings to give feedback. We put them here in case a gui
+      % needs them
+      statusStrings = {};
    end   
    
    properties (SetAccess = protected)
@@ -99,29 +99,12 @@ classdef topsTreeNodeTask < topsTreeNode
          self.start@topsRunnable();
 
          % Possibly update the gui using the new task
-         if ~isempty(self.caller.taskGuiHandle)
+         if ~isempty(self.caller.GUIHandle)
             
-            taskGUI('taskGUI_updateTask', self.caller.taskGuiHandle, [], ...
-               guidata(self.caller.taskGuiHandle), self);
+            feval(self.caller.GUIName, [self.caller.GUIName '_updateTask'], ...
+               self.caller.GUIHandle, [], guidata(self.caller.GUIHandle), self);
          end
-      end
-      
-      % Utility to set a property only if the given value is not empty.
-      %  Useful for overriding defaults if given
-      %
-      function setIfNotEmpty(self, name, value)
-         
-         % Like the name says
-         if ~isempty(value)
-            
-            % check for nested structure
-            if iscell(name)               
-               self.(name{1}).(name{2}) = value;
-            else
-               self.(name) = value;
-            end
-         end
-      end
+      end      
             
       % Get a trial struct by trialCount index
       %
@@ -240,30 +223,27 @@ classdef topsTreeNodeTask < topsTreeNode
    methods (Access = protected)
       
       % show status
-      function showStatus(self, str1, str2)
-                     
-         % Always print in command window
-         if ~isempty(str1)
-            disp(' ');
-            disp(str1)
+      function updateStatus(self, indices)
+
+         % Check arg
+         if nargin < 2 || isempty(indices)
+            indices = 1:length(self.statusStrings);
          end
          
-         if nargin > 2 && ~isempty(str2)
-            disp(str2)
+         % Always print in command window
+         % Loop through the indices
+         for ii = indices
+            if ii == 1
+               disp(' ')
+            end
+            disp(self.statusStrings{ii})
          end
          
          % Conditionally show in GUI
-         if ~isempty(self.caller.taskGuiHandle)
+         if ~isempty(self.caller.GUIHandle)
             
-            % Get the gui handles
-            data = guidata(self.caller.taskGuiHandle);
-            if ~isempty(str1)
-               set(data.status2text, 'String', str1);
-            end
-            if nargin > 2 && ~isempty(str2)
-               set(data.status3text, 'String', str2);
-            end               
-            drawnow;
+            feval(self.caller.GUIName, [self.caller.GUIName '_updateTaskStatus'], ...
+               self.caller.GUIHandle, [], guidata(self.caller.GUIHandle), self, indices);
          end
       end
       

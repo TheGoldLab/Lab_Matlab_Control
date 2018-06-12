@@ -39,7 +39,7 @@ switch location
       arglist = { ...
          'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 6 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
          'sendTTLs',             false, ...
-         'userInput',            'dotsReadableEyeMouseSimulator', ... %'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
+         'userInput',            'dotsReadableEyePupilLabs', ...%'dotsReadableEyeMouseSimulator', ... %'dotsReadableHIDKeyboard', ... % or 'dotsReadableEyeMouseSimulator'
          'displayIndex',         0, ... % 0=small, 1=main
          'useRemoteDrawing',     false, ...
          };
@@ -60,7 +60,7 @@ if nargin < 2 || isempty(useGUI)
 end
 
 if useGUI
-   mainTreeNode.startGUI('taskGUI', datatub{'Control'}{'userInputDevice'});
+   mainTreeNode.startGUI('eyeGUI', datatub{'Control'}{'userInputDevice'});
 else
    mainTreeNode.run();
 end

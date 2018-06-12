@@ -483,6 +483,7 @@ classdef dotsReadableEye < dotsReadable
          calibrationEnsemble.setObjectProperty('xCenter', targetXY(1,[1 1]));
          calibrationEnsemble.setObjectProperty('yCenter', targetXY(1,[2 2]));
          calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         pause(0.3);
          calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
          pause(0.3);
          

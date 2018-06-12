@@ -206,8 +206,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
 
          % ---- Show information about the task/trial
          %
-         trial = self.getTrial();         
-         self.showStatus( ...
+         trial = self.getTrial();
+         self.statusStrings = { ...
             ... % Task info
             sprintf('%s (task %d/%d): %d correct, %d error, mean RT=%.2f', ...
             self.name, self.taskID, ...
@@ -218,13 +218,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             ... % Trial info
             sprintf('Trial %d/%d, dir=%d, coh=%d', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence));
+            trial.direction, trial.coherence)};
+         self.updateStatus();
       end
       
       %% Finish trial method
       function finishTrial(self)
          
-         % ---- Sync times
+         % ---- Sync times again, just to be sure
          %
          trial = self.getTrial();
          [trial.time_local_trialFinish, ...
@@ -240,7 +241,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %     to re-parse the UI data
          topsDataLog.logDataInGroup(trial, 'trial');
          
-         % Call superclass finishTrial method to determine next trial
+         % ---- Prepare for the next trial
+         %
+         % We do this here instead of in startTrial because prepareForNextTrial 
+         % might terminate the task if no trials remain.
          self.prepareForNextTrial();
       end
       
@@ -266,7 +270,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             % GOOD CHOICE
             %
-
             % Override repeat trial flag
             self.repeatTrial = false;
 
@@ -293,14 +296,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             %  Second possibly feedback about speed
             if self.name(1) == 'S'
                
-               % Get the reference value
+               % Check current RT relative to the reference value
                if isa(self.settings.referenceRT, 'topsTreeNodeTaskRTDots')
                   RTRefValue = self.settings.referenceRT.settings.referenceRT;
                else
                   RTRefValue = self.settings.referenceRT;
                end
                
-               % Check current RT relative to the reference value
                if isfinite(RTRefValue)
                   if trial.RT <= RTRefValue
                      feedbackString = cat(2, feedbackString, ', in time');
@@ -315,10 +317,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.setTrial(trial);
                   
          % --- Show trial feedback
-         self.showStatus([], ...
+         self.statusStrings{2} = ...
             sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, feedbackString, trial.RT));         
+            trial.direction, trial.coherence, feedbackString, trial.RT);
+         self.updateStatus(2); % just update the second one
          
          % ---- Set the feedback string
          self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);

@@ -66,8 +66,11 @@ classdef topsTreeNode < topsRunnableComposite
       % cell array of strings for supported iterationMethods
       validIterationMethods = {'sequential', 'random'};
       
+      % Gui name
+      GUIName = [];
+      
       % handle to taskGui interface
-      taskGuiHandle = [];
+      GUIHandle = [];
    end
    
    methods
@@ -92,11 +95,12 @@ classdef topsTreeNode < topsRunnableComposite
       function startGUI(self, name, varargin)
          
          if nargin < 2 || isempty(name)
-            name = @taskGUI;
+            name = 'eyeGUI';
          end
          
          % Start the task gui, sending in args
-         self.taskGuiHandle = feval(name, self, varargin{:});
+         self.GUIName = name;
+         self.GUIHandle = feval(name, self, varargin{:});
       end
       
       % Check status flags. Return ~0 if something happened
@@ -106,7 +110,7 @@ classdef topsTreeNode < topsRunnableComposite
          ret = 0;
          
          % Possibly check gui
-         if ~isempty(self.taskGuiHandle)
+         if ~isempty(self.GUIHandle)
             drawnow;
          end         
 

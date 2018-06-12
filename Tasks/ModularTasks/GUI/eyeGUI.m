@@ -1,35 +1,35 @@
-function varargout = taskGUI(varargin)
-% TASKGUI MATLAB code for taskGUI.fig
-%      TASKGUI, by itself, creates a new TASKGUI or raises the existing
+function varargout = eyeGUI(varargin)
+% EYEGUI MATLAB code for eyeGUI.fig
+%      EYEGUI, by itself, creates a new EYEGUI or raises the existing
 %      singleton*.
 %
-%      H = TASKGUI returns the handle to a new TASKGUI or the handle to
+%      H = EYEGUI returns the handle to a new EYEGUI or the handle to
 %      the existing singleton*.
 %
-%      TASKGUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in TASKGUI.M with the given input arguments.
+%      EYEGUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in EYEGUI.M with the given input arguments.
 %
-%      TASKGUI('Property','Value',...) creates a new TASKGUI or raises the
+%      EYEGUI('Property','Value',...) creates a new EYEGUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before taskGUI_OpeningFcn gets called.  An
+%      applied to the GUI before eyeGUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to taskGUI_OpeningFcn via varargin.
+%      stop.  All inputs are passed to eyeGUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help taskGUI
+% Edit the above text to modify the response to help eyeGUI
 
-% Last Modified by GUIDE v2.5 10-Jun-2018 13:59:40
+% Last Modified by GUIDE v2.5 11-Jun-2018 11:51:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @taskGUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @taskGUI_OutputFcn, ...
+                   'gui_OpeningFcn', @eyeGUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @eyeGUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -43,15 +43,15 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before taskGUI is made visible.
-function taskGUI_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before eyeGUI is made visible.
+function eyeGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to taskGUI (see VARARGIN)
+% varargin   command line arguments to eyeGUI (see VARARGIN)
 
-% Choose default command line output for taskGUI
+% Choose default command line output for eyeGUI
 handles.output = hObject;
 
 % First (required) arg is topsTreeNode
@@ -77,10 +77,10 @@ set([handles.skipbutton, handles.abortbutton, handles.recalibratebutton], ...
 guidata(hObject, handles);
 
 % Task-specific updates
-taskGUI_updateTask(hObject, [], handles, []);
+eyeGUI_updateTask(hObject, [], handles, []);
 
 % This sets up the initial plot - only do when we are invisible
-% so window can get raised using taskGUI.
+% so window can get raised using eyeGUI.
 if strcmp(get(hObject,'Visible'),'off') && isempty(handles.readableEye)
    % Create a grid of x and y data
    y = -10:0.5:10;
@@ -102,12 +102,12 @@ if strcmp(get(hObject,'Visible'),'off') && isempty(handles.readableEye)
    zlabel('z')
 end
 
-% UIWAIT makes taskGUI wait for user response (see UIRESUME)
+% UIWAIT makes eyeGUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 % ---- Call when incrementing tasks
 %
-function taskGUI_updateTask(hObject, eventdata, handles, task)
+function eyeGUI_updateTask(hObject, eventdata, handles, task)
 
 % Add task
 handles.task = task;
@@ -121,10 +121,25 @@ for ii = 1:length(handles.topsTreeNode.children)
       text1_str = [text1_str '**'];
    end
 end
+drawnow
 set(handles.status1text, 'String', text1_str);
 
 % resave the data
 guidata(hObject, handles);
+
+
+% ---- Call when updating the gui within a task
+%
+function eyeGUI_updateTaskStatus(hObject, eventdata, handles, task, indices)
+            
+% Set the status strings
+if any(indices==1)
+   set(handles.status2text, 'String', task.statusStrings{1});
+end
+if any(indices==2)
+   set(handles.status3text, 'String', task.statusStrings{2});
+end
+drawnow;
 
 % % ---- Call when incrementing trials
 % %
@@ -154,7 +169,7 @@ guidata(hObject, handles);
 % guidata(hObject, handles);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = taskGUI_OutputFcn(hObject, eventdata, handles)
+function varargout = eyeGUI_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB

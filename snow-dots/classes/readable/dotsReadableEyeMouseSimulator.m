@@ -62,7 +62,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
             self.HIDmouse.x = 0;
             self.HIDmouse.y = 0;
          end
-         
+                  
          % save x,y values and timestamp
          time = mglGetSecs;
          newData = [ ...
