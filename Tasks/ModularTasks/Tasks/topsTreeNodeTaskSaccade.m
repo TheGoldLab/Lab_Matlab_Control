@@ -70,7 +70,11 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       readables = struct( ...
          ...
          ...   % The readable object
-         'userInput',                     [], ...
+         'userInput',                  [], ...
+         ...
+         ...   % readable settings
+         'settings',                   struct( ....
+         'bufferGaze',                 false), ...
          ...
          ...   % Gaze windows
          'gazeWindows', struct( ...
@@ -322,12 +326,23 @@ end
             
          elseif isa(self.readables.userInput, 'dotsReadableEye')
             
-            % ---- Set gazeWindows
+            % ---- Get target x,y positions
             %
-            % get target x,y positions
             xs = self.drawables.stimulusEnsemble.getObjectProperty('xCenter');
             ys = self.drawables.stimulusEnsemble.getObjectProperty('yCenter');
+
+            % ---- Control gaze buffering
+            % 
+            % Arguments are useBuffer and recenter
+            self.readables.userInput.resetGaze(false);
             
+            % Then conditionally turn it on when re-centering at fp x,y
+            editStateByName(self.stateMachine, 'holdFixation', 'exit', ...
+               {@resetGaze, self.readables.userInput, ...
+               self.readables.settings.bufferGaze, [xs{1} ys{1}]});
+            
+            % ---- Set gazeWindows
+            %
             % Check for reset
             if self.updateReadables
                
@@ -355,7 +370,8 @@ end
             end
          end
          
-         % Unset the flag
+         % ---- Unset the flag
+         %
          self.updateReadables = false;         
          
          % ---- Flush the UI and deactivate all compound events (gaze windows)
@@ -476,6 +492,7 @@ end
          
          % ---- Fevalables for state list
          %
+         dnow   = {@drawnow};
          blanks = {@callObjectMethod, self.drawables.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib = {}; %{@getNextEvent, self.userInput, false, {'brokeFixation'}};
@@ -493,7 +510,6 @@ end
             'eventName', 'brokeFixation', 'isInverted', true}};
          gwt    = {dce, self.readables.userInput, {'fixWindow', 'isActive', false}, ...
             {'trgWindow', 'isActive', true}};
-         caleye = {@calibrate, self.readables.userInput, 'recenter'};
          
          % ---- Timing variables
          %
@@ -513,7 +529,7 @@ end
          trialStates = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
-            'waitForFixation'   gwfxw    chkuif   tft        caleye  'blankNoFeedback' ; ...
+            'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
             'holdFixation'      gwfxh    chkuib   tfh        {}      'showTarget'      ; ... % Branch here
             'VGSshowTarget'     showt    chkuib   vtd        gwt     'hideFix'         ; ... % VGS
             'MGSshowTarget'     showt    chkuib   mtd        {}      'MGSdelay'        ; ... % MGS
@@ -525,7 +541,7 @@ end
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
-            'done'              {}       {}       iti        {}      ''                ; ...
+            'done'              dnow     {}       iti        {}      ''                ; ...
             };
          
          % ---- Put stuff together in a stateMachine so that it will run

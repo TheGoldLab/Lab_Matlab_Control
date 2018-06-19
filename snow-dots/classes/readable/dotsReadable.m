@@ -151,7 +151,7 @@ classdef dotsReadable < handle
             
             if self.useGUI
                
-               % Use diaglog window
+               % Use dialog window
                answer = questdlg('Calibration failed. Re-position and Retry?', ...
                   'Calibration failure', 'Retry', 'Abort', 'Retry');               
             else

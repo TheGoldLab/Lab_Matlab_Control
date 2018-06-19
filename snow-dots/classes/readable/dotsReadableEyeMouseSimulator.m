@@ -35,11 +35,10 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          % Get and save mouse component IDs... first two are x,y, last is
          % button press
          self.HIDmouseComponentIDs = getComponentIDs(self.HIDmouse);
-
          
          % set a dummy sample frequency
          if nargin < 2 || isempty(frequency)
-            self.sampleFrequency = 200;
+            self.sampleFrequency = 1000;
          else
             self.sampleFrequency = frequency;
          end
@@ -53,7 +52,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          
          % Read from the mouse
          self.HIDmouse.read();
-         pause(0.001);
+         pause(1/self.sampleFrequency);
          
          % Check for button press
          if getValue(self.HIDmouse, self.HIDmouseComponentIDs(3))

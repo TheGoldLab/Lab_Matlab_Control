@@ -482,6 +482,29 @@ classdef (Sealed) topsDataLog < topsGroupedList
       %  (includig nans)
       function ecodes = parseEcodes(group, fileWithPath)
          
+         % Get the data 
+         logStruct = topsDataLog.getTaggedData(group, fileWithPath);
+         
+         % If we found something
+         if ~isempty(logStruct)
+            
+            % Make the FIRA ecodes struct
+            %  Names is list of fieldnames (data columns)
+            %  Types are ignored
+            %  data is the matrix, rows are trials, columns are fieldnames
+            ecodes = struct( ...
+               'name', {fieldnames(logStruct(1).item)'}, ...
+               'type', [], ...
+               'data', cell2mat(permute(struct2cell(...
+               [logStruct.item]),[3 1 2])));            
+         else
+            ecodes = [];
+         end
+      end
+      
+      % Convenient routine to collect tagged data into a cell array
+      function data = getTaggedData(group, fileWithPath)
+
          % get the log struct
          if nargin < 2 || isempty(fileWithPath)
             logStruct = topsDataLog.getSortedDataStruct();
@@ -490,22 +513,10 @@ classdef (Sealed) topsDataLog < topsGroupedList
          end
          
          % Find the structs in the named group
-         groupInds = find(strcmp(group, {logStruct.group}));
-
-         % check for struct data
-         if ~isempty(groupInds)
-            
-            % Make the FIRA ecodes struct
-            %  Names is list of fieldnames (data columns)
-            %  Types are ignored
-            %  data is the matrix, rows are trials, columns are fieldnames
-            ecodes = struct( ...
-               'name', {fieldnames(logStruct(groupInds(1)).item)'}, ...
-               'type', [], ...
-               'data', cell2mat(permute(struct2cell(...
-               [logStruct(groupInds).item]),[3 1 2])));            
+         if ~isempty(logStruct)
+            data = logStruct(strcmp(group, {logStruct.group}));
          else
-            ecodes = [];
+            data = [];
          end
       end
    end

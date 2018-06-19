@@ -115,7 +115,7 @@ classdef topsTreeNode < topsRunnableComposite
          end         
 
          % Pause experiment, wait for ui
-         while self.pauseFlag
+         while self.pauseFlag && ~self.abortFlag
             pause(0.01);            
          end
          

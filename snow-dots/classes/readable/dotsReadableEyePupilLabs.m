@@ -260,7 +260,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % If any argument given, revert to dotsReadableEye calibrateDevice
          % Routine (used for special case of recentering)
-         if nargin >= 2 && strcmp(varargin{1}, 'recenter')
+         if nargin >= 2 && ~isempty(varargin{1})
             status = self.calibrateDevice@dotsReadableEye(varargin{:});
             return
          end
@@ -580,7 +580,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Close the communication channels with pupilLab
       function closeDevice(self)
          
-         if ~isempty(self.reqPort)
+         % Dumb check that this isn't a loaded file
+         if ~isempty(self.reqPort) && ~isempty(self.lastSocketRefresh) && ...
+               (mglGetSecs() - self.lastSocketRefresh)/60 < .1
             
             % possibly turn off recording
             if self.isRecording
@@ -591,10 +593,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % Disconnect and close the data port
             zmq.core.disconnect(self.gazePort, self.pupilLabSubAddress);
             zmq.core.close(self.gazePort);
+            self.gazePort = [];
             
             % Disconnect and close the control port
             zmq.core.disconnect(self.reqPort, ['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
             zmq.core.close(self.reqPort);
+            self.reqPort = [];
             
             % Close the context
             % zmq.core.ctx_shutdown(self.zmqContext);

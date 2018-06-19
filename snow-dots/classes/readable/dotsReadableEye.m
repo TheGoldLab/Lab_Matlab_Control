@@ -68,14 +68,11 @@ classdef dotsReadableEye < dotsReadable
       % the current "y" position of the eye in user-defined coordinates.
       y;
       
-      % how to offset raw pupil data, before scaling
-      pupilOffset = 0;
-      
-      % how to scale raw pupil data, after ofsetting
-      pupilScale = 1;
-      
       % the current pupil size, offset and scaled
       pupil;
+      
+      % The time of the most-recent sample (in ui time)
+      time;
       
       % frequency in Hz of eye tracker data samples
       % @details
@@ -93,8 +90,8 @@ classdef dotsReadableEye < dotsReadable
       % object
       screenEnsemble = [];
       
-      % Optional axes to show gazeMonitor
-      gazeMonitorAxes = [];
+      % axis limits
+      gazeMonitorLim = 20;
       
       % Number of samples to collect for calibration offset
       offsetCalibrationN = 30;
@@ -129,15 +126,21 @@ classdef dotsReadableEye < dotsReadable
    end
    
    properties (SetAccess = protected)
-      
+
       % how to offset raw x,y gaze data, before scaling
       xyOffset = [0 0];
-      
+            
       % how to scale raw x,y gaze data, after ofsetting
       xyScale = [1 1];
       
       % how to rotate x,y gaze data
       rotation = [1 0; 0 1];
+      
+      % how to offset raw pupil data, before scaling
+      pupilOffset = 0;
+      
+      % how to scale raw pupil data, after ofsetting
+      pupilScale = 1;
       
       % integer identifier for x-position component
       xID = 1;
@@ -154,11 +157,20 @@ classdef dotsReadableEye < dotsReadable
    
    properties (SetAccess = private)
       
-      % axis limits
-      gazeMonitorLim = 20;
+      % Handle to axes showing gazeMonitor
+      gazeMonitorAxes = [];
       
       % handle to the line object used to plot the eye position
-      gazeMonitorDataHandle = [];      
+      gazeMonitorDataHandle = [];     
+      
+      % How to use gaze monitor:
+      %  false = show current eye position only
+      %  true = buffer eye position and show history
+      % Set/unset using resetGazeBuffer method
+      bufferGazeData = false;
+      
+      % handle to the line object used to plot the last eye position
+      gazeMonitorBufferedDataHandle = [];
    end
    
    methods
@@ -332,10 +344,10 @@ classdef dotsReadableEye < dotsReadable
       % Open the gaze monitor
       %
       %  Open the window and set the useGUI flag to true
-      function initializeGazeMonitor(self)
+      function openGazeMonitor(self, gazeMonitorAxes)
          
          % Possibly initialize the gaze monitor
-         if isempty(self.gazeMonitorAxes)
+         if nargin < 2 || isempty(gazeMonitorAxes)
             
             % Use the current figure
             % figure;
@@ -343,19 +355,30 @@ classdef dotsReadableEye < dotsReadable
             
             % Use the current axes
             self.gazeMonitorAxes = gca;
+         else
+            
+            % Set to given axes
+            self.gazeMonitorAxes = gazeMonitorAxes;
          end
             
          % setup axes
          axes(self.gazeMonitorAxes); cla reset; hold on;
          
-         % add handle to gaze data (an 'x' showing the current gaze
+         % Add handle to object for drawing buffered data
+         self.gazeMonitorBufferedDataHandle = line(-999, -999, ...
+            'Color',       'b', ...
+            'Marker',      'x', ...
+            'MarkerSize',  12,  ...
+            'LineStyle',   'none');      
+
+         % Add handle to gaze data (an 'x' showing the current gaze
          % position)
          self.gazeMonitorDataHandle = line(0, 0, ...
             'Color',       'r', ...
             'Marker',      'x', ...
             'MarkerSize',  12,  ...
-            'LineWidth',   3);
-
+            'LineStyle',   'none');
+         
          % Make it look nice, using static axes so plot commands don't
          % take too much time
          lims = [-self.gazeMonitorLim self.gazeMonitorLim];
@@ -378,9 +401,9 @@ classdef dotsReadableEye < dotsReadable
          ylabel('Vertical eye position (deg)')
                   
          % Monitor is on
-         self.useGUI = true;
+         self.useGUI = true;         
       end
-      
+
       % Close the gaze monitor
       %
       % For now just turn the flag off, but don't do anything else
@@ -388,6 +411,65 @@ classdef dotsReadableEye < dotsReadable
          
          % Monitor is off
          self.useGUI = false;
+      end
+      
+      % Possibly buffer and recenter gaze
+      %
+      % Arguments:
+      %  useBuffer   ... flag to stop/start buffering
+      %  recenter    ... if true, recenter to [0 0]
+      %                  or use given values
+      function resetGaze(self, useBuffer, recenter)
+         
+         % Conditionally set flag
+         if nargin > 1 && ~isempty(useBuffer)
+            self.bufferGazeData = useBuffer;
+         end
+         
+         % Conditionally re-center gaze
+         if nargin > 2 && ~isempty(recenter)
+            if islogical(recenter) && recenter
+               self.calibrate(true)
+            elseif isnumeric(recenter) && length(recenter)==2
+               self.calibrate(true, recenter);
+            end
+         end
+         
+         set(self.gazeMonitorBufferedDataHandle, ...
+            'XData', [], ...
+            'YData', []);
+      end            
+      
+      % Utilities for changing calibration offsets (e.g., via GUI)
+      function incrementCalibrationOffsetX(self, increment)
+         self.setEyeCalibration(self.xyOffset + [increment 0], [], []);
+      end
+      
+      function incrementCalibrationOffsetY(self, increment)
+         self.setEyeCalibration(self.xyOffset + [0 increment], [], []);
+      end
+      
+      % Set the calibration parameters and dump to the data log.
+      %  This is public in case you want to set these by hand for some
+      %  reason
+      function setEyeCalibration(self, xyOffsets, xyScales, rotations)
+
+         % Conditionally set the inputs..note that all arguments must 
+         %  be given, but use [] as flag not to change
+         if ~isempty(xyOffsets)            
+            self.xyOffset = xyOffsets;
+         end
+         if ~isempty(xyScales)
+            self.xyScale = xyScales;
+         end
+         if ~isempty(rotations)
+            self.rotation = rotations;
+         end
+         
+         % Save it to the log
+         topsDataLog.logDataInGroup( ...
+            {mglGetSecs() self.xyOffset, self.xyScale, self.rotation}, ...
+            'dotsReadableEye calibration');
       end
    end
    
@@ -416,8 +498,8 @@ classdef dotsReadableEye < dotsReadable
       %   and put in units of deg vis angle
       %
       % Optional arguments to recenter only
-      %   'recenter'
-      %   [current_gaze_x current_gaze_y]
+      %   1: recenterFlag
+      %   2: [current_gaze_x current_gaze_y]
       %
       % Returns:
       %  status = 0 if error, 1 if calibrated within tolerance
@@ -426,8 +508,8 @@ classdef dotsReadableEye < dotsReadable
          
          % Check for special case of recentering -- just check eye position
          % and update self.xyOffset values
-         if nargin > 1 && strcmp(varargin{1}, 'recenter')
-            
+         if nargin > 1 && ~isempty(varargin{1})
+
             % Find screen coordinates to calibrate with respect to
             if nargin > 2 && ~isempty(varargin{2})
                currentXY = varargin{2};
@@ -446,7 +528,8 @@ classdef dotsReadableEye < dotsReadable
             % of the older, uncalibrated samples
             % var(gazeXY)
             if all(var(gazeXY) < self.OffsetVarTolerance)
-               self.xyOffset = self.xyOffset + currentXY - median(gazeXY);
+               self.setEyeCalibration( ...
+                  self.xyOffset + currentXY - median(gazeXY), [], []);
                self.flushData();
             else
                disp('dotsReadableEye calibration recenter failed')
@@ -479,13 +562,12 @@ classdef dotsReadableEye < dotsReadable
             -self.calibrationFPX -self.calibrationFPY];
          numFixations = size(targetXY, 1);
 
-         % show it once
+         % show it once, after a delay sometimes needed for graphics to
+         % initialize
+         pause(0.7);
          calibrationEnsemble.setObjectProperty('xCenter', targetXY(1,[1 1]));
          calibrationEnsemble.setObjectProperty('yCenter', targetXY(1,[2 2]));
          calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-         pause(0.3);
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-         pause(0.3);
          
          % Variables to check for success
          gazeRawXY = nans(self.fullCalibrationN, 2);
@@ -561,7 +643,7 @@ classdef dotsReadableEye < dotsReadable
             Ly = diffTargetXY(:,2)~=0;
             
             % Calculate average x,y scaling
-            self.xyScale = [ ...
+            xyScaleVals = [ ...
                mean(lenDiffTargetXY(Lx,:) ./ lenDiffGazeXY(Lx,:)) ...
                mean(lenDiffTargetXY(Ly,:) ./ lenDiffGazeXY(Ly,:))];
             
@@ -573,17 +655,17 @@ classdef dotsReadableEye < dotsReadable
                angs(ii) = atan2(norm(cross(u,v)),dot(u,v));
             end
             ang = mean(angs);
-            self.rotation = [cos(ang) -sin(ang); sin(ang) cos(ang)];
+            rotationVals = [cos(ang) -sin(ang); sin(ang) cos(ang)];
             
             % Calculate average x,y offset
-            self.xyOffset = mean(targetXY -  ...
-               [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
-               self.rotation);
+            xyOffsetVals = mean(targetXY -  ...
+               [xyScaleVals(1).*gazeXY(:,1) xyScaleVals(2).*gazeXY(:,2)] * ...
+               rotationVals);
             
             % Check tolerance
             transformedData = ...
-               [self.xyScale(1).*gazeXY(:,1) self.xyScale(2).*gazeXY(:,2)] * ...
-               self.rotation + repmat(self.xyOffset, size(gazeXY,1), 1);
+               [xyScaleVals(1).*gazeXY(:,1) xyScaleVals(2).*gazeXY(:,2)] * ...
+               rotationVals + repmat(xyOffsetVals, size(gazeXY,1), 1);
             
             % For debugging
             %             plot(targetXY(:,1), targetXY(:,2), 'ro');
@@ -598,6 +680,7 @@ classdef dotsReadableEye < dotsReadable
                   self.calibrationTransformTolerance)
                
                % Done!
+               self.setEyeCalibration(xyOffsetVals, xyScaleVals, rotationVals);
                isCalibrated = true;
             else
                checkCalibrationCounter = checkCalibrationCounter + 1;
@@ -631,117 +714,125 @@ classdef dotsReadableEye < dotsReadable
             newData = rawData;
          end
          
-         % update gaze window data by computing distance of gaze
-         %  to center of each window
-         if ~isempty(self.gazeEvents)
-            
-            % Get Logical array of isActive flags
-            LactiveFlags = [self.gazeEvents.isActive];
-            
-            % Check for active gazeWindows
-            if ~any(LactiveFlags)
-               return
+         % NOTE: FOR NOW ASSUME THAT ALL EVENTS USE THE SAME (DEFAULT) GAZE
+         % CHANNELS!!! THIS CAN/SHOULD BE CHANGED IF MORE FLEXIBILITY IS
+         % NEEDED, BUT FOR NOW IT SERVES TO SPEED THINGS UP
+         % Get x,y samples ... these should be paired
+         Lx = rawData(:,1) == self.xID;
+         Ly = rawData(:,1) == self.yID;
+         
+         % Check for relevant data
+         if ~any(Lx) || sum(Lx) ~= sum(Ly)
+            if sum(Lx) ~= sum(Ly) % This shouldn't happen
+               warning('dotsReadableEye.readNewData: error')
+            end
+            return
+         end
+         
+         % collect into [time x y] triplets
+         gazeData = cat(2, rawData(Lx,3), rawData(Lx,2), rawData(Ly,2));
+         numSamples = size(gazeData, 1);
+                  
+         % Save the current gaze
+         self.time = gazeData(end,1);
+         self.x    = gazeData(end,2);
+         self.y    = gazeData(end,3);
+         
+         % disp(gazeData(end,2:3))
+         % Possibly update monitor window
+         if ~isempty(self.gazeMonitorDataHandle)
+            if self.bufferGazeData               
+               xd  = get(self.gazeMonitorDataHandle, 'XData');
+               yd  = get(self.gazeMonitorDataHandle, 'YData');
+               xde = get(self.gazeMonitorBufferedDataHandle, 'XData');
+               yde = get(self.gazeMonitorBufferedDataHandle, 'YData');               
+               set(self.gazeMonitorBufferedDataHandle, ...
+                  'XData', cat(2, xde, xd), ...
+                  'YData', cat(2, yde, yd));
             end
             
-            % NOTE: FOR NOW ASSUME THAT ALL EVENTS USE THE SAME (DEFAULT) GAZE
-            % CHANNELS!!! THIS CAN/SHOULD BE CHANGED IF MORE FLEXIBILITY IS
-            % NEEDED, BUT FOR NOW IT SERVES TO SPEED THINGS UP
-            % Get x,y samples ... these should be paired
-            Lx = rawData(:,1) == self.xID;
-            Ly = rawData(:,1) == self.yID;
+            % always set the current data points
+            set(self.gazeMonitorDataHandle, ...
+               'XData', self.x, ...
+               'YData', self.y);
             
-            % Check for relevant data
-            if ~any(Lx) || sum(Lx) ~= sum(Ly)
-               if sum(Lx) ~= sum(Ly) % This shouldn't happen
-                  warning('dotsReadableEye.readNewData: error')
-               end
-               return
-            end
-            
-            % collect into [time x y] triplets
-            gazeData = cat(2, rawData(Lx,3), rawData(Lx,2), rawData(Ly,2));
-            numSamples = size(gazeData, 1);
-            
-            % disp(gazeData(end,2:3))
-            % Possibly update monitor window
-            if self.useGUI
-               set(self.gazeMonitorDataHandle, ...
-                  'XData', gazeData(end,2), ...
-                  'YData', gazeData(end,3));
+            % Only draw if not buffering
+            if ~self.bufferGazeData
                drawnow;
             end
+         end
+         
+         if isempty(self.gazeEvents)
+            return
+         end
+         
+         % Now loop through each active gaze window and update each
+         %   gaze window data by computing distance of gaze
+         %   to center of each window
+         for ii = find([self.gazeEvents.isActive])
             
-            % Save the current gaze
-            self.x = gazeData(end,2);
-            self.y = gazeData(end,3);
+            % Get the gaze event struct, for convenience
+            ev = self.gazeEvents(ii);
+            % disp(sprintf('checking <%s>', ev.name))
             
-            % Now loop through each active gaze event and update
-            for ii = find(LactiveFlags)
+            % Calcuate number of samples to add to the buffer
+            numSamplesToAdd = min(size(ev.sampleBuffer,1), numSamples);
+            
+            % Rotate the buffer
+            ev.sampleBuffer(1:end-numSamplesToAdd,:) = ...
+               ev.sampleBuffer(1+numSamplesToAdd:end,:);
+            
+            % Add the new samples:
+            % [<timestamp> <distance from center>]
+            inds = (numSamples-numSamplesToAdd+1):numSamples;
+            ev.sampleBuffer(end-numSamplesToAdd+1:end,:) = [
+               gazeData(inds, 1), ...
+               sqrt( ...
+               (gazeData(inds,2)-ev.centerXY(1)).^2 + ...
+               (gazeData(inds,3)-ev.centerXY(2)).^2)];
+            
+            % Save the event struct back in the object
+            self.gazeEvents(ii)=ev;
+
+            % Check for event:
+            %  1. current sample is in acceptance window
+            %  2. at least one other sample is in acceptance window
+            %  3. earlist sample in acceptance window was at least
+            %     historyLength in the past
+            %  4. no intervening samples were outside window
+            if ev.isInverted
                
-               % Get the gaze event struct, for convenience
-               ev = self.gazeEvents(ii);
-               % disp(sprintf('checking <%s>', ev.name))
+               % Looking for ALL samples outside window
+               Lgood = ev.sampleBuffer(:,2) > ev.windowSize;
                
-               % Calcuate number of samples to add to the buffer
-               bufLen = size(ev.sampleBuffer,1);
-               numSamplesToAdd = min(bufLen, numSamples);
-               
-               % Rotate the buffer
-               ev.sampleBuffer(1:end-numSamplesToAdd,:) = ...
-                  ev.sampleBuffer(1+numSamplesToAdd:end,:);
-               
-               % Add the new samples:
-               % [<timestamp> <distance from center>]
-               inds = (numSamples-numSamplesToAdd+1):numSamples;
-               ev.sampleBuffer(end-numSamplesToAdd+1:end,:) = [
-                  gazeData(inds, 1), ...
-                  sqrt( ...
-                  (gazeData(inds,2)-ev.centerXY(1)).^2 + ...
-                  (gazeData(inds,3)-ev.centerXY(2)).^2)];
-               
-               % Check for event:
-               %  1. current sample is in acceptance window
-               %  2. at least one other sample is in acceptance window
-               %  3. earlist sample in acceptance window was at least
-               %     historyLength in the past
-               %  4. no intervening samples were outside window
-               if ev.isInverted
-                  
-                  % Looking for ALL samples outside window
-                  Lgood = ev.sampleBuffer(:,2) > ev.windowSize;
-                  
-                  if Lgood(end) && any(Lgood(1:end-1))
-                     fg = find(Lgood,1);
-                     if (ev.sampleBuffer(fg,1) <= ...
-                           (ev.sampleBuffer(end,1) - ev.windowDur)) && ...
-                           (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
-                        
-                        % Add the event to the data stream
-                        newData = cat(1, newData, ...
-                           [ev.ID ev.sampleBuffer(fg,[2 1])]);
-                     end
-                  end
-                  
-               else
-                  
-                  % Looking for first/last samples indide window
-                  Lgood = ev.sampleBuffer(:,2) <= ev.windowSize;
-                  
-                  if Lgood(end) && any(Lgood(1:end-1))
-                     fg = find(Lgood,1);
-                     if (ev.sampleBuffer(fg,1) <= ...
-                           (ev.sampleBuffer(end,1) - ev.windowDur)) %&& ...
-                        %  (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
-                        
-                        % Add the event to the data stream
-                        newData = cat(1, newData, ...
-                           [ev.ID ev.sampleBuffer(fg,[2 1])]);
-                     end
+               if Lgood(end) && any(Lgood(1:end-1))
+                  fg = find(Lgood,1);                  
+                  if (ev.sampleBuffer(fg,1) <= ...
+                        (ev.sampleBuffer(end,1) - ev.windowDur)) && ...
+                        (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
+                                          
+                     % Add the event to the data stream
+                     newData = cat(1, newData, ...
+                        [ev.ID ev.sampleBuffer(fg,[2 1])]);
                   end
                end
                
-               % Save the event struct back in the object
-               self.gazeEvents(ii)=ev;
+            else
+               
+               % Looking for first/last samples indide window
+               Lgood = ev.sampleBuffer(:,2) <= ev.windowSize;
+               
+               if Lgood(end) && any(Lgood(1:end-1))
+                  fg = find(Lgood,1);
+                  if (ev.sampleBuffer(fg,1) <= ...
+                        (ev.sampleBuffer(end,1) - ev.windowDur)) %&& ...
+                     %  (all(Lgood(fg:end) | ~isfinite(ev.sampleBuffer(fg:end,2))))
+
+                     % Add the event to the data stream
+                     newData = cat(1, newData, ...
+                        [ev.ID ev.sampleBuffer(fg,[2 1])]);
+                  end
+               end
             end
          end
       end
@@ -848,13 +939,41 @@ classdef dotsReadableEye < dotsReadable
                self.gazeEvents(index).centerXY(2), ...
                'LineStyle', ...
                lineStyle);
-            drawnow;
          else
             
             % Remove the circle from the gaze monitor
             set(self.gazeEvents(index).gazeWindowHandle, ...
                'XData', 0, 'YData', 0);
-            drawnow;
+         end
+         
+         % update the plot
+         drawnow;
+      end
+   end
+   
+   methods (Static)
+      
+      % Utility for using the topsDataLog item to calibrate gaze
+      %
+      %  calibrationCell is the cell array stored in the topsDataLog
+      %     in setEyeCalibration, above.
+      %  cell contents:
+      %     1. timestamp
+      %     2. xyOffset
+      %     3. xyScale
+      %     4. rotation matrix
+      function calibratedXY = calibrateGaze(rawXY, calibrationCell)
+         
+         numSamples = size(rawXY, 1);
+         if numSamples > 0
+            
+            % Scale, rotate, then offset
+            calibratedXY = [ ...
+               calibrationCell{3}(1).*rawXY(:,2) ...
+               calibrationCell{3}(2).*rawXY(:,2)] * ...
+               calibrationCell{4} + repmat(calibrationCell{2}, numSamples, 1);
+         else
+            calibratedXY = [];
          end
       end
    end

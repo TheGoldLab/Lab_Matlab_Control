@@ -22,7 +22,7 @@ function varargout = eyeGUI(varargin)
 
 % Edit the above text to modify the response to help eyeGUI
 
-% Last Modified by GUIDE v2.5 11-Jun-2018 11:51:12
+% Last Modified by GUIDE v2.5 13-Jun-2018 10:44:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,15 +62,16 @@ handles.task = [];
 handles.readableEye = [];
 if nargin > 4 && ~isempty(varargin{2}) && isa(varargin{2}, 'dotsReadableEye')
    handles.readableEye = varargin{2};
-   handles.readableEye.gazeMonitorAxes = handles.gazeAxes;
-   handles.readableEye.initializeGazeMonitor();
+   handles.readableEye.openGazeMonitor(handles.gazeAxes);
 end
 
 % Run status args
 handles.isRunning = false;
 
 % Set other buttons as inactive
-set([handles.skipbutton, handles.abortbutton, handles.recalibratebutton], ...
+set([handles.skipbutton, handles.abortbutton, handles.recalibratebutton, ...
+   handles.upbutton, handles.downbutton, ...
+   handles.leftbutton, handles.rightbutton], ...
    'Enable', 'off');
 
 % Update handles structure
@@ -118,11 +119,48 @@ for ii = 1:length(handles.topsTreeNode.children)
    text1_str = cat(2, text1_str, sprintf('  %d. %s', ...
       ii, handles.topsTreeNode.children{ii}.name));
    if ~isempty(task) && task==handles.topsTreeNode.children{ii}
-      text1_str = [text1_str '**'];
+      text1_str = cat(2, text1_str, '**');
    end
 end
-drawnow
 set(handles.status1text, 'String', text1_str);
+
+% update the gazeWindow information
+if ~isempty(handles.readableEye)
+   
+   % Configure the text boxes
+   for ii = 1:4
+      
+      % active
+      if ~isempty(task) && ii <= length(task.readables.gazeWindows)
+         
+         % Check radio button to see if value remains fixed across tasks
+         fixedValue = get(handles.(sprintf('gw%dbutton', ii)), 'Value');
+         
+         % Both boxes
+         for tags = {'Size' 'Dur'}
+            h = handles.(sprintf('gw%d%s', ii, tags{:}));
+            set(h, 'Enable', 'on');
+            val = get(h, 'String');
+            if isempty(val) || ~fixedValue
+               set(h, 'String', num2str(...
+                  task.readables.gazeWindows(ii).(sprintf('window%s', tags{:}))));
+            elseif ~isempty(val) && fixedValue
+               task.readables.gazeWindows(ii).(sprintf('window%s', tags{:})) = ...
+                  num2str(val);
+            end
+         end
+      else
+         % Inactivate remaining boxes
+         for tags = {'Size' 'Dur'}
+            h = handles.(sprintf('gw%d%s', ii, tags{:}));
+            set(h, 'Enable', 'off');
+         end
+      end
+   end
+end
+
+% Make sure the GUI is updated
+drawnow
 
 % resave the data
 guidata(hObject, handles);
@@ -238,6 +276,13 @@ if ~handles.isRunning
    set(handles.abortbutton, 'Enable', 'on', ...
       'BackGroundColor', [1 0 0]);
    
+   % conditionally set gaze widgets as active
+   if ~isempty(handles.readableEye)
+      set([handles.upbutton, handles.downbutton, ...
+         handles.leftbutton, handles.rightbutton], ...
+         'Enable', 'on');
+   end
+   
    % Set the flag
    handles.isRunning = true;
    
@@ -285,7 +330,6 @@ function skipbutton_Callback(hObject, eventdata, handles)
 
 handles.topsTreeNode.skipFlag = true;
 
-
 % --- Executes on button press in abortbutton.
 function abortbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to abortbutton (see GCBO)
@@ -322,46 +366,47 @@ end
 %    handles.topsTreeNode.calibrateFlag = true;
 % end
 
-% --- Executes on button press in pushbutton7.
-function pushbutton7_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton7 (see GCBO)
+% --- Executes on button press in upbutton.
+function upbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to upbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.readableEye.incrementCalibrationOffsetY(0.1);
+
+% --- Executes on button press in downbutton.
+function downbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to downbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.readableEye.incrementCalibrationOffsetY(-0.1);
+
+% --- Executes on button press in leftbutton.
+function leftbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to leftbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.readableEye.incrementCalibrationOffsetX(-0.1);
+
+% --- Executes on button press in rightbutton.
+function rightbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to rightbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.readableEye.incrementCalibrationOffsetX(0.1);
+
+function gw1Size_Callback(hObject, eventdata, handles)
+% hObject    handle to gw1Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
-% --- Executes on button press in pushbutton8.
-function pushbutton8_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton8 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in pushbutton9.
-function pushbutton9_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton9 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in pushbutton10.
-function pushbutton10_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton10 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-function gwdiam1_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdiam1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of gwdiam1 as text
-%        str2double(get(hObject,'String')) returns contents of gwdiam1 as a double
-
+% Hints: get(hObject,'String') returns contents of gw1Size as text
+%        str2double(get(hObject,'String')) returns contents of gw1Size as a double
+handles.task.readables.gazeWindows(1).windowSize = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdiam1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdiam1 (see GCBO)
+function gw1Size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw1Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -371,19 +416,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdur1_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdur1 (see GCBO)
+function gw1Dur_Callback(hObject, eventdata, handles)
+% hObject    handle to gw1Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdur1 as text
-%        str2double(get(hObject,'String')) returns contents of gwdur1 as a double
-
+% Hints: get(hObject,'String') returns contents of gw1Dur as text
+%        str2double(get(hObject,'String')) returns contents of gw1Dur as a double
+handles.task.readables.gazeWindows(1).windowDur = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdur1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdur1 (see GCBO)
+function gw1Dur_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw1Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -393,19 +438,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdiam2_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdiam2 (see GCBO)
+function gw2Size_Callback(hObject, eventdata, handles)
+% hObject    handle to gw2Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdiam2 as text
-%        str2double(get(hObject,'String')) returns contents of gwdiam2 as a double
-
+% Hints: get(hObject,'String') returns contents of gw2Size as text
+%        str2double(get(hObject,'String')) returns contents of gw2Size as a double
+handles.task.readables.gazeWindows(2).windowSize = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdiam2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdiam2 (see GCBO)
+function gw2Size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw2Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -415,19 +460,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdur2_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdur2 (see GCBO)
+function gw2Dur_Callback(hObject, eventdata, handles)
+% hObject    handle to gw2Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdur2 as text
-%        str2double(get(hObject,'String')) returns contents of gwdur2 as a double
-
+% Hints: get(hObject,'String') returns contents of gw2Dur as text
+%        str2double(get(hObject,'String')) returns contents of gw2Dur as a double
+handles.task.readables.gazeWindows(2).windowDur = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdur2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdur2 (see GCBO)
+function gw2Dur_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw2Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -437,19 +482,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdiam3_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdiam3 (see GCBO)
+function gw3Size_Callback(hObject, eventdata, handles)
+% hObject    handle to gw3Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdiam3 as text
-%        str2double(get(hObject,'String')) returns contents of gwdiam3 as a double
-
+% Hints: get(hObject,'String') returns contents of gw3Size as text
+%        str2double(get(hObject,'String')) returns contents of gw3Size as a double
+handles.task.readables.gazeWindows(3).windowSize = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdiam3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdiam3 (see GCBO)
+function gw3Size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw3Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -459,20 +504,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-function gwdur3_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdur3 (see GCBO)
+function gw3Dur_Callback(hObject, eventdata, handles)
+% hObject    handle to gw3Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdur3 as text
-%        str2double(get(hObject,'String')) returns contents of gwdur3 as a double
-
+% Hints: get(hObject,'String') returns contents of gw3Dur as text
+%        str2double(get(hObject,'String')) returns contents of gw3Dur as a double
+handles.task.readables.gazeWindows(3).windowDur = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdur3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdur3 (see GCBO)
+function gw3Dur_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw3Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -482,19 +526,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdiam4_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdiam4 (see GCBO)
+function gw4Size_Callback(hObject, eventdata, handles)
+% hObject    handle to gw4Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdiam4 as text
-%        str2double(get(hObject,'String')) returns contents of gwdiam4 as a double
-
+% Hints: get(hObject,'String') returns contents of gw4Size as text
+%        str2double(get(hObject,'String')) returns contents of gw4Size as a double
+handles.task.readables.gazeWindows(4).windowSize = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdiam4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdiam4 (see GCBO)
+function gw4Size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw4Size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -504,19 +548,19 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function gwdur4_Callback(hObject, eventdata, handles)
-% hObject    handle to gwdur4 (see GCBO)
+function gw4Dur_Callback(hObject, eventdata, handles)
+% hObject    handle to gw4Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of gwdur4 as text
-%        str2double(get(hObject,'String')) returns contents of gwdur4 as a double
-
+% Hints: get(hObject,'String') returns contents of gw4Dur as text
+%        str2double(get(hObject,'String')) returns contents of gw4Dur as a double
+handles.task.readables.gazeWindows(4).windowDur = ...
+   str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
-function gwdur4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gwdur4 (see GCBO)
+function gw4Dur_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gw4Dur (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -525,3 +569,35 @@ function gwdur4_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% --- Executes on button press in gw1button.
+function gw1button_Callback(hObject, eventdata, handles)
+% hObject    handle to gw1button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of gw1button
+
+% --- Executes on button press in gw2button.
+function gw2button_Callback(hObject, eventdata, handles)
+% hObject    handle to gw2button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of gw2button
+
+% --- Executes on button press in gw3button.
+function gw3button_Callback(hObject, eventdata, handles)
+% hObject    handle to gw3button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of gw3button
+
+% --- Executes on button press in gw4button.
+function gw4button_Callback(hObject, eventdata, handles)
+% hObject    handle to gw4button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of gw4button

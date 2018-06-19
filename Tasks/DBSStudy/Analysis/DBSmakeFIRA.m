@@ -11,19 +11,19 @@ function DBSmakeFIRA(filename)
 
 if nargin < 1 || isempty(filename)
    % for debugging
-   filename = 'data_2018_05_29_09_25.mat';
+   filename = 'data_2018_06_19_10_48.mat';
 end
 
 % Flush the data log (probably not necessary)
 topsDataLog.flushAllData()
 
 % Use the machine-specific data pathname to find the data
-pathname = DBSfilepath();
+rawFile = fullfile(DBSfilepath(), 'Raw', filename);
 
 % Get the ecode matrix using the topsDataLog utility
-FIRA.ecodes = topsDataLog.parseEcodes( 'trial', ...
-   fullfile(pathname, 'Raw', filename));
+FIRA.ecodes = topsDataLog.parseEcodes('trial', rawFile);
 
-% Get the pupil data
+% Get the pupil calibration data
+pupilCalibration = topsDataLog.getTaggedData('dotsReadableEye calibration');
 
 end

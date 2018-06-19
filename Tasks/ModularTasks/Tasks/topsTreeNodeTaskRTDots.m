@@ -90,6 +90,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          ...   % The readable object
          'userInput',                     [],               ...
          ...
+         ...   % readable settings
+         'settings',                   struct( ....
+         'bufferGaze',                 false), ...
+         ...
          ...   % The gaze windows
          'gazeWindows', struct( ...
          'name',           {'fixWindow', 'trg1Window', 'trg2Window'}, ...
@@ -420,37 +424,50 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
        %% Prepare readables for this trial
       %
       function prepareReadables(self)
+         
+         % Check for keyboard update
+         if isa(self.readables.userInput, 'dotsReadableHIDKeyboard') && ...
+               self.updateReadables
             
-         % Check for major update
-         if self.updateReadables
+            % ---- set keyboard events
+            %
+            % First deactivate all events
+            self.readables.userInput.deactivateEvents();
             
-            if isa(self.readables.userInput, 'dotsReadableHIDKeyboard')
-               
-               % ---- set keyboard events
-               %
-               % First deactivate all events
-               self.readables.userInput.deactivateEvents();
-               
-               % Now add given events. Note that the third and fourth arguments
-               %  to defineCalibratedEvent are Calibrated value and isActive --
-               %  we could make those user controlled.
-               for ii = 1:length(self.readables.keyboardEvents)
-                  self.readables.userInput.defineCalibratedEvent( ...
-                     self.readables.keyboardEvents(ii).name, ...
-                     self.readables.keyboardEvents(ii).eventName, ...
-                     1, true);
-               end
-               
-            elseif isa(self.readables.userInput, 'dotsReadableEye')
+            % Now add given events. Note that the third and fourth arguments
+            %  to defineCalibratedEvent are Calibrated value and isActive --
+            %  we could make those user controlled.
+            for ii = 1:length(self.readables.keyboardEvents)
+               self.readables.userInput.defineCalibratedEvent( ...
+                  self.readables.keyboardEvents(ii).name, ...
+                  self.readables.keyboardEvents(ii).eventName, ...
+                  1, true);
+            end
             
-               % ---- Set gazeWindows
-               %
+         elseif isa(self.readables.userInput, 'dotsReadableEye')
+            
+            % ---- Get target x,y positions
+            %
+            xs = self.drawables.stimulusEnsemble.getObjectProperty('xCenter');
+            ys = self.drawables.stimulusEnsemble.getObjectProperty('yCenter');
+            
+            % ---- Control gaze buffering
+            %
+            % Arguments are useBuffer and recenter
+            self.readables.userInput.resetGaze(false);
+            
+            % Then conditionally turn it on when re-centering at fp x,y
+            editStateByName(self.stateMachine, 'holdFixation', 'exit', ...
+               {@resetGaze, self.readables.userInput, ...
+               self.readables.settings.bufferGaze, [xs{1} ys{1}]});
+            
+            % ---- Conditionally set gazeWindows
+            %
+            % Check for reset
+            if self.updateReadables
+               
                % First clear existing
                self.readables.userInput.clearCompoundEvents();
-
-               % get target x,y positions
-               xs = self.drawables.stimulusEnsemble.getObjectProperty('xCenter');
-               ys = self.drawables.stimulusEnsemble.getObjectProperty('yCenter');
                
                % Now set up new ones
                for ii = 1:length(self.readables.gazeWindows)
@@ -466,10 +483,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                      'windowDur',   gw.windowDur);
                end
             end
-            
-            % Unset the flag
-            self.updateReadables = false;
-         end
+         end           
+         
+         % ---- Unset the flag
+         %
+         self.updateReadables = false;         
          
          % ---- Flush the UI and deactivate all compound events (gaze windows)
          %
@@ -659,7 +677,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             'eventName', 'brokeFixation', 'isInverted', true}};
          gwts   = {dce, self.readables.userInput, {'fixWindow', 'isActive', false}, ...
             {'trg1Window', 'isActive', true}, {'trg2Window', 'isActive', true}};
-         caleye = {@calibrate, self.readables.userInput, 'recenter'};
             
          % ---- Timing variables
          %
@@ -674,7 +691,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          trialStates = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
-            'waitForFixation'   gwfxw    chkuif   tft        caleye  'blankNoFeedback' ; ...
+            'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
             'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...
             'showTargets'       showt    chkuib   1          gwts    'preDots'         ; ...
             'preDots'           {}       {}       0          {}      'showDots'        ; ...
@@ -757,6 +774,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % For instructions
          if strcmp(name, 'Quest')
+            task.trialIterationMethod = 'sequential';
             name = 'NN';
          end
          
