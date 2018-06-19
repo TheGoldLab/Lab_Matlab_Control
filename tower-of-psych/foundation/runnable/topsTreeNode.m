@@ -60,6 +60,9 @@ classdef topsTreeNode < topsRunnableComposite
       
       % Skip to next task
       skipFlag=false;
+      
+      % Recalibrate
+      calibrateObject=[];
    end
    
    properties (Hidden)
@@ -118,6 +121,12 @@ classdef topsTreeNode < topsRunnableComposite
          while self.pauseFlag && ~self.abortFlag
             pause(0.01);            
          end
+         
+         % Recalibrate
+         if ~isempty(self.calibrateObject)
+             calibrate(self.calibrateObject);
+             self.calibrateObject = [];
+         end         
          
          % Abort experiment
          if self.abortFlag

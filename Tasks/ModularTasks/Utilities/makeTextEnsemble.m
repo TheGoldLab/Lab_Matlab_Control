@@ -22,7 +22,7 @@ if nargin < 2 || isempty(num)
 end
 
 if nargin < 3 || isempty(yOffset)
-   yOffset = 10;
+   yOffset = 3;
 end
 
 % If no screen ensemble given, assume this is local

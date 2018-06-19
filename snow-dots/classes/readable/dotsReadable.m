@@ -157,11 +157,11 @@ classdef dotsReadable < handle
             else
                
                % Keyboard
-               answer = input('Calibration failed. [R]etry or [A]bort?', 's');
+               answer = input('Calibration failed. [R]etry or [C]ontinue?', 's');
             end
             
             if ~any(strcmp(answer, {'Retry' 'R' 'r'}))
-               error('Calibration failed!')
+               break
             end
          end
          

@@ -266,22 +266,23 @@ if ~handles.isRunning
    set(hObject, 'String', 'Running', ...
       'BackGroundColor', [0 1 0]);
 
-   % Set other buttons as active
-   if ~isempty(handles.readableEye)
+  % Set other buttons as active
+  if ~isempty(handles.readableEye)
+      
+      % recalibrate
       set(handles.recalibratebutton, 'Enable', 'on', ...
-         'BackGroundColor', [1 1 0]);
-   end
+          'BackGroundColor', [1 1 0]);
+      
+      % offsets
+      set([handles.upbutton, handles.downbutton, ...
+          handles.leftbutton, handles.rightbutton], ...
+          'Enable', 'on');
+  end
+  
    set(handles.skipbutton, 'Enable', 'on', ...
       'BackGroundColor', [1 0.5 0]);
    set(handles.abortbutton, 'Enable', 'on', ...
       'BackGroundColor', [1 0 0]);
-   
-   % conditionally set gaze widgets as active
-   if ~isempty(handles.readableEye)
-      set([handles.upbutton, handles.downbutton, ...
-         handles.leftbutton, handles.rightbutton], ...
-         'Enable', 'on');
-   end
    
    % Set the flag
    handles.isRunning = true;
@@ -353,18 +354,8 @@ function recalibratebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% check that there is an eye tracker to calibrate
-if ~isempty(handles.readableEye)
-   handles.readableEye.calibrate();
-end
-
-% if ~handles.topsTreeNode.isRunning || handles.topsTreeNode.pauseFlag
-%    % calibrate now
-%    handles.readableEye.calibrate();
-% else
-%    % wait until end of trial
-%    handles.topsTreeNode.calibrateFlag = true;
-% end
+% Send a handle to the object to calibrate
+handles.topsTreeNode.calibrateObject = handles.readableEye;
 
 % --- Executes on button press in upbutton.
 function upbutton_Callback(hObject, eventdata, handles)
