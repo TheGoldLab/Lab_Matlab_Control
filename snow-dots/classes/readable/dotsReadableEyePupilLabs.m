@@ -34,10 +34,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Port for PupilLab Remote plugin (string)
       pupilLabPort = '50020';
       
-      % windowRect for showing calibration graphics.. default for
-      %  GeChic monitor
-      windowRect = [0 0 1920 1080];
-      
       % Whether or not to get each eye data along with overall gaze
       getRawEyeData = false;
       
@@ -139,7 +135,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          zmq.core.setsockopt(self.gazePort,'ZMQ_SUBSCRIBE','gaze');
          
          % Keep track of when this happens
-         self.lastSocketRefresh = mglGetSecs;
+         self.lastSocketRefresh = feval(self.clockFunction);
       end
       
       % Overloaded flushData method
@@ -223,10 +219,10 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          if isOpen
             
             % Measure round-trip time
-            now = mglGetSecs;
+            now = feval(self.clockFunction);
             zmq.core.send(self.reqPort, uint8('t'));
             self.result = zmq.core.recv(self.reqPort);
-            self.roundTripTime = mglGetSecs - now;
+            self.roundTripTime = feval(self.clockFunction) - now;
             
             % Query the ZMQ_REQ port for the value of the ZMQ_SUB port.
             zmq.core.send(self.reqPort,uint8('SUB_PORT'));
@@ -273,7 +269,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             restartRecording = false;
          end
          
-         % Pointer subscribe to calibration notification channel. This will give
+         % Subscribe to calibration notification channel. This will give
          % us information about the calibration routine as it progresses
          % in the PupilLabs software. We will use this to determine when
          % to transition to the next calibration target.
@@ -340,10 +336,10 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             
             % Wait for PupilLab calibration sample done message
             msg = [];
-            endTime = mglGetSecs() + self.calibrationTimeout;
+            endTime = feval(self.clockFunction) + self.calibrationTimeout;
             while (isempty(strfind(msg, 'marker_sample_completed')) || ...
                   isempty(strfind(msg, 'timestamp'))) && ...
-                  mglGetSecs() < endTime
+                  feval(self.clockFunction) < endTime
                msg = char(zmq.core.recv(calNotify,500));
                % disp(sprintf('msg is <%s>', msg))
             end
@@ -356,7 +352,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             
             % wait a bit between targets
             pause(0.5);
-         end
+         end % for each target
          
          % Create a stop calibration target that is identical to the
          % calibration marker but with a flipped color scheme.
@@ -378,8 +374,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Wait for 'stopped' message from PupilLab
          warning('off','zmq:core:recv:bufferTooSmall');
          msg = [];
-         endTime = mglGetSecs() + self.calibrationTimeout;
-         while isempty(strfind(msg, 'stopped')) && mglGetSecs() < endTime
+         endTime = feval(self.clockFunction) + self.calibrationTimeout;
+         while isempty(strfind(msg, 'stopped')) && feval(self.clockFunction) < endTime
             msg = char(zmq.core.recv(calNotify,500));
          end
          warning('on','zmq:core:recv:bufferTooSmall');
@@ -405,10 +401,10 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          if restartRecording
             self.record(true);
          end
-      end
+      end % calibrateDevice
       
-      % Overloaded recordDeviceOn function
-      function isRecording = recordDeviceOn(self)
+      % Overloaded startRecording function
+      function isRecording = startRecording(self)
          
          % Check for filename
          if isempty(self.filename)
@@ -426,16 +422,16 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          zmq.core.send(self.reqPort, uint8(str));
          self.result = zmq.core.recv(self.reqPort);
          isRecording = true;
-      end
+      end % startRecording
       
-      % Overloaded recordDeviceOff function
-      function isRecording = recordDeviceOff(self)
+      % Overloaded stopRecording function
+      function isRecording = stopRecording(self)
          
          % Turn off recording
          zmq.core.send(self.reqPort, uint8('r'));
          self.result = zmq.core.recv(self.reqPort);
          isRecording = false;
-      end
+      end % stopRecording
       
       % Overrides method from dotsReadableEye
       function components = openComponents(self)
@@ -489,7 +485,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Possibly refresh the socket
          if ~isempty(self.socketRefreshInterval)
             if isempty(self.lastSocketRefresh) || ...
-                  ((mglGetSecs - self.lastSocketRefresh) > ...
+                  ((feval(self.clockFunction) - self.lastSocketRefresh) > ...
                   self.socketRefreshInterval)
                self.refreshSocket();
             end
@@ -582,7 +578,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % Dumb check that this isn't a loaded file
          if ~isempty(self.reqPort) && ~isempty(self.lastSocketRefresh) && ...
-               (mglGetSecs() - self.lastSocketRefresh)/60 < .1
+               (feval(self.clockFunction) - self.lastSocketRefresh)/60 < .1
             
             % possibly turn off recording
             if self.isRecording
@@ -604,6 +600,61 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % zmq.core.ctx_shutdown(self.zmqContext);
             % zmq.core.ctx_term(self.zmqContext);
          end
+      end
+   end
+   
+   methods (Static)
+      
+      % readDataFromFile
+      %
+      % Utility for reading data from a pupillabs folder
+      %
+      % dataPath is string pathname to where the pupil-labs folder is
+      %
+      % Returns data matrix, rows are times, columns are:
+      %  1. timestamp
+      %  2. gaze x
+      %  3. gaze y
+      %  4. confidence
+      function [data, tags] = readDataFromFile(dataPath)
+         
+         % for debugging
+         if nargin < 1 || isempty(dataPath)
+            filename = 'data_2018_06_19_10_48';
+            dataPath = fullfile(DBSfilepath(), 'Pupil', [filename '_pupilLabs']);
+         end
+         
+         % load into a temporary file... not sure how else to do this (yet)
+         tmpFileName = 'tmp_pupil_data';
+         
+         % Set up the return values
+         tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
+         data = [];
+         
+         % Loop through the subdirectories, getting the data
+         dirs = dir(fullfile(dataPath, '0*'));
+         for dd = 1:length(dirs)
+            rawFileWithPath = fullfile(dataPath, dirs(dd).name, 'pupil_data');
+            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s %s', ...
+               rawFileWithPath, tmpFileName);
+            system(commandStr);
+            
+            % collect the data
+            load(tmpFileName);
+            
+            % make a struct from the cell array
+            dataStruct = cat(1, [gaze_positions{:}]);
+            
+            % save the data
+            pos = [dataStruct.norm_pos];
+            data = cat(1, data, [ ...
+               [dataStruct.timestamp]', ...
+               pos(1:2:end)', pos(2:2:end)', ...
+               [dataStruct.confidence]']);
+         end
+      
+         % clean up the tmp file
+         system(sprintf('rm %s.mat', tmpFileName));
       end
    end
 end

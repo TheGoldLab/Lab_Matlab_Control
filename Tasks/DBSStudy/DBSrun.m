@@ -22,7 +22,7 @@ end
 
 switch location
    
-   case {'OR' 'or'}
+   case {'or' 'OR'}
       arglist = { ...
          'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
          'sendTTLs',             true, ...
@@ -34,7 +34,7 @@ switch location
          'sendTTLs',             true, ...
          'coherences',           100, ...
          };
-       
+      
    case {'debug' 'Debug'}
       arglist = { ...
          'taskSpecs',            {'VGS' 1, 'MGS', 1, 'Quest' 8 'SN' 2 'AN' 2}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
@@ -43,24 +43,20 @@ switch location
          'displayIndex',         0, ... % 0=small, 1=main
          'useRemoteDrawing',     false, ...
          };
-        
+      
    otherwise % office
       arglist = { ...
-         'taskSpecs',            {'VGS' 1 'MGS' 1 'Quest' 10 'SN' 5 'AN' 5}, ...
-...%         'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
+         'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
          };
 end
 
 % Call the configuration routine
 %
-[mainTreeNode, datatub] =  DBSconfigure(arglist{:});
+[mainTreeNode, datatub] = DBSconfigure(arglist{:});
 
 %% ---- Start the gui or run the task
-if nargin < 2 || isempty(useGUI)
-   useGUI = true;
-end
-
-if useGUI
+%
+if nargin < 2 || isempty(useGUI) || useGUI
    mainTreeNode.startGUI('eyeGUI', datatub{'Control'}{'userInputDevice'});
 else
    mainTreeNode.run();

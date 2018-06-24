@@ -25,20 +25,46 @@ classdef dotsPlayableTone < dotsPlayable
             rads = linspace(0, nCycles*2*pi, nSamples);
             self.waveform = sin(rads)*self.intensity;
             if strcmp(self.side,'left')
-            self.waveform = [self.waveform; zeros(size(self.waveform))];
+               self.waveform = [self.waveform; zeros(size(self.waveform))];
             elseif strcmp(self.side,'right')
-            self.waveform = [zeros(size(self.waveform)); self.waveform];
+               self.waveform = [zeros(size(self.waveform)); self.waveform];
             end
             self.player = audioplayer(self.waveform, ...
-                self.sampleFrequency, self.bitsPerSample);
+               self.sampleFrequency, self.bitsPerSample);
         end
         
         % Play the tone.
         function play(self)
-            if isobject(self.player)
-                % play is async, playblocking would be sync
-                play(self.player);
-            end
+           
+           if isempty(self.player)
+              prepareToPlay(self);
+           end
+           
+           % Check for synchronous/asynchronous
+           if self.playBlocking
+              playblocking(self.player); % synchronous
+           else
+              play(self.player); % asynchronous
+           end
         end
+    end
+    
+    methods (Static)
+       
+       % Convenient utility for making a tone object
+       %
+       % args is 3x1 vector of:
+       %    frequency (Hz)
+       %    duration  (sec)
+       %    intensity (normalized)
+       function playableTone = makePlayableTone(args)
+          
+          playableTone           = dotsPlayableTone();
+          playableTone.frequency = args(1);
+          playableTone.duration  = args(2);
+          playableTone.intensity = args(3);
+          
+          playableTone.prepareToPlay();
+       end
     end
 end

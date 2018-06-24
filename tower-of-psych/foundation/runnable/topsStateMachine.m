@@ -169,7 +169,8 @@ classdef topsStateMachine < topsConcurrent
       % @a stateInfo should have the same fields as allStates:
       % 	- @b name unique name to identify the state
       % 	- @b timeout time that may elapse before transitioning to the
-      %   @b next state, in units of clockFunction.
+      %   @b next state, in units of clockFunction. If cell array, calls
+      %   fevalable to get a random pick.
       % 	- @b next the @b name of the state to transition to once @b
       % timeout has elapsed
       % 	- @b entry fevalable cell array invoked when entering the state
@@ -420,8 +421,15 @@ classdef topsStateMachine < topsConcurrent
             self.currentClassification = currentState.classification;
             self.currentInput = currentState.input;
             self.currentEntryTime = feval(self.clockFunction);
-            self.currentTimeoutTime = ...
-               self.currentEntryTime + currentState.timeout;
+            
+            % parse timeout
+            if isscalar(currentState.timeout)
+               self.currentTimeoutTime = ...
+                  self.currentEntryTime + currentState.timeout;
+            elseif iscell(currentState.timeout)
+               self.currentTimeoutTime = ...
+                  self.currentEntryTime + feval(currentState.timeout{:});
+            end
             
             fevalName = sprintf('%s:%s', ...
                self.entryString, currentState.name);

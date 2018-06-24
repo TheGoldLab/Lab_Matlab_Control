@@ -82,10 +82,13 @@ classdef dotsReadable < handle
       initialEventQueueSize = 100;
       
       %> any function that returns the current time as a number
-      clockFunction;
+      clockFunction = mglGetSecs();      
       
       %> name of the data file for devices that store their own data
       filename;
+      
+      %> where the file is
+      filepath = [];
       
       %> controls whether or not to stop recording during calibration
       recordDuringCalibration = false;
@@ -167,7 +170,7 @@ classdef dotsReadable < handle
          
          % Log a time maker that we just calibrated the device
          name = [class(self) '_calibration'];
-         data = mglGetSecs;
+         data = feval(self.clockFunction);
          topsDataLog.logDataInGroup(data, name);
       end
       
@@ -189,12 +192,12 @@ classdef dotsReadable < handle
          if onFlag && ~self.isRecording
             
             % use overloaded recordDevice for device-specific calls
-            self.isRecording = self.recordDeviceOn();
+            self.isRecording = self.startRecording();
             
          elseif ~onFlag && self.isRecording
             
             % use overloaded recordDevice for device-specific calls
-            self.isRecording = self.recordDeviceOff();
+            self.isRecording = self.stopRecording();
          end
       end
       
@@ -808,12 +811,12 @@ classdef dotsReadable < handle
       end
       
       %> Turn on data recording from the device (for subclasses).
-      function isRecording = recordDeviceOn(self)
+      function isRecording = startRecording(self)
          isRecording = false; % overriden by device-specific subclass
       end
       
       %> Turn off data recording from the device (for subclasses).
-      function isRecording = recordDeviceOff(self)
+      function isRecording = stopRecording(self)
          isRecording = false; % overriden by device-specific subclass
       end
       

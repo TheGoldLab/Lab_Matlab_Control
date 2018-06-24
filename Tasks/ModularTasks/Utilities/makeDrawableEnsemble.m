@@ -1,5 +1,5 @@
-function ensemble = makeDrawableEnsemble(name, objects, screenEnsemble)
-% function ensemble = makeDrawableEnsemble(name, objects, screenEnsemble)
+function ensemble = makeDrawableEnsemble(name, objects, screenEnsemble, automateDraw)
+% function ensemble = makeDrawableEnsemble(name, objects, screenEnsemble, automateDraw)
 %
 % Convenient utility for combining a bunch of drawables into an ensemble
 %
@@ -8,6 +8,8 @@ function ensemble = makeDrawableEnsemble(name, objects, screenEnsemble)
 %  objects        ... cell array of drawable objects
 %  screenEnsemble ... ensemble containing the screen object, which we use 
 %                       to determine client/server behavior
+%  automateDraw   ... flag indicating whether or not to add automate draw
+%                       method
 %
 % 5/28/18 written by jig
 
@@ -33,4 +35,9 @@ ensemble = dotsEnsembleUtilities.makeEnsemble([name 'Ensemble'], remoteInfo{:});
 % add the objects
 for ii = 1:length(objects)
    ensemble.addObject(objects{ii});
+end
+
+% possibly automate drawing
+if nargin > 3 && automateDraw
+   ensemble.automateObjectMethod('draw', @mayDrawNow);
 end

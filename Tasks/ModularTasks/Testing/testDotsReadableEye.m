@@ -8,25 +8,26 @@ dotsTheScreen.reset('displayIndex', 0);
 dotsTheScreen.openWindow();
 
 try
+   
+   % Run initial calibration routine
    e.calibrate();
    
+   % Open the gaze monitor
    eyeGUI(topsTreeNode('test'), e);   
-   % e.openGazeMonitor();
    
    % Don't buffer, don't recenter
-   resetGaze(self, false, false);
+   resetGaze(e, false, false);
    for ii = 1:100
       e.read();
-      pause(0.01);
+      pause(0.1);
    end
    
    % Buffer and recenter
-   resetGaze(self, true, true);
+   resetGaze(e, true, true);
    for ii = 1:100
       e.read();
-      pause(0.01);
+      pause(0.1);
    end
-   e.updateGazeMonitor();
       
 catch
    dotsTheScreen.closeWindow();

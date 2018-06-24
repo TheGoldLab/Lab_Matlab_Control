@@ -374,16 +374,19 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % setNextState
       %
-      % Utility to conditionally set the next state
-      function setNextState(self, condition, thisState, nextStateIfTrue, nextStateIfFalse)
-         
-         if self.(condition)
-            self.stateMachine.editStateByName(thisState, 'next', nextStateIfTrue);
-         else
-            self.stateMachine.editStateByName(thisState, 'next', nextStateIfFalse);
-         end
-      end
+      function setNextState(thisState, condition, nextStateIfTrue, nextStateIfFalse)
+% function setNextState(thisState, condition, nextStateIfTrue, nextStateIfFalse)
+%
+% stateMachine utility to conditionally set the next state
+%
+% Created 6/22/2018 by jig
+
+if condition   
+  self.stateMachine.editStateByName(thisState, 'next', nextStateIfTrue);
+else
+  self.stateMachine.editStateByName(thisState, 'next', nextStateIfFalse);
+end
+      
    end   
 end

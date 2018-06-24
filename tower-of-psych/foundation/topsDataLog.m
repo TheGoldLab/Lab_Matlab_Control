@@ -483,6 +483,11 @@ classdef (Sealed) topsDataLog < topsGroupedList
       function ecodes = parseEcodes(group, fileWithPath)
          
          % Get the data 
+         if nargin < 2
+            fileWithPath = [];
+         end
+         
+         % get the tagged data
          logStruct = topsDataLog.getTaggedData(group, fileWithPath);
          
          % If we found something

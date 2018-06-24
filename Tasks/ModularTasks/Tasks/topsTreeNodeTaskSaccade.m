@@ -198,21 +198,11 @@ end
       %% Finish trial method
       function finishTrial(self)
          
-         % ---- Sync times again
-         %
-         trial = self.getTrial();
-         [trial.time_local_trialFinish, ...
-            trial.time_screen_trialFinish, ~, ...
-            trial.time_ui_trialFinish] = ...
-            syncTiming(self.drawables.screenEnsemble, ...
-            self.readables.userInput);
-          self.setTrial(trial);
-         
          % ---- Save the current trial in the DataLog
          %
          %  We do this even if no choice was made, in case later we want
          %     to re-parse the UI data
-         topsDataLog.logDataInGroup(trial, 'trial');
+         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
          
          % Call superclass finishTrial method
          self.prepareForNextTrial();
@@ -395,7 +385,8 @@ end
          [trial.time_local_trialStart, ...
             trial.time_screen_trialStart, ...
             trial.time_screen_roundTrip, ...
-            trial.time_ui_trialStart] = ...
+            trial.time_ui_trialStart, ...
+            trial.time_ui_roundTrip] = ...
             syncTiming(self.drawables.screenEnsemble, ...
             self.readables.userInput);
          
@@ -428,11 +419,7 @@ end
          if isempty(self.drawables.screenEnsemble)
             
             % just set up a debug screen
-            screen = dotsTheScreen.theObject();
-            screen.displayIndex = 0;
-            self.drawables.screenEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', false);
-            self.drawables.screenEnsemble.addObject(screen);
-            self.drawables.screenEnsemble.automateObjectMethod('flip', @nextFrame);
+            self.drawables.screenEnsemble = makeScreenEnsemble(false, 0);
          end
          
          % ---- Initialize the stimulus ensemble
@@ -495,7 +482,7 @@ end
          dnow   = {@drawnow};
          blanks = {@callObjectMethod, self.drawables.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
-         chkuib = {}; %{@getNextEvent, self.userInput, false, {'brokeFixation'}};
+         chkuib = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
          chkuic = {@getEventWithTimestamp, self, self.readables.userInput, {'choseTarget'}, 'choice'};
          showfx = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 1, 2, 'fixOn'};
          showt  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
@@ -588,12 +575,12 @@ end
          switch name
             case 'VGS'
                task.drawables.settings.textStrings = { ...
-                  'Look at the red cross. When it disappears', ...
-                  'Look at the visual target'};
+                  'Look at the red cross. When it disappears,', ...
+                  'look at the visual target.'};
             otherwise
                task.drawables.settings.textStrings = { ...
-                  'Look at the red cross. When it disappears', ...
-                  'Look at the remebered location of the visual target'};
+                  'Look at the red cross. When it disappears,', ...
+                  'look at the remebered location of the visual target.'};
          end
       end
    end

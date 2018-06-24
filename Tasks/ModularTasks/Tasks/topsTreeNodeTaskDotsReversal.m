@@ -1,14 +1,14 @@
-classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
-   % @class topsTreeNodeTaskRTDots
+classdef topsTreeNodeTaskDotsReversal < topsTreeNodeTask
+   % @class topsTreeNodeTaskDotsReversal
    %
-   % Response-time dots (RTD) task
+   % Dots-reversal task
    %
    % For standard configurations, call:
-   %  topsTreeNodeTaskRTDots.getStandardConfiguration
+   %  topsTreeNodeTaskDotsReversal.getStandardConfiguration
    % 
    % Otherwise:
    %  1. Create an instance:
-   %        task = topsTreeNodeTaskRTDots()
+   %        task = topsTreeNodeTaskDotsReversal()
    %  2. Set properties, in particular typically you need to provide:
    %        task.drawables.screenEnsemble
    %        task.drawables.textEnsemble
@@ -34,13 +34,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'directions',                    [0 180], ...
          'coherences',                    [0 3.2 6.4 12.8 25.6 51.2], ...
          'directionPriors',               [50 50], ...
-         'dotsDuration',                  [], ...
+         'dotsDuration',                  [0.3 0.5 1.5], ...
+         'hazards',                       [0.1 2], ...
          'referenceRT',                   [], ...
          'sendTTLs',                      false);
       
       % Timing properties
       timing = struct( ...
-         'showInstructions',              10.0, ...
+         'showInstructions',              1.0, ...
          'waitAfterInstructions',         0.5, ...
          'fixationTimeout',               5.0, ...
          'holdFixation',                  0.5, ...
@@ -153,26 +154,21 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self = self@topsTreeNodeTask(varargin{:});
       end
       
-      %% Set method for drawables properties
-      %
-      %  Updates the updateDrawables flag
+      % Set method for drawables properties that updates the
+      % updateDrawables flag
       function set.drawables(self, value)
          self.drawables = value;
          self.updateDrawables = true;
       end
       
-      %% Set method for readable properties
-      %
-      %	Updates the updateReadables flag
+      % Set method for readable properties that updates the
+      % updateReadables flag
       function set.readables(self, value)
          self.readables = value;
          self.updateReadables = true;
       end
       
-      %% Start task (overloaded)
-      % 
-      % Put stuff here that you want to do before each time you run this
-      % task
+      %% Overloaded start task method
       function start(self)
          
          % Do some bookkeeping via superclass
@@ -201,10 +197,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.prepareForNextTrial();
       end
       
-      %% Finish task (overloaded)
-      %
-      % Put stuff here that you want to do after each time you run this
-      % task
+      %% Overloaded finish task method
       function finish(self)
          
          % Do some bookkeeping
@@ -214,9 +207,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          topsDataLog.writeDataFile();
       end
       
-      %% Start trial
-      %
-      % Put stuff here that you want to do before each time you run a trial
+      %% Start trial method
       function startTrial(self)
          
          % ---- Prepare components
@@ -244,16 +235,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.updateStatus();
       end
       
-      %% Finish trial
-      %
-      % Put stuff here that you want to do after each time you run a trial
+      %% Finish trial method
       function finishTrial(self)
          
          % ---- Save the current trial in the DataLog
          %
          %  We do this even if no choice was made, in case later we want
          %     to re-parse the UI data
-         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
+         topsDataLog.logDataInGroup(trial, 'trial');
          
          % ---- Prepare for the next trial
          %
@@ -262,7 +251,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.prepareForNextTrial();
       end
       
-      %% Set Choice
+      %% Set Choice method
       %
       % Save choice/RT information and set up feedback for the dots task
       function setDotsChoice(self, value)
@@ -348,7 +337,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
       end
       
-      %% updateQuest
+      %% updateQuest method
       %
       function updateQuest(self)
          
@@ -405,6 +394,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                fpX + self.drawables.settings.targetDistance], 2);
             self.drawables.stimulusEnsemble.setObjectProperty('yCenter', fpY.*[1 1], 2);
             
+            % set updateReadables flag because gaze windows depend on
+            % target positions
+            self.updateReadables = true;            
+            
             % All other stimulus ensemble properties
             stimulusDrawables = {'fixation' 'targets' 'dots'};
             for dd = 1:length(stimulusDrawables)
@@ -414,24 +407,23 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                end
             end
             
-            % set updateReadables flag because gaze windows depend on
-            % target positions
-            self.updateReadables = true;            
-            
             % reset flag
             self.updateDrawables = false;
          end
          
          % Possibly use reference coherence (e.g., from Quest)
          if isa(self.settings.coherences, 'topsTreeNodeTaskRTDots')
-            trial.coherence = self.settings.coherences.settings.coherences;            
+            trial.coherence = self.settings.coherences.settings.coherences;
+            
             self.setTrial(trial);
          end
 
          % Save the coherence and direction to the dots object
          %  in the stimulus ensemble
-         self.drawables.stimulusEnsemble.setObjectProperty('coherence', trial.coherence, 3);
-         self.drawables.stimulusEnsemble.setObjectProperty('direction', trial.direction, 3);
+         self.drawables.stimulusEnsemble.setObjectProperty( ...
+            'coherence', trial.coherence, 3);
+         self.drawables.stimulusEnsemble.setObjectProperty(...
+            'direction', trial.direction, 3);
          
          % Prepare to draw dots stimulus
          self.drawables.stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow);
@@ -562,7 +554,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          if isempty(self.drawables.screenEnsemble)
             
             % just set up a debug screen
-            self.drawables.screenEnsemble = makeScreenEnsemble(false, 0);
+            screen = dotsTheScreen.theObject();
+            screen.displayIndex = 0;
+            self.drawables.screenEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', false);
+            self.drawables.screenEnsemble.addObject(screen);
+            self.drawables.screenEnsemble.automateObjectMethod('flip', @nextFrame);
          end
          
          % Make the stimulus ensemble
@@ -576,7 +572,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             % create the ensemble
             self.drawables.stimulusEnsemble = makeDrawableEnsemble('RTDots', ...
                {dotsDrawableTargets(), dotsDrawableTargets(), dotsDrawableDotKinetogram}, ...
-               self.drawables.screenEnsemble, true);
+               self.drawables.screenEnsemble);
+            
+            % Automate drawing (for dots)
+            self.drawables.stimulusEnsemble.automateObjectMethod('draw', @mayDrawNow);
          end
 
          % Make the text ensemble
@@ -667,10 +666,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          blanks  = {@callObjectMethod, self.drawables.screenEnsemble, @blank};
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
-         chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
+         chkuib  = {};%{@getNextEvent, self.userInput, false, {'brokeFixation'}};
          chkuic  = {@getEventWithTimestamp, self, self.readables.userInput, {'choseLeft' 'choseRight'}, 'choice'};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
-            {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
+            {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'dotsOn'};
          showt   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
          showfb  = {@drawWithTimestamp, self, self.drawables.textEnsemble, 1, [], 'fdbkOn'};
          showdRT = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
@@ -733,9 +732,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Note that the predots state is what allows us to get a good timestamp
          %   of the dots onset... we start the flipping before, so the dots will start
          %   as soon as we send the isVisible command in the entry fevalable of showDots
-         activeList = {{ ...
-            self.drawables.stimulusEnsemble, 'draw'; ...
-            self.drawables.screenEnsemble, 'flip'}, ...
+         activeList = {{self.drawables.stimulusEnsemble, 'draw'; self.drawables.screenEnsemble, 'flip'}, ...
             {'preDots' 'showDotsRT' 'showDotsFX'}};
          self.stateMachine.addSharedFevalableWithName( ...
             {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
@@ -778,15 +775,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %  2. Text string #1
          %  3. RTFeedback flag
          SATsettings = { ...
-            'S' 'Be as fast as possible.'                 task.settings.referenceRT; ...
-            'A' 'Be as accurate as possible.'             nan;...
-            'N' 'Be as fast and accurate as possible.'    nan};
+            'S' 'Be as fast as possible'                 task.settings.referenceRT; ...
+            'A' 'Be as accurate as possible'             nan;...
+            'N' 'Be as fast and accurate as possible'    nan};
          
          dp = task.settings.directionPriors;
          BIASsettings = { ...
-            'L' 'Left is more likely.'                    [max(dp) min(dp)]; ...
-            'R' 'Right is more likely.'                   [min(dp) max(dp)]; ...
-            'N' 'Both directions are equally likely.'     [50 50]};
+            'L' 'LEFT is more likely'                    [max(dp) min(dp)]; ...
+            'R' 'RIGHT is more likely'                   [min(dp) max(dp)]; ...
+            'N' 'BOTH directions equally likely'         [50 50]};
          
          % For instructions
          if strcmp(name, 'Quest')

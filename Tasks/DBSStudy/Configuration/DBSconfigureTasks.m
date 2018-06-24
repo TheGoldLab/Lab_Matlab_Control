@@ -13,6 +13,7 @@ function DBSconfigureTasks(mainTreeNode, datatub)
 %% ---- Set defaults properties common to both tasks
 commonProperties = { ...
    {'drawables', 'settings', 'targetDistance'}, datatub{'Settings'}{'targetDistance'}, ...
+   {'timing',    'showInstructions'},           datatub{'Settings'}{'instructionDuration'},       ...
    {'settings',  'sendTTLs'},                   datatub{'Settings'}{'sendTTLs'},       ...
    {'readables', 'userInput'},                  datatub{'Control'}{'userInputDevice'}, ...
    {'drawables', 'screenEnsemble'},             datatub{'Graphics'}{'screenEnsemble'}, ...
@@ -36,8 +37,9 @@ gazeWindows = { ...
 welcome = topsCallList();
 welcome.alwaysRunning = false;
 welcome.addCall({@drawTextEnsemble, datatub{'Graphics'}{'textEnsemble'}, { ...
-   'Work at your own pace', ...
-   'Each trial starts by fixating the central cross'}, 2, 1}, 'text');
+   'Work at your own pace.', ...
+   'Each trial starts by fixating the central cross'}, ...
+   datatub{'Settings'}{'instructionDuration'}, 1}, 'text');
 
 % Countdown call list
 countdown = topsCallList();
@@ -69,7 +71,7 @@ for ii = 1:2:length(taskSpecs)
             taskSpecs{ii}, taskSpecs{ii+1}, commonProperties{:}, ...
             gazeWindows{1:8}, 'taskID', taskID, 'taskTypeID', taskTypeID, ...
             {'settings' 'directions'}, datatub{'Settings'}{'saccadeDirections'});
-            
+         
       otherwise
          
          % Make RTDots task with name, numTrials, and args
@@ -77,8 +79,8 @@ for ii = 1:2:length(taskSpecs)
             taskSpecs{ii}, taskSpecs{ii+1}, commonProperties{:}, ...
             gazeWindows{:}, 'taskID', taskID, 'taskTypeID', taskTypeID, ...
             {'settings' 'coherences'}, datatub{'Settings'}{'coherences'}, ...
-            {'settings' 'referenceRT'}, datatub{'Settings'}{'referenceRT'});                     
-
+            {'settings' 'referenceRT'}, datatub{'Settings'}{'referenceRT'});
+         
          % Add special instructions for first dots task
          if noDots
             task.drawables.settings.textStrings = cat(1, ...
@@ -92,11 +94,11 @@ for ii = 1:2:length(taskSpecs)
          if strcmp(taskSpecs{ii}, 'Quest')
             datatub{'Settings'}{'coherences'} = task;
             datatub{'Settings'}{'referenceRT'} = task;
-         end         
+         end
    end
    
    % Add some fevalables to show instructions/feedback before/after tasks
-   if ii == 1 
+   if ii == 1
       task.startFevalable = {@run, welcome};
    else
       task.startFevalable = {@run, countdown};
@@ -108,6 +110,5 @@ for ii = 1:2:length(taskSpecs)
    % Add as child to the maintask. Have it loop forever until explicitly
    % aborted by the task logic
    task.iterations = inf;
-   mainTreeNode.addChild(task);   
-   
+   mainTreeNode.addChild(task);
 end

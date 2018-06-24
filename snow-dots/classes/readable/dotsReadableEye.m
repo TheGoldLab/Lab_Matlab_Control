@@ -118,7 +118,7 @@ classdef dotsReadableEye < dotsReadable
 
       % Tolerance for using calibration values -- determined by
       % trial-and-error
-      calibrationTransformTolerance = 3.0;
+      calibrationTransformTolerance = 4.0;
       
       % number of times to try calibrating before giving a message if it
       % keeps failing (not within tolerances
@@ -468,7 +468,7 @@ classdef dotsReadableEye < dotsReadable
          
          % Save it to the log
          topsDataLog.logDataInGroup( ...
-            {mglGetSecs() self.xyOffset, self.xyScale, self.rotation}, ...
+            {feval(self.clockFunction) self.xyOffset, self.xyScale, self.rotation}, ...
             'dotsReadableEye calibration');
       end
    end
@@ -568,6 +568,7 @@ classdef dotsReadableEye < dotsReadable
          calibrationEnsemble.setObjectProperty('xCenter', targetXY(1,[1 1]));
          calibrationEnsemble.setObjectProperty('yCenter', targetXY(1,[2 2]));
          calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         pause(0.5);
          
          % Variables to check for success
          gazeRawXY = nans(self.fullCalibrationN, 2);
@@ -588,7 +589,7 @@ classdef dotsReadableEye < dotsReadable
                calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
                
                % Wait for fixation
-               pause(0.3);
+               pause(0.4);
                
                % flush the eye data
                self.flushData();
@@ -629,7 +630,7 @@ classdef dotsReadableEye < dotsReadable
                   @dotsDrawable.blankScreen, {}, [], true);
                
                % wait a moment
-               pause(0.5);                              
+               pause(0.7);                              
             end
             
             % Get vectors connecting each point
@@ -683,6 +684,7 @@ classdef dotsReadableEye < dotsReadable
                self.setEyeCalibration(xyOffsetVals, xyScaleVals, rotationVals);
                isCalibrated = true;
             else
+               disp(sqrt(sum((targetXY-transformedData).^2,2)))
                checkCalibrationCounter = checkCalibrationCounter + 1;
             end
          end
@@ -923,7 +925,7 @@ classdef dotsReadableEye < dotsReadable
          % If active, update the data to draw the circle
          if self.gazeEvents(index).isActive
             
-            % Draw the circle now
+            % Draw the circle
             th = (0:pi/50:2*pi)';
             if self.gazeEvents(index).isInverted
                lineStyle = ':';
@@ -953,7 +955,8 @@ classdef dotsReadableEye < dotsReadable
    
    methods (Static)
       
-      % Utility for using the topsDataLog item to calibrate gaze
+      % Utility for using a topsDataLog 'dotsReadableEye calibration'
+      %  item to calibrate gaze for a single chunk of data
       %
       %  calibrationCell is the cell array stored in the topsDataLog
       %     in setEyeCalibration, above.
@@ -966,15 +969,37 @@ classdef dotsReadableEye < dotsReadable
          
          numSamples = size(rawXY, 1);
          if numSamples > 0
-            
+           
             % Scale, rotate, then offset
             calibratedXY = [ ...
-               calibrationCell{3}(1).*rawXY(:,2) ...
+               calibrationCell{3}(1).*rawXY(:,1) ...
                calibrationCell{3}(2).*rawXY(:,2)] * ...
                calibrationCell{4} + repmat(calibrationCell{2}, numSamples, 1);
          else
             calibratedXY = [];
          end
+      end
+      
+      % Utility for calibrating gaze using an array of structures
+      % containing 'dotsReadableEye calibration' items
+      %
+      % Raw values columns are time, gaze_x, gaze_y 
+      function calibratedValues = calibrateGazeSets(rawValues, calibrationSets)
+
+         % Make array of calibration timestamps ... remember these are in local time
+         calibrationCell = cat(1, calibrationSets.item);
+         calibrationTimes = cat(1, calibrationCell{:,1}, inf);
+   
+         % Calibrate gaze, in chunks
+         for cc = 1:size(calibrationTimes)-1
+      
+            % get relevant samples
+            Lcal = rawValues(:,1) >= calibrationTimes(cc) & ...
+               rawValues(:,1) < calibrationTimes(cc+1);
+            rawValues(Lcal,2:3) = dotsReadableEye.calibrateGaze( ...
+               rawValues(Lcal,2:3), calibrationCell(cc,:));
+         end
+         calibratedValues = rawValues;
       end
    end
 end

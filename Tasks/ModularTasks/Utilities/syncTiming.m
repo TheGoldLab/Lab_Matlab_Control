@@ -1,6 +1,6 @@
-function [localTime, screenTime, screenRoundTripTime, uiTime] = ...
+function [localTime, screenTime, screenRoundTripTime, uiTime, uiRoundTripTime] = ...
    syncTiming(screenEnsemble, ui)
-% function [localTime, screenTime, screenRoundTripTime, uiTime] = ...
+% function [localTime, screenTime, screenRoundTripTime, uiTime, uiRoundTripTime] = ...
 %    syncTiming(screenEnsemble, ui)
 %
 % RTD = Response-Time Dots
@@ -27,6 +27,7 @@ while roundTrip > 0.01 && ~timeout;
    timeout = (after-start) > 0.5;
 end
 uiTime              = ui.getDeviceTime();
+uiRoundTripTime     = mglGetSecs - after;
 localTime           = mean([before after]);
 screenRoundTripTime = roundTrip;
 

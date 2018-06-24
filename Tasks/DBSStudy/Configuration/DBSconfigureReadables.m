@@ -15,7 +15,8 @@ if strncmp(datatub{'Settings'}{'userInput'}, 'dotsReadableEye', length('dotsRead
    
    % Set properties: filename, screenEnsemble for calibration drawing, autoread
    [~, name, ~] = fileparts(datatub{'Settings'}{'filename'});
-   ui.filename = sprintf('%s_pupilLabs', name);
+   ui.filename = sprintf('%s_eye', name);
+   ui.filepath = fullfile(DBSfilepath(), 'Pupil');
    ui.screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
    ui.recordDuringCalibration = true;
    
