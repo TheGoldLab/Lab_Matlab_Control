@@ -409,25 +409,17 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if drawTarget
             self.calibrationEnsemble.callObjectMethod(...
                @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
-         end
+         end         
       end % drift correct
       
-      % Show eye position
-      %
-      function status = showEyeNow(self)
-         
-         status = 0;
-      end
-      
-      % Validate calibration
-      %
-      function status = validateNow(self)
-         
-         status = 0;
-      end
+                  case {'e' 'E'}
+               status = self.showEyeNow();
+               
+            case {'v' 'V'}
+               status = self.validateNow();
+               
 
-      % Overloaded startRecording method
-      %
+      % Overloaded startRecording function
       function isRecording = startRecording(self)
          
          % Check for filename
@@ -447,8 +439,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
       end % startRecording
       
-      % Overloaded stopRecording method
-      %
+      % Overloaded stopRecording function
       function isRecording = stopRecording(self)
          
          % Turn off recording and close file

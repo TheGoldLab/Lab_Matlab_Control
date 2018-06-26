@@ -147,10 +147,13 @@ classdef dotsReadable < handle
       end
       
       %> Calibrate the device
+      % 
+      % calibrateDevice is device specific and should return 0 if
+      % successful, otherwise an error
       function calibrate(self, varargin)
          
          % Call device-specific calibration routine and check status
-         while self.calibrateDevice(varargin{:}) < 1
+         while self.calibrateDevice(varargin{:}) > 0
             
             if self.useGUI
                
@@ -807,7 +810,7 @@ classdef dotsReadable < handle
       %> be safe to call calibrateDevice() multiple times in a row.
       function status = calibrateDevice(self, varargin)
          disp('Calibrate!')
-         status = 1;
+         status = 0;
       end
       
       %> Turn on data recording from the device (for subclasses).

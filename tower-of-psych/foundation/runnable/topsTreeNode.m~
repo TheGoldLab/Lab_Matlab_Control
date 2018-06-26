@@ -125,7 +125,7 @@ classdef topsTreeNode < topsRunnableComposite
       %  GUI but did not run anything
       function finish(self)
          
-         if self.isStarted
+         if self.isRunni
             self.finish@topsRunnable();
          end
       end
@@ -153,6 +153,9 @@ classdef topsTreeNode < topsRunnableComposite
          % Pause experiment, wait for ui
          while self.pauseFlag && ~self.abortFlag
             pause(0.01);      
+            if self.abortFlag
+               disp('aborting!')
+            end
          end
                            
          % Abort experiment
