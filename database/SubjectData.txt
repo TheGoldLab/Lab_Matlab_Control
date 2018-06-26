@@ -1,0 +1,11 @@
+SubjectID,FirstName,LastName,Contact,PhoneNumber,Ethnicity,Gender,DateOfBirth,TaxForm
+CBP,Chris,Pizzica,cpizzica@gmail.com,123-123-3213,White,Male,05/05/1987,1
+WER,asdf,fds,asdf,1231231234,White,Male,12/12/1234,1
+WaW,Waranthorn,Wanichthaworn,waranthw@pennlaw.upenn.edu,NaN,Asian,Female,04/04/1992,2
+WeP,Weerapha,Panatdasirisuk,gluay88weerapha@gmail.com,NaN,Asian,Female,24/08/1988,2
+WiD,Wilasinee,Suksawang,wilasiney@yahoo.com,NaN,Asian,Female,08/05/1980,2
+SpD,Spavit,DarnThamrongkul,spavit044@gmail.com,NaN,Asian,Male,23/12/1975,2
+PaT,Pattira,Thaithosaeng,pattira@sas.upenn.edu,NaN,Asian,Female,15/02/1990,2
+AdR,Adam,Ripley,aripley@wharton.upenn.edu,NaN,White,Male,01/08/1998,1
+TES,test,test,test@gmail.com,1111111111,White,Male,01/01/2001,1
+TST,Test,test,test@test.com,1112223333,White,Male,11/20/1990,1

@@ -174,13 +174,12 @@ classdef topsGroupedList < topsFoundation
             end
         end
         
-        % Make a group from a cell array list of pairs:
-        % <string mnemonic>, <value>
+        % Make a group from a cell array
         function makeGroupFromList(self, groupName, list)
         
            % Save settings
            for ii = 1:2:length(list)
-              self.addItemToGroupWithMnemonic(list{ii+1}, groupName, list{ii})
+              self{groupName}{list{ii}} = list{ii+1};
            end
         end
         

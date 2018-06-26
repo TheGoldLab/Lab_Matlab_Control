@@ -122,9 +122,9 @@ classdef topsTreeNode < topsRunnableComposite
          if ~isempty(self.runGUIHandle)
             
             feval(self.runGUIName, [self.runGUIName name], ...
-               self.runGUIHandle, [], guidata(self.runGUIHandle), varargin{:});
+               self.runGUIHandle, [], guidata(self.caller.GUIHandle), self);
          end
-      end
+
       
       % Check status flags. Return ~0 if something happened
       function ret = checkFlags(self, child)

@@ -1,5 +1,5 @@
-function kb = DBSmatchingKeyboard()
-% function kb = DBSmatchingKeyboard()
+function kb = getMatchingKeyboard()
+% function kb = getMatchingKeyboard()
 %
 % Utility for selecting particular keyboards associated with particular
 % machines

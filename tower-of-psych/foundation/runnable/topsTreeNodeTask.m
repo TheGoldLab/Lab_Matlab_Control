@@ -99,11 +99,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.start@topsRunnable();
 
          % Possibly update the gui using the new task
-         if ~isempty(self.caller.GUIHandle)
-            
-            feval(self.caller.GUIName, [self.caller.GUIName '_updateTask'], ...
-               self.caller.GUIHandle, [], guidata(self.caller.GUIHandle), self);
-         end
+         self.caller.updateGUI('_updateTask', self);         
       end      
             
       % Get a trial struct by trialCount index
@@ -239,12 +235,8 @@ classdef topsTreeNodeTask < topsTreeNode
             disp(self.statusStrings{ii})
          end
          
-         % Conditionally show in GUI
-         if ~isempty(self.caller.GUIHandle)
-            
-            feval(self.caller.GUIName, [self.caller.GUIName '_updateTaskStatus'], ...
-               self.caller.GUIHandle, [], guidata(self.caller.GUIHandle), self, indices);
-         end
+         % Possibly update the gui using the new task
+         self.caller.updateGUI('_updateTaskStatus', self, indices);         
       end
       
       % drawWithTimestamp(self, drawables, inds_on, inds_off, eventTag)

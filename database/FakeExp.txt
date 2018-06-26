@@ -1,0 +1,2 @@
+ProtocolNumber,TaskName,TaskDescription,TaskID,Pathway,Payment,PerSessHour,PerformanceIncentives,LeadExperimenter,Apperatus
+123456,FakeExp,Fake Experiment,FEX,Users/joshuagold/Psychophyics/Data/FEX,10,Hourly Rate,None.,Nobody,Keyboard

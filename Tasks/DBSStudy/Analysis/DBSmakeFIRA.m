@@ -13,7 +13,7 @@ function DBSmakeFIRA(filename)
 if nargin < 1 || isempty(filename)
    % for debugging
    % filename = 'data_2018_06_19_10_48';
-   filename = 'data_2018_06_24_16_21';
+   filename = 'data_2018_06_25_07_47';
 end
 
 % Use the machine-specific data pathname to find the data

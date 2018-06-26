@@ -1,5 +1,5 @@
-function [mainTreeNode, datatub] = DBSrun(location, useGUI)
-%% function [mainTreeNode, datatub] = DBSrun(location, useGUI)
+function [mainTreeNode, datatub] = DBSrun(location)
+%% function [mainTreeNode, datatub] = DBSrun(location)
 %
 % DBSrun = Response-Time Dots
 %
@@ -50,14 +50,10 @@ switch location
          };
 end
 
-% Call the configuration routine
+%% ---- Call the configuration routine
 %
 [mainTreeNode, datatub] = DBSconfigure(arglist{:});
 
-%% ---- Start the gui or run the task
+%% ---- Run it!
 %
-if nargin < 2 || isempty(useGUI) || useGUI
-   mainTreeNode.startGUI('eyeGUI', datatub{'Control'}{'userInputDevice'});
-else
-   mainTreeNode.run();
-end
+mainTreeNode.run();

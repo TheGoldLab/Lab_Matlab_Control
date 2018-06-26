@@ -1,5 +1,5 @@
-function DBSconfigureReadables(datatub)
-% function DBSconfigureReadables(datatub)
+function DBSconfigureReadables(mainTreeNode, datatub)
+% function DBSconfigureReadables(mainTreeNode, datatub)
 %
 % configuration routine for dotsReadable classes
 %
@@ -16,9 +16,12 @@ if strncmp(datatub{'Settings'}{'userInput'}, 'dotsReadableEye', length('dotsRead
    % Set properties: filename, screenEnsemble for calibration drawing, autoread
    [~, name, ~] = fileparts(datatub{'Settings'}{'filename'});
    ui.filename = sprintf('%s_eye', name);
-   ui.filepath = fullfile(DBSfilepath(), 'Pupil');
+   ui.filepath = fullfile(getDataFilepath('DBSStudy'), 'Pupil');
    ui.screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
    ui.recordDuringCalibration = true;
+   
+   % Add it to the mainTreeNode (for possible GUI control)
+   mainTreeNode.runGUIArgs = {ui};
    
    % Start: calibration, recording
    addCall(datatub{'Control'}{'startCallList'}, {@calibrate, ui}, 'calibrate eye');
@@ -30,7 +33,8 @@ if strncmp(datatub{'Settings'}{'userInput'}, 'dotsReadableEye', length('dotsRead
    
 else
    
-   ui = DBSmatchingKeyboard();
+   % Use utility to find the appropriate keyboard for this machine
+   ui = getMatchingKeyboard();
    
    % Add a maintask finish fevalable to close the kb
    addCall(datatub{'Control'}{'finishCallList'}, {@close, ui}, 'close keyboard');

@@ -19,15 +19,19 @@ function [mainTreeNode, datatub] =  DBSconfigure(varargin)
 
 %% ---- Parse arguments for configuration settings
 %
+% Name of the experiment, which determines where data are are stored
+name = 'DBSStudy';
+
 %  Default filename is based on the clock
 c = clock;
-filename = fullfile(DBSfilepath(), 'Raw', ...
+filename = fullfile(getDataFilepath(name), 'Raw', ...
    sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
    c(1), c(2), c(3), c(4), c(5)));
 
 % Other defaults
 settings = { ...
    'taskSpecs',                  {'VGS' 1 'NN' 1 'Quest' 1 'AN' 1 'SN' 1 'NL' 1 'NR' 1}, ...
+   'runGUI',                     'eyeGUI', ...
    'useRemoteDrawing',           true, ...
    'instructionDuration',        10, ...
    'displayIndex',               1, ... % 0=small, 1=main
@@ -52,34 +56,32 @@ end
 %% ---- Create a topsGroupedList
 %
 % This is a versatile data structure that will allow us to pass all
-%  relevant variables to the state machine as it advances
+%  relevant variables to the state machine as it advances.
+%  Make it and add all the settigs as a group
 %
 datatub = topsGroupedList();
-
-% Save settings
-for ii = 1:2:length(settings)
-   datatub{'Settings'}{settings{ii}} = settings{ii+1};
-end
+datatub.makeGroupFromList('Settings', settings);
 
 %% ---- Create topsCallLists for experiment start/finish fevalables
 %
-% Use topsTreeNode utlity
+% Use topsTreeNode utility.
 [mainTreeNode, ...
    datatub{'Control'}{'startCallList'}, ...
    datatub{'Control'}{'finishCallList'}] = ...
-   topsTreeNode.createTopNode('DBS study');
+   topsTreeNode.createTopNode(name, [], datatub{'Settings'}{'runGUI'});
 
 %% ---- Configure elements
 %
 % Done in separate files for readability
 DBSconfigureDrawables(datatub);
-DBSconfigureReadables(datatub);
+DBSconfigureReadables(mainTreeNode, datatub);
 DBSconfigureTasks(mainTreeNode, datatub);
 
 %% ---- Set up data logging
 %
 % Flush the log, log the tub, and save to the file
 topsDataLog.flushAllData(); % Flush stale data, just in case
+topsDataLog.logDataInGroup(struct(mainTreeNode), 'mainTreeNode');
 topsDataLog.logDataInGroup(struct(datatub), 'datatub');
 addCall(datatub{'Control'}{'startCallList'}, {@topsDataLog.writeDataFile, filename}, 'first log write');
 addCall(datatub{'Control'}{'finishCallList'}, {@topsDataLog.writeDataFile}, 'last log write');
