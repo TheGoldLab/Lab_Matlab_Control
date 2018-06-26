@@ -1,2 +1,0 @@
-ProtocolNumber,TaskName,TaskDescription,TaskID,Pathway,Payment,PerSessHour,PerformanceIncentives,LeadExperimenter,Apperatus,RecordingDevice
-123456,EyetrackerExp,Use the Eyetracker to....,ETE,Users/joshuagold/Psychophyics/Data/EyetrackerEXP,10,Per Session,None,Chris Pizzica,Keyboard,EyeTracker

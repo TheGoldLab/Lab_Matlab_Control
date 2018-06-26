@@ -22,24 +22,24 @@ function varargout = SubjectData(varargin)
 
 % Edit the above text to modify the response to help SubjectData
 
-% Last Modified by GUIDE v2.5 13-Sep-2017 16:14:53
+% Last Modified by GUIDE v2.5 26-Jun-2018 12:32:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @SubjectData_OpeningFcn, ...
-                   'gui_OutputFcn',  @SubjectData_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+   'gui_Singleton',  gui_Singleton, ...
+   'gui_OpeningFcn', @SubjectData_OpeningFcn, ...
+   'gui_OutputFcn',  @SubjectData_OutputFcn, ...
+   'gui_LayoutFcn',  [] , ...
+   'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+   gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+   [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+   gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -54,12 +54,22 @@ function SubjectData_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for SubjectData
 handles.output = hObject;
+
+% Add the image
 axes(handles.axes1)
 matlabImage = imread('neurons.jpeg');
 imagesc(matlabImage)
 axis off
 axis image
 handles.Present = 0;
+
+% Save default directory
+handles.defaultDirectory = '/Users/joshuagold/Psychophysics/Projects/Database/';
+if ~exist(handles.defaultDirectory, 'dir')
+   handles.defaultDirectory = uigetdir([], 'Please select a database directory');
+end
+set(handles.dirString, 'String', sprintf('Directory: %s', handles.defaultDirectory));
+
 % Update handles structure
 global counter
 counter = 1;
@@ -68,15 +78,16 @@ counter = 1;
 % PhoneNumber field.
 handles.allow = 0;
 handles.procede = 0;
-guidata(hObject, handles);
 
+% Re-save the handles
+guidata(hObject, handles);
 
 % UIWAIT makes SubjectData wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = SubjectData_OutputFcn(hObject, eventdata, handles) 
+function varargout = SubjectData_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -94,38 +105,38 @@ function Sub_ID_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of Sub_ID as text
 %        str2double(get(hObject,'String')) returns contents of Sub_ID as a double
-SearchData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/SubjectData.txt');
+SearchData = readtable(fullfile(handles.defaultDirectory, 'SubjectData.txt'));
 handles.Sub_ID = get(hObject,'String');
 guidata(hObject,handles);
 if any(strcmp(SearchData.(1),handles.Sub_ID))
-    IDX = strcmp(SearchData.(1),handles.Sub_ID);
-    EDX = find(IDX);
-    set(handles.FirstName,'String',SearchData{EDX,2});
-    handles.FirstName = get(handles.FirstName,'String');
-    set(handles.LastName,'String',SearchData{EDX,3});
-    handles.LastName = get(handles.LastName,'String');
-    set(handles.ContactInfo,'String',SearchData{EDX,4});
-    handles.ContactInfo = get(handles.ContactInfo,'String');
-    set(handles.PhoneNumber,'String',SearchData{EDX,5});
-    handles.PhoneNumber = get(handles.PhoneNumber,'String');
-    set(handles.Ethnicity,'String',SearchData{EDX,6});
-    handles.Ethnicity = get(handles.Ethnicity,'String');
-    set(handles.Gender,'String',SearchData{EDX,7});
-    handles.Gender = get(handles.Gender,'String');
-    set(handles.DateOfBirth,'String',SearchData{EDX,8});
-    handles.DateOfBirth = get(handles.DateOfBirth,'String');
-    if SearchData{EDX,9} == 1
-    set(handles.radiobutton1,'Value',SearchData{EDX,9});
-    handles.TaxForm = get(handles.radiobutton1,'Value');
-    handles.allow = 1;
-    handles.procede = 1;
-    else
-        set(handles.radiobutton2,'Value',1);
-        handles.TaxForm = 2;
-        handles.allow = 1;
-        handles.procede = 1;
-    end
-    handles.Present = 1;
+   IDX = strcmp(SearchData.(1),handles.Sub_ID);
+   EDX = find(IDX);
+   set(handles.FirstName,'String',SearchData{EDX,2});
+   handles.FirstName = get(handles.FirstName,'String');
+   set(handles.LastName,'String',SearchData{EDX,3});
+   handles.LastName = get(handles.LastName,'String');
+   set(handles.ContactInfo,'String',SearchData{EDX,4});
+   handles.ContactInfo = get(handles.ContactInfo,'String');
+   set(handles.PhoneNumber,'String',SearchData{EDX,5});
+   handles.PhoneNumber = get(handles.PhoneNumber,'String');
+   set(handles.Ethnicity,'String',SearchData{EDX,6});
+   handles.Ethnicity = get(handles.Ethnicity,'String');
+   set(handles.Gender,'String',SearchData{EDX,7});
+   handles.Gender = get(handles.Gender,'String');
+   set(handles.DateOfBirth,'String',SearchData{EDX,8});
+   handles.DateOfBirth = get(handles.DateOfBirth,'String');
+   if SearchData{EDX,9} == 1
+      set(handles.radiobutton1,'Value',SearchData{EDX,9});
+      handles.TaxForm = get(handles.radiobutton1,'Value');
+      handles.allow = 1;
+      handles.procede = 1;
+   else
+      set(handles.radiobutton2,'Value',1);
+      handles.TaxForm = 2;
+      handles.allow = 1;
+      handles.procede = 1;
+   end
+   handles.Present = 1;
 end
 guidata(hObject,handles);
 
@@ -138,7 +149,7 @@ function Sub_ID_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -161,7 +172,7 @@ function FirstName_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -184,9 +195,8 @@ function LastName_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
-
 
 
 function ContactInfo_Callback(hObject, eventdata, handles)
@@ -208,7 +218,7 @@ function ContactInfo_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function Ethnicity_Callback(hObject, eventdata, handles)
@@ -229,7 +239,7 @@ function Ethnicity_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -243,13 +253,13 @@ function Gender_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from Gender
 handles.Gender = get(hObject,'Value');
 if handles.Gender == 2
-    handles.Gender = 'Male';
+   handles.Gender = 'Male';
 elseif handles.Gender == 3
-    handles.Gender = 'Female';
+   handles.Gender = 'Female';
 elseif handles.Gender == 4
-    handles.Gender = 'Transgender';
+   handles.Gender = 'Transgender';
 elseif handles.Gender == 5
-    handles.Gender = 'Do Not Wish To Say';
+   handles.Gender = 'Do Not Wish To Say';
 end
 guidata(hObject,handles);
 % --- Executes during object creation, after setting all properties.
@@ -261,7 +271,7 @@ function Gender_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -271,78 +281,83 @@ function Complete_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 if handles.allow && handles.procede == 1
-    
-SubjectID = {handles.Sub_ID};
-FirstName = {handles.FirstName};
-LastName = {handles.LastName};
-Contact = {handles.ContactInfo};
-Ethnicity = {handles.Ethnicity};
-Gender = {handles.Gender};
-DateOfBirth = {handles.DateOfBirth};
-TaxForm = {handles.TaxForm};
-PhoneNumber = {handles.PhoneNumber};
-
-
-CurrentSubject = table(SubjectID,FirstName,LastName,Contact,PhoneNumber,Ethnicity,Gender,DateOfBirth,TaxForm);
-if handles.Present == 0
-writetable(CurrentSubject,'/Users/joshuagold/Psychophysics/Projects/Database/CurrentSubject.txt');
-CurrentSubject = readtable('/Users/joshuagold/Psychophysics/Projects/Database/CurrentSubject.txt');
-% if exist('SubjectData.txt','file') == 2
-%     writetable(NewData,'NewData.txt');
-    OldData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/SubjectData.txt');
-    CombinedData = [OldData;CurrentSubject];
-    writetable(CombinedData,'/Users/joshuagold/Psychophysics/Projects/Database/SubjectData.txt');
-else
-    writetable(CurrentSubject,'/Users/joshuagold/Psychophysics/Projects/Database/CurrentSubject.txt');
-%     writetable(NewData,'SubjectData.txt');
-% end
-% close(SubjectData)
-% else
-%     close(SubjectData)
-end
-close(SubjectData)
-SelectTask
-
+   
+   SubjectID = {handles.Sub_ID};
+   FirstName = {handles.FirstName};
+   LastName = {handles.LastName};
+   Contact = {handles.ContactInfo};
+   Ethnicity = {handles.Ethnicity};
+   Gender = {handles.Gender};
+   DateOfBirth = {handles.DateOfBirth};
+   TaxForm = {handles.TaxForm};
+   PhoneNumber = {handles.PhoneNumber};
+   
+   
+   CurrentSubject = table(SubjectID,FirstName,LastName,Contact,PhoneNumber,Ethnicity,Gender,DateOfBirth,TaxForm);
+   if handles.Present == 0
+      writetable(CurrentSubject,fullfile(handles.defaultDirectory, 'CurrentSubject.txt'));
+      CurrentSubject = readtable(fullfile(handles.defaultDirectory, 'CurrentSubject.txt'));
+      % if exist('SubjectData.txt','file') == 2
+      %     writetable(NewData,'NewData.txt');
+      OldData = readtable(fullfile(handles.defaultDirectory, 'SubjectData.txt'));
+      CombinedData = [OldData;CurrentSubject];
+      writetable(CombinedData, fullfile(handles.defaultDirectory, 'SubjectData.txt'));
+   else
+      writetable(CurrentSubject,fullfile(handles.defaultDirectory, 'CurrentSubject.txt'));
+      %     writetable(NewData,'SubjectData.txt');
+      % end
+      % close(SubjectData)
+      % else
+      %     close(SubjectData)
+   end
+   close(SubjectData)
+   
+   % Call the next gui
+   SelectTask({handles.defaultDirectory});
+   
 elseif handles.allow == 0 && handles.procede == 1
-    disp('Please Select a Tax Form')
+   disp('Please Select a Tax Form')
 elseif handles.allow == 1 && handles.procede == 0
-    disp('Please Enter a Phone Number. If the participant does not wish to give their phone number, just enter 555-555-5555 into the form.')
+   disp('Please Enter a Phone Number. If the participant does not wish to give their phone number, just enter 555-555-5555 into the form.')
 end
+
+
+
 % --- Executes on button press in DatabaseCheck.
 function DatabaseCheck_Callback(hObject, eventdata, handles)
 % hObject    handle to DatabaseCheck (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-SearchData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/SubjectData.txt');
+SearchData = readtable(fullfile(handles.defaultDirectory, 'SubjectData.txt'));
 if any(strcmp(SearchData.(1),handles.Sub_ID))
-    IDX = strcmp(SearchData.(1),handles.Sub_ID);
-    EDX = find(IDX);
-    set(handles.FirstName,'String',SearchData{EDX,2});
-    handles.FirstName = get(handles.FirstName,'String');
-    set(handles.LastName,'String',SearchData{EDX,3});
-    handles.LastName = get(handles.LastName,'String');
-    set(handles.ContactInfo,'String',SearchData{EDX,4});
-    handles.ContactInfo = get(handles.ContactInfo,'String');
-    set(handles.PhoneNumber,'String',SearchData{EDX,5});
-    handles.PhoneNumber = get(handles.PhoneNumber,'String');
-    set(handles.Ethnicity,'String',SearchData{EDX,6});
-    handles.Ethnicity = get(handles.Ethnicity,'String');
-    set(handles.Gender,'String',SearchData{EDX,7});
-    handles.Gender = get(handles.Gender,'String');
-    set(handles.DateOfBirth,'String',SearchData{EDX,8});
-    handles.DateOfBirth = get(handles.DateOfBirth,'String');
-    if SearchData{EDX,9} == 1
-    set(handles.radiobutton1,'Value',SearchData{EDX,9});
-    handles.TaxForm = get(handles.radiobutton1,'Value');
-    handles.allow = 1;
-    handles.procede = 1;
-    else
-        set(handles.radiobutton2,'Value',1);
-        handles.TaxForm = 2;
-        handles.allow = 1;
-        handles.procede = 1;
-    end
-    handles.Present = 1;
+   IDX = strcmp(SearchData.(1),handles.Sub_ID);
+   EDX = find(IDX);
+   set(handles.FirstName,'String',SearchData{EDX,2});
+   handles.FirstName = get(handles.FirstName,'String');
+   set(handles.LastName,'String',SearchData{EDX,3});
+   handles.LastName = get(handles.LastName,'String');
+   set(handles.ContactInfo,'String',SearchData{EDX,4});
+   handles.ContactInfo = get(handles.ContactInfo,'String');
+   set(handles.PhoneNumber,'String',SearchData{EDX,5});
+   handles.PhoneNumber = get(handles.PhoneNumber,'String');
+   set(handles.Ethnicity,'String',SearchData{EDX,6});
+   handles.Ethnicity = get(handles.Ethnicity,'String');
+   set(handles.Gender,'String',SearchData{EDX,7});
+   handles.Gender = get(handles.Gender,'String');
+   set(handles.DateOfBirth,'String',SearchData{EDX,8});
+   handles.DateOfBirth = get(handles.DateOfBirth,'String');
+   if SearchData{EDX,9} == 1
+      set(handles.radiobutton1,'Value',SearchData{EDX,9});
+      handles.TaxForm = get(handles.radiobutton1,'Value');
+      handles.allow = 1;
+      handles.procede = 1;
+   else
+      set(handles.radiobutton2,'Value',1);
+      handles.TaxForm = 2;
+      handles.allow = 1;
+      handles.procede = 1;
+   end
+   handles.Present = 1;
 end
 guidata(hObject,handles);
 
@@ -367,7 +382,7 @@ function DateOfBirth_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -388,19 +403,19 @@ function radiobutton2_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of radiobutton2
 function uibuttongroup1_SelectionChangedFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in uibuttongroup1 
+% hObject    handle to the selected object in uibuttongroup1
 % eventdata  structure with the following fields
 %	EventName: string 'SelectionChanged' (read only)
 %	OldValue: handle of the previously selected object or empty
 %	NewValue: handle of the currently selected object
 % handles    structure with handles and user data (see GUIDATA)
 switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
-    case 'radiobutton1'
-        handles.TaxForm = 1;
-        handles.allow = 1;
-    case 'radiobutton2'
-        handles.TaxForm = 2;
-        handles.allow = 1;
+   case 'radiobutton1'
+      handles.TaxForm = 1;
+      handles.allow = 1;
+   case 'radiobutton2'
+      handles.TaxForm = 2;
+      handles.allow = 1;
 end
 guidata(hObject, handles);
 
@@ -426,7 +441,7 @@ function PhoneNumber_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -436,3 +451,15 @@ function SubIDCheck_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 EmailSubID
+
+
+% --- Executes on button press in dirButton.
+function dirButton_Callback(hObject, eventdata, handles)
+% hObject    handle to dirButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Open a dialog to get the new path
+handles.defaultDirectory = uigetdir([], 'Please select a database directory');
+set(handles.dirString, 'String', sprintf('Directory: %s', handles.defaultDirectory));
+guidata(hObject,handles);

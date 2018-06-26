@@ -27,19 +27,19 @@ function varargout = SessionData(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @SessionData_OpeningFcn, ...
-                   'gui_OutputFcn',  @SessionData_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+   'gui_Singleton',  gui_Singleton, ...
+   'gui_OpeningFcn', @SessionData_OpeningFcn, ...
+   'gui_OutputFcn',  @SessionData_OutputFcn, ...
+   'gui_LayoutFcn',  [] , ...
+   'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+   gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+   [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+   gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -54,12 +54,18 @@ function SessionData_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for SessionData
 handles.output = hObject;
-% Update handles structure
+
+% Add the image
 axes(handles.axes1)
 matlabImage = imread('neurons.jpeg');
 imagesc(matlabImage)
 axis off
 axis image
+
+% save the dirname argument
+handles.defaultDirectory = varargin{1}{:};
+
+% re-save the handles
 guidata(hObject, handles);
 
 % UIWAIT makes SessionData wait for user response (see UIRESUME)
@@ -67,7 +73,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = SessionData_OutputFcn(hObject, eventdata, handles) 
+function varargout = SessionData_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -101,7 +107,7 @@ function SessionTime_CreateFcn(hObject, eventdata, handles)
 % reallyannoying = moreannoying([48:49 63:65]);
 % set(hObject,'String',reallyannoying);
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -125,7 +131,7 @@ function SessionDate_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -149,7 +155,7 @@ function SubjectID_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -172,7 +178,7 @@ function Payment_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -196,7 +202,7 @@ function TaskID_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -220,7 +226,7 @@ function TaskVersion_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -244,7 +250,7 @@ function Experimenter_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -268,7 +274,7 @@ function SessionsNumber_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -302,7 +308,7 @@ function Protocol_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -312,7 +318,7 @@ function AutoComplete_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-TaskData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/CurrentTask.txt');
+TaskData = readtable(fullfile(handles.defaultDirectory, 'CurrentTask.txt'));
 set(handles.Protocol,'String',TaskData{1,1});
 handles.Protocol = get(handles.Protocol,'String');
 
@@ -335,7 +341,7 @@ handles.Payment = get(handles.Payment,'String');
 set(handles.PerSessHour,'String',TaskData{1,7})
 handles.PerSessHour = get(handles.PerSessHour,'String');
 
-CurrentSubject = readtable('/Users/joshuagold/Psychophysics/Projects/Database/CurrentSubject.txt');
+CurrentSubject = readtable(fullfile(handles.defaultDirectory, 'CurrentSubject.txt'));
 set(handles.SubjectID,'String',CurrentSubject{1,1})
 handles.SubjectID = get(handles.SubjectID,'String');
 guidata(hObject,handles);
@@ -347,33 +353,34 @@ function Complete_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 guidata(hObject,handles)
 if handles.Consent == 1
-SessionTime = {handles.SessionTime};
-SessionDate = {handles.SessionDate};
-TaskVersion = {handles.TaskVersion};
-Experimenter = {handles.Experimenter};
-SessionsNumber = {handles.SessionsNumber};
-Consent = {handles.Consent};
-ExperimenterNotes = {handles.ExperimenterNotes};
-
-CurrentSubject = readtable('/Users/joshuagold/Psychophysics/Projects/Database/CurrentSubject.txt');
-CurrentTask = readtable('/Users/joshuagold/Psychophysics/Projects/Database/CurrentTask.txt');
-TotalPayment = CurrentTask{1,6};
-CurrentSession = table(SessionTime,SessionDate,TaskVersion,Experimenter,SessionsNumber,Consent,ExperimenterNotes, TotalPayment);
-
-ExperimentLog = [CurrentSubject CurrentTask CurrentSession];
-writetable(ExperimentLog,'/Users/joshuagold/Psychophysics/Projects/Database/ExperimentLog.txt');
-
-ExperimentLog = readtable('/Users/joshuagold/Psychophysics/Projects/Database/ExperimentLog.txt');
-if exist('/Users/joshuagold/Psychophysics/Projects/Database/ExperimentArchive.txt','file')
-ExperimentArchive = readtable('/Users/joshuagold/Psychophysics/Projects/Database/ExperimentArchive.txt');
-ExperimentAddition = [ExperimentArchive;ExperimentLog];
-writetable(ExperimentAddition,'/Users/joshuagold/Psychophysics/Projects/Database/ExperimentArchive.txt');
+   SessionTime = {handles.SessionTime};
+   SessionDate = {handles.SessionDate};
+   TaskVersion = {handles.TaskVersion};
+   Experimenter = {handles.Experimenter};
+   SessionsNumber = {handles.SessionsNumber};
+   Consent = {handles.Consent};
+   ExperimenterNotes = {handles.ExperimenterNotes};
+   
+   CurrentSubject = readtable(fullfile(handles.defaultDirectory, 'CurrentSubject.txt'));
+   CurrentTask = readtable(fullfile(handles.defaultDirectory, 'CurrentTask.txt'));
+   TotalPayment = CurrentTask{1,6};
+   CurrentSession = table(SessionTime,SessionDate,TaskVersion,Experimenter,SessionsNumber,Consent,ExperimenterNotes, TotalPayment);
+   
+   ExperimentLog = [CurrentSubject CurrentTask CurrentSession];
+   writetable(ExperimentLog,fullfile(handles.defaultDirectory, 'ExperimentLog.txt'));
+   ExperimentLog = readtable(fullfile(handles.defaultDirectory, 'ExperimentLog.txt'));
+   
+   if exist(fullfile(handles.defaultDirectory, 'ExperimentArchive.txt'), 'file');
+      
+      ExperimentArchive = readtable(fullfile(handles.defaultDirectory, 'ExperimentArchive.txt'));
+      ExperimentAddition = [ExperimentArchive;ExperimentLog];
+      writetable(ExperimentAddition,fullfile(handles.defaultDirectory, 'ExperimentArchive.txt'));
+   else
+      writetable(ExperimentLog,fullfile(handles.defaultDirectory, 'ExperimentArchive.txt'));
+   end
+   close(SessionData);
 else
-    writetable(ExperimentLog,'/Users/joshuagold/Psychophysics/Projects/Database/ExperimentArchive.txt');
-end
-close(SessionData);
-else
-    disp('You can not proceed without informed consent.')
+   disp('You can not proceed without informed consent.')
 end
 
 
@@ -396,7 +403,7 @@ function ExperimenterNotes_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -419,5 +426,5 @@ function PerSessHour_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end

@@ -27,19 +27,19 @@ function varargout = SelectTask(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @SelectTask_OpeningFcn, ...
-                   'gui_OutputFcn',  @SelectTask_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+   'gui_Singleton',  gui_Singleton, ...
+   'gui_OpeningFcn', @SelectTask_OpeningFcn, ...
+   'gui_OutputFcn',  @SelectTask_OutputFcn, ...
+   'gui_LayoutFcn',  [] , ...
+   'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+   gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+   [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+   gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -59,6 +59,10 @@ matlabImage = imread('neurons.jpeg');
 imagesc(matlabImage)
 axis off
 axis image
+
+% save the dirname argument
+handles.defaultDirectory = varargin{1}{:};
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -67,7 +71,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = SelectTask_OutputFcn(hObject, eventdata, handles) 
+function varargout = SelectTask_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -109,7 +113,7 @@ function ProtocolNumber_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -132,9 +136,8 @@ function TaskName_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
-
 
 
 function TaskDescription_Callback(hObject, eventdata, handles)
@@ -155,9 +158,8 @@ function TaskDescription_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
-
 
 
 function TaskID_Callback(hObject, eventdata, handles)
@@ -178,7 +180,7 @@ function TaskID_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -187,7 +189,7 @@ function AuditoryTask_Callback(hObject, eventdata, handles)
 % hObject    handle to AuditoryTask (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-TaskData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/EyetrackerExp.txt');
+TaskData = readtable(fullfile(handles.defaultDirectory, 'EyetrackerExp.txt'));
 set(handles.ProtocolNumber,'String',TaskData{1,1});
 set(handles.TaskName,'String',TaskData{1,2});
 set(handles.TaskDescription,'String',TaskData{1,3});
@@ -202,10 +204,11 @@ function Complete_Callback(hObject, eventdata, handles)
 % hObject    handle to Complete (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-writetable(handles.CurrentTask,'/Users/joshuagold/Psychophysics/Projects/Database/CurrentTask.txt')
+writetable(handles.CurrentTask,fullfile(handles.defaultDirectory, 'CurrentTask.txt'));
 close(SelectTask);
-SessionData;
 
+% Open the next diaglog -- pass as cell
+SessionData({handles.defaultDirectory});
 
 
 function DataPathway_Callback(hObject, eventdata, handles)
@@ -226,7 +229,7 @@ function DataPathway_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 
@@ -235,7 +238,7 @@ function AuditoryDecision_Callback(hObject, eventdata, handles)
 % hObject    handle to AuditoryDecision (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-TaskData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/AuditoryDecision.txt');
+TaskData = readtable(fullfile(handles.defaultDirectory, 'AuditoryDecision.txt'));
 set(handles.ProtocolNumber,'String',TaskData{1,1});
 set(handles.TaskName,'String',TaskData{1,2});
 set(handles.TaskDescription,'String',TaskData{1,3});
@@ -250,7 +253,7 @@ function TonicOddball_Callback(hObject, eventdata, handles)
 % hObject    handle to TonicOddball (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-TaskData = readtable('/Users/joshuagold/Psychophysics/Projects/Database/TonicOddball.txt');
+TaskData = readtable(fullfile(handles.defaultDirectory, 'TonicOddball.txt'));
 set(handles.ProtocolNumber,'String',TaskData{1,1});
 set(handles.TaskName,'String',TaskData{1,2});
 set(handles.TaskDescription,'String',TaskData{1,3});

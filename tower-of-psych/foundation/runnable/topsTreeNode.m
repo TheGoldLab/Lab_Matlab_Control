@@ -69,12 +69,18 @@ classdef topsTreeNode < topsRunnableComposite
       
       % args to the runGUI constructor
       runGUIArgs = {};      
+      
+      % databaseGUI name
+      databaseGUIName = [];
    end
    
    properties (Hidden)
       
       % handle to taskGui interface
       runGUIHandle = [];
+
+      % databaseGUI name
+      databaseGUIHandle = [];
    end
    
    methods
@@ -99,6 +105,9 @@ classdef topsTreeNode < topsRunnableComposite
       function start(self)
          
          % check for databaseGUI
+         if ~isempty(self.databaseGUIName) && isempty(self.databaseGUIHandle)
+            self.databaseGUIHandle = feval(self.databaseGUIName);          
+         end
          
          % check for runGUI
          if ~isempty(self.runGUIName) && isempty(self.runGUIHandle)
@@ -141,19 +150,19 @@ classdef topsTreeNode < topsRunnableComposite
          while self.pauseFlag && ~self.abortFlag
             pause(0.01);            
          end
-         
-         % Recalibrate
-         if ~isempty(self.calibrateObject)
-             calibrate(self.calibrateObject);
-             self.calibrateObject = [];
-         end         
-         
+                           
          % Abort experiment
          if self.abortFlag
             self.abortFlag=false;
             self.abort();
             ret = 1;
             return
+         end
+         
+         % Recalibrate
+         if ~isempty(self.calibrateObject)
+             calibrate(self.calibrateObject);
+             self.calibrateObject = [];
          end
          
          % Skip to next task
@@ -279,7 +288,7 @@ classdef topsTreeNode < topsRunnableComposite
       %  databaseGUI ... 
       %  runGUI
       function [node, startCallList, finishCallList] = createTopNode(name, ...
-            databaseGUI, runGUIName)
+            databaseGUIName, runGUIName)
          
          % ---- Create topsCallLists for start/finish fevalables
          %
@@ -304,6 +313,9 @@ classdef topsTreeNode < topsRunnableComposite
          node.finishFevalable = {@run, finishCallList};
          
          % ---- Possibly add the databaseGUI
+         if nargin >= 2 && ~isempty(databaseGUIName)
+            node.databaseGUIName = databaseGUIName;
+         end
          
          % ---- Possibly add the runGUI
          if nargin >= 3 && ~isempty(runGUIName)

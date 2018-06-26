@@ -1,2 +1,0 @@
-ProtocolNumber,TaskName,TaskDescription,TaskID,Pathway,Payment,PerSessHour,PerformanceIncentives,LeadExperimenter,Apperatus,RecordingDevice
-827236,AuditoryDecision,high vs low discrimination task with bias manipulation using priors & pretones ,AudiDeci,Users/joshuagold/Psychophyics/Data/AuditoryDecisionPriorsTask,8,Per Session,Bonus up to 20,Lalitta,Gamepad,None
