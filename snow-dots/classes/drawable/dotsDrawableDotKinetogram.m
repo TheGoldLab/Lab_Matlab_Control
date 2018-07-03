@@ -1,6 +1,10 @@
 classdef dotsDrawableDotKinetogram < dotsDrawableVertices
     % @class dotsDrawableDotKinetogram
     % Animate random dots that carry a motion signal.
+    %
+    % 07/03/2018 jig updated random-number generating syntax to use
+    % recommended rng instead of rand
+    
     properties
         % the x-coordinate of the center of the dot field (degrees visual
         % angle, centered)
@@ -63,9 +67,16 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % OpenGL stencil to use for the circular aperture
         stencilNumber = 2;
+        
+        % If not nan, this value specifies a "NO-VAR" condition that 
+        %   produces the exact sequence of dots for a given coherence 
+        %   and direction (assuming all other properties are constant).
+        %   Seed is computed as randBase+coherence+100*direction;
+        randBase = nan;
     end
     
     properties (SetAccess = protected)
+       
         % number of dots in the kinetogram, includes all interleaving
         % frames.
         nDots;
@@ -107,9 +118,15 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % Compute some parameters and create a circular aperture texture.
         function prepareToDrawInWindow(self)
+           
             % access info about the drawing window
             screen = dotsTheScreen.theObject();
             
+            % Check for random number seed
+            if ~isnan(self.randBase)
+               rng(self.randBase + self.coherence + 100*self.direction);
+            end
+               
             % gross accounting for the underlying dot field
             fieldWidth = self.diameter*self.fieldScale;
             self.nDots = ceil(self.density * fieldWidth^2 ...
@@ -150,6 +167,12 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % Compute dot positions for the next frame of animation.
         function computeNextFrame(self)
+           
+           % Check for random number seed
+           if ~isnan(self.randBase)
+              rng(self.randBase + self.coherence + 100*self.direction + 50000);
+           end
+
             % cache some properties as local variables because it's faster
             nFrames = self.interleaving;
             frame = self.frameNumber;

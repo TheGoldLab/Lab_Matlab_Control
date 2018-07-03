@@ -152,7 +152,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if isempty(self.calibrationEnsemble)
             
             % Set screen coordinates
-            windowRect = getObjectProperty(self.screenEnsemble, 'windowRect')
+            windowRect = getObjectProperty(self.screenEnsemble, 'windowRect');
             Eyelink('Command', 'screen_pixel_coords = %d %d %d %d', ...
                windowRect(1), windowRect(2), windowRect(3)-1, windowRect(4)-1);
             
@@ -237,6 +237,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          % Send mode key
          Eyelink('SendKeyButton', double('c'), 0, self.KB_PRESS);
          
+         % get screen info
+         windowRect = getObjectProperty(self.screenEnsemble, 'windowRect');
+         pixelsPerDegree = getObjectProperty(self.screenEnsemble, 'pixelsPerDegree');
+         
          % Loop through the calibration protocol
          targetOldX           = self.MISSING;
          targetOldY           = self.MISSING;
@@ -271,9 +275,13 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                      targetY ~= self.MISSING) && (targetX ~= targetOldX || ...
                      targetY ~= targetOldY)
                   
-                  % Present calibration target at the updated position
-                  self.calibrationEnsemble.setObjectProperty('xCenter', targetX);
-                  self.calibrationEnsemble.setObjectProperty('yCenter', targetY);
+                  % Present calibration target at the updated position,
+                  % converted into degrees visual angle wrt center of
+                  % screen
+                  self.calibrationEnsemble.setObjectProperty('xCenter', ...
+                     (targetX - windowRect(3)/2)/pixelsPerDegree);
+                  self.calibrationEnsemble.setObjectProperty('yCenter', ...
+                     (targetY - windowRect(4)/2)/pixelsPerDegree);
                   
                   % Draw the target and flip the buffer
                   self.calibrationEnsemble.callObjectMethod(...

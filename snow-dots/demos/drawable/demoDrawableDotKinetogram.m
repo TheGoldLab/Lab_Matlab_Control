@@ -80,7 +80,7 @@ try
     % get a drawing window
     %sc=dotsTheScreen.theObject;
     %sc.reset('displayIndex', 2);
-    dotsTheScreen.reset('displayIndex', 2);
+    dotsTheScreen.reset('displayIndex', 0);
     dotsTheScreen.openWindow();
     
     % get the objects ready to use the window
