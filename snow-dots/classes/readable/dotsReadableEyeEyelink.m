@@ -46,9 +46,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % Playable objects for calibration feedback tones
       calibrationPlayables = {};
       
-      % The ensemble holding the calibration target
-      calibrationEnsemble = [];
-      
       % Calibration user input
       calibrationUI = [];
       
@@ -87,7 +84,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       end
       
       % Transfer data file
-      function transferDataFile(self. pathname)
+      function transferDataFile(self, pathname)
          
          % get the file
          status = Eyelink('ReceiveFile', [], [], pathname);
@@ -155,7 +152,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if isempty(self.calibrationEnsemble)
             
             % Set screen coordinates
-            windowRect = getObjectProperty(self.screenEnsemble, 'windowRect');
+            windowRect = getObjectProperty(self.screenEnsemble, 'windowRect')
             Eyelink('Command', 'screen_pixel_coords = %d %d %d %d', ...
                windowRect(1), windowRect(2), windowRect(3)-1, windowRect(4)-1);
             

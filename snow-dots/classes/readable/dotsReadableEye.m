@@ -926,12 +926,13 @@ classdef dotsReadableEye < dotsReadable
       % xyRect coordinates into a single transform to be applied to data
       % during appendData().
       function setupCoordinateRectTransform(self)
-         self.xScale = self.xyRect(3)/self.inputRect(3);
-         self.xOffset = ...
-            (self.xyRect(1)/self.xScale) - self.inputRect(1);
-         self.yScale = self.xyRect(4)/self.inputRect(4);
-         self.yOffset = ...
-            (self.xyRect(2)/self.yScale) - self.inputRect(2);
+         self.xyScale = [ ...
+             self.xyRect(3)/self.inputRect(3), ...
+             self.xyRect(4)/self.inputRect(4)];
+             
+         self.xyOffset = [ ...
+            (self.xyRect(1)/self.xyScale(1)) - self.inputRect(1), ...
+            (self.xyRect(2)/self.xyScale(2)) - self.inputRect(2)];
       end
    end
    
