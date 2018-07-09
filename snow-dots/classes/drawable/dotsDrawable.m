@@ -67,6 +67,7 @@ classdef dotsDrawable < handle
       % Returns a struct of frame timing information, as returned from
       % nextFrame().
       function frameInfo = drawFrame(drawables, doClear)
+         
          % draw() each drawable
          for ii = 1:numel(drawables)
             drawables{ii}.mayDrawNow();

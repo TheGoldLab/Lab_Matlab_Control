@@ -518,20 +518,20 @@ classdef dotsReadableEye < dotsReadable
             case {'d' 'D'}
                
                % Drift correction
-               status = self.driftCorrectNow(varargin{:});
+               status = self.driftCorrect(varargin{:});
                
             otherwise % case {'c' 'C'}
                
-               % Calibration
-               status = self.calibrateNow();
+               % Calibration with respect to screen coordinates
+               status = self.calibrateToScreen();
          end
       end
       
-      % driftCorrectNow
+      % driftCorrect
       %
       % Do drift correction. Optional argument is x,y location of
       %  current gaze
-      function status = driftCorrectNow(self, currentXY)
+      function status = driftCorrect(self, currentXY)
          
          if nargin < 2 || isempty(currentXY)
             currentXY = [0 0];
@@ -559,10 +559,10 @@ classdef dotsReadableEye < dotsReadable
          status = 0;
       end
       
-      % calibrateNow
+      % calibrateToScreen
       %
       % Calibrate with respect to screen coordinates
-      function status = calibrateNow(self)
+      function status = calibrateToScreen(self)
          
          % For debugging
          % fig = figure;

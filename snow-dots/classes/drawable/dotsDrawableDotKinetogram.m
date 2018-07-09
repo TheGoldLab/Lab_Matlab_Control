@@ -17,6 +17,12 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % percentage of dots that carry the intended motion signal
         coherence = 50;
         
+        % to randomize coherence
+        coherenceSTD = 0;
+        
+        % if flip when random coherence < 0
+        flipDir = false;
+        
         % density of dots in the kinetogram (dots per degree-visual-angle^2
         % per second)
         density = 16.7;
@@ -186,16 +192,29 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             self.frameSelector = thisFrame;
             nFrameDots = sum(thisFrame);
             
-            % pick coherent dots
+            % pick coherent dots... need to check if we flip direction
+            % based on random coherence pick
+            degreeOffset = 0;
             cohSelector = false(1, numel(thisFrame));
-            cohCoinToss = 100*rand(1, nFrameDots) < self.coherence;
+            if self.coherenceSTD==0
+               cohCoinToss = 100*rand(1, nFrameDots) < self.coherence;
+            else
+               coh = normrnd(self.coherence, self.coherenceSTD);
+               if coh < 0
+                  if self.flipDir
+                     degreeOffset = 180;
+                  end
+                  coh = abs(coh);
+               end
+               cohCoinToss = 100*rand(1, nFrameDots) < coh;
+            end               
             nCoherentDots = sum(cohCoinToss);
             nNonCoherentDots = nFrameDots - nCoherentDots;
             lifetimes = self.dotLifetimes;
             if self.isLimitedLifetime
                 % would prefer not to call sort
                 %   should be able to do accounting as we go
-                [frameSorted, frameOrder] = sort(lifetimes(thisFrame));
+                [~, frameOrder] = sort(lifetimes(thisFrame));
                 isDueForCoh = false(1, nFrameDots);
                 isDueForCoh(frameOrder(1:nCoherentDots)) = true;
                 cohSelector(thisFrame) = isDueForCoh;
@@ -240,7 +259,7 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             % move the coherent dots
             XY = self.normalizedXY;
             R = self.deltaR;
-            radians = pi*degrees/180;
+            radians = pi*(degrees+degreeOffset)/180;
             deltaX = R*cos(radians);
             deltaY = R*sin(radians);
             XY(1,cohSelector) = XY(1,cohSelector) + deltaX;
