@@ -1,11 +1,15 @@
 % Script for testing the dotsReadableEyeEyelink class
 
-% set up a small screen for calibration
-screenEnsemble = makeScreenEnsemble(false, 1);
+% set up a screen for calibration
+screenEnsemble = makeScreenEnsemble(false, 2);
 screenEnsemble.callObjectMethod(@open);
 
 % Get the readableEye object
 e = dotsReadableEyeEyelink();
+
+if ~e.isAvailable
+    disp('ERROR')
+end
 
 % give it the screen ensemble
 e.screenEnsemble = screenEnsemble;
@@ -14,7 +18,7 @@ e.screenEnsemble = screenEnsemble;
 e.calibrate();
    
 % % try validation
-e.calibrate('v');
+% e.calibrate('v');
 
 % try
 %    

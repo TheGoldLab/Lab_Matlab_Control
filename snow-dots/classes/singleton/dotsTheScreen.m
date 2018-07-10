@@ -155,11 +155,15 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             display = displays(whichElement);
             self.displayPixels = [0 0 display.screenSizePixel];
             
+            % reading from mglDescribeDisplays seems accurate
+            self.width = display.screenSizeMM(1)/10;
+            self.height = display.screenSizeMM(2)/10;
+            
             % approximate visual coordinate conversion factor
             % note that the "actual" conversion occurs below in
             % open(), with mglVisualAngleCoordinates()
-            self.pixelsPerDegree = self.displayPixels(3) ...
-                / (2*(180/pi)*atan2(self.width/2, self.distance));
+            self.pixelsPerDegree = self.displayPixels(3) / ...
+                (2 * rad2deg(atan2(self.width/2, self.distance)));
             
             % utility to manage frame timing
             self.flushGauge = dotsMglFlushGauge();
@@ -196,6 +200,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             %   this may fail silently, also
             dotsMglSmoothness('scene', double(self.multisample));
             
+            % in pixels
             if isempty(self.windowRect)
                 w = mglGetParam('screenWidth');
                 h = mglGetParam('screenHeight');

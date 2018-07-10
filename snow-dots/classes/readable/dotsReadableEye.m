@@ -106,7 +106,7 @@ classdef dotsReadableEye < dotsReadable
       calibrationFPY = 5;
       
       % Size of calibration target
-      calibrationFPSize = 2;
+      calibrationFPSize = 1.5;
       
       % Tolerance for using calibration values -- determined by
       % trial-and-error

@@ -11,11 +11,13 @@ end
 %sc=dotsTheScreen.theObject;
 %sc.reset('displayIndex', 2);
 
-dotsTheScreen.reset('displayIndex', 0);
+dotsTheScreen.reset('displayIndex', 2);
 dotsTheScreen.openWindow();
 
 % create a targets object
 t = dotsDrawableTargets();
+
+t.width = 45;
 
 % draw one target
 t.isSmooth = false;
