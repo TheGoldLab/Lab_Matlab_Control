@@ -93,6 +93,12 @@ classdef dotsReadableEye < dotsReadable
       % axis limits
       gazeMonitorLim = 20;
       
+      % samples to plot during showEye
+      samplesToShow = 1000;
+      
+      % automatically show eye after calibration
+      showEyeAfterCalibration = true;
+      
       % Number of samples to collect for calibration offset
       offsetCalibrationN = 30;
       
@@ -123,6 +129,10 @@ classdef dotsReadableEye < dotsReadable
       % number of times to try calibrating before giving a message if it
       % keeps failing (not within tolerances
       numberCalibrationTries = 5;
+      
+      % ui for user feedback during/after calibration
+      calibrationUI = [];
+      
    end
    
    properties (SetAccess = protected)
@@ -501,7 +511,11 @@ classdef dotsReadableEye < dotsReadable
       %   and put in units of deg vis angle
       %
       % Optional arguments to recenter only
-      %   1: mode flag: 'c' for calibrate, 'd' for drift correction
+      %   1: mode flag: 
+      %     'c'      calibrate
+      %     'v'      validate
+      %     's'      show eye position
+      %     'd'      drift correction
       %   2: optional x,y values of current gaze for drift correcton
       %
       % Returns:
@@ -513,17 +527,62 @@ classdef dotsReadableEye < dotsReadable
             mode = 'c';
          end
          
+         % get a keyboard, if not given
+         if isempty(self.calibrationUI)
+            % special case of mouse simulator
+            if isa(self, 'dotsReadableEyeMouseSimulator')
+               self.calibrationUI = self.HIDmouse;
+               self.calibrationUI.deactivateEvents();
+               self.calibrationUI.defineCalibratedEvent(5, 'space', 1, true);
+            else
+               self.calibrationUI = getMatchingKeyboard();
+               self.calibrationUI.deactivateEvents();
+               self.calibrationUI.defineCalibratedEvent('KeyboardSpacebar', 'space', 1, true);
+            end
+            self.calibrationUI.isAutoRead = true;
+         end
+         
+         % Wait until spacebar done
+         while ~isempty(self.calibrationUI.getNextEvent()) end
+         self.calibrationUI.flushData();
+         
+         % Generate Fixation target (cross)
+         %
+         % We will create a single drawable object to represent the fixation cue.
+         % Then, we simply adjust the location of the cue each time we present it.
+         if isempty(self.calibrationEnsemble)
+            fixationCue = dotsDrawableTargets();
+            fixationCue.width  = [1 0.1] * self.calibrationFPSize;
+            fixationCue.height = [0.1 1] * self.calibrationFPSize;
+            self.calibrationEnsemble = makeDrawableEnsemble(...
+               'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
+         end
+          
+         % Default no error
+         status = 0;
+         
          % Check for calibration/drift correction mode
          switch mode
+            
             case {'d' 'D'}
                
                % Drift correction
                status = self.driftCorrect(varargin{:});
                
+            case {'s' 'S'}
+               
+               % Show eye position
+               self.showEyePosition();
+                              
             otherwise % case {'c' 'C'}
                
-               % Calibration with respect to screen coordinates
-               status = self.calibrateToScreen();
+               % Calibration
+               status = self.calibrateNow();
+                             
+               if status == 0 && self.showEyeAfterCalibration
+                  % Show eye position
+                  self.showEyePosition();
+               end
          end
       end
       
@@ -531,11 +590,25 @@ classdef dotsReadableEye < dotsReadable
       %
       % Do drift correction. Optional argument is x,y location of
       %  current gaze
-      function status = driftCorrect(self, currentXY)
+      function status = driftCorrect(self, currentXY, showTarget)
          
+         % check args
          if nargin < 2 || isempty(currentXY)
             currentXY = [0 0];
          end
+         
+         if nargin < 3 || isempty(showTarget)
+            showTarget = false;
+         end
+         
+         % possibly show target
+         if showTarget
+            self.calibrationEnsemble.setObjectProperty('xCenter', currentXY(1));
+            self.calibrationEnsemble.setObjectProperty('yCenter', currentXY(2));
+            self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            % wait to settle
+            pause(0.3);
+         end   
          
          % Collect transformed x,y data
          gazeXY = nans(self.offsetCalibrationN, 2);
@@ -555,32 +628,87 @@ classdef dotsReadableEye < dotsReadable
             disp('dotsReadableEye calibration recenter failed')
          end
          
+         % Possibly hide target
+         if showTarget
+            self.calibrationEnsemble.callObjectMethod( ...
+               @dotsDrawable.blankScreen, {}, [], true);
+         end
+         
          % all is good
          status = 0;
       end
       
-      % calibrateToScreen
+      % showEyePosition
+      %
+      % Read and plot eye position
+      function showEyePosition(self)
+                  
+         % Make ensemble of target objects to show
+         targetEnsemble = makeDrawableEnsemble('spots', ...
+            {dotsDrawableTargets}, self.screenEnsemble, false);
+ 
+         targetEnsemble.setObjectProperty('width', 0.5);
+         targetEnsemble.setObjectProperty('height', 0.5);
+         targetEnsemble.setObjectProperty('isColorByVertexGroup', true);
+         
+         % blank the screen
+         self.calibrationEnsemble.callObjectMethod( ...
+            @dotsDrawable.blankScreen, {}, [], true);
+
+         % keep history
+         xyData = nans(self.samplesToShow, 5);
+         xyData(:,3:5) = repmat(linspace(0,1,self.samplesToShow)',1,3);
+         lastTime = -9999;
+         
+         % Get frame interval
+         fi = 1/self.screenEnsemble.getObjectProperty('windowFrameRate', 1);
+         
+         % Loop until spacebar
+         while ~strcmp(self.calibrationUI.getNextEvent(), 'space')
+            
+            % Get all new events
+            tic;
+            while toc < fi - 0.004 % leave some flip time
+               
+               self.read();
+               % rotate buffer
+               if self.time > lastTime
+                  lastTime             = self.time;
+                  xyData(1:end-1,1:2)  = xyData(2:end,1:2);
+                  xyData(end,1:2)      = [self.x self.y];
+               end
+            end
+            
+            % update the drawable
+            Lgood = ~isnan(xyData(:,1));
+            
+            if any(Lgood)
+               targetEnsemble.setObjectProperty('xCenter', xyData(Lgood,1));
+               targetEnsemble.setObjectProperty('yCenter', xyData(Lgood,2));
+               targetEnsemble.setObjectProperty('colors', xyData(Lgood,3:5));
+               
+               % show it
+               targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            end
+           
+         end
+                  
+         % blank the screen
+         self.calibrationEnsemble.callObjectMethod( ...
+            @dotsDrawable.blankScreen, {}, [], true);
+      end
+
+      % calibrateNow
       %
       % Calibrate with respect to screen coordinates
-      function status = calibrateToScreen(self)
+      % Can be overloaded
+      function status = calibrateNow(self)
          
          % For debugging
          % fig = figure;
          % cla reset; hold on;
          
-         % Generate Fixation target (cross)
-         %
-         % We will create a single drawable object to represent the fixation cue.
-         % Then, we simply adjust the location of the cue each time we present it.
-         if isempty(self.calibrationEnsemble)
-            fixationCue = dotsDrawableTargets();
-            fixationCue.width  = [1 0.1] * self.calibrationFPSize;
-            fixationCue.height = [0.1 1] * self.calibrationFPSize;
-            self.calibrationEnsemble = makeDrawableEnsemble(...
-               'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
-         end
-         
-         % Set up matrices to present cues and collect fixation data
+        % Set up matrices to present cues and collect fixation data
          targetXY = [ ...
             -self.calibrationFPX  self.calibrationFPY;
             self.calibrationFPX  self.calibrationFPY;
@@ -903,11 +1031,9 @@ classdef dotsReadableEye < dotsReadable
             
             % Save the transformed x value(s)
             newData(Lx,2) = transformedData(:,1);
-            self.x = transformedData(end,1);
             
             % Save the transformed y value(s)
             newData(Ly,2) = transformedData(:,2);
-            self.y = transformedData(end,2);
          end
          
          % Transform the pupil

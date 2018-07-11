@@ -17,11 +17,17 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       waitForModeReadyTime = 50;
       
       % Whether or not to automatically do validation after calibration
-      validateAfterCalibrate = true;
+      validateAfterCalibration = true;
       
-      % if false, user must press spacebar while fixating during
-      % calibration
-      useAuoTrigger = true;
+      % calibration/validation pacing: 0 (for manual trigger) or 
+      %  500, 1000, or 1500 (msec)
+      defaultPacing = 1000;
+      
+      % Ask for input during calibration
+      queryDuringCalibration = true;
+      
+      % query wait time during calibration (sec)
+      queryTimeout = 5;
       
       % Frequency/duration/intensity values for calibration feedback tones
       calibrationTargetBeep  = [1250 0.05 0.6];
@@ -36,12 +42,15 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % Keyboard event definitions: type, key/event pairs
       % jig TODO GAMEPAD
       calibrationUIEvents = { ...
-         'dotsReadableHIDKeyboard', ...
-         {'KeyboardSpacebar', 'acceptCalibration'; ...
-         'KeyboardQ', 'abortCalibration'}; ...
-         'dotsReadableHIDGamepad', ...
-         {'GamepadB', 'acceptCalibration'; ...
-         'GamepadA', 'abortCalibration'}};
+         'KeyboardSpacebar',     'accept'; ...
+         'KeyboardB',            'both'; ...
+         'KeyboardC',            'calibrate'; ...
+         'KeyboardQ',            'abort'; ...
+         'KeyboardS',            'show'
+         'KeyboardR',            'repeat'; ...
+         'KeyboardT',            'toggle'; ...
+         'KeyboardV',            'validate'; ...
+         };
       
    end % Public properties
    
@@ -126,8 +135,8 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             
             % make sure that we get gaze, pupil data from the Eyelink
             if isOpen
-                Eyelink('Command', 'link_sample_data = HREF,AREA');
-                Eyelink('Command', 'pupil_size_diameter = YES');
+               Eyelink('Command', 'link_sample_data = HREF,AREA');
+               Eyelink('Command', 'pupil_size_diameter = YES');
             end
             
          catch err
@@ -146,14 +155,8 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       
       % Calibrate the eye tracker
       %
-      % Optional argument is char indicating mode:
-      %  'c'      ... calibrate
-      %  'v'      ... validate
-      %  'e'      ... show eye position
-      %  'd'      ... drift correct
-      %
       % Returns status: 0 for error, 1 for good calibration
-      function status = calibrateDevice(self, mode, varargin)
+      function status = calibrateNow(self)
          
          % Check for connection
          if ~Eyelink('IsConnected')
@@ -178,8 +181,8 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             fixationCue.width  = [1 0.1] * self.calibrationFPSize;
             fixationCue.height = [0.1 1] * self.calibrationFPSize;
             self.calibrationEnsemble = makeDrawableEnsemble(...
-               'calibrationEnsemble', {fixationCue}, self.screenEnsemble);           
-        end
+               'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
+         end
          
          % Create feedback sounds
          %
@@ -192,28 +195,18 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % Set up user input
          %
-         if isempty(self.calibrationUI);
-            
-            % Make the ui object
-            self.calibrationUI = feval(self.calibrationUIType);
-            
-            % read when checking for events
-            self.calibrationUI.isAutoRead = true;
+         if ~isempty(self.calibrationUI);
             
             % Deactivate all events
             self.calibrationUI.deactivateEvents();
             
-            % Get the event definitions
-            eventIndex = find(strcmp(self.calibrationUIType, ...
-               self.calibrationUIEvents(:,1)));
-            
             % Now add given events. Note that the third and fourth arguments
             %  to defineCalibratedEvent are Calibrated value and isActive --
             %  we could make those user controlled.
-            for ii = 1:size(self.calibrationUIEvents{eventIndex,2}, 1)
+            for ii = 1:size(self.calibrationUIEvents,1)
                self.calibrationUI.defineCalibratedEvent( ...
-                  self.calibrationUIEvents{eventIndex,2}{ii,1}, ...
-                  self.calibrationUIEvents{eventIndex,2}{ii,2}, ...
+                  self.calibrationUIEvents{ii,1}, ...
+                  self.calibrationUIEvents{ii,2}, ...
                   1, true);
             end
          end
@@ -227,238 +220,432 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          self.calibrationEnsemble.callObjectMethod(...
             @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
          
-         % Mode
-         if nargin < 2 || isempty(mode)
-            mode = 'c';
-         end
-         
-         switch mode
-            
-            case {'d' 'D'}
-               % Takes optional arguments
-               status = self.driftCorrect(varargin{:});
-               
-            case {'e' 'E'}
-               % not implemented
-               status = self.showEye();
-               
-            case {'v' 'V'}
-               status = self.calibrateValidate('v');
-               
-            otherwise % case {'c' 'C'}
-               
-                %                 % Set options
-                %                 % Enter options screen
-                %                 Eyelink('SendKeyButton', double('S'), 0, 10); %self.KB_PRESS);
-                %                 % Load default configuration
-                %                 Eyelink('SendKeyButton', double('D'), 0, 10); %self.KB_PRESS);
-                %                 % Set pupil size to diamter
-                %                 Eyelink('SendKeyButton', double('S'), 0, 10); %self.KB_PRESS);
-                %                 % Turn off filters
-                %                 % Analog output data selection -> off/raw/HREF/Gaze
-                %                 % (default)
-                %                 Eyelink('SendKeyButton', double('A'), 0, 10); %self.KB_PRESS);
-                %                 Eyelink('SendKeyButton', double('A'), 0, 10); %self.KB_PRESS);
-                %                 Eyelink('SendKeyButton', double('A'), 0, 10); %self.KB_PRESS);
-
-               % Calibrate
-               status = self.calibrateValidate('c');
-               
-               % Possibly validate
-               if status == 0 && self.validateAfterCalibrate
-                  status = self.calibrateValidate('v');
-               end
-               
-               % Get eye that's tracked... use LEFT if both
-               % EyeAvailable returns: 0=Left, 1=Right, 2=Binocular
-               % convert to 1=Left, 2=Right
-               self.trackedEye = Eyelink('EyeAvailable')+1;
-               if self.trackedEye == 3
-                  self.trackedEye = 1; % use left if binocular
-               end
-         end
-      end
-      
-      % Calibration routine
-      %
-      function status = calibrateValidate(self, key)
-         
-         % Send mode key and wait to settle
-         Eyelink('SendKeyButton', double(key), 0, self.KB_PRESS);                 
-         pause(0.1);
-         
-         % Set 9-target calibration
-         if key == 'c'
-             Eyelink('Command', 'calibration_type = HV9');
-             Eyelink('Command', 'enable_automatic_calibration = YES');
-             Eyelink('Command', 'automatic_calibration_pacing = 1000');
-         end
-         
-         % Check/set auto triger
-         if self.useAuoTrigger
-             Eyelink('SendKeyButton', double('A'), 0, self.KB_PRESS);
-             pause(0.1);
-         end
-          
-         % wait a bit for everything to settle
-
-%          % help timing?
-%          for ii = 1:10
-%              self.calibrationEnsemble.callObjectMethod(...
-%                  @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
-%          end
-         
          % Flush the ui
          self.calibrationUI.flushData();
+         
+         % Calibrate/validate
+         toDo = {};
+         if self.doCalibration
+            toDo = cat(2, toDo, 'calibrate');
+         end
+         if self.doValidation
+            toDo = cat(2, toDo, 'validate');
+         end
+         if self.doShowEye
+            toDo = cat(2, toDo, 'showEye');
+         end
+         pacingVals = [0 500 1000 1500];
+         pacingI = find(self.pacing==pacingVals,1);
+         
+         while ~isempty(toDo)
+                        
+            % Possibly query for input
+            if self.queryDuringCalibration
+               
+               if strcmp(toDo{1}, 'calibrate')
+                  disp('space or c to continue with calibration');
+                  disp('v to skip to validation');
+                  disp('s to skip to show eye');
+                  
+               elseif strcmp(toDo{1}, 'validate')
+                  disp('space or v to continue with validation');
+                  disp('c to repeat calibration');
+                  disp('s to skip to show eye');
+                  
+               elseif strcmp(toDo{1}, 'showEye')
+                  disp('space or s to continue with show eye');
+                  disp('c to repeat calibration');
+                  disp('s to repeat validation');
+               end
+               
+               % Text about pacing
+               stars = cell(4,1);
+               stars{pacingI} = '*';
+               disp(sprintf( ...
+                  't to toggle acceptance pacing [manual%s 500%s 1000%s 1500%s]', ...
+                  stars{1}, stars{2}, stars{3}, stars{4}))
+               
+               % Wait for keyboard input
+               [didHappen, ~, ~, ~, nextEvent] = waitForEvent( ...
+                  self.calibrationUI, [], self.queryTimeout);
+               
+               % Made it through timeout, just continue
+               if ~didHappen
+                  nextEvent = 'continue';
+               end
+               
+               % Parse input
+               switch nextEvent
+                  
+                  case {'calibrate', 'validate', 'showEye'}
+                     if ~strcmp(toDo{1}, nextEvent)
+                        toDo = cat(2, nextEvent, toDo);
+                     end
+                     
+                  case 'abort'
+                     toDo = {'abort'};
+                     
+                  case 'toggle'
+                     pacingI = pacingI + 1;
+                     if pacingI > length(pacingVals)
+                        pacingI = 1;
+                     end
+                     toDo = cat(2, 'pacing', toDo);
+               end
+               
+               switch(toDo{1})
+                  
+                  case 'calibrate'
+                     
+                     % calibrate with current pacing
+                     status = self.calibrateValidate('c', pacingVals(pacingI));
+                     
+                     % check for abort
+                     if status == 1
+                        toDo = {'abort'};
+                     end
+                     
+                  case 'validate'
+
+                     % validate with current pacing
+                     self.calibrateValidate('v', pacingVals(pacingI));
+                     
+                  case 'showEye'
+                     
+                     % Call dotsReadableEye.showEyePosition, which goes
+                     % until spacebar
+                     self.showEyePosition();
+               end
+               toDo = toDo(2:end);
+            end
+         end
+         
+         % Get eye that's tracked... use LEFT if both
+         % EyeAvailable returns: 0=Left, 1=Right, 2=Binocular
+         % convert to 1=Left, 2=Right
+         self.trackedEye = Eyelink('EyeAvailable')+1;
+         if self.trackedEye == 3
+            self.trackedEye = 1; % use left if binocular
+         end
+      end      
+      
+      % calibrateValidate
+      %
+      % Perform calibration or validation procedure
+      function status = calibrateValidate(self, mode, pacing)
+         
+         % Default outcome (no error)
+         status = 0;
+         
+         % Set mode
+         Eyelink('SendKeyButton', double(mode), 0, self.KB_PRESS);
+         Eyelink('Command', 'calibration_type = HV9');
+         pause(0.1);  
+         
+         % Set pacing/feedback         
+         if nargin < 3 || isempty(pacing) || ~any(pacing==[0 500 1000 1500])
+            pacing = 1000;
+         end
+         
+         Eyelink('Command', sprintf('automatic_calibration_pacing = %d', pacing));
+         if pacing==0
+            Eyelink('Command', 'enable_automatic_calibration = NO');
+         else
+            Eyelink('Command', 'enable_automatic_calibration = YES');
+         end
+         
+         % Check/set auto trigger
+         %          if self.useAuoTrigger
+         %             Eyelink('SendKeyButton', double('A'), 0, self.KB_PRESS);
+         %             pause(0.1);
+         %          end
          
          % Loop through the protocol
          targetOldX           = self.MISSING;
          targetOldY           = self.MISSING;
          continueCalibration  = true;
-         count = 0;
          tc = -999;
          while continueCalibration
             
-%             % Get Eyelink mode
-%             currentMode = Eyelink('CurrentMode');
-%             
-%             % Check for setup/target mode
-%             if bitand(currentMode, self.IN_SETUP_MODE) && ...
-%                   bitand(currentMode, self.IN_TARGET_MODE)
+            % Check for target show/move
+            [targetCheck, targetX, targetY] = Eyelink('TargetCheck');
+            pause(0.2);
+            
+            if targetCheck ~= tc
+               tc = targetCheck;
+               disp([-9 targetCheck])
+            end
+            
+            [result, messageString] = Eyelink('CalMessage');
+            if result ~= 0 || ~isempty(messageString)
+               disp([-88 result])
+               disp(messageString)
+            end
+            
+            % Get Eyelink mode
+            currentMode = Eyelink('CurrentMode');
+            
+            % Check for end of calibrate/validate or no more setup/target mode
+            if (targetCheck==0 && result~=0) || ...
+                  ~bitand(currentMode, self.IN_SETUP_MODE) || ...
+                  ~bitand(currentMode, self.IN_TARGET_MODE)
+               break
+            end
+            
+            % Check to erase or (re)draw the target
+            if targetCheck==0 || targetX == self.MISSING || ...
+                  targetY == self.MISSING
                
-               % Check for target show/move
-               [targetCheck, targetX, targetY] = Eyelink('TargetCheck');
+               % Blank the screen
+               self.calibrationEnsemble.callObjectMethod(...
+                  @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+               
+               % Indicate not drawn
+               targetOldX = self.MISSING;
+               targetOldY = self.MISSING;
+               waitingForAcceptance = false;
+               
+            elseif targetCheck==1 && (targetX ~= targetOldX || ...
+                  targetY ~= targetOldY)
+               
+               % Present calibration target at the updated position,
+               % converted into degrees visual angle wrt center of
+               % screen
+               self.calibrationEnsemble.setObjectProperty('xCenter', ...
+                  (targetX - self.windowCtr(1))/self.pixelsPerDegree);
+               self.calibrationEnsemble.setObjectProperty('yCenter', ...
+                  -(targetY - self.windowCtr(2))/self.pixelsPerDegree);
+               
+               % blank/pause/draw+flip/woo hoo!
+               self.calibrationEnsemble.callObjectMethod(...
+                  @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
                pause(0.2);
+               self.calibrationEnsemble.callObjectMethod(...
+                  @dotsDrawable.drawFrame, {}, [], true);
                
-               if targetCheck ~= tc
-                   tc = targetCheck;
-                   disp([-9 targetCheck])
-               end
+               % Set flags
+               targetOldX = targetX;
+               targetOldY = targetY;
                
-               [result, messageString] = Eyelink('CalMessage');
-               if result ~= 0 || ~isempty(messageString)
-                   disp([-88 result])
-                   disp(messageString)
-               end
+               % Play alerting sound
+               play(self.calibrationPlayables{1});
                
-               if targetCheck==0 && result~=0
-                   break
-               end
+               % checking for trigger
+               waitingForAcceptance = true; % aren't we all?
+            end
+            
+            % Get user input
+            switch self.calibrationUI.getNextEvent()
                
-               % Check to erase or (re)draw the target
-               if targetCheck==0 || targetX == self.MISSING || ...
-                     targetY == self.MISSING
+               case 'accept'
                   
-                  % Blank the screen
-                  self.calibrationEnsemble.callObjectMethod(...
-                     @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+                  % Aceept current calibration target
+                  if waitingForAcceptance
+                     Eyelink('AcceptTrigger');
+                     waitingForAcceptance = false;
+                  end
                   
-                  % Indicate not drawn
-                  targetOldX = self.MISSING;
-                  targetOldY = self.MISSING;
-                  waitingForAcceptance = false;
-                                    
-%                   if count == self.numCalibrationTargets
-%                       continueCalibration = false;
-%                   end
-%                   
-               elseif targetCheck==1 && (targetX ~= targetOldX || ...
-                     targetY ~= targetOldY)
+                  % Wait to release keypress
+                  while ~isempty(self.calibrationUI.getNextEvent())
+                     doNothing = true;
+                  end
+                  self.calibrationUI.flushData();
                   
-                  % Present calibration target at the updated position,
-                  % converted into degrees visual angle wrt center of
-                  % screen
-                  self.calibrationEnsemble.setObjectProperty('xCenter', ...
-                     (targetX - self.windowCtr(1))/self.pixelsPerDegree);
-                  self.calibrationEnsemble.setObjectProperty('yCenter', ...
-                     -(targetY - self.windowCtr(2))/self.pixelsPerDegree);
+               case 'abort'
                   
-                  % blank/pause/draw+flip/woo hoo!
-                  self.calibrationEnsemble.callObjectMethod(...
-                     @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
-                  pause(0.2);
-                  self.calibrationEnsemble.callObjectMethod(...
-                     @dotsDrawable.drawFrame, {}, [], true);
-                  
-                  % Set flags
-                  targetOldX = targetX;
-                  targetOldY = targetY;
-                  
-                  % Play alerting sound
-                  play(self.calibrationPlayables{1});
-                  
-                  % update the count
-                  count = count + 1;
-                  
-                  disp(count)
-                  
-                  % checking for trigger
-                  waitingForAcceptance = true; % aren't we all?
-               end
-               
-               % Get user input
-               switch self.calibrationUI.getNextEvent()
-                  
-                  case 'acceptCalibration'
-                     
-                     % Aceept current calibration target
-                     if waitingForAcceptance
-                        Eyelink('AcceptTrigger');
-                        waitingForAcceptance = false;
-                     end
-                     
-                     % Wait to release keypress
-                     while ~isempty(self.calibrationUI.getNextEvent())
-                        doNothing = true;
-                     end
-                     self.calibrationUI.flushData();
-                     
-                  case 'abortCalibration'
-                     
-                     % Abort the process.
-                     continueCalibration = false;
-               end
-               
-%             else % no longer in setup/target mode
-%                continueCalibration = false;
-%             end
+                  % Abort the process.
+                  status = 1;
+                  break;
+            end            
          end % while continueCalibration
          
          % Blank the screen
          self.calibrationEnsemble.callObjectMethod(...
             @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
-         
-        status = 0;
-         % Check for success and play appropriate sound
-%           if key == 'c' 
-%               if ~Eyelink('CalResult')
-% %              
-%              % Return: 40 158
-%              % Enter: 88
-%              %
-%              % Esc (discard): 41
-% for ii = 1:200
-%     ii
-%     Eyelink('SendKeyButton', ii, 0, 10)
-%     r = input('next')
-% end
-
-%              Eyelink('CalResult')
-%             if Eyelink('CalResult')>0
-%                
-%                % Success!!
-%                play(self.calibrationPlayables{1});
-%                status = 0;
-%             else
-%                
-%                % Failure!!
-%                play(self.calibrationPlayables{2});
-%                status = 1;
-%             end
-%          else
-%             status = ~isempty(input('[enter] to accept or [r]etry', 's'));
-%          end
-      end
+      end      
+      
+      %
+      %
+      %       % Calibration routine
+      %       %
+      %       function status = calibrateValidate(self, key)
+      %
+      %          % Send mode key and wait to settle
+      %          Eyelink('SendKeyButton', double(key), 0, self.KB_PRESS);
+      %          pause(0.1);
+      %
+      %          % Set 9-target calibration
+      %          if key == 'c'
+      %              Eyelink('Command', 'calibration_type = HV9');
+      %              Eyelink('Command', 'enable_automatic_calibration = YES');
+      %              Eyelink('Command', 'automatic_calibration_pacing = 1000');
+      %          end
+      %
+      %          % Check/set auto triger
+      %          if self.useAuoTrigger
+      %              Eyelink('SendKeyButton', double('A'), 0, self.KB_PRESS);
+      %              pause(0.1);
+      %          end
+      %
+      %          % wait a bit for everything to settle
+      %
+      % %          % help timing?
+      % %          for ii = 1:10
+      % %              self.calibrationEnsemble.callObjectMethod(...
+      % %                  @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+      % %          end
+      %
+      %          % Flush the ui
+      %          self.calibrationUI.flushData();
+      %
+      %          % Loop through the protocol
+      %          targetOldX           = self.MISSING;
+      %          targetOldY           = self.MISSING;
+      %          continueCalibration  = true;
+      %          count = 0;
+      %          tc = -999;
+      %          while continueCalibration
+      %
+      % %             % Get Eyelink mode
+      % %             currentMode = Eyelink('CurrentMode');
+      % %
+      % %             % Check for setup/target mode
+      % %             if bitand(currentMode, self.IN_SETUP_MODE) && ...
+      % %                   bitand(currentMode, self.IN_TARGET_MODE)
+      %
+      %                % Check for target show/move
+      %                [targetCheck, targetX, targetY] = Eyelink('TargetCheck');
+      %                pause(0.2);
+      %
+      %                if targetCheck ~= tc
+      %                    tc = targetCheck;
+      %                    disp([-9 targetCheck])
+      %                end
+      %
+      %                [result, messageString] = Eyelink('CalMessage');
+      %                if result ~= 0 || ~isempty(messageString)
+      %                    disp([-88 result])
+      %                    disp(messageString)
+      %                end
+      %
+      %                if targetCheck==0 && result~=0
+      %                    break
+      %                end
+      %
+      %                % Check to erase or (re)draw the target
+      %                if targetCheck==0 || targetX == self.MISSING || ...
+      %                      targetY == self.MISSING
+      %
+      %                   % Blank the screen
+      %                   self.calibrationEnsemble.callObjectMethod(...
+      %                      @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+      %
+      %                   % Indicate not drawn
+      %                   targetOldX = self.MISSING;
+      %                   targetOldY = self.MISSING;
+      %                   waitingForAcceptance = false;
+      %
+      % %                   if count == self.numCalibrationTargets
+      % %                       continueCalibration = false;
+      % %                   end
+      % %
+      %                elseif targetCheck==1 && (targetX ~= targetOldX || ...
+      %                      targetY ~= targetOldY)
+      %
+      %                   % Present calibration target at the updated position,
+      %                   % converted into degrees visual angle wrt center of
+      %                   % screen
+      %                   self.calibrationEnsemble.setObjectProperty('xCenter', ...
+      %                      (targetX - self.windowCtr(1))/self.pixelsPerDegree);
+      %                   self.calibrationEnsemble.setObjectProperty('yCenter', ...
+      %                      -(targetY - self.windowCtr(2))/self.pixelsPerDegree);
+      %
+      %                   % blank/pause/draw+flip/woo hoo!
+      %                   self.calibrationEnsemble.callObjectMethod(...
+      %                      @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+      %                   pause(0.2);
+      %                   self.calibrationEnsemble.callObjectMethod(...
+      %                      @dotsDrawable.drawFrame, {}, [], true);
+      %
+      %                   % Set flags
+      %                   targetOldX = targetX;
+      %                   targetOldY = targetY;
+      %
+      %                   % Play alerting sound
+      %                   play(self.calibrationPlayables{1});
+      %
+      %                   % update the count
+      %                   count = count + 1;
+      %
+      %                   disp(count)
+      %
+      %                   % checking for trigger
+      %                   waitingForAcceptance = true; % aren't we all?
+      %                end
+      %
+      %                % Get user input
+      %                switch self.calibrationUI.getNextEvent()
+      %
+      %                   case 'acceptCalibration'
+      %
+      %                      % Aceept current calibration target
+      %                      if waitingForAcceptance
+      %                         Eyelink('AcceptTrigger');
+      %                         waitingForAcceptance = false;
+      %                      end
+      %
+      %                      % Wait to release keypress
+      %                      while ~isempty(self.calibrationUI.getNextEvent())
+      %                         doNothing = true;
+      %                      end
+      %                      self.calibrationUI.flushData();
+      %
+      %                   case 'abortCalibration'
+      %
+      %                      % Abort the process.
+      %                      continueCalibration = false;
+      %                end
+      %
+      % %             else % no longer in setup/target mode
+      % %                continueCalibration = false;
+      % %             end
+      %          end % while continueCalibration
+      %
+      %          % Blank the screen
+      %          self.calibrationEnsemble.callObjectMethod(...
+      %             @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+      %
+      %         status = 0;
+      %          % Check for success and play appropriate sound
+      % %           if key == 'c'
+      % %               if ~Eyelink('CalResult')
+      % % %
+      % %              % Return: 40 158
+      % %              % Enter: 88
+      % %              %
+      % %              % Esc (discard): 41
+      % % for ii = 1:200
+      % %     ii
+      % %     Eyelink('SendKeyButton', ii, 0, 10)
+      % %     r = input('next')
+      % % end
+      %
+      % %              Eyelink('CalResult')
+      % %             if Eyelink('CalResult')>0
+      % %
+      % %                % Success!!
+      % %                play(self.calibrationPlayables{1});
+      % %                status = 0;
+      % %             else
+      % %
+      % %                % Failure!!
+      % %                play(self.calibrationPlayables{2});
+      % %                status = 1;
+      % %             end
+      % %          else
+      % %             status = ~isempty(input('[enter] to accept or [r]etry', 's'));
+      % %          end
+      %       end
       
       % Drift correction
       %
@@ -531,13 +718,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
          end
       end % drift correct
-      
-      % Show eye position
-      %
-      function status = showEye(self)
-         
-         status = 0;
-      end
       
       % Overloaded startRecording method
       %

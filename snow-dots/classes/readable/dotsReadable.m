@@ -106,7 +106,7 @@ classdef dotsReadable < handle
       queueNext;
       
       %> queue index of the last event enqueued
-      queueLast;
+      queueLast=0;
       
       %> possibly keep track of device clock
       deviceResetTime;
@@ -954,7 +954,7 @@ classdef dotsReadable < handle
          %> resize the queue as needed
          queueSize = numel(self.eventQueue);
          nValues = numel(eventValues);
-         if queueSize < (self.queueLast + nValues);
+         if queueSize < (self.queueLast + nValues)
             newSize = 2*queueSize+nValues;
             self.resizeEventQueue(newSize, false);
          end
@@ -1047,12 +1047,12 @@ classdef dotsReadable < handle
       %> @details
       %> Returns true if any of given @a readables reports that @a
       %> eventName happened before @a maxWait.  Returns as a second output
-      %> the amout of time waited.  Returns as a third output the data
+      %> the amount of time waited.  Returns as a third output the data
       %> associated with the event.  The data has the form [ID, value,
       %> time].  Returns as a fourth output the readable which reported @a
       %> eventName.  If more than one of the given @a readables reports @a
       %> eventName, only returns the first readable.
-      function [didHappen, waitTime, data, readable] = waitForEvent( ...
+      function [didHappen, waitTime, data, readable, name] = waitForEvent( ...
             readables, eventName, maxWait)
          
          %> easier to work with cell since unlike objects can't combine
@@ -1077,7 +1077,8 @@ classdef dotsReadable < handle
             %> get a queued event for this readable
             readable.read();
             [name, data] = readable.getNextEvent();
-            if strcmp(name, eventName)
+            if ~isempty(name) && (strcmp(name, eventName) || ...
+                  isempty(eventName))
                waitTime = clocker.getDeviceTime() - startTime;
                didHappen = true;
                return;

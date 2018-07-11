@@ -1,5 +1,6 @@
 classdef dotsDrawableTargets < dotsDrawableVertices
     % @class dotsDrawableTargets
+    
     % Draw one or multiple polygon target at once.
     properties
         % an x-coordinate for each target (degrees visual angle, centered)
@@ -79,6 +80,7 @@ classdef dotsDrawableTargets < dotsDrawableVertices
     end
     
     methods (Access = protected)
+       
         % Calculate triangle vertex positions to make up polygons.
         function updatePolygons(self)
             [x, y, indices] = makePolygons(self.xCenter, self.yCenter, ...

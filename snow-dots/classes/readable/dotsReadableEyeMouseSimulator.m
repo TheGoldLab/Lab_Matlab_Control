@@ -91,7 +91,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          time = toc(self.tstart); %time = feval(self.clockFunction);
          newData = [ ...
             self.xID self.HIDmouse.x/self.mouseScaleFactor time; ...
-            self.yID -self.HIDmouse.y/self.mouseScaleFactor time];
+            self.yID -self.HIDmouse.y/self.mouseScaleFactor time]
          
          if self.isRecording
             self.index = self.index + 1;
