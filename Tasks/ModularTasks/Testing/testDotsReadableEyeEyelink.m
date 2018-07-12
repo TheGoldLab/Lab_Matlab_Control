@@ -14,6 +14,7 @@ e.screenEnsemble.callObjectMethod(@open);
 % Run initial calibration routine
 e.calibrate();
    
+dotsTheScreen.closeWindow();
 % try showEye
 % e.calibrate('s');
 

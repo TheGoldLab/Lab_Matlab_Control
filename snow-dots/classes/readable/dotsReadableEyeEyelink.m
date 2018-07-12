@@ -192,13 +192,12 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             % Flush the ui
             self.calibrationUI.flushData();
             
-            % Calibrate/validate
-            toDo = {'c', 'v'};
-            toDo = toDo([self.doCalibration self.doValidation]);            
+            % Possibly toggle pacing
             pacingVals = [0 500 1000 1500];
             pacingI = find(self.defaultPacing==pacingVals,1);
+            isCalibrated = false;
             
-            while ~isempty(toDo)
+            while ~isCalibrated
                 
                 % Possibly query for input
                 if self.queryDuringCalibration
@@ -207,22 +206,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                     while ~isempty(self.calibrationUI.getNextEvent()) end
                     self.calibrationUI.flushData();
                     
-                    switch (toDo{1})
-                        
-                        case 'c'
-                            disp('space or c to continue with calibration');
-                            disp('v to skip to validation');
-                            disp('q to finish');
-                            
-                        case 'v'
-                            disp('space or v to continue with validation');
-                            disp('c to repeat calibration');
-                            disp('q to finish');
-                    end
-                    
-                    % Text about pacing
+                    % Show instructions
                     stars = cell(4,1);
                     stars{pacingI} = '*';
+                    disp('space to continue, q to quit');
                     disp(sprintf( ...
                         't to toggle acceptance pacing [manual%s 500%s 1000%s 1500%s]', ...
                         stars{1}, stars{2}, stars{3}, stars{4}))
@@ -240,35 +227,25 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                         dotsReadable.waitForEvent(self.calibrationUI, [], self.queryTimeout);
                     end
                     
-                    % Parse input
-                    switch nextEvent
+                else
+                    nextEvent = 'accept';
+                end
+                
+                % Parse input
+                switch nextEvent
+                    
+                    case {'accept', 'calibrate'}
+                        status = self.calibrateValidate('c', pacingVals(pacingI));
+                        isCalibrated = true;
                         
-                        case 'accept'
-                            status = self.calibrateValidate(toDo{1}, pacingVals(pacingI));
-                            toDo(1) = [];
-                            
-                        case 'calibrate'
-                            status = self.calibrateValidate('c', pacingVals(pacingI));
-                            if self.doValidation
-                                toDo = {'v'};
-                            else
-                                toDo = {};
-                            end
-                            
-                        case 'validate'
-                            status = self.calibrateValidate('v', pacingVals(pacingI));
-                            toDo = {};
-                            
-                        case 'abort'
-                            status = 1;
-                            toDo = {};
-                            
-                        case 'toggle'
-                            pacingI = pacingI + 1;
-                            if pacingI > length(pacingVals)
-                                pacingI = 1;
-                            end
-                    end                    
+                    case 'abort'
+                        isCalibrated = true;
+                        
+                    case 'toggle'
+                        pacingI = pacingI + 1;
+                        if pacingI > length(pacingVals)
+                            pacingI = 1;
+                        end
                 end
             end
             
@@ -281,8 +258,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             end
             
             % Turn on recording
+            pause(0.2);
             Eyelink('StartRecording');
-            pause(0.1);
+            pause(0.2);
         end
         
         % calibrateValidate
@@ -339,14 +317,15 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                 if count >= 10 && ((targetCheck==0 && result~=0) || ...
                         ~bitand(currentMode, self.IN_SETUP_MODE) || ...
                         ~bitand(currentMode, self.IN_TARGET_MODE))
-                    pause(0.2)
-                    Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
-                    % not sure why I need this, but for now I do...
-%                     if mode == 'v'
-%                           pause(0.5)
-%                         Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);                        
-%                     end
-                    break
+                    if mode == 'c'
+                        calibrateValidate(self, 'v', pacing);
+                        return;
+                    else
+                        pause(0.2);
+                        Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
+                        pause(0.2);
+                        break
+                    end
                 end
                 
                 % Check to erase or (re)draw the target
@@ -362,14 +341,14 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                     targetOldY = self.MISSING;
                     waitingForAcceptance = false;
                     
-                elseif targetCheck==1 
+                elseif targetCheck==1
                     
                     % checking for trigger
                     waitingForAcceptance = true; % aren't we all?
                     
                     % check for redraw
                     if targetX ~= targetOldX || targetY ~= targetOldY
-                    
+                        
                         % Present calibration target at the updated position,
                         % converted into degrees visual angle wrt center of
                         % screen
@@ -379,6 +358,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                             -(targetY - self.windowCtr(2))/self.pixelsPerDegree);
                         
                         % blank/pause/draw+flip/woo hoo!
+                        if count==1
+                            pause(0.2);
+                        end
                         self.calibrationEnsemble.callObjectMethod(...
                             @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
                         pause(0.2);
@@ -424,7 +406,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             self.calibrationEnsemble.callObjectMethod(...
                 @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
         end
-                
+        
         % Drift correction
         %
         %  Optional arguments are:
@@ -509,7 +491,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             end
             
             % Open data file
-            isRecording = ~Eyelink('OpenFile', self.filename);            
+            isRecording = ~Eyelink('OpenFile', self.filename);
         end % startRecording
         
         % Overloaded stopRecording method

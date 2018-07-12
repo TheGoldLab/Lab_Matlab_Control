@@ -17,6 +17,9 @@ switch deblank(machineName)
    case 'GoldLaptop'
       pathname = '/Users/jigold/GoldWorks/Local/Data/Projects';
       
+    case 'PsychophysicsMacMini'
+        pathname = '/Users/joshuagold/Psychophysics/Data';
+        
    otherwise
       % Default: use current directory
       pathname = '.';

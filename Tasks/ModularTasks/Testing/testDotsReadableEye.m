@@ -6,7 +6,7 @@ try
    %e = dotsReadableEyePupilLabs();
    %e = dotsReadableEyeMouseSimulator();
    % e = dotsReadableEyeEyelink();
-  e = dotsReadableEyePupilLabs();
+  e = dotsReadableEyeEyelink();
   
    % set up a small screen for calibration
    e.screenEnsemble = makeScreenEnsemble(false, 0);
