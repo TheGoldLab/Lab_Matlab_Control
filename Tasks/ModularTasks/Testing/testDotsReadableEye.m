@@ -2,7 +2,8 @@
 
 % Get the readableEye object
 %e = dotsReadableEyePupilLabs();  
-e = dotsReadableEyeMouseSimulator();
+%e = dotsReadableEyeMouseSimulator();
+e = dotsReadableEyeEyelink();
 
 % set up a small screen for calibration
 e.screenEnsemble = makeScreenEnsemble(false, 0);
