@@ -19,6 +19,8 @@ if strncmp(datatub{'Settings'}{'userInput'}, 'dotsReadableEye', length('dotsRead
    ui.filepath = fullfile(getDataFilepath('DBSStudy'), 'Pupil');
    ui.screenEnsemble = datatub{'Graphics'}{'screenEnsemble'};
    ui.recordDuringCalibration = true;
+   ui.queryDuringCalibration = false;
+   ui.doShowEye = false;
    
    % Add it to the mainTreeNode (for possible GUI control)
    mainTreeNode.runGUIArgs = {ui};

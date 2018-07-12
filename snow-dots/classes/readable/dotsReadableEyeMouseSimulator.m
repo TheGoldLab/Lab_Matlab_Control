@@ -37,9 +37,13 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
       function self = dotsReadableEyeMouseSimulator(matching, frequency)
          self = self@dotsReadableEye();
          
+         if nargin < 1
+            matching = [];
+         end
+         
          % get the mouse object
-         if nargin < 1 || isempty(matching)
-            self.HIDmouse = dotsReadableHIDMouse();
+         if isempty(matching)
+            self.HIDmouse = getMatchingMouse();
          else
             self.HIDmouse = dotsReadableHIDMouse(matching);
          end
@@ -91,7 +95,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          time = toc(self.tstart); %time = feval(self.clockFunction);
          newData = [ ...
             self.xID self.HIDmouse.x/self.mouseScaleFactor time; ...
-            self.yID -self.HIDmouse.y/self.mouseScaleFactor time]
+            self.yID -self.HIDmouse.y/self.mouseScaleFactor time];
          
          if self.isRecording
             self.index = self.index + 1;
