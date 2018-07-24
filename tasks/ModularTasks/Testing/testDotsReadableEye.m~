@@ -1,40 +1,29 @@
 function testDotsReadableEye(tracker, useRemote)
 % function testDotsReadableEye(tracker, useRemote)
-%
+% 
 % Function for testing the dotsReadableEye class
 
-% Possible values:
-%  'dotsReadableEyePupilLabs'
-%  'dotsReadableEyeEyelink'
-%  'dotsReadableEyeMouseSimulator'
+% Possible values
 if nargin < 1 || isempty(tracker)
    tracker = 'dotsReadableEyePupilLabs';
 end
-
-if nargin < 2 || isempty(useRemote)
-   useRemote = false;
-end
-
-if ~useRemote
-   screenNumber = 0;
-else
-   screenNumber = 1;
-end
-
 try
    
    % Get the readableEye object
-   e = feval(tracker);
-   
+   %e = dotsReadableEyePupilLabs();
+   %e = dotsReadableEyeMouseSimulator();
+   % e = dotsReadableEyeEyelink();
+  e = dotsReadableEyeEyelink();
+  
    % set up a small screen for calibration
-   e.screenEnsemble = makeScreenEnsemble(useRemote, screenNumber);
+   e.screenEnsemble = makeScreenEnsemble(false, 0);
    e.screenEnsemble.callObjectMethod(@open);
    
    % Run initial calibration routine
    e.calibrate();
    
-   % e.calibrate('s');
-   
+  % e.calibrate('s');
+    
    dotsTheScreen.closeWindow();
    %    % Open the gaze monitor
    %    eyeGUI(topsTreeNode('test'), e);

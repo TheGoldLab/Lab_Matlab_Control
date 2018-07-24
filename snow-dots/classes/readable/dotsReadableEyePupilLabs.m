@@ -616,7 +616,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       %  2. gaze x
       %  3. gaze y
       %  4. confidence
-      function [data, tags] = readDataFromFile(dataPath)
+      function [dataMatrix, tags] = readDataFromFile(dataPath)
          
          % for debugging
          if nargin < 1 || isempty(dataPath)
@@ -625,11 +625,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
          
          % load into a temporary file... not sure how else to do this (yet)
-         tmpFileName = 'tmp_pupil_data';
+         tmpFileName = 'tmpDataFile';
          
          % Set up the return values
          tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
-         data = [];
+         dataMatrix = [];
          
          % Loop through the subdirectories, getting the data
          dirs = dir(fullfile(dataPath, '0*'));
@@ -642,15 +642,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % collect the data
             load(tmpFileName);
             
-            % make a struct from the cell array
-            dataStruct = cat(1, [gaze_positions{:}]);
-            
-            % save the data
-            pos = [dataStruct.norm_pos];
-            data = cat(1, data, [ ...
-               [dataStruct.timestamp]', ...
-               pos(1:2:end)', pos(2:2:end)', ...
-               [dataStruct.confidence]']);
+            % concatenate 
+            dataMatrix = cat(1, dataMatrix, eval(tmpFileName));
          end
       
          % clean up the tmp file

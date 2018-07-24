@@ -1,0 +1,175 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf350
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww12480\viewh15840\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs36 \cf0 Making a Simple Task with DotsX
+\fs24 \
+\
+Document history:\
+14 September 2008	BSH (benjamin.heasly@gmail.com) started it from scratch\
+17 October 2008		BSH started over because the old one was confusing and lame\
+\
+
+\b\fs26 Overview
+\fs24 \
+
+\b0 DotsX is a code library (a bunch of code) written in the Gold lab with MATLAB and the Psychophysics Toolbox (Psychtoolbox).  DotsX should make it easy to program and run psychophysics tasks.  Thus, DotsX addresses the three main elements of psychophysics:\
+\
+	1. configuration and control of stimulus graphics\
+	2. data acquisition from devices like a keyboard, a digital-analog converter, an eyetracker, etc.\
+	3. flow of control (i.e. what happens when?)\
+\
+A given task can treat these elements separately and uniquely.  DotsX provides a framework for doing so.\
+\
+In this document, I'll go through an example task called "simple_demo".  The code for this task already exits, and you should be able to find it in DotsX in the folder\
+	DotsX/tasks/simple_demo/\
+\
+I'll explain the 5 files here that completely specify the task.\
+\
+Before beginning, you should make sure that DotsX is installed and working on your Mac.  See the Gold lab how-to document called "Install_DotsX.rtf", linked below.  This will help you test the simple_demo task itself, then you can come back here to find how it works.\
+\
+
+\b\fs26 The simple_demo task
+\b0\fs24 \
+IN WORDS\
+First, I'll describe the task in words.  The simple_demo task is a two-alternative forced choice task.  The stimulus is a random dots kinetogram with motion at various coherences and net motion in the leftward or rightward direction.\
+\
+Each trial begins with a blue fixation point.  The fixation point remains on screen during a preparatory period marked by two tones.  After the preparatory period, the dots stimulus appears.\
+\
+The coherence and direction of the dots are selected at random during each trial from a pre-computed list of coherence and direction combinations.\
+\
+The dots are presented for 1 second, then disappear while the fixation point remains.  During a 1 second interval after the dots appear, the subject may respond to indicate his or her perception of leftward or rightward motion.\
+\
+The "f" corresponds to a "leftward" percept, the "j" key corresponds to a "rightward" percept.  If the subject's response is correct, the word "correct" will appear in green text and a ringing coin sound will play.  If the subject's response is incorrect, the work "incorrect" will appear in red and an "ouch" sound will play.\
+\
+If the subject presses a key other than "f" or "j", or presses a key at an inappropriate time, the words "invalid response!" will appear in red and 5 short tones will sound.  That trial will be aborted.\
+\
+Trials will continue until the subject has made valid (correct or incorrect) responses to a pre-determined number of trials.\
+\
+IN CODE\
+Next, let's see how this task can be implemented in DotsX.  I used 5 files, each of which has a distinct purpose.  As you read this document, you should follow along with the code and comments in those 5 task files.\
+\
+The first 3 task files address the 3 main elements of psychophysics.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\b \cf0 gXsimpleDemo_graphics.m
+\b0 \
+This file specifies which graphical elements, or "objects", will appear onscreen during the task, as well as some details for each object such as size, location, and color.  This task uses 5 graphics objects:\
+	3 text objects, for showing feedback to the subject\
+	1 dots object, for showing the random dots stimulus\
+	1 target object, as a fixation point\
+\
+
+\b gXsimpleDemo_hardware.m
+\b0 \
+This file specifies which hardware devices will be used during the task.  In general, these might include data acquisition devices like an eyetracker, and non-graphical output devices like the sound card.\
+\
+The simple_demo task uses 4 different sound objects:\
+	2 "beep" objects, which play simple tones on the sound card\
+	2 "sound" objects, which play arbitrary .wav or .mp3 sounds on the sound card.\
+\
+simple_demo also uses the keyboard for getting responses from the subject.  There is no "keyboard" object in gXsimpleDemo_hardware.m because DotsX automatically activates an object called "kbHID", which communicates with most USB keyboards.\
+\
+
+\b gXsimpleDemo_statelist.m
+\b0 \
+This file specifies the flow of control through a task.  Its main purpose is to define a number of events, or "states", that may occur during each trial.  Each state can do things like invoke a function, display graphics, wait for an interval, and transition to another state.  For details about what a state can do, as well as the particular states defined for the simple_demo task, see the comments in gXsimpleDemo_statelist.m.\
+\
+In addition to the states themselves, this file defines some hardware "mappings".  These allow the task to react to the subject's behavior.  For example, if the subject presses the "f" key, the task may transition to a state named "left", indicating that the subject saw leftward motion.\
+\
+Finally, this file also defines some "conditionalizations".  These allow the task to react on the fly to things other that user inputs.  For example, the simple_demo task needs to react to the random task condition of leftward vs. rightward motion, in order to determine whether the subject's response was correct or incorrect.\
+\
+Since Each of the files above addresses only one of the elements of psychophysics, we now need to tie them together and build a complete task.\
+\
+
+\b taskSimpleDemo.m
+\b0 \
+Every DotsX task needs to have a "task file", such as taskSimpleDemo.m.  The name of this file must begin with the prefix "task".  The task file may take in arguments and it may specify additional objects not specified in the graphics, hardware, and statelist files listed above.\
+\
+Most importantly, the task file must invoke the rAdd() function to create a "task" object, which ties together all of the specified objects and configuration information into a single entity.  Let's look at the 3 parts of this task file.\
+\
+ARGUMENTS\
+taskSimpleDemo.m can handle three input arguments in the cell array varargin (see MATLAB's "help varargin" or "doc varargin" for more information).  varargin could potentially contain anything, but taskSimpleDemo.m has specific expectations:\
+\
+	varargin\{1\} -- a scalar number, the number of trials to run in this task\
+	varargin\{2\} -- an array of numbers, the dot coherences to show in this task\
+	varargin\{3\} -- a logical, or "boolean" value, whether or not to mute sounds during the task\
+\
+If varargin does not contain at least three elements, taskSimpleDemo.m will choose some default values to use.  In principle it could also check that input values are of the correct type and size, and in sensible ranges, but for the sake of brevity, it doesn't.\
+\
+ADDITIONAL OBJECTS\
+taskSimpleDemo.m specifies two "tuning curve" objects which keep track of stimulus conditions.  One of these objects holds the values 180 and 0, for leftward and rightward dot motion.  The other object holds an arbitrary array of coherence values that were passed in as arguments above.\
+\
+Together these tuning curve objects will determine all of the combinations of dot directions and coherences and keep track of which combinations have been shown.  Thus, they make it easy to keep track of things like trials per stimulus condition.\
+\
+"HELPERS" AND rAdd\
+All of the objects we have specified above, including the tuning curve and all the objects in the graphics, hardware, and statelist files, are known as task "helpers".  They are the objects that allow the task to function.  The job of the task object is to coordinate among the helpers and hold higher-level organizational data.\
+\
+Above, we have only specified which helper objects we want.  Now we need to invoke the rAdd() function to create an actual, functional task object.  The task object will in turn create actual, functional helper objects--we just have to tell the task object about the helpers we've already specified.\
+\
+Thus, in the rAdd() function call, the first property we specify for our task object is a list of "helpers".  In this list, helpers may appear as object class names or as file names.  Each class name or file name starts a new row, and additional configuration appears across the three columns of the list.\
+\
+The first line of helpers list refers our tuning curve object.  First we specify the class name, in this case "dXtc" for "DotsX tuning curve".  We must also specify the number of objects we want (2) and the properties we configured above (arg_dXtc).  The third column (dXtc_rAdd_args) is explained in the nearby comments.\
+\
+The second, third and fourth lines of helpers refer to the three "gx" configuration files above.  In curly braces, we can specify any arguments to pass to these files.  The graphics and statelist files do not require any arguments.  The hardware file needs to know whether or not sounds should be muted during the task (\{mute\}).  The second column (1) indicates that we only need one copy, or "instance" of the helpers in each file.  The second column will usually be (1).  The third column (group_rAdd_args) is explained in the comments.\
+\
+That's it for the helpers list.  More task properties, for the dXtask are defined in the rAdd() function call, and these are described in the file comments.\
+\
+With the task object, we have tied all our objects and configuration together to make a single, useful entity.  At this point, you should be able to execute taskSimpleDemo.m and create the dXtask.  But this will not cause the task to run!  The last step is to add this task to a "paradigm" object, which will take care of actually executing the task.\
+\
+
+\b simpleDemoRoot.m\
+
+\b0 Every experiment should have a "root" file, such as simpleDemoRoot, with the name of the experiment and the "Root.m" suffix.  This file should be the entry point for configuring and experiment session.  It should specify session-specific configurations and the task(s) to be run.  It should create an instance of dXparadigm with the above configurations.  It should execute the task immediately, and/or save the task configuration as a "root" file, to be executed later.\
+\
+The dXparadigm class is responsible for loading one or more tasks and running them.  It holds data such as the length of the intertrial interval, and the location where data files are saved.  It also has methods like loadTasks() and runTasks(), which will finally execute your experiment.\
+\
+Since every task or experiment must run through a paradigm object, the time when the paradigm is created is a good time to do last-minute configuration.  This would include configurations that may change from experiment session to experiment session, such as the subject's name and the number of trials to run.\
+\
+Once the paradigm and task(s) are created, they will exist in MATLAB inside a global variable called "ROOT_STRUCT".  We call this the "root" of your experiment session.  Once created, the root contains all the information necessary to run your experiment immediately.  Or, the root can be saved to a file to be run later and run multiple times.\
+\
+Let's look at how simpleDemoRoot.m takes last-minute configurations, creates a paradigm object, and stores everything in a root:\
+\
+LAST-MINUTE-CONFIGURATION\
+At the top of simpleDemoRoot.m, there are 5 variables that take last-minute configuration data.  Several quantities are derived from these:\
+\
+The variable "subject" takes any string that identifies the subject for the current experiment session.  The "paradigmName" is derived from the subject's name, along with a prefix that identifies the simpleDemo task.  The "FIRADir" is also derived from the subject.  This directory is where data for this subject will be saved.\
+\
+"numTrials", "coherences", and "mute" are variables that should be familiar.  They are data passed to the task file, taskSimpleDemo.m, for configuring the task and its helpers.  They are packaged into the cell array "taskList".  This cell array tells the paradigm object which task(s) to run during this session.  It contains the name of the task file (without a '.m' ending), the number of times to repeat the task (3), and any arguments to pass to each task file (\{numTrials, coherences, mute\}).\
+\
+If we wanted to run more than one task, we would append similar information for each task to the same "taskList".\
+\
+Finally, we specify the "screenMode", which DotsX and the paradigm where to show graphics during the experiment.  For testing purposes, this may be 'debug' or 'local' to show no graphics, or show them on the local computer, respectively.  For an actual experiment where data is gathered, "screenMode" should be 'remote', to show graphics on a remote, "graphics slave" computer.\
+\
+"screenMode" is used to initialize DotsX  in the call to rInit().\
+\
+CREATING THE PARADIGM\
+The call to rAdd will create a functioning instance of the dXparadigm class, with all our task configuration data.  The several parameters passed to rAdd are explained in the nearby comments.  Most of them are the same or similar to the last-minute configuration discussed above.\
+\
+USING THE PARADIGM, SAVING THE ROOT\
+Now that DotsX is initialized and we have created a paradigm object, we can use the paradigm!\
+\
+The first step is to load our task with the loadTasks() method of dXparadigm.  This method will invoke the task files named in the paradigm's taskList property.  In our case, this is taskSimpleDemo.m.  When loadTasks() is completed, the task and all of its helpers will be created and activated for use.  At this point the task is ready to run.\
+\
+Just before running the task, it is useful to save a copy of the DotsX ROOT_STRUCT variable.  This is the root of your experiment session, which can be loaded and reloaded at any time to start your experiment from the current, initialized state.  You can save multiple roots for the same experiment, as configured for different subjects, different conditions, etc.\
+\
+The root file will be saved in a folder called "roots/", along side the task files discussed above.  The filename will be unique for the current experiment and subject.  For example, if the the subject were named "Somebody", this root file would be found at\
+	DotsX/tasks/simple_demo/roots/simpleDemo_Somebody.mat\
+\
+Now that the root is saved, let's go ahead and run the task!  This is easy, since all the configuration has already taken place.  We simply invoke the runTasks() method of the current paradigm object.  This should cause the experiment to run, as described at the beginning of this document.  You can exit the experiment at any time by pressing F3.\
+\
+You might wish to remove the runTasks() function call from your own "yourExperimentRoot.m" file.  This choice depends on whether you intend to configure and your experiment root in advance of running an actual experiment, or always to do both at the same time.\
+\
+Finally, once the experiment is completed or exited, it is prudent to clean up all resources used by DotsX.  This is the purpose of "rDone" and "clear all" at the bottom of simpleDemoRoot.m\
+\
+
+\b\fs26 See Also:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\b0\fs24 \cf0 How to install and test DotsX:
+\b\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+{\field{\*\fldinst{HYPERLINK "http:///LabWorks/GoldLabSOPs/Computers/Install_DotsX/Install_DotsX.rtf"}}{\fldrslt \cf0 Install_DotsX.rtf}}}

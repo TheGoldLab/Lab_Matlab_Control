@@ -13,11 +13,14 @@ function DBSmakeFIRA(filename)
 if nargin < 1 || isempty(filename)
    % for debugging
    % filename = 'data_2018_06_19_10_48';
-   filename = 'data_2018_06_25_07_47';
+   filename = 'data_2018_06_25_07_47';   
 end
 
+% Where the data are stored
+DBSfilepath = fullfile(getDataFilepath(), 'DBSStudy');
+
 % Use the machine-specific data pathname to find the data
-rawFile = fullfile(DBSfilepath(), 'Raw', [filename '.mat']);
+rawFile = fullfile(DBSfilepath, 'Raw', [filename '.mat']);
 
 %% Get the ecode matrix using the topsDataLog utility
 %
@@ -59,12 +62,13 @@ uci = find(strcmp(ecodes.name, 'time_choice'), 1);
 % get ui device
 groupMap = datatubStruct.item.allGroupsMap('Control');
 ui = groupMap('userInputDevice');
-fileWithPath = fullfile(DBSfilepath(), 'Pupil', [filename '_eye']);
+fileWithPath = fullfile(DBSfilepath, 'Pupil', [filename '_eye']);
 
 % Use constructor class static method to read the data file.
 %
-% for PupilLabs: Uses a python script... BE PATIENT!!!
+% for PupilLabs: Uses a python script...
 [eyeData, tags] = feval([class(ui) '.readDataFromFile'], fileWithPath);
+eyeData = cell2num(eyeData);
 
 % FOR DEBUGGING
 % load('tmp_pupil_data');

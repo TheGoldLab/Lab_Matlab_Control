@@ -470,8 +470,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             
             if nargin < 6 || isempty(targetSize)
                 targetSize = 20;
-            end
-            
+            end            
             
             % set up gamma table arrays
             maxV                    = tableSize-1;

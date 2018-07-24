@@ -1,0 +1,235 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf350
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\fmodern\fcharset0 Courier;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue255;}
+{\info
+{\author Joshua Gold}
+{\*\company Gold Lab}}\margl1440\margr1440\vieww17040\viewh14900\viewkind0
+\deftab720
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\f0\b\fs32 \cf0 HIDx: what is it, why, and how do you use it?\
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\fs26 \cf0 Revisions\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0\fs24 \cf0 18 Aug 2006	Ben H. wrote the blank example of a howto.rtf\
+6 Oct 2008	Ben H. wrote it.\
+7 Oct 20080	Ben H. added some notes and links about HIDx development\
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\f0\i\b\fs28 \cf0 What is HIDx?  Why?\
+\pard\pardeftab720\ql\qnatural
+
+\f1\i0\b0\fs24 \cf0 HIDx is a MATLAB "mex" function for getting user input data into MATLAB and DotsX.  "HID" stands for Human Interface Device, and is the name of a standard framework for getting input data from USB devices like keyboards, mouses, gamepads, and many others.\
+\
+I (Ben Heasly) wrote HIDx to provide an alternative to the hardware-input-checking functions provided with Psychtoolbox.  In general, I thought the Psychtoolbox functions could be made more uniform, faster, and more efficient.  I also made a specific design choice that makes HIDx different: HIDx uses event notification, rather than polling, to get data about user inputs.\
+\
+What are event notification and polling?  Functions that do polling, like the Psychtoolbox functions, ask questions like, "Is the button being pressed right now?"  The answers would be simple and describe only the immediate state of a device, for example: pressed or unpressed.  So when you use polling functions you have to call them often enough to observe events of interest.  This introduces the ugly problems of sampling frequency.  For example, if someone presses and releases a button very quickly between polling calls, your program might never observe the event.  You can treat this problem with brute force by making function calls very rapidly, but that's a waste of CPU time and its just plain ugly.\
+\
+Functions that use event notification, like HIDx, ask questions like, "What button events have occurred?"  The answers would be rich, and describe all the state 
+\i transitions
+\i0  that have occurred since the last function call.  For example, "button #1 became unpressed at 0.011 seconds; button #2 became pressed at 0.100 seconds".  With event notification, you can get a complete record of what user inputs have occurred with relatively few function calls.  The detailed accounting takes place efficiently and automatically, outside of your own programs.\
+\
+HIDx implements the HID framework in a way that links DotsX objects to HID devices.  This makes it easy to get notification about input events from USB keyboards, USB gamepads, and the 1208FS USB digital-analog converter (this is the little blue box connected to the levers device in the psychophysics room).  HIDx could be extended to get input data from other HID devices--a USB mouse would be an obvious choice--but so far I have only written modules for keyboard, gamepad, and the 1208FS.\
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\f0\i\b\fs28 \cf0 Basic usage on the MATLAB command window\
+\pard\pardeftab720\ql\qnatural
+
+\f1\i0\b0\fs24 \cf0 HIDx is designed to integrate silently with DotsX, so there's little need for command line-based interaction with HIDx.  But let's go through the available commands, anyway.  You can type "HIDx" in the MATLAB command window to get a summary of these commands.\
+\
+SCAN\
+[deviceInfo =] HIDx('scan'); % [Return device info struct array] or list a few key numbers.\
+\
+You can ask HIDx what HID devices are connected to the computer and get lots of information about each device.  "HIDx('scan')" by itself will print a list of USB devices along with a little bit of information about them.\
+\
+"deviceInfo = HIDx('scan')", with a variable assigned to receive output, will return a struct array of data with one struct per HID device.  The fields of the structs describe things like product name, vendor name, number of buttons, etc.\
+\
+INIT\
+isInitialized = HIDx('init'); % Build HID device library.  Lock the HIDx mex function.  Redundant init's are ok.\
+\
+'init' builds internally the same set of device data that is returned to you by 'scan'.  'init' also locks the HIDx mex function so that the internal data persist when you or MATLAB call "clear all", "clear mex" or "clear HIDx".\
+\
+rInit automatically invokes HIDx('init').\
+\
+CLOSE\
+isInitialized = HIDx('close'); % Free HID library and device resources.\
+\
+'close' frees all resources used by HIDx.  These include the memory that holds the internal data about USB devices, any existing links between HID devices and DotsX objects, and any input event data that hasn't yet been sent to MATLAB.\
+\
+rDone automatically invokes HIDx('close').\
+\
+STATUS\
+isInitialized = HIDx('status'); % Boolean: is initialized or not.\
+\
+'status' just tells you whether HIDx has already been initialized with 'init'.\
+\
+ADD\
+[deviceIndex, deviceInfo, elementInfo] = HIDx('add', className, classIndex, deviceCriteria, extras); % Setup a HID device and associate with a DotsX object.\
+\
+'add' is the key interaction between MATLAB and the HIDx function.  It establishes a link between a given HID device and a given DotsX object that is designed to work with that device.  Let's take the USB keyboard as an example and go through the argument list for 'add':\
+\
+\pard\pardeftab720\ql\qnatural
+
+\b \cf0 'add'
+\b0  -- invokes this subcommand of HIDx.\
+
+\b className
+\b0  -- this is a string containing the name of a DotsX class like "dXkbHID".\
+
+\b classIndex
+\b0  -- this is the index of a DotsX object contained in ROOT_STRUCT, of type className.  Usually classIndex = 1.\
+
+\b deviceCriteria
+\b0  -- this is a struct containing all or some of the fields returned by 'scan'.  HIDx will compare the field names and values of this struct to those of the currently connected HID devices and try to find a match.  If a match is found, HIDx will associate the matching HID device with the DotsX object specified by className and classIndex.\
+\
+deviceCriteria can be as vague or specific as you like.  For dXkbHID, the default deviceCriteria has only one field:\
+deviceCriteria
+\f2 .usageName = 'Keyboard';\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 \
+This means that any device that identifies itself as a HID keyboard can be associated with dXkbHID.  If you have more than one keyboard connected, you might want to be more specific.  For example, you could specify a keyboard of a particular brand, like NEXXTECH:\
+deviceCriteria
+\f2 .usageName = 'Keyboard';\
+
+\f1 deviceCriteria
+\f2 .vendorID = 3690;\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b \cf0 extras
+\b0  -- optional.  This would be any additional data required to configure the HID device.  The format of extras is specific to each device: dXkbHID omits extras alltogether, dXPMDHID uses extras to configure things like scanning frequency for the 1208FS digital-analog converter.\
+\
+Let's also look at the outputs of 'add':\
+\
+
+\b deviceIndex
+\b0  -- this is the index of the HID-MATLAB link stored within HIDx.  This is distinct from the index HID device itself, and distinct from the classIndex of the DotsX object.\
+\
+
+\b deviceInfo
+\b0  -- this is all the device data about the matched HID device, with the same fields as returned by 'scan'.\
+\
+
+\b elementInfo
+\b0  -- this is detailed information about the individual components of the matched HID device.  It contains data such as the default states and expected ranges of buttons, wheels, joystick axes, etc.
+\f2 \
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 \
+The root() methods of classes like dXkbHID, dXPMDHID, and dXgameHID automatically invoke 'add'.  Arguments such as deviceCriteria are stored as properties of these classes.\
+\
+In addition, rInit automatically creates an instance of dXkbHID, which in turn automatically invokes 'add'.\
+\
+REMOVE\
+[deviceIndex =] HIDx('remove', deviceIndex); % Free device resources and stop incoming data.\
+\
+'remove' frees resources used by one HID-MATLAB link that was created by 'add'.  deviceIndex is the same deviceIndex as returned by 'add'.\
+\
+The root() methods of classes like dXkbHID, dXPMDHID, and dXgameHID automatically invoke 'remove'.\
+\
+RESET\
+HIDx('reset', deviceIndex); % Zero time and forget old events for a device.\
+\
+'refresh' erases any input events, like key-presses, that have not yet been sent to MATLAB.  It also resets the time frame for future events so that "0" is the time of the most recent 'reset'.\
+\
+RUN\
+HIDx('run', deviceIndex [,secs]); % Trigger callbacks to send any available data to MATLAB [set timeout other than 0.0005 sec].\
+\
+'run' is almost as important as 'add'.  'run' sends data about input events, like key-presses, from the HID device drivers to MATLAB.  'run' does not return any data explicitly, but it silently invokes the putValues() method of DotsX objects whose HID devices have events to report.  Each putValues() method stores event data in the 'values' property of each object.  The 'run' arguments are optional:\
+\
+\pard\pardeftab720\ql\qnatural
+
+\b \cf0 'run'
+\b0  -- invokes this subcommand.\
+
+\b deviceIndex
+\b0  -- optional.  This is the index of a HID-MATLAB link as returned by 'add'.  If deviceIndex is omitted, HIDx will return events for all devices that have new events.\
+
+\b secs
+\b0  -- optional.  HIDx can block MATLAB's execution and wait extra time for an event to occur.  The default wait time is 0.0005 sec (half a millisecond).  Whenever you specify secs, that value will become the new default.  Whatever the secs wait time, HIDx will automatically invoke putValues() and return as soon as there is an input event to report.\
+\
+SETREPORT\
+HIDx('setReport', deviceIndex, reportID, report, [,reportType] [,milisecs]); % Send UInt8 data to HID device [report type (0-3) other than 1=output] [use timeout other than 50ms].\
+\
+Some HID devices can be configured with data formatted as "reports".  For example it is a report that tells the 1208FS to begin scanning for inputs.  Other devices, like HID keyboards, don't need to use such reports.  The arguments for setting a report are:\
+\
+
+\b 'setReport'
+\b0  -- invokes this subcommand\
+
+\b deviceIndex
+\b0  -- this is the index of a HID-MATLAB link as returned by 'add'.\
+
+\b reportID
+\b0  -- this is the memory address, within a given HID device, of a report that can be set.  This may also determine the function of the report.\
+
+\b report
+\b0  -- this is configuration data, such as scanning frequency, for the HID device to read.\
+
+\b reportType
+\b0  -- this is the type of report, such as input or output.  Usually. 1=output is the correct type.\
+
+\b milisecs
+\b0  -- this is an interval (in ms) to wait for the report to be sent to the HID device.  Default is 50ms.\
+\
+UNLOCK\
+HIDx('unlock'); % Unlock the HIDx mex function so MATLAB can clear it.  This may cause subsequent HIDx('add') calls to crash. \
+\
+'init' locks the HIDx mex function so that MATLAB cannot clear it.  Thus, after you invoke 'init', connecting or removing a USB device from the computer can cause problems with the internal accounting for USB devices.  You can try unlocking HIDx with 'unlock', and then doing a "clear all" in MATLAB, and then doing an new 'init' to rebuild all the internal device data.\
+\
+But I have found that this doesn't work and causes MATLAB to crash.  I think the problem involves dynamic memory allocation in the Apple HID library that underlies HIDx.  We just don't have sufficient access to that library's pointers and allocations.\
+\
+So, rather than invoking 'init' and 'unlock' multiple times, I suggest restarting MATLAB whenever you connect or disconnect a USB device.\
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\f0\i\b\fs28 \cf0 Some Development Notes\
+\pard\pardeftab720\ql\qnatural
+
+\f1\i0\b0\fs24 \cf0 SOURCE CODE\
+You can find the HIDx source in an Xcode project called "LabTools", along with several other lab C projects.  All of this source code is saved in the lab's SVN repository.  Access them at the URL "http://192.168.1.9:8800/svn/LabTools".  For example, from the command line,\
+\
+svn checkout http://192.168.1.9:8800/svn/LabTools ~/Desktop/LabTools\
+\
+Should give you a working copy of the LabTools C source code and project, on your desktop.\
+\
+The code for HIDx is based on a core set of C functions defined in HIDx.h and HIDx.c.  These use heavily a high-level library for working with HID devices, called "HID Utilities".  The source for HID Utilities is linked below.  There should also be working builds of the library in DotsX/mex/libHIDUtilities.a and DotsX/mex/libHIDUtilities-Intel.a that you can link against.  I think additional builds of libHIDUtilities come with Psychtoolbox.\
+\
+I figured out how to write HIDx by reading the HID Utilities source code and by reading the "HID Class Device Interface Guide", also linked below.\
+\
+DEVICE-SPECIFIC CODE\
+In addition to the core HIDx functions, there is another source file for each HID device that HIDx can use.  Each of these files must define a function for adding the device, removing the device, and for formatting and sending event data to MATLAB.  The easiest way to figure out how to write a new one is probably to copy one of the existing device-specific source files.  The gamepad is probably the simplest.  The PMD1208 is more complex because it must handle a wide variety of analog inputs and store long analog traces in so-called "reports".\
+\
+To make use HIDx and a HID device in DotsX, you should also define a class specific to that device.  The class should invoke the HIDx 'add' and 'remove' sub functions, with appropriate, device-specific arguments, in its root() method.  The class should invoke the 'reset' sub function in its reset() method.  The class must also define a putValues() method which will be automatically invoked by HIDx when new event data are available.  Again, the easiest way to figure out how to make a new class is probably to copy an existing class, like dXgameHID.\
+\
+NO POWERPC BUILT YET\
+I compiled HIDx on one of the newer Intel-based Macs in the lab.  So as of now (7 Oct. 2008) there is a "HIDx.mexmaci" in DotsX/mex, but there is no "HIDx.mexmac', for use with the older PowerPC Macs.  I don't know any reason why you couldn't compile HIDx for a PowerPC Mac, I just never tried it.  I assume that at some point PowerPC Macs will become so obsolete that it won't matter...\
+\pard\pardeftab720\sb240\sa60\ql\qnatural
+
+\f0\b\fs26 \cf0 See Also:\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0\fs24 \cf0 OS X HID documentation (online or local .pdf)
+\f0\b\fs26 \
+\pard\pardeftab720\ql\qnatural
+{\field{\*\fldinst{HYPERLINK "http://developer.apple.com/documentation/DeviceDrivers/Conceptual/HID/intro/chapter_1_section_1.html"}}{\fldrslt 
+\f1\b0\fs24 \cf2 \ul \ulc2 http://developer.apple.com/documentation/DeviceDrivers/Conceptual/HID/intro/chapter_1_section_1.html}}
+\f1\b0\fs24 \cf2 \ul \ulc2 \
+\pard\pardeftab720\ql\qnatural
+{\field{\*\fldinst{HYPERLINK "http:///LabWorks/GoldLabSOPs/Computers/HIDx_USB_code/HID_Class_Device_Interface_Guide.pdf"}}{\fldrslt \cf2 HID_Class_Device_Interface_Guide.pdf}}\
+\
+\pard\pardeftab720\ql\qnatural
+\cf0 \ulnone HID Utilities source (online and local .zip)\cf2 \ul \ulc2 \
+http://developer.apple.com/samplecode/HID_Utilities_Source/\
+\pard\pardeftab720\ql\qnatural
+{\field{\*\fldinst{HYPERLINK "http:///LabWorks/GoldLabSOPs/Computers/HIDx_USB_code/HID_Utilities_Source.zip"}}{\fldrslt \cf2 HID_Utilities_Source.zip}}\
+\
+\pard\pardeftab720\ql\qnatural
+\cf0 \ulnone Wikipedia entry:\
+{\field{\*\fldinst{HYPERLINK "http://en.wikipedia.org/wiki/USB_human_interface_device_class"}}{\fldrslt http://en.wikipedia.org/wiki/USB_human_interface_device_class}}\
+\
+The author of HIDx, who may have forgotten a lot by the time you get in touch with him, but who wouldn't mind trying to help out:\
+benjamin.heasly@gmail.com}
