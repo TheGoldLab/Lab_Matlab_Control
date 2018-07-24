@@ -21,7 +21,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         
         % calibration/validation pacing: 0 (for manual trigger) or
         %  500, 1000, or 1500 (msec)
-        defaultPacing = 1000;
+        defaultPacing = 0;
         
         % do calibration step during calibration
         doCalibration = true;
@@ -113,8 +113,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                 isOpen = ~Eyelink('Initialize', []);
                 
                 % make sure that we get gaze, pupil data from the Eyelink
+                % Also possibly:HREF
                 if isOpen
-                    Eyelink('Command', 'link_sample_data = HREF,AREA');
+                    Eyelink('Command', 'link_sample_data = GAZE,AREA');
                     Eyelink('Command', 'pupil_size_diameter = YES');
                 end
                 
@@ -235,7 +236,17 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                 switch nextEvent
                     
                     case {'accept', 'calibrate'}
-                        status = self.calibrateValidate('c', pacingVals(pacingI));
+                        
+                        % setup calibration parameters
+                        Eyelink('Command', 'calibration_type = HV9');
+                        Eyelink('Command', sprintf('automatic_calibration_pacing = %d', pacingVals(pacingI)));
+                        if pacingVals(pacingI)==0
+                            Eyelink('Command', 'enable_automatic_calibration = NO');
+                        else
+                            Eyelink('Command', 'enable_automatic_calibration = YES');
+                        end
+                        pause(0.25);
+                        status = self.calibrateValidate('c', pacingVals(pacingI)>0);
                         isCalibrated = true;
                         
                     case 'abort'
@@ -258,7 +269,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             end
             
             % Turn on recording
-            pause(0.2);
             Eyelink('StartRecording');
             pause(0.2);
         end
@@ -266,7 +276,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         % calibrateValidate
         %
         % Perform calibration or validation procedure
-        function status = calibrateValidate(self, mode, pacing)
+        function status = calibrateValidate(self, mode, autoTrigger)
             
             % Default outcome (no error)
             status = 0;
@@ -277,22 +287,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             
             % Set mode
             Eyelink('SendKeyButton', double(mode), 0, self.KB_PRESS);
-            Eyelink('Command', 'calibration_type = HV9');
-            pause(0.25);
-            
-            % Set pacing/feedback
-            if nargin < 3 || isempty(pacing) || ~any(pacing==[0 500 1000 1500])
-                pacing = 1000;
-            end
-            
-            Eyelink('Command', sprintf('automatic_calibration_pacing = %d', pacing));
-            if pacing==0
-                Eyelink('Command', 'enable_automatic_calibration = NO');
-            else
-                Eyelink('Command', 'enable_automatic_calibration = YES');
+            pause(0.2);
+            if autoTrigger
                 Eyelink('SendKeyButton', double('A'), 0, self.KB_PRESS);
             end
-            pause(0.25);
             
             % Loop through the protocol
             targetOldX           = self.MISSING;
@@ -318,13 +316,15 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                         ~bitand(currentMode, self.IN_SETUP_MODE) || ...
                         ~bitand(currentMode, self.IN_TARGET_MODE))
                     if mode == 'c'
-                        calibrateValidate(self, 'v', pacing);
+                        % Eyelink('SendKeyButton', 88, 0, self.KB_PRESS)
+                        pause(0.5)
+                        calibrateValidate(self, 'v', autoTrigger);
                         return;
                     else
                         pause(0.2);
                         Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
                         pause(0.2);
-                        break
+                        break;
                     end
                 end
                 
@@ -369,6 +369,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                         
                         % update the count
                         count = count + 1;
+                        % disp(count)
                         
                         % Set flags
                         targetOldX = targetX;
@@ -386,6 +387,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                         
                         % Aceept current calibration target
                         if waitingForAcceptance
+                            % Eyelink('SendKeyButton', 32, 0, self.KB_PRESS);
                             Eyelink('AcceptTrigger');
                             waitingForAcceptance = false;
                         end
@@ -530,8 +532,8 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             evt = Eyelink('NewestFloatSample');
             
             % Convert to degrees visual angle wrt center of the screen
-            x =  (evt.hx(self.trackedEye) - self.windowCtr(1))/self.pixelsPerDegree;
-            y = -(evt.hy(self.trackedEye) - self.windowCtr(2))/self.pixelsPerDegree;
+            x =  (evt.gx(self.trackedEye) - self.windowCtr(1))/self.pixelsPerDegree;
+            y = -(evt.gy(self.trackedEye) - self.windowCtr(2))/self.pixelsPerDegree;
             
             % package up data in dotsReadable format
             newData = [ ...

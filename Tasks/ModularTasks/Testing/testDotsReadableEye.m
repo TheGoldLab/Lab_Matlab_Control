@@ -1,5 +1,5 @@
-function testDotsReadableEye(tracker, useRemote)
-% function testDotsReadableEye(tracker, useRemote)
+function testDotsReadableEye(tracker, useRemote, screenNumber)
+% function testDotsReadableEye(tracker, useRemote, screenNumber)
 %
 % Function for testing the dotsReadableEye class
 
@@ -15,10 +15,8 @@ if nargin < 2 || isempty(useRemote)
    useRemote = false;
 end
 
-if ~useRemote
+if nargin < 3 || isempty(screenNumber)
    screenNumber = 0;
-else
-   screenNumber = 1;
 end
 
 try
