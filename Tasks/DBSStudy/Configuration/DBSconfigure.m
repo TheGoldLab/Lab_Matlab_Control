@@ -1,5 +1,5 @@
-function [mainTreeNode, datatub] =  DBSconfigure(varargin)
-%% function [mainTreeNode, datatub] =  DBSconfigure(varargin)
+function topNode =  DBSconfigure(varargin)
+%% function topNode =  DBSconfigure(varargin)
 %
 % This function sets up a DBS experiment. We keep this logic separate from
 % running and cleaning up an experiment because we may want to decide
@@ -13,7 +13,6 @@ function [mainTreeNode, datatub] =  DBSconfigure(varargin)
 %              
 % Returns:
 %  mainTreeNode ... the topsTreeNode at the top of the hierarchy
-%  datatub      ... the topsGroupedList that holds task variables
 %
 % 11/17/18   jig wrote it
 
@@ -24,7 +23,8 @@ name = 'DBSStudy';
 
 %  Default filename is based on the clock
 c = clock;
-filename = fullfile(getDataFilepath(name), 'Raw', ...
+filename = fullfile( ...
+   dotsTheMachineConfiguration.getDefaultValue('dataPath'), name, 'Raw', ...
    sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
    c(1), c(2), c(3), c(4), c(5)));
 
@@ -54,35 +54,20 @@ for ii = 1:2:nargin
    settings{find(strcmp(varargin{ii}, settings),1) + 1} = varargin{ii+1};
 end
 
-%% ---- Create a topsGroupedList
-%
-% This is a versatile data structure that will allow us to pass all
-%  relevant variables to the state machine as it advances.
-%  Make it and add all the settigs as a group
-%
-datatub = topsGroupedList();
-datatub.makeGroupFromList('Settings', settings);
-
 %% ---- Create topsCallLists for experiment start/finish fevalables
 %
-[mainTreeNode, ...
-   datatub{'Control'}{'startCallList'}, ...
-   datatub{'Control'}{'finishCallList'}] = ...
-   topsTreeNode.createTopNode(name, ...
-   datatub{'Settings'}{'subjectGUI'}, datatub{'Settings'}{'runGUI'});
+% Add a topsGroupedList as the nodeData, plus other fields
+%
+topNode = topsTreeNodeTopNode(name);
+topNode.nodeData = topsGroupedList();
+topNode.nodeData.makeGroupFromList('Settings', settings);
+topNode.filename        = topNode.nodeData{'Settings'}{'filename'};
+topNode.databaseGUIname = topNode.nodeData{'Settings'}{'subjectGUI'};
+topNode.runGUIname      = topNode.nodeData{'Settings'}{'runGUI'};
 
 %% ---- Configure elements
 %
 % Done in separate files for readability
-DBSconfigureDrawables(datatub);
-DBSconfigureReadables(mainTreeNode, datatub);
-DBSconfigureTasks(mainTreeNode, datatub);
-
-%% ---- Set up data logging
-%
-% Flush the log, log the tub, and save to the file
-topsDataLog.flushAllData(); % Flush stale data, just in case
-topsDataLog.logDataInGroup(struct(mainTreeNode), 'mainTreeNode');
-topsDataLog.logDataInGroup(struct(datatub), 'datatub');
-addCall(datatub{'Control'}{'startCallList'}, {@topsDataLog.writeDataFile, filename}, 'first log write');
-addCall(datatub{'Control'}{'finishCallList'}, {@topsDataLog.writeDataFile}, 'last log write');
+DBSconfigureDrawables(topNode);
+DBSconfigureReadables(topNode);
+DBSconfigureTasks(topNode);

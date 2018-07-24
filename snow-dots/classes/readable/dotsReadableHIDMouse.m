@@ -17,6 +17,13 @@ classdef dotsReadableHIDMouse < dotsReadableHID
    % any scaling or nonlinearity.  The latest sums are available in the x
    % and y properties.
    properties
+      
+      % the latest x-position of the mouse
+      x;
+      
+      % the latest y-position of the mouse
+      y;
+      
       % struct of HID parameters to identify mouse button elements
       % @details
       % See mexHIDUsage() or mexHIDUsage.gui() for lists of valid HID
@@ -35,11 +42,14 @@ classdef dotsReadableHIDMouse < dotsReadableHID
       % parameters.
       yMatching;
       
-      % the latest x-position of the mouse
-      x;
+      % Matching properties for machine-specific hardware - Vendor
+      VendorID;
       
-      % the latest y-position of the mouse
-      y;
+      % Matching properties for machine-specific hardware - Product
+      ProductID;
+      
+      % Matching properties for machine-specific hardware - Usage
+      PrimaryUsage=2;
    end
    
    properties (SetAccess = protected)
@@ -63,8 +73,20 @@ classdef dotsReadableHIDMouse < dotsReadableHID
       function self = dotsReadableHIDMouse(devicePreference)
          self = self@dotsReadableHID();
          
-         if nargin > 0
+         if nargin > 0 && ~isempty(devicePreference)
             self.devicePreference = devicePreference;
+         else
+            mc = dotsTheMachineConfiguration.theObject();
+            mc.applyClassDefaults(self);
+            if ~isempty(self.VendorID)
+               self.devicePreference.VendorID = self.VendorID;
+            end
+            if ~isempty(self.ProductID)
+               self.devicePreference.ProductID = self.ProductID;
+            end
+            if ~isempty(self.PrimaryUsage)
+               self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            end
          end
          
          % choose basic device identification criteria

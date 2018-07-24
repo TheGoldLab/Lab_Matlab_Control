@@ -5,8 +5,12 @@
 %
 % 5/11/18 written by jig
 
-%% Get IP addresses
-[clientIP, clientPort, serverIP, serverPort] = getIPs();
+% could define IP/ports here, but normally just use defaults
+% clientIP = 
+% clientPort = 
+% serverIP =
+% serverPort =
+% dotsEnsembleServer.runNewServer([],clientIP,clientPort,serverIP,serverPort);
 
 %% Start server
-dotsEnsembleServer.runNewServer([],clientIP,clientPort,serverIP,serverPort);
+dotsEnsembleServer.runNewServer();

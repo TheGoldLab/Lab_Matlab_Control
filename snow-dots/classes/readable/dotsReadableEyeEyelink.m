@@ -51,19 +51,19 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         pixelsPerDegree = [];
         
         % Return values from Eyelink
-        NO_REPLY=1000;             % no reply yet (for polling test)
-        KB_PRESS=10;               % pressed keyboard
-        MISSING=-32768;            % eyedata.h
-        IN_DISCONNECT_MODE=16384;  % disconnected
+        NO_REPLY=1000;              % no reply yet (for polling test)
+        KB_PRESS=10;                % pressed keyboard
+        MISSING=-32768;             % eyedata.h
+        IN_DISCONNECT_MODE=16384;   % disconnected
         IN_UNKNOWN_MODE=0;    		% mode fits no class (i.e setup menu)
         IN_IDLE_MODE=1;    			% off-line
         IN_SETUP_MODE=2;   			% setup or cal/val/dcorr
-        IN_RECORD_MODE=4;    		% data flowing
-        IN_TARGET_MODE=8;    		% some mode that needs fixation targets
-        IN_DRIFTCORR_MODE=16;      % drift correction
+        IN_RECORD_MODE=4;           % data flowing
+        IN_TARGET_MODE=8;           % some mode that needs fixation targets
+        IN_DRIFTCORR_MODE=16;       % drift correction
         IN_IMAGE_MODE=32;   			% image-display mode
         IN_USER_MENU=64;				% user menu
-        IN_PLAYBACK_MODE=256;		% tracker sending playback data
+        IN_PLAYBACK_MODE=256;       % tracker sending playback data
         
     end % Protected properties
     

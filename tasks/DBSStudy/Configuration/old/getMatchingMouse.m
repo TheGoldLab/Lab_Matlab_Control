@@ -23,12 +23,12 @@ switch deblank(machineName)
       if any([infoStruct.ProductID]==772)
          
          % optical mouse
-         matching.VendorID = 772;
+         matching.ProductID = 772;
          matching.PrimaryUsage = 2;
          
       else % if any([infoStruct.ProductID]==632)
          
-         % built-in keboard
+         % built-in trackpad
          matching.ProductID = 632;
          matching.PrimaryUsage = 2;
       end            

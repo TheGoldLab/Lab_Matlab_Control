@@ -52,22 +52,10 @@ classdef topsGroupedList < topsFoundation
         % @param name optional name for this object
         % @details
         % If @a name is provided, assigns @a name to this object.
-        % If further arguments are provided, should be 
         function self = topsGroupedList(varargin)
-           name = 'groupedList';
-           args = {};
-           if nargin > 1
-              name = varargin{1};
-              if nargin > 2
-                 args = varargin(2:end);
-              end
-           end
-           
+
            % Make the topsFoundation object
-           self = self@topsFoundation(name);
-           
-           % Possibly add the values, 
-           
+           self = self@topsFoundation(varargin{:});
         end
                 
         % Open a GUI to view object details.
