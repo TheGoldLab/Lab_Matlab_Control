@@ -162,6 +162,9 @@ classdef dotsReadableEye < dotsReadable
         % how to rotate x,y gaze data
         rotation = [1 0; 0 1];
         
+        % flag if any transformation is necessary
+        doTransform = false;
+        
         % how to offset raw pupil data, before scaling
         pupilOffset = 0;
         
@@ -212,7 +215,6 @@ classdef dotsReadableEye < dotsReadable
         % Connect to eye tracker and prepare coordinate transforms.
         function initialize(self)
             self.initialize@dotsReadable();
-            self.setupCoordinateRectTransform();
         end
         
         % Clear data from this object.
@@ -313,7 +315,7 @@ classdef dotsReadableEye < dotsReadable
             %   dotsReadable.detectEvent to make any real comparisons,
             %   which is why we set the min/max values to -/+inf.
             eventName = self.gazeEvents(index).eventName;
-            eventID = self.gazeEvents(index).ID;
+            eventID   = self.gazeEvents(index).ID;
             self.components(eventID).name = eventName;
             self.defineEvent(eventID, eventName, -inf, inf, false, ...
                 self.gazeEvents(index).isActive);
@@ -495,6 +497,14 @@ classdef dotsReadableEye < dotsReadable
                 self.rotation = rotations;
             end
             
+            % check if the tranformation parameters are used
+            if any(self.xyOffset~=0) || any(self.xyScale~=1) || ...
+                  any(self.rotation(:)~=[1 0 0 1]')
+               self.doTransform = true;
+            else
+               self.doTransform = false;
+            end
+        
             % Save it to the log
             topsDataLog.logDataInGroup( ...
                 {feval(self.clockFunction) self.xyOffset, self.xyScale, self.rotation}, ...
@@ -556,7 +566,7 @@ classdef dotsReadableEye < dotsReadable
                 else
                     
                     % use the keyboard
-                    self.calibrationUI = getMatchingKeyboard();
+                    self.calibrationUI = dotsReadableHIDKeyboard();
                     self.calibrationUI.deactivateEvents();
                     
                     % Deactivate all events
@@ -937,6 +947,9 @@ classdef dotsReadableEye < dotsReadable
             
             % get new data
             rawData = self.transformRawData(self.readRawEyeData());
+            if isempty(rawData)
+               return
+            end            
             
             % check whether or not we pass along all the raw data
             %  or just the events
@@ -1097,16 +1110,12 @@ classdef dotsReadableEye < dotsReadable
             
             % Could check if same number of x,y samples but that should always
             % be true
-            if any(Lx)
+            if any(Lx) && self.doTransform
                 
                 % Scale, rotate, then offset
                 transformedData = ...
                     [self.xyScale(1).*newData(Lx,2) self.xyScale(2).*newData(Ly,2)] * ...
                     self.rotation + repmat(self.xyOffset, sum(Lx), 1);
-                
-                if newData(Lx,2) ~= transformedData(:,1)
-                    disp('GG')
-                end
                 
                 % Save the transformed x value(s)
                 newData(Lx,2) = transformedData(:,1);
@@ -1123,21 +1132,6 @@ classdef dotsReadableEye < dotsReadable
                 newData(pupilSelector,2) = transPupil;
                 self.pupil = transPupil(end);
             end
-        end
-        
-        % Prepare the transform from inputRect to xyRect coordinates.
-        % @details
-        % Combines the transforms out of inputRect coordinates and into
-        % xyRect coordinates into a single transform to be applied to data
-        % during appendData().
-        function setupCoordinateRectTransform(self)
-            self.xyScale = [ ...
-                self.xyRect(3)/self.inputRect(3), ...
-                self.xyRect(4)/self.inputRect(4)];
-            
-            self.xyOffset = [ ...
-                (self.xyRect(1)/self.xyScale(1)) - self.inputRect(1), ...
-                (self.xyRect(2)/self.xyScale(2)) - self.inputRect(2)];
         end
     end
     

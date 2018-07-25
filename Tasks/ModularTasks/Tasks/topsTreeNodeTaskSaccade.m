@@ -131,16 +131,8 @@ end
          self.updateReadables = true;
       end
       
-      %% Overloaded start task method
-      function start(self)
-         
-         % Do some bookkeeping via superclass
-         self.start@topsTreeNodeTask();
-         
-         % Check for abort
-         if ~self.isRunning
-            return
-         end
+      %% Start task method
+      function startTask(self)
          
          % Configure each element - separated for readability
          self.initializeDrawables();
@@ -160,13 +152,7 @@ end
       end
       
       %% Overloaded finish task method
-      function finish(self)
-         
-         % Do some bookkeeping
-         self.finish@topsRunnable();
-         
-         % Write data from the log to disk
-         topsDataLog.writeDataFile();
+      function finishTask(self)         
       end
       
       %% Start trial method
@@ -195,20 +181,7 @@ end
          self.updateStatus(); % just update the second one
       end
       
-      %% Finish trial method
-      function finishTrial(self)
-         
-         % ---- Save the current trial in the DataLog
-         %
-         %  We do this even if no choice was made, in case later we want
-         %     to re-parse the UI data
-         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
-         
-         % Call superclass finishTrial method
-         self.prepareForNextTrial();
-      end
-      
-      %% Set Choice method
+       %% Set Choice method
       %
       % Save choice/RT information and set up feedback
       function setSaccadeChoice(self, value)
@@ -299,20 +272,9 @@ end
          if isa(self.readables.userInput, 'dotsReadableHIDKeyboard') && ...
                self.updateReadables
             
-            % ---- set keyboard events
-            %
-            % First deactivate all events
-            self.readables.userInput.deactivateEvents();
-            
-            % Now add given events. Note that the third and fourth arguments
-            %  to defineCalibratedEvent are Calibrated value and isActive --
-            %  we could make those user controlled.
-            for ii = 1:length(self.readables.keyboardEvents)
-               self.readables.userInput.defineCalibratedEvent( ...
-                  self.readables.keyboardEvents(ii).name, ...
-                  self.readables.keyboardEvents(ii).eventName, ...
-                  1, true);
-            end
+            % Reset calibrated events to the given list
+            self.readables.userInput.resetCalibratedEvents(true, ...
+               self.readables.keyboardEvents);           
             
          elseif isa(self.readables.userInput, 'dotsReadableEye')
             
@@ -339,10 +301,8 @@ end
                % First clear existing
                self.readables.userInput.clearCompoundEvents();
                
-               % Now set up new ones
+               % Now set up new ones, with respect to target locations
                for ii = 1:length(self.readables.gazeWindows)
-                  
-                  % Define the event
                   gw = self.readables.gazeWindows(ii);
                   oi = gw.objectIndices;
                   self.readables.userInput.defineCompoundEvent( ...

@@ -494,6 +494,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             
             % Open data file
             isRecording = ~Eyelink('OpenFile', self.filename);
+            
         end % startRecording
         
         % Overloaded stopRecording method
@@ -524,7 +525,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         function newData = readRawEyeData(self)
             
             if ~self.isAvailable || Eyelink('NewFloatSampleAvailable') <= 0
-                newData = zeros(0, 3);
+                newData = [];%zeros(0, 3);
                 return
             end
             

@@ -126,8 +126,10 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
       %> Turn off data recording from the device (for subclasses).
       function isRecording = stopRecording(self)
          
-         data = self.data(1:self.index,:);
-         save(fullfile(self.filepath, self.filename), 'data');
+         if ~isempty(self.filename)
+            data = self.data(1:self.index,:);
+            save(fullfile(self.filepath, self.filename), 'data');
+         end
          
 %          [~,cmdout] = system('ps -ef | grep mouse');
 %          

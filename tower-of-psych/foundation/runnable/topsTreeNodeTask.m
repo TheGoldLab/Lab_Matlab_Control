@@ -8,6 +8,10 @@ classdef topsTreeNodeTask < topsTreeNode
    % that can make it easy to dump that struct into the topsDataLog and
    % keep track of what is going on.
    %
+   % Subclasses must define
+   %  startTask
+   %  finishTask
+   
    % 5/27/18 created by jig
    
    properties
@@ -99,9 +103,55 @@ classdef topsTreeNodeTask < topsTreeNode
          self.start@topsRunnable();
 
          % Possibly update the gui using the new task
-         self.caller.updateGUI('_updateTask', self);         
-      end      
+         self.caller.updateGUI('_updateTask', self);    
+         
+         % Check for abort
+         if ~self.isRunning
+            return
+         end
+         
+         % Call sub-class startTask method
+         self.startTask();
+      end
             
+      % Finish task method
+      function finish(self)         
+         
+         % Do some bookkeeping
+         self.finish@topsRunnable();
+         
+         % Call sub-class finishTask method
+         self.finishTask();
+         
+         % Write data from the log to disk if the topNode defines a
+         % filename
+         if ~isempty(self.caller.filename)
+            topsDataLog.writeDataFile();
+         end
+      end
+      
+      % Start a trial ... can be overloaded in task subclass
+      %
+      function startTrial(self)
+      end
+      
+      % Finish a trial ... can be overloaded in task subclass
+      %
+      function finishTrial(self)
+         
+         % ---- Save the current trial in the DataLog
+         %
+         %  We do this even if no choice was made, in case later we want
+         %     to re-parse the UI data
+         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
+         
+         % ---- Prepare for the next trial
+         %
+         % We do this here instead of in startTrial because prepareForNextTrial 
+         % might terminate the task if no trials remain.
+         self.prepareForNextTrial();
+      end
+      
       % Get a trial struct by trialCount index
       %
       function trial = getTrial(self, trialCount)

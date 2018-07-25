@@ -173,15 +173,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % 
       % Put stuff here that you want to do before each time you run this
       % task
-      function start(self)
-         
-         % Do some bookkeeping via superclass
-         self.start@topsTreeNodeTask();
-         
-         % Check for abort
-         if ~self.isRunning
-            return
-         end
+      function startTask(self)
          
          % Configure each element - separated into different methods for
          % readability
@@ -205,13 +197,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %
       % Put stuff here that you want to do after each time you run this
       % task
-      function finish(self)
-         
-         % Do some bookkeeping
-         self.finish@topsRunnable();
-         
-         % Write data from the log to disk
-         topsDataLog.writeDataFile();
+      function finishTask(self)         
       end
       
       %% Start trial
@@ -242,24 +228,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
             trial.direction, trial.coherence)};
          self.updateStatus();
-      end
-      
-      %% Finish trial
-      %
-      % Put stuff here that you want to do after each time you run a trial
-      function finishTrial(self)
-         
-         % ---- Save the current trial in the DataLog
-         %
-         %  We do this even if no choice was made, in case later we want
-         %     to re-parse the UI data
-         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
-         
-         % ---- Prepare for the next trial
-         %
-         % We do this here instead of in startTrial because prepareForNextTrial 
-         % might terminate the task if no trials remain.
-         self.prepareForNextTrial();
       end
       
       %% Set Choice
@@ -445,21 +413,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          if isa(self.readables.userInput, 'dotsReadableHIDKeyboard') && ...
                self.updateReadables
             
-            % ---- set keyboard events
-            %
-            % First deactivate all events
-            self.readables.userInput.deactivateEvents();
-            
-            % Now add given events. Note that the third and fourth arguments
-            %  to defineCalibratedEvent are Calibrated value and isActive --
-            %  we could make those user controlled.
-            for ii = 1:length(self.readables.keyboardEvents)
-               self.readables.userInput.defineCalibratedEvent( ...
-                  self.readables.keyboardEvents(ii).name, ...
-                  self.readables.keyboardEvents(ii).eventName, ...
-                  1, true);
-            end
-            
+            % Reset calibrated events to the given list
+            self.readables.userInput.resetCalibratedEvents(true, ...
+               self.readables.keyboardEvents);           
+         
          elseif isa(self.readables.userInput, 'dotsReadableEye')
             
             % ---- Get target x,y positions
@@ -485,10 +442,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                % First clear existing
                self.readables.userInput.clearCompoundEvents();
                
-               % Now set up new ones
+               % Now set up new ones, with respect to target locations
                for ii = 1:length(self.readables.gazeWindows)
-                  
-                  % Define the event
                   gw = self.readables.gazeWindows(ii);
                   oi = gw.objectIndices;
                   self.readables.userInput.defineCompoundEvent( ...
@@ -653,10 +608,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Fill in the trialData with relevant information
          self.trialData = dealMat2Struct(self.trialData(1), ...
-            'taskID', repmat(self.taskTypeID,1,numel(directionGrid)), ...
-            'trialIndex', 1:numel(directionGrid), ...
-            'direction', directionGrid(:)', ...
-            'coherence', coherenceGrid(:)');
+            'taskID',      repmat(self.taskTypeID,1,numel(directionGrid)), ...
+            'trialIndex',  1:numel(directionGrid), ...
+            'direction',   directionGrid(:)', ...
+            'coherence',   coherenceGrid(:)');
       end
       
       %% Initialize StateMachine

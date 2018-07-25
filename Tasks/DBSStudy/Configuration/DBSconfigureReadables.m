@@ -23,9 +23,9 @@ ui.isAutoRead = true;
 if isa(ui, 'dotsReadableEye')
    
    % Set properties: filename, screenEnsemble for calibration drawing, autoread
-   [~, name, ~] = fileparts(topNode.nodeData{'Settings'}{'filename'});
+   [path, name, ~] = fileparts(topNode.nodeData{'Settings'}{'filename'});
    ui.filename = sprintf('%s_eye', name);
-   ui.filepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), 'Pupil');
+   ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), 'Pupil');
    ui.screenEnsemble = topNode.nodeData{'Graphics'}{'screenEnsemble'};
    ui.recordDuringCalibration = true;
    ui.queryDuringCalibration = false;

@@ -92,15 +92,15 @@ if strcmp(get(hObject,'Visible'),'off') && isempty(handles.readableEye)
    Z = sin(sqrt(X.^2+Y.^2)) ./ sqrt(X.^2+Y.^2);
    
    % Create a surface contour plor using the surfc function
-   surfc(X, Y, Z)
+   surfc(X, Y, Z);
    
    % Adjust the view angle
-   view(-38, 18)
+   view(-38, 18);
    
    % Add title and axis labels
-   xlabel('x')
-   ylabel('y')
-   zlabel('z')
+   xlabel('x');
+   ylabel('y');
+   zlabel('z');
 end
 
 % UIWAIT makes eyeGUI wait for user response (see UIRESUME)
