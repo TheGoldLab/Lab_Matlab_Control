@@ -114,8 +114,8 @@ classdef dotsTheScreen < dotsAllSingletonObjects
         % table.
         function gammaTableFileName = getHostGammaTableFilename
             
-            [~,h] = unix('hostname -s');
-            gammaTableFileName = sprintf('dots_%s_GammaTable.mat', deblank(h));
+            [~,machineName] = system('scutil --get ComputerName');
+            gammaTableFileName = sprintf('dots_%s_GammaTable.mat', deblank(machineName));
             
         end
         
@@ -453,7 +453,12 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             
             % check arguments
             if nargin < 2 || isempty(optiCAL)
-                optiCAL = '/dev/tty.USA19H1461P1.1';
+                calDir = dir('/dev/tty.USA*');
+                if ~isempty(calDir)
+                    optiCAL = ['/dev/' calDir(1).name];
+                else
+                    error('makeGammaTable: optical device not found')
+                end
             end
             
             if nargin < 3
@@ -465,7 +470,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             end
             
             if nargin < 5 || isempty(sampleInterval)
-                sampleInterval = 0.1;
+                sampleInterval = 0.02;
             end
             
             if nargin < 6 || isempty(targetSize)
