@@ -461,12 +461,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             Eyelink('DriftCorrStart', ...
                 self.windowCtr(1) + xy(1) * self.pixelsPerDegree, ...
                 self.windowCtr(2) - xy(2) * self.pixelsPerDegree);
-            %pause(0.1);
-             %Eyelink( 'AcceptTrigger');
-            %Eyelink('ApplyDriftCorr');
-            %Eyelink('CalResult')
-            Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
-            Eyelink('StartRecording')
+            pause(0.1);
+             Eyelink( 'AcceptTrigger');
+            Eyelink('ApplyDriftCorr');
+            Eyelink('CalResult')
             status = 0;
             
 %             % Wait for confirmation.

@@ -95,6 +95,9 @@ classdef dotsReadable < handle
       
       % Flag to use GUI for feedback, etc.
       useGUI = false;
+      
+      % Flag to skip calibration routine
+      useExistingCalibration = false;
    end
    
    properties (SetAccess = protected)

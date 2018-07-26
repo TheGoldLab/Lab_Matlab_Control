@@ -24,7 +24,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       ProductID;
       
       % Matching properties for machine-specific hardware - Usage
-      PrimaryUsage=2;
+      PrimaryUsage=6;
    end
    
    methods

@@ -51,6 +51,6 @@ try
    %       pause(0.1);
    %    end
    
-catch
+catch 
    dotsTheScreen.closeWindow();
 end

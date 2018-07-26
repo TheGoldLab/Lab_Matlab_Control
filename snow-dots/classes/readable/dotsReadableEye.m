@@ -945,17 +945,23 @@ classdef dotsReadableEye < dotsReadable
         % transform x, y, and pupil data into user-defined coordinates.
         function newData = readNewData(self)
             
+            % Default
+            newData = [];
+            
             % get new data
-            rawData = self.transformRawData(self.readRawEyeData());
+            rawData = self.readRawEyeData();
             if isempty(rawData)
                return
-            end            
+            end     
+            
+            % Possibly transfor
+            if self.doTransform
+                rawData = self.transformRawData(rawData);
+            end
             
             % check whether or not we pass along all the raw data
             %  or just the events
-            if self.readEventsOnly
-                newData = [];
-            else
+            if ~self.readEventsOnly
                 newData = rawData;
             end
             
@@ -1110,7 +1116,7 @@ classdef dotsReadableEye < dotsReadable
             
             % Could check if same number of x,y samples but that should always
             % be true
-            if any(Lx) && self.doTransform
+            if any(Lx)
                 
                 % Scale, rotate, then offset
                 transformedData = ...

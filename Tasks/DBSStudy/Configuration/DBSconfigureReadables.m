@@ -30,6 +30,7 @@ if isa(ui, 'dotsReadableEye')
    ui.recordDuringCalibration = true;
    ui.queryDuringCalibration = false;
    ui.doShowEye = false;
+   ui.useExistingCalibration = true;
    
    % Add it to the mainTreeNode (for possible GUI control)
    topNode.runGUIArgs = {ui};
