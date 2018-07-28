@@ -455,6 +455,12 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).isActive = false;
       end
       
+      % Reset events (define in subclasses)
+      %
+      %
+      function resetEvents(self, deactivateFlag, eventDefinitions)
+      end
+      
       % Activate all events
       %
       %  To do this separately for each event, call defineEvent and set

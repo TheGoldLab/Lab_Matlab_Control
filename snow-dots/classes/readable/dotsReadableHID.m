@@ -264,7 +264,7 @@ classdef dotsReadableHID < dotsReadable
          end
       end
       
-      % resetCalibratedEvents
+      % resetEvents
       %
       %  Convenient utility for clearing and resetting calibrated events
       %
@@ -276,14 +276,15 @@ classdef dotsReadableHID < dotsReadable
       %                          eventName (required),
       %                          calibratedValues (optional),
       %                          isActive (optional)
-      function resetCalibratedEvents(deactivateFlag, eventDefinitions)
+      function resetEvents(self, deactivateFlag, eventDefinitions)
          
          % Conditinally deactivate all events
-         if nargin >= 1 && deactivateFlag
-            self.readables.userInput.deactivateEvents();
+         if nargin >= 2 && deactivateFlag
+            self.deactivateEvents();
          end
          
-         if nargin >= 2 && ~isempty(eventDefinitions)
+         % Update the events
+         if nargin >= 3 && ~isempty(eventDefinitions)
             
             % Check fields
             if ~isfield(eventDefinitions, 'calibratedValues')
@@ -296,10 +297,10 @@ classdef dotsReadableHID < dotsReadable
             % Now add given events.
             for ii = 1:length(eventDefinitions)
                self.defineCalibratedEvent( ...
-                  eventDefinitions.name, ...
-                  eventDefinitions.eventName, ...
-                  eventDefinitions.calibratedValues, ...
-                  eventDefinitions.isActive);
+                  eventDefinitions(ii).name, ...
+                  eventDefinitions(ii).eventName, ...
+                  eventDefinitions(ii).calibratedValues, ...
+                  eventDefinitions(ii).isActive);
             end
          end
       end

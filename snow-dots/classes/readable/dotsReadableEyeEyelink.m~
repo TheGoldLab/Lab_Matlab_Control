@@ -157,18 +157,50 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                Eyelink('CloseFile');
                
                % Get the file
-               status  = Eyelink('ReceiveFile', [], self.filename, self.filepath);
-
-               % Copy to the real filename. This keeps the tmp file around
-               % in case there were any problems copying
+               status  = Eyelink('ReceiveFile', [], [], self.filepath);
                tmpname = fullfile(self.filepath, self.defaultFilename);
-               newname = fullfile(self.filepath, self.filename);               
+               newname = fullfile(self.filepath, self.filename);
+               
                if status > 0 || ~exist(tmpname, 'file')
                   disp('dotsReadableEyeEyelink: problems transferring data file')
+                  
                else
                   copyfile(tmpname, newname);
                end
+               
+               % Copy to the real filename. This keeps the tmp file around
+               % in case there were any problems copying
+               
+               
+               % Transfer it
+    % download data file
+    try
+        fprintf('Receiving data file ''%s''\n', edfFile );
+        status=Eyelink('ReceiveFile');
+        if status > 0
+            fprintf('ReceiveFile status %d\n', status);
+        end
+        if 2==exist(edfFile, 'file')
+            fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, pwd );
+        end
+
+        
+           
+            if status == 0
+                warning('Eyelink ReceiveFile error');
             end
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             % shutdown connection
             if self.isAvailable

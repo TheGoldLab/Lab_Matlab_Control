@@ -7,17 +7,19 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    %  topsTreeNodeTaskSaccade.getStandardConfiguration
    % 
    % Otherwise:
-   %  1. Create an instance:
-   %        task = topsTreeNodeTaskSaccade()
-   %  2. Set properties, in particular typically you need to provide:
+   %  1. Create an instance directly:
+   %        task = topsTreeNodeTaskSaccade();
+   %
+   %  2. Set properties. These are required:
    %        task.drawables.screenEnsemble
-   %        task.drawables.textEnsemble
    %        task.readables.userInput
+   %     Others can use defaults
+   %
    %  3. Add this as a child to another topsTreeNode
    %
    % 5/28/18 created by jig
    
-   properties
+   properties % (SetObservable) % uncomment if adding listeners
       
       % Trial properties.
       settings = struct( ...
@@ -70,35 +72,28 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       readables = struct( ...
          ...
          ...   % The readable object
-         'userInput',                  [], ...
+         'userInput',                  [],      ...
          ...
          ...   % readable settings
-         'settings',                   struct( ....
-         'bufferGaze',                 false), ...
+         'settings',                   struct(  ...
+         'bufferGaze',                 false),  ...
          ...
          ...   % Gaze windows
-         'gazeWindows', struct( ...
+         'dotsReadableEye', struct( ...
          'name',              {'fixWindow', 'trgWindow'}, ...
          'eventName',         {'holdFixation', 'choseTarget'}, ...
          'windowSize',        {8, 8}, ...
          'windowDur',         {0.15, 0.15}, ...
-         'objectIndices',     {[1 1], [2 1]}), ...
+         'ensemble',          {[], []}, ... % ensemble object to bind to
+         'ensembleIndices',   {[1 1], [2 1]}), ... % object/item indices
          ...
          ...   % Keyboard events 
-         'keyboardEvents', struct( ...
+         'dotsReadableHIDKeyboard', struct( ...
          'name',        {'KeyboardSpacebar', 'KeyboardT', 'KeyboardC'}, ...
          'eventName',   {'holdFixation', 'choseTarget', 'calibrate'}));
-end
+   end
    
    properties (SetAccess = protected)
-      
-      % Flag indicating whether to update drawables between trials; e.g.,
-      % after a property value changed
-      updateDrawables = true;
-      
-      % Flag indicating whether to update readables between trials; e.g.,
-      % after a property value changed
-      updateReadables = true;
       
       % The state machine, created locally
       stateMachine = [];
@@ -114,31 +109,39 @@ end
       % @details
       % If @a name is provided, assigns @a name to this object.
       function self = topsTreeNodeTaskSaccade(varargin)
+         
+         % ---- Make it from the superclass
+         %
          self = self@topsTreeNodeTask(varargin{:});
-      end
-      
-      % Set method for drawables properties that updates the
-      % updateDrawables flag
-      function set.drawables(self, value)
-         self.drawables = value;
-         self.updateDrawables = true;
-      end
-      
-      % Set method for readable properties that updates the
-      % updateReadables flag
-      function set.readables(self, value)
-         self.readables = value;
-         self.updateReadables = true;
+         
+         % ---- Keep track of changes to certain property structs
+         %
+         %  This will eventually be useful for real-time updating
+         self.addSetListeners({'drawables', 'readables'});
       end
       
       %% Start task method
       function startTask(self)
          
-         % Configure each element - separated for readability
+         % ---- Configure each element - separated for readability
+         % 
          self.initializeDrawables();
          self.initializeReadables();
          self.initializeTrialData();
          self.initializeStateMachine();
+         
+         % ---- Set up gaze windows
+         %
+         if isa(self.readables.userInput, 'dotsReadableEye')
+            
+            % bind drawables to gaze windows
+            [self.readables.dotsReadableEye.ensemble] = ...
+               deal(self.drawables.stimulusEnsemble);
+           
+            % set up drift correction
+            self.stateMachine.editStateByName('holdFixation', 'exit', ...
+               {@resetGaze, self.readables.userInput, 1});
+         end
          
          % ---- Show task-specific instructions
          %
@@ -147,7 +150,8 @@ end
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);
          
-         % Get the first trial
+         % ---- Get the first trial
+         %
          self.prepareForNextTrial();
       end
       
@@ -187,11 +191,13 @@ end
       function setSaccadeChoice(self, value)
          
          % ---- Get current task/trial and save the choice/correct flag
+         %
          trial = self.getTrial();
          trial.choice = value;
          trial.correct = value;
          
          % ---- Parse choice info
+         %
          if value<0
             
             % NO CHOICE
@@ -216,12 +222,15 @@ end
          end
          
          % ---- Re-save the trial
+         %
          self.setTrial(trial);
          
          % ---- Set the feedback string
+         %
          self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
          
          % --- Show trial feedback
+         %
          self.statusStrings{2} = ...
             sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
@@ -236,7 +245,8 @@ end
       %
       function prepareDrawables(self)
          
-         % Get the current trial
+         % ---- Get the current trial
+         % 
          trial = self.getTrial();
          
          % ---- Always set target location
@@ -249,7 +259,8 @@ end
             self.drawables.fixation.yCenter + targetOffset * sind(trial.direction), 2);
          
          % ---- Conditionally update all stimulusEnsemble objects
-         if self.updateDrawables
+         %
+         if self.updateFlags.drawables
             
             % All other stimulus ensemble properties
             stimulusDrawables = {'fixation' 'target'};
@@ -261,7 +272,7 @@ end
             end
             
             % Unset the flag
-            self.updateDrawables = false;
+            self.updateFlags.drawables = false;
          end
       end
       
@@ -269,65 +280,26 @@ end
       %
       function prepareReadables(self)
          
-         if isa(self.readables.userInput, 'dotsReadableHIDKeyboard') && ...
-               self.updateReadables
-            
-            % Reset calibrated events to the given list
-            self.readables.userInput.resetCalibratedEvents(true, ...
-               self.readables.keyboardEvents);           
-            
-         elseif isa(self.readables.userInput, 'dotsReadableEye')
-            
-            % ---- Get target x,y positions
-            %
-            xs = self.drawables.stimulusEnsemble.getObjectProperty('xCenter');
-            ys = self.drawables.stimulusEnsemble.getObjectProperty('yCenter');
-
-            % ---- Control gaze buffering
-            % 
-            % Arguments are useBuffer and recenter
-            self.readables.userInput.resetGaze(false);
-            
-            % Then conditionally turn it on when re-centering at fp x,y
-            editStateByName(self.stateMachine, 'holdFixation', 'exit', ...
-               {@resetGaze, self.readables.userInput, ...
-               self.readables.settings.bufferGaze, [xs{1} ys{1}]});
-            
-            % ---- Set gazeWindows
-            %
-            % Check for reset
-            if self.updateReadables
-               
-               % First clear existing
-               self.readables.userInput.clearCompoundEvents();
-               
-               % Now set up new ones, with respect to target locations
-               for ii = 1:length(self.readables.gazeWindows)
-                  gw = self.readables.gazeWindows(ii);
-                  oi = gw.objectIndices;
-                  self.readables.userInput.defineCompoundEvent( ...
-                     self.readables.gazeWindows(ii).name, ...
-                     'eventName',   gw.eventName, ...
-                     'centerXY',    [xs{oi(1)}(oi(2)) ys{oi(1)}(oi(2))], ...
-                     'windowSize',  gw.windowSize, ...
-                     'windowDur',   gw.windowDur);
-               end
-            else
-               
-               % Just update the target gaze window
-               self.readables.userInput.defineCompoundEvent('trgWindow', ...
-                  'centerXY', [xs{2} ys{2}]);
-            end
+         % ---- Reset the events
+         %
+         % Check for update... if so, get the readables event update struct 
+         %     based on the class type
+         if self.updateFlags.readables
+            classType = intersect(fieldnames(self.readables), ...
+               cat(1, class(self.readables.userInput), ...
+               superclasses(self.readables.userInput)));
+            eventDefinitions = self.readables.(classType{:});
+            self.updateFlags.readables = false;
+         else
+            eventDefinitions = [];
          end
          
-         % ---- Unset the flag
-         %
-         self.updateReadables = false;         
+         % call resetEvents with the struct to do the heavy lifting
+         self.readables.userInput.resetEvents(true, eventDefinitions);
          
-         % ---- Flush the UI and deactivate all compound events (gaze windows)
+         % ---- Flush the UI
          %
          self.readables.userInput.flushData();
-         self.readables.userInput.deactivateCompoundEvents();
       end
       
       %% Prepare trialData for this trial
@@ -335,9 +307,11 @@ end
       function prepareTrialData(self)
          
          % ---- Get the current trial
+         %
          trial = self.getTrial();
          
          % ---- Set repeat flag, which must be overridden
+         %
          self.repeatTrial = true;
          
          % ---- Get synchronization times
@@ -350,13 +324,15 @@ end
             syncTiming(self.drawables.screenEnsemble, ...
             self.readables.userInput);
          
-         % Conditionally send TTL pulses (mod trial count)
+         % ---- Conditionally send TTL pulses (mod trial count)
+         %
          if self.settings.sendTTLs
             [trial.time_TTLStart, trial.time_TTLFinish] = ...
                sendTTLsequence(mod(self.trialCount,4)+1);
          end
          
          % ---- Re-save the trial
+         %
          self.setTrial(trial);
       end
       
@@ -374,12 +350,10 @@ end
       %
       function initializeDrawables(self)
          
-         % ---- Initialize the screen
+         % ---- Check for screen
          %
          if isempty(self.drawables.screenEnsemble)
-            
-            % just set up a debug screen
-            self.drawables.screenEnsemble = makeScreenEnsemble(false, 0);
+            error('topsTreeNodeTaskRTDots: missing screenEnsemble');
          end
          
          % ---- Initialize the stimulus ensemble
@@ -403,6 +377,10 @@ end
             self.drawables.textEnsemble = makeTextEnsemble('text', 2, ...
                self.drawables.settings.textOffset, self.drawables.screenEnsemble);
          end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.drawables = true;
       end
       
       %% Initalize user input devices
@@ -416,17 +394,23 @@ end
          if isempty(self.readables.userInput)
             self.readables.userInput = dotsReadableHIDKeyboard();
          end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.readables = true;
       end
       
       %% Initalize trial data
       %
       function initializeTrialData(self)
          
-         % Make array of directions
+         % ---- Make array of directions
+         % 
          directions = repmat(self.settings.directions, ...
             self.settings.trialsPerDirection, 1);
          
-         % Make the trial data structure array
+         % ---- Make the trial data structure array
+         %
          self.trialData = dealMat2Struct(self.trialData(1), ...
             'taskID', repmat(self.taskTypeID,1,numel(directions)), ...
             'trialIndex', 1:numel(directions), ...
@@ -507,7 +491,7 @@ end
          self.stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
          self.stateMachineComposite.addChild(self.stateMachine);
          
-         % Add it as a child to the task
+         % ---- Add it as a child to the task
          %
          self.addChild(self.stateMachineComposite);
       end
@@ -523,15 +507,17 @@ end
       %
       function task = getStandardConfiguration(name, trialsPerDirection, varargin)
          
-         % Get the task object, with optional property/value pairs
+         % ---- Get the task object, with optional property/value pairs
          task = topsTreeNodeTaskSaccade(name, varargin{:});
          
-         % Use given trials per direction
+         % ---- Use given trials per direction
+         %
          if ~isempty(trialsPerDirection)
             task.settings.trialsPerDirection = trialsPerDirection;
          end
          
-         % Instruction strings
+         % ---- Instruction strings
+         %
          switch name
             case 'VGS'
                task.drawables.settings.textStrings = { ...

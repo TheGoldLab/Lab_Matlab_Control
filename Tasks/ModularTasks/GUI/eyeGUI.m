@@ -131,7 +131,7 @@ if ~isempty(handles.readableEye)
    for ii = 1:4
       
       % active
-      if ~isempty(task) && ii <= length(task.readables.gazeWindows)
+      if ~isempty(task) && ii <= length(task.readables.dotsReadableEye)
          
          % Check radio button to see if value remains fixed across tasks
          fixedValue = get(handles.(sprintf('gw%dbutton', ii)), 'Value');
@@ -143,9 +143,9 @@ if ~isempty(handles.readableEye)
             val = get(h, 'String');
             if isempty(val) || ~fixedValue
                set(h, 'String', num2str(...
-                  task.readables.gazeWindows(ii).(sprintf('window%s', tags{:}))));
+                  task.readables.dotsReadableEye(ii).(sprintf('window%s', tags{:}))));
             elseif ~isempty(val) && fixedValue
-               task.readables.gazeWindows(ii).(sprintf('window%s', tags{:})) = ...
+               task.readables.dotsReadableEye(ii).(sprintf('window%s', tags{:})) = ...
                   num2str(val);
             end
          end
@@ -392,7 +392,7 @@ function gw1Size_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw1Size as text
 %        str2double(get(hObject,'String')) returns contents of gw1Size as a double
-handles.task.readables.gazeWindows(1).windowSize = ...
+handles.task.readables.dotsReadableEye(1).windowSize = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -414,7 +414,7 @@ function gw1Dur_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw1Dur as text
 %        str2double(get(hObject,'String')) returns contents of gw1Dur as a double
-handles.task.readables.gazeWindows(1).windowDur = ...
+handles.task.readables.dotsReadableEye(1).windowDur = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -436,7 +436,7 @@ function gw2Size_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw2Size as text
 %        str2double(get(hObject,'String')) returns contents of gw2Size as a double
-handles.task.readables.gazeWindows(2).windowSize = ...
+handles.task.readables.dotsReadableEye(2).windowSize = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -458,7 +458,7 @@ function gw2Dur_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw2Dur as text
 %        str2double(get(hObject,'String')) returns contents of gw2Dur as a double
-handles.task.readables.gazeWindows(2).windowDur = ...
+handles.task.readables.dotsReadableEye(2).windowDur = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -480,7 +480,7 @@ function gw3Size_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw3Size as text
 %        str2double(get(hObject,'String')) returns contents of gw3Size as a double
-handles.task.readables.gazeWindows(3).windowSize = ...
+handles.task.readables.dotsReadableEye(3).windowSize = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -502,7 +502,7 @@ function gw3Dur_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw3Dur as text
 %        str2double(get(hObject,'String')) returns contents of gw3Dur as a double
-handles.task.readables.gazeWindows(3).windowDur = ...
+handles.task.readables.dotsReadableEye(3).windowDur = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -524,7 +524,7 @@ function gw4Size_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw4Size as text
 %        str2double(get(hObject,'String')) returns contents of gw4Size as a double
-handles.task.readables.gazeWindows(4).windowSize = ...
+handles.task.readables.dotsReadableEye(4).windowSize = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
@@ -546,7 +546,7 @@ function gw4Dur_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of gw4Dur as text
 %        str2double(get(hObject,'String')) returns contents of gw4Dur as a double
-handles.task.readables.gazeWindows(4).windowDur = ...
+handles.task.readables.dotsReadableEye(4).windowDur = ...
    str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.

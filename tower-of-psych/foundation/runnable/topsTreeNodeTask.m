@@ -52,7 +52,10 @@ classdef topsTreeNodeTask < topsTreeNode
    properties (SetAccess = protected)
       
       % flag to repeat trial
-      repeatTrial = false;      
+      repeatTrial = false;
+      
+      % property update flags, set by setListeners
+      updateFlags = [];
    end
    
    methods
@@ -63,7 +66,13 @@ classdef topsTreeNodeTask < topsTreeNode
       % Any remaining arguments are property/value pairs -- and note that
       % properties can be cell array of strings for property structs
       function self = topsTreeNodeTask(varargin)
-         self = self@topsTreeNode(varargin{1});
+         
+         if nargin == 0
+            name = 'topsTreeNodeTask';
+         else
+            name = varargin{1};
+         end
+         self = self@topsTreeNode(name);
          
          if nargin > 1
             for ii = 2:2:nargin
@@ -263,6 +272,37 @@ classdef topsTreeNodeTask < topsTreeNode
                end
             end
          end
+      end
+      
+      % Set up listener for changes to certain propoperties
+      %
+      % Names is cell array of strings
+      function addSetListeners(self, names)
+         
+         if ~iscell(names)
+            names = {names};
+         end
+         
+         % make flags
+         self.updateFlags = cell2struct(num2cell(false(size(names))), names, 2);
+
+         % jig commented for now - not needed until/if realtime updating is
+         %  added
+         % Add the listeners
+         %          for ii = 1:length(names)
+         %             addlistener(self, names{ii}, 'PostSet', @self.propertySetListener);
+         %          end
+         
+      end
+      
+      % The listener
+      %
+      % Callback for PostSet event
+      % Inputs: meta.property object, event.PropertyEvent
+      function propertySetListener(self, source, event)
+         
+         % h = event.AffectedObject;
+         self.updateFlags.(source.Name) = true;
       end
    end
    

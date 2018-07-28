@@ -318,14 +318,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
         % Returns the standard file name for an .xml settings file on this
         % host, suitable for automatic loading.
         function hostFile = getHostFilename()
-            if isunix()
-                % jig changed this 5/15/2018
-                % [stat,h] = unix('hostname -s');
-                [~,name] = system('scutil --get ComputerName');
-            else
-                name = 'windows';
-            end
-            hostFile = sprintf('dots_%s_MachineConfig.xml', deblank(name));
+            hostFile = sprintf('dots_%s_MachineConfig.xml', getMachineName());
         end
         
         % Get the value of a default setting by name.
