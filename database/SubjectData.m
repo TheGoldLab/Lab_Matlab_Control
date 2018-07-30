@@ -64,7 +64,7 @@ axis image
 handles.Present = 0;
 
 % Save default directory
-handles.defaultDirectory = '/Users/joshuagold/Psychophysics/Projects/Database/';
+fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), 'Database');
 if ~exist(handles.defaultDirectory, 'dir')
    handles.defaultDirectory = uigetdir([], 'Please select a database directory');
 end

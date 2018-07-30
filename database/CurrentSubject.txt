@@ -1,2 +1,0 @@
-SubjectID,FirstName,LastName,Contact,PhoneNumber,Ethnicity,Gender,DateOfBirth,TaxForm
-,aa,aa,aaa,2602555,white,Male,05/20/1990,1
