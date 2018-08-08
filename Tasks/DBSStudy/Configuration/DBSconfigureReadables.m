@@ -43,5 +43,5 @@ if isa(ui, 'dotsReadableEye')
    topNode.addCall('finish', {@record, ui, false}, 'finish recording eye');   
 end
 
-%% ---- Save to the tub
+%% ---- Save to the nodeData list
 topNode.nodeData{'Control'}{'userInputDevice'} = ui;

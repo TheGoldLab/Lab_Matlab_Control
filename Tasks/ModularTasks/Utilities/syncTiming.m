@@ -1,7 +1,7 @@
-function [localTime, screenTime, screenRoundTripTime, uiTime, uiRoundTripTime] = ...
-   syncTiming(screenEnsemble, ui)
+function [localTime, screenTime, screenRoundTripTime, uiTimes, uiRoundTripTimes] = ...
+   syncTiming(screenEnsemble, uis)
 % function [localTime, screenTime, screenRoundTripTime, uiTime, uiRoundTripTime] = ...
-%    syncTiming(screenEnsemble, ui)
+%    syncTiming(screenEnsemble, uis)
 %
 % RTD = Response-Time Dots
 %
@@ -10,24 +10,54 @@ function [localTime, screenTime, screenRoundTripTime, uiTime, uiRoundTripTime] =
 %
 % Arguments:
 %  screenEnsemble    ... holds the dotsTheScreen object, to get timing
-%  ui                ... the current user-interface object
+%  uis               ... the current user-interface object
 %
 % 11/21/18 written by jig
 
 % Ask for the time from the screen object, but only accept it if it comes
 % quickly
-roundTrip = inf;
-start = mglGetSecs;
-timeout = false;
-while roundTrip > 0.01 && ~timeout;
-   before = mglGetSecs;
-   screenTime = screenEnsemble.callObjectMethod(@getCurrentTime);
-   after = mglGetSecs;
-   roundTrip = after - before;
-   timeout = (after-start) > 0.5;
-end
-uiTime              = ui.getDeviceTime();
-uiRoundTripTime     = mglGetSecs - after;
-localTime           = mean([before after]);
-screenRoundTripTime = roundTrip;
 
+% parse args
+if nargin < 1
+   localTime           = mglGetSecs();
+   screenTime          = nan;
+   screenRoundTripTime = nan;
+   uiTimes             = nan;
+   uiRoundTripTimes    = nan;
+   return
+end
+
+if nargin < 2
+   uis = [];
+end
+
+% Get screen time
+screenTime = nan;
+if nargin >= 1 && ~isempty(screenEnsemble)
+   screenRoundTripTime = inf;
+   start               = mglGetSecs;
+   after               = start;
+   while (screenRoundTripTime > 0.01) && ((after-start) < 0.5);
+      before              = mglGetSecs;
+      screenTime          = screenEnsemble.callObjectMethod(@getCurrentTime);
+      after               = mglGetSecs;
+      screenRoundTripTime = after - before;
+   end
+   localTime = mean([before after]);
+end
+
+% Get ui times
+if iscell(uis)
+   uiTimes          = nans(length(uis),1);
+   uiRoundTripTimes = nans(length(uis), 1);   
+   for ii = 1:length(uis)
+      uiTimes(ii)          = uis{ii}.getDeviceTime();
+      uiRoundTripTimes(ii) = mglGetSecs - after;
+   end
+elseif ~isempty(uis)
+      uiTimes          = uis.getDeviceTime();
+      uiRoundTripTimes = mglGetSecs - after;
+else
+   uiTimes          = nan;
+   uiRoundTripTimes = nan;
+end

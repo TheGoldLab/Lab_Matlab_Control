@@ -9,6 +9,11 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
    % By default, dotsReadableHIDKeyboard defines "pressed" events for
    % each keyboard key.  Use getNextEvent() to make sure that no key
    % presses are missed, and that each press is observed only once.
+   %
+   % Example usage:
+   %  kb = dotsReadableHIDKeyboard();
+   %  [isPressed, waitTime, data, kbout] = dotsReadableHIDKeyboard.waitForKeyPress(kb, 'KeyboardF', 5, true)
+   
    properties
       % struct of HID parameters to identify the key elements of the
       % keyboard.
@@ -69,18 +74,16 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          
          % define the "pressed" event for each key
          for ii = 1:numel(self.components)
-            self.definePressedEvent(self.components(ii).name);
+            self.defineKeyboardEvent(self.components(ii).name);
          end
          
          % flush
          self.flushData();
       end
       
-      %> For backwards compability. See dotsReadableHID/defineCalibratedEvent
-      %> for details
-      function [name, ID] = definePressedEvent(self, keyName)
-         [name,ID] = self.defineCalibratedEvent(keyName, ...
-            [], [], true);
+      % Wrapper for define event
+      function event = defineKeyboardEvent(self, componentName)         
+         event = self.defineEvent([], true, 'component', componentName);
       end
    end
    
@@ -187,11 +190,11 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            eventName = kbs(ii).definePressedEvent(keyName);
+            event = kbs(ii).defineKeyboardEvent(keyName);
          end
          
          [isPressed, data, kb] = ...
-            dotsReadable.isEventHappening(kbs, eventName);
+            dotsReadable.isEventHappening(kbs, event.name);
       end
       
       % Wait for given key to be pressed, on one or many keyboards.
@@ -225,11 +228,11 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          % get event name
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            eventName = kbs(ii).definePressedEvent(keyName);
+            event = kbs(ii).defineKeyboardEvent(keyName);
          end
                   
          [isPressed, waitTime, data, kb] = ...
-            dotsReadable.waitForEvent(kbs, eventName, maxWait);
+            dotsReadable.waitForEvent(kbs, event.name, maxWait);
       end
    end
 end

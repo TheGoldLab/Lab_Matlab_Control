@@ -12,12 +12,11 @@ function DBSmakeFIRA(filename)
 %% Parse filenames
 if nargin < 1 || isempty(filename)
    % for debugging
-   % filename = 'data_2018_06_19_10_48';
-   filename = 'data_2018_06_25_07_47';   
+   filename = 'data_2018_08_08_08_55';   
 end
 
 % Where the data are stored
-DBSfilepath = fullfile(getDataFilepath(), 'DBSStudy');
+DBSfilepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), 'DBSStudy');
 
 % Use the machine-specific data pathname to find the data
 rawFile = fullfile(DBSfilepath, 'Raw', [filename '.mat']);
@@ -27,8 +26,9 @@ rawFile = fullfile(DBSfilepath, 'Raw', [filename '.mat']);
 % First flush the data log
 topsDataLog.flushAllData();
 
-% get the datatub
-datatubStruct = topsDataLog.getTaggedData('datatub', rawFile);
+% get the mainTreeNode
+mainTreeNodeStruct = topsDataLog.getTaggedData('mainTreeNode', rawFile);
+mainTreeNode = mainTreeNodeStruct.item;
 
 % Now read the ecodes -- note that this works only if the trial struct was
 % made only with SCALAR entries

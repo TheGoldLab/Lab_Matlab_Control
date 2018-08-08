@@ -27,19 +27,19 @@ function varargout = eyeGUI(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @eyeGUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @eyeGUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+   'gui_Singleton',  gui_Singleton, ...
+   'gui_OpeningFcn', @eyeGUI_OpeningFcn, ...
+   'gui_OutputFcn',  @eyeGUI_OutputFcn, ...
+   'gui_LayoutFcn',  [] , ...
+   'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+   gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+   [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+   gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -57,7 +57,7 @@ handles.output = hObject;
 % First (required) arg is topsTreeNode
 handles.topsTreeNode = varargin{1};
 handles.task = [];
-   
+
 % Second (optional) arg is dotsReadable object
 handles.readableEye = [];
 if nargin > 4 && ~isempty(varargin{2}) && isa(varargin{2}, 'dotsReadableEye')
@@ -169,7 +169,7 @@ guidata(hObject, handles);
 % ---- Call when updating the gui within a task
 %
 function eyeGUI_updateTaskStatus(hObject, eventdata, handles, task, indices)
-            
+
 % Set the status strings
 if any(indices==1)
    set(handles.status2text, 'String', task.statusStrings{1});
@@ -182,11 +182,11 @@ drawnow;
 % % ---- Call when incrementing trials
 % %
 % function taskGUI_updateTrial(hObject, eventdata, handles, str1, str2)
-% 
+%
 % % possibly update the gaze windows
 % if ~isempty(handles.readableEye)
 %    for ii = 1:4
-%       
+%
 %       if length(handles.readableEye.gazeEvents) >= ii
 %          diamStr = num2str(handles.readableEye.gazeEvents(ii).windowSize);
 %          durStr  = num2str(handles.readableEye.gazeEvents(ii).windowDur);
@@ -196,13 +196,13 @@ drawnow;
 %          durStr  = '';
 %          enable  = 'off';
 %       end
-%       
+%
 %       % Set diameter/dur in gui
 %       set(handles.(sprintf('gwdiam%d', ii)), 'String', diamStr, 'Enable', enable);
 %       set(handles.(sprintf('gwdur%d',  ii)), 'String', durStr,  'Enable', enable);
 %    end
 % end
-% 
+%
 % % resave the data
 % guidata(hObject, handles);
 
@@ -229,7 +229,7 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 file = uigetfile('*.fig');
 if ~isequal(file, 0)
-    open(file);
+   open(file);
 end
 
 % --------------------------------------------------------------------
@@ -245,10 +245,10 @@ function CloseMenuItem_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
-                     ['Close ' get(handles.figure1,'Name') '...'],...
-                     'Yes','No','Yes');
+   ['Close ' get(handles.figure1,'Name') '...'],...
+   'Yes','No','Yes');
 if strcmp(selection,'No')
-    return;
+   return;
 end
 
 delete(handles.figure1)
@@ -265,20 +265,20 @@ if ~handles.isRunning
    % Green with envy
    set(hObject, 'String', 'Running', ...
       'BackGroundColor', [0 1 0]);
-
-  % Set other buttons as active
-  if ~isempty(handles.readableEye)
+   
+   % Set other buttons as active
+   if ~isempty(handles.readableEye)
       
       % recalibrate
       set(handles.recalibratebutton, 'Enable', 'on', ...
-          'BackGroundColor', [1 1 0]);
+         'BackGroundColor', [1 1 0]);
       
       % offsets
       set([handles.upbutton, handles.downbutton, ...
-          handles.leftbutton, handles.rightbutton], ...
-          'Enable', 'on');
-  end
-  
+         handles.leftbutton, handles.rightbutton], ...
+         'Enable', 'on');
+   end
+   
    set(handles.skipbutton, 'Enable', 'on', ...
       'BackGroundColor', [1 0.5 0]);
    set(handles.abortbutton, 'Enable', 'on', ...
@@ -404,7 +404,7 @@ function gw1Size_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw1Dur_Callback(hObject, eventdata, handles)
@@ -426,7 +426,7 @@ function gw1Dur_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw2Size_Callback(hObject, eventdata, handles)
@@ -448,7 +448,7 @@ function gw2Size_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw2Dur_Callback(hObject, eventdata, handles)
@@ -470,7 +470,7 @@ function gw2Dur_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw3Size_Callback(hObject, eventdata, handles)
@@ -492,7 +492,7 @@ function gw3Size_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw3Dur_Callback(hObject, eventdata, handles)
@@ -514,7 +514,7 @@ function gw3Dur_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw4Size_Callback(hObject, eventdata, handles)
@@ -536,7 +536,7 @@ function gw4Size_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 function gw4Dur_Callback(hObject, eventdata, handles)
@@ -558,7 +558,7 @@ function gw4Dur_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+   set(hObject,'BackgroundColor','white');
 end
 
 % --- Executes on button press in gw1button.

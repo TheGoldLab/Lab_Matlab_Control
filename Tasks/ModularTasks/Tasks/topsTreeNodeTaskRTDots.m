@@ -11,7 +11,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    %        task = topsTreeNodeTaskRTDots();
    %
    %  2. Set properties. These are required:
-   %        task.drawables.screenEnsemble
+   %        task.screenEnsemble
    %        task.readables.userInput
    %     Others can use defaults
    %
@@ -37,8 +37,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'coherences',                    [0 3.2 6.4 12.8 25.6 51.2], ...
          'directionPriors',               [50 50], ...
          'dotsDuration',                  [], ...
-         'referenceRT',                   [], ...
-         'sendTTLs',                      false);
+         'referenceRT',                   []);
       
       % Timing properties
       timing = struct( ...
@@ -55,7 +54,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       drawables = struct( ...
          ...
          ...   % Ensembles
-         'screenEnsemble',                [],      ...
          'stimulusEnsemble',              [],      ...
          'textEnsemble',                  [],      ...
          ...
@@ -103,17 +101,17 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          ...
          ...   % The gaze windows
          'dotsReadableEye', struct( ...
-         'name',              {'fixWindow', 'trg1Window', 'trg2Window'}, ...
-         'eventName',         {'holdFixation', 'choseLeft', 'choseRight'}, ...
-         'windowSize',        {8, 8, 8}, ...
-         'windowDur',         {0.15, 0.15, 0.15}, ...
-         'ensemble',          {[], [], []}, ... % ensemble object to bind to
-         'ensembleIndices',   {[1 1], [2 1], [2 2]}), ... % object/item indices
+         'name',              {'holdFixation', 'breakFixation', 'choseLeft', 'choseRight'}, ...
+         'isInverted',        {false, true, false, false}, ...
+         'windowSize',        {8, 8, 8, 8}, ...
+         'windowDur',         {0.15, 0.15, 0.15, 0.15}, ...
+         'ensemble',          {[], [], [], []}, ... % ensemble object to bind to
+         'ensembleIndices',   {[1 1], [1 1], [2 1], [2 2]}), ... % object/item indices
          ...
          ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the userInput type
          'dotsReadableHIDKeyboard', struct( ...
-         'name',        {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}, ...
-         'eventName',   {'holdFixation', 'choseLeft', 'choseRight', 'calibrate'}));
+         'name',              {'holdFixation', 'choseLeft', 'choseRight', 'calibrate'}, ...
+         'component',         {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}));
       
       % Quest properties
       questSettings = struct( ...
@@ -128,12 +126,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
 
       % The quest object
       quest = [];
-      
-      % The state machine, created locally
-      stateMachine = [];
-      
-      % The state machine concurrent composite, created locally
-      stateMachineComposite = [];
       
       % Boolean flag, whether an RT task or not
       isRT = [];
@@ -153,9 +145,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Keep track of changes to certain property structs
          %
          %  This will eventually be useful for real-time updating
-         self.addSetListeners({'drawables', 'readables'});
+         self.registerSetListeners('drawables', 'readables');
       end
-      
+
       %% Start task (overloaded)
       % 
       % Put stuff here that you want to do before each time you run this
@@ -170,29 +162,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.initializeTrialData();
          self.initializeStateMachine();         
          
-         % ---- Set up gaze windows
-         %
-         if isa(self.readables.userInput, 'dotsReadableEye')
-            
-            % bind drawables to gaze windows
-            [self.readables.dotsReadableEye.ensemble] = ...
-               deal(self.drawables.stimulusEnsemble);
-            
-            % set up drift correction
-            editStateByName(self.stateMachine, 'holdFixation', 'exit', ...
-               {@resetGaze, self.readables.userInput, 1});
-         end
-         
          % ---- Show task-specific instructions
          %
          drawTextEnsemble(self.drawables.textEnsemble, ...
             self.drawables.settings.textStrings, ...
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);
-         
-         %  ----Get the first trial
-         %
-         self.prepareForNextTrial();
       end
       
       %% Finish task (overloaded)
@@ -212,7 +187,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.prepareDrawables();
          self.prepareReadables();
          self.prepareStateMachine();
-         self.prepareTrialData();
 
          % ---- Show information about the task/trial
          %
@@ -231,6 +205,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             trial.direction, trial.coherence)};
          self.updateStatus();
       end
+            
+      %% Finish Trial
+      %
+      % Could add stuff here
+      function finishTrial(self)
+      end
       
       %% Set Choice
       %
@@ -241,7 +221,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          trial = self.getTrial();
          trial.correct = value;
-         trial.choice = value;
+         trial.choice  = value;
          
          % ---- Parse choice info
          %
@@ -256,8 +236,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             % GOOD CHOICE
             %
-            % Override repeat trial flag
-            self.repeatTrial = false;
+            % Override completedTrial flag
+            self.completedTrial = true;
 
             % Mark as correct/error
             trial.correct = double( ...
@@ -384,7 +364,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             self.drawables.stimulusEnsemble.setObjectProperty('xCenter', [...
                fpX - self.drawables.settings.targetDistance, ...
                fpX + self.drawables.settings.targetDistance], 2);
-            self.drawables.stimulusEnsemble.setObjectProperty('yCenter', fpY.*[1 1], 2);
+            self.drawables.stimulusEnsemble.setObjectProperty('yCenter', ...
+               fpY.*[1 1], 2);
             
             % All other stimulus ensemble properties
             stimulusDrawables = {'fixation' 'targets' 'dots'};
@@ -423,59 +404,27 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %
       function prepareReadables(self)
          
-         % ---- Reset the events
+         % ---- Reset the events for the given ui type
          %
-         % Get the name of the struct that specifies the events for the ui
          if self.updateFlags.readables
+            
+            % parse the name
             classType = intersect(fieldnames(self.readables), ...
                cat(1, class(self.readables.userInput), ...
                superclasses(self.readables.userInput)));
-            eventDefinitions = self.readables.(classType{:});
+            
+            % use it to call defineEvents with the appropriate event definitions
+            self.readables.userInput.defineEvents(self.readables.(classType{:}));
+
+            % reset flag
             self.updateFlags.readables = false;
-         else
-            eventDefinitions = [];
          end
-         
-         % call resetEvents with the struct to do the heavy lifting
-         self.readables.userInput.resetEvents(true, eventDefinitions);
-         
-         % ---- Flush the UI
+                  
+         % ---- Deactivate the events (they are activated in the statelist)
+         %     and flush the UI
          %
+         self.readables.userInput.deactivateEvents();
          self.readables.userInput.flushData();
-      end
-      
-      %% Prepare trialData for this trial
-      %
-      function prepareTrialData(self)
-         
-         % ---- Get the current trial
-         %
-         trial = self.getTrial();
-         
-         % ---- Set repeat flag, which must be overridden
-         %
-         self.repeatTrial = true;
-         
-         % ---- Get synchronization times
-         %
-         [trial.time_local_trialStart, ...
-            trial.time_screen_trialStart, ...
-            trial.time_screen_roundTrip, ...
-            trial.time_ui_trialStart, ...
-            trial.time_ui_roundTrip] = ...
-            syncTiming(self.drawables.screenEnsemble, ...
-            self.readables.userInput);
-         
-         % ---- Conditionally send TTL pulses (mod trial count)
-         %
-         if self.settings.sendTTLs
-            [trial.time_TTLStart, trial.time_TTLFinish] = ...
-               sendTTLsequence(mod(self.trialCount,4)+1);
-         end
-         
-         % ---- Re-save the trial
-         %
-         self.setTrial(trial);
       end
       
       %% Prepare stateMachine for this trial
@@ -497,7 +446,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
          % ---- Check for screen
          %
-         if isempty(self.drawables.screenEnsemble)
+         if isempty(self.screenEnsemble)
             error('topsTreeNodeTaskRTDots: missing screenEnsemble');
          end
          
@@ -512,7 +461,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             % create the ensemble
             self.drawables.stimulusEnsemble = makeDrawableEnsemble('RTDots', ...
                {dotsDrawableTargets(), dotsDrawableTargets(), dotsDrawableDotKinetogram}, ...
-               self.drawables.screenEnsemble, true);
+               self.screenEnsemble, true);
          end
 
          % ---- Make the text ensemble
@@ -522,7 +471,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             % Create the ensemble
             self.drawables.textEnsemble = makeTextEnsemble('text', 2, ...
-               self.drawables.settings.textOffset, self.drawables.screenEnsemble);
+               self.drawables.settings.textOffset, self.screenEnsemble);
          end
          
          % ---- Set flag to update first time through
@@ -540,6 +489,17 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          if isempty(self.readables.userInput)
             self.readables.userInput = dotsReadableHIDKeyboard();
          end
+         
+         % ---- Bind stimulus ensemble to gaze windows
+         %
+         if isa(self.readables.userInput, 'dotsReadableEye')
+            [self.readables.dotsReadableEye.ensemble] = ...
+               deal(self.drawables.stimulusEnsemble);
+         end
+         
+         % ---- Register the readable (for timing)
+         %
+         self.registerReadableTiming(self.readables.userInput);
          
          % ---- Set flag to update first time through
          %
@@ -615,7 +575,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Fevalables for state list
          %
-         blanks  = {@callObjectMethod, self.drawables.screenEnsemble, @blank};
+         blanks  = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
          chkuic  = {@getEventWithTimestamp, self, self.readables.userInput, {'choseLeft' 'choseRight'}, 'choice'};
@@ -630,14 +590,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          pdbr    = {@setNextState, self, 'isRT', 'preDots', 'showDotsRT', 'showDotsFX'};
          pse     = {@pause 0.005};
          sch     = @(x)cat(2, {@setDotsChoice, self}, x);
-         dce     = @defineCompoundEvent;
-         gwfxw   = {dce, self.readables.userInput, {'fixWindow', ...
-            'eventName', 'holdFixation', 'isInverted', false, 'isActive', true}};
-         gwfxh   = {dce, self.readables.userInput, {'fixWindow', ...
-            'eventName', 'brokeFixation', 'isInverted', true}};
-         gwts    = {dce, self.readables.userInput, {'fixWindow', 'isActive', false}, ...
-            {'trg1Window', 'isActive', true}, {'trg2Window', 'isActive', true}};
-            
+
+         % drift correction
+         hfdc  = {@reset, self.readables.userInput, 1};
+         
+         % Activate/deactivate readable events
+         dce   = @setEventsActiveFlag;
+         gwfxw = {dce, self.readables.userInput, 'holdFixation'};
+         gwfxh = {}; 
+         gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'holdFixation'};
+         % gwfxh = {}; % {dce, self.readables.userInput, 'brokeFixation', 'holdFixation'};
+         % gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'brokeFixation'};
+         
          % ---- Timing variables
          %
          tft = self.timing.fixationTimeout;
@@ -648,13 +612,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          tsf = self.timing.showFeedback;
          iti = self.timing.InterTrialInterval;         
          
-         % ---- Make the state machine
+         % ---- Make the state machine. These will be added into the 
+         %        stateMachine (in topsTreeNode)
          %
-         trialStates = {...
+         self.stateMachineStates = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          pdbr    'waitForFixation' ; ...
             'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
-            'holdFixation'      gwfxh    chkuib   tfh        {}      'showTargets'     ; ...
+            'holdFixation'      gwfxh    chkuib   tfh        hfdc    'showTargets'     ; ...
             'showTargets'       showt    chkuib   txp        gwts    'preDots'         ; ...
             'preDots'           {}       {}       0          {}      ''                ; ...
             'showDotsRT'        showdRT  chkuic   dtt        hided   'noChoice'        ; ...
@@ -669,37 +634,23 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
             'done'              pse      {}       iti        {}      ''                ; ...
             };
-         
-         % ---- Put stuff together in a stateMachine so that it will run
-         %
-         self.stateMachine = topsStateMachine();
-         self.stateMachine.addMultipleStates(trialStates);
-         self.stateMachine.startFevalable = {@self.startTrial};
-         self.stateMachine.finishFevalable = {@self.finishTrial};
-         
-         % ---- Set up ensemble activation list.
+                  
+         % ---- Set up ensemble activation list. This determines which
+         %        states will correspond to automatic, repeated calls to
+         %        the given ensemble methods
          %
          % See activateEnsemblesByState for details.
-         % Note that the predots state is what allows us to get a good timestamp
-         %   of the dots onset... we start the flipping before, so the dots will start
-         %   as soon as we send the isVisible command in the entry fevalable of showDots
-         activeList = {{ ...
+         self.stateMachineActiveList = {{ ...
             self.drawables.stimulusEnsemble, 'draw'; ...
-            self.drawables.screenEnsemble, 'flip'}, ...
+            self.screenEnsemble, 'flip'}, ...
             {'preDots' 'showDotsRT' 'showDotsFX'}};
-         self.stateMachine.addSharedFevalableWithName( ...
-            {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
          
-         % ---- Make a concurrent composite to interleave run calls
+         % --- List of children to add to the stateMachineComposite
+         %        (the state list above is added automatically)
          %
-         self.stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
-         self.stateMachineComposite.addChild(self.stateMachine);
-         self.stateMachineComposite.addChild(self.drawables.stimulusEnsemble);
-         self.stateMachineComposite.addChild(self.drawables.screenEnsemble);
-         
-         % ---- Add it as a child to the task
-         %
-         self.addChild(self.stateMachineComposite);
+         self.stateMachineCompositeChildren = { ...
+            self.drawables.stimulusEnsemble, ...
+            self.screenEnsemble};
       end      
    end
    

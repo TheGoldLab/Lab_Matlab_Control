@@ -120,11 +120,10 @@ classdef dotsReadableHIDMouse < dotsReadableHID
          IDs = [self.components.ID];
          nButtons = numel(self.buttonIDs);
          for ii = 1:nButtons
-            isThisButton = IDs == self.buttonIDs(ii);
-            comp = self.components(isThisButton);
-            eventName = ['pressed ' comp.name];
-            highValue = comp.CalibrationMax;
-            self.defineEvent(comp.ID, eventName, highValue, highValue);
+            comp = self.components(IDs == self.buttonIDs(ii));
+            self.defineEvent(['pressed ' comp.name], true, false, ...
+               'component', comp.ID, 'lowValue', comp.CalibrationMax, ...
+               'highValue', comp.CalibrationMax);
          end
          
          % need to flush the data and reset the start position

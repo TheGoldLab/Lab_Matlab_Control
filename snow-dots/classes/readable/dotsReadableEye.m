@@ -140,15 +140,9 @@ classdef dotsReadableEye < dotsReadable
       calibrationUI = [];
       
       % Keyboard event definitions: type, key/event pairs
-      calibrationUIEvents = { ...
-         'KeyboardSpacebar',     'accept'; ...
-         'KeyboardC',            'calibrate'; ...
-         'KeyboardD',            'dritfCorrect'; ...
-         'KeyboardQ',            'abort'; ...
-         'KeyboardR',            'repeat'; ...
-         'KeyboardS',            'showEye'; ...
-         'KeyboardT',            'toggle'; ...
-         };
+      calibrationUIEvents = struct( ...
+         'name',      {'accept', 'calibrate', 'dritfCorrect', 'abort', 'repeat', 'showEye', 'toggle'}, ...
+         'component', {'KeyboardSpacebar',  'KeyboardC', 'KeyboardD',  'KeyboardQ', 'KeyboardR',  'KeyboardS', 'KeyboardT'});
    end
    
    properties (SetAccess = protected)
@@ -203,6 +197,10 @@ classdef dotsReadableEye < dotsReadable
       
       % handle to the line object used to plot the last eye position
       gazeMonitorBufferedDataHandle = [];
+      
+      % for gaze windows
+      cosTh = cos((0:pi/50:2*pi)');
+      sinTh = sin((0:pi/50:2*pi)');
    end
    
    methods
@@ -228,43 +226,25 @@ classdef dotsReadableEye < dotsReadable
          self.pupil = 0;
       end
       
-      % Overloaded defineCompoundEvent function
+      % Overloaded defineEvent function
       %
       % For Eye trackers, this is a gaze window that checks whether
       %   gaze (x and y coordinates, which is why it must
       %   be defined as a "compound" event) falls into or out of a
       %   circular window.
       %
-      % Arguments are either cell arrays of multiple windows that each
-      %   include the following arguments, or just subsets of the following
-      %   arguments (first is required, the subsequent property/value
-      %   pairs are optional):
-      %
-      %  name is a unique string identifier
+      % Required arguments:
       %  eventName   ... Name of event used by dotsReadable.getNextEvent
+      %  isActive    ... Flag indicating if this event is currently active
+      %  isInverted  ... If true, checking for *out* of window
+      %
+      % Optional property/value pairs
       %  centerXY    ... x,y coordinates of center of gaze window
       %  channelsXY  ... Indices of data channels for x,y position
       %  windowSize  ... Diameter of circular gaze window
       %  windowDur   ... How long eye must be in window (msec) for event
-      %  isInverted  ... If true, checking for *out* of window
-      %  isActive    ... Flag indicating if this event is currently active
-      function defineCompoundEvent(self, varargin)
-         
-         % This shouldn't happen
-         if nargin < 2
-            return;
-         end
-         
-         % If multiple definitions given, loop through one at a time
-         if iscell(varargin{1})
-            for ii = 1:nargin-1
-               defineCompoundEvent(self, varargin{ii}{:});
-            end
-            return
-         end
-         
-         % first argument is the name
-         name = varargin{1};
+      %   <plus more, see below>
+      function event = defineEvent(self, name, isActive, isInverted, varargin)
          
          % check if it already exists
          if isempty(self.gazeEvents) || ~any(strcmp(name, {self.gazeEvents.name}))
@@ -280,15 +260,14 @@ classdef dotsReadableEye < dotsReadable
             self.gazeEvents = cat(1, self.gazeEvents, struct( ...
                'name',             name, ...
                'ID',               ID, ...
-               'eventName',        [], ...
                'channelsXY',       [self.xID self.yID], ...
                'centerXY',         [0 0], ...
                'ensemble',         [], ...
                'ensembleIndices',  [], ...
                'windowSize',       3, ...
                'windowDur',        0.2, ...
-               'isInverted',       false, ...
-               'isActive',         false, ...
+               'isInverted',       isInverted, ...
+               'isActive',         isActive, ...
                'sampleBuffer',     [], ...
                'gazeWindowHandle', []));
          else
@@ -297,8 +276,8 @@ classdef dotsReadableEye < dotsReadable
             index = find(strcmp(name, {self.gazeEvents.name}));
          end
          
-         % Parse args
-         for ii=2:2:nargin-2
+         % Add given args
+         for ii=1:2:nargin-4
             self.gazeEvents(index).(varargin{ii}) = varargin{ii+1};
          end
          
@@ -316,12 +295,15 @@ classdef dotsReadableEye < dotsReadable
          %   we only send real events and don't require
          %   dotsReadable.detectEvent to make any real comparisons,
          %   which is why we set the min/max values to -/+inf.
-         eventName = self.gazeEvents(index).eventName;
-         eventID   = self.gazeEvents(index).ID;
-         self.components(eventID).name = eventName;
-         self.defineEvent(eventID, eventName, -inf, inf, false, ...
-            self.gazeEvents(index).isActive);
-         
+         name = self.gazeEvents(index).name;
+         ID = self.gazeEvents(index).ID;
+         self.components(ID).name = ['gaze_' name];
+         event = defineEvent@dotsReadable(self, name, ....
+            self.gazeEvents(index).isActive, false, ...
+            'component', ID, ...
+            'lowValue', -inf, ...
+            'highValue', inf);
+
          % check for ensemble binding
          if ~isempty(self.gazeEvents(index).ensemble)
             xCenter = self.gazeEvents(index).ensemble.getObjectProperty('xCenter');
@@ -336,41 +318,13 @@ classdef dotsReadableEye < dotsReadable
             self.updateGazeMonitorWindow(index);
          end
       end
-      
-      % Reset events (define in subclasses)
-      %
-      %     deactivateFlag   ... whether or not to deactivate all existing
-      %                            events
-      %     eventDefinitions ... array of structs with fields:
-      %                            requred: name
-      %                            optional: any other gaze event property, above
-      function resetEvents(self, deactivateFlag, eventDefinitions)
-         
-         % conditionally deactivate all windows
-         if nargin >= 1 && deactivateFlag
-            self.deactivateCompoundEvents();
-         end
-         
-         % loop through the definitions
-         if nargin >= 2 && ~isempty(eventDefinitions)
-            fields = fieldnames(eventDefinitions);
-            fields = fields(~strcmp('name', fields));
-            args   = cell(1, length(fields)*2+1);
-            args{1} = 'name';
-            args(2:2:end) = fields;
-            for ii = 1:numel(eventDefinitions)
-               args(1:2:end) = struct2cell(eventDefinitions(ii));
-               self.defineCompoundEvent(args{:});
-            end
-         end
-         
-         % Always reset the gaze (really just the eye buffer)
-         self.resetGaze();
-      end      
-      
+           
       % Activate gaze windows
-      function activateCompoundEvents(self)
+      function activateEvents(self)
          
+         % Call dotsReadable method
+         activateEvents@dotsReadable(self);
+
          % Activate all of the gaze windows
          if ~isempty(self.gazeEvents)
             [self.gazeEvents.isActive] = deal(true);
@@ -378,40 +332,95 @@ classdef dotsReadableEye < dotsReadable
          
          % Show the gazeMonitor windows
          if self.useGUI
-            for ii = 1:length(self.gazeEvents)
-               self.updateGazeMonitorWindow(ii);
-            end
+            self.updateGazeMonitorWindow();
          end
       end
       
       % De-activate gaze windows
-      function deactivateCompoundEvents(self)
+      function deactivateEvents(self)
          
-         % Deactivate all of the gaze windows
-         if ~isempty(self.gazeEvents)
-            [self.gazeEvents.isActive] = deal(false);
+         % Call dotsReadable method
+         deactivateEvents@dotsReadable(self);
+
+         % Deactivate all of the gaze windows and clear the data buffers
+         for ii = 1:length(self.gazeEvents)
+            self.gazeEvents(ii).isActive = false;
+            self.gazeEvents(ii).sampleBuffer(:) = nan;
          end
          
+         % Clear the gaze windo data buffer
+         set(self.gazeMonitorBufferedDataHandle, ...
+            'XData', [], ...
+            'YData', []);
+
          % Hide the gazeMonitor windows
          if self.useGUI
-            for ii = 1:length(self.gazeEvents)
-               self.updateGazeMonitorWindow(ii);
-            end
+            self.updateGazeMonitorWindow();
          end
       end
       
       % Delete all compoundEvents
-      function clearCompoundEvents(self)
+      function clearEvents(self)
          
          % Deactivate the current gaze events so the monitor window is
          % appropriately cleared
-         self.deactivateCompoundEvents;
+         self.deactivateEvents;
          
          % Now clear them
          self.gazeEvents = [];
          
          % Now clear the associated events
-         self.clearEvents();
+         clearEvents@dotsReadable(self);
+      end
+      
+      % Set/unset activeFlag
+      function setEventsActiveFlag(self, activateList, deactivateList)
+                           
+         % Activate
+         if nargin > 1 && ~isempty(activateList)
+            if ischar(activateList)
+               Lind = strcmp(activateList, {self.gazeEvents.name});
+               if any(Lind)
+                  self.gazeEvents(Lind).isActive = true;
+               end
+            else
+               for ii = 1:length(activateList)
+                  Lind = strcmp(activateList{ii}, {self.gazeEvents.name});
+                  if any(Lind)
+                     self.gazeEvents(Lind).isActive = true;
+                  end
+               end
+            end
+         else
+            activateList = {};
+         end
+         
+         % Deactivate
+         if nargin > 2 && ~isempty(deactivateList)
+            if ischar(deactivateList)
+               Lind = strcmp(deactivateList, {self.gazeEvents.name});
+               if any(Lind)
+                  self.gazeEvents(Lind).isActive = false;
+               end
+            else
+               for ii = 1:length(deactivateList)
+                  Lind = strcmp(deactivateList{ii}, {self.gazeEvents.name});
+                  if any(Lind)
+                     self.gazeEvents(Lind).isActive = false;
+                  end
+               end
+            end
+         else
+            deactivateList = {};
+         end
+         
+         % Now set flags in superclass
+         setEventsActiveFlag@dotsReadable(self, activateList, deactivateList);
+
+         % update the gui
+         if self.useGUI
+            self.updateGazeMonitorWindow();
+         end
       end
       
       % Open the gaze monitor
@@ -485,30 +494,7 @@ classdef dotsReadableEye < dotsReadable
          % Monitor is off
          self.useGUI = false;
       end
-      
-      % Possibly buffer and recenter gaze
-      %
-      % Arguments:
-      %  recenter    ... if true, recenter to [0 0]
-      %                  or use given values
-      %  useBuffer   ... flag to stop/start buffering
-      function resetGaze(self, recenter, useBuffer)
-         
-         % Conditionally re-center gaze (drift correct)
-         if nargin > 1 && ~isempty(recenter)
-            self.calibrate('d', recenter);
-         end
-         
-         % Conditionally set flag
-         if nargin > 2 && ~isempty(useBuffer)
-            self.bufferGazeData = useBuffer;
-         end
-         
-         set(self.gazeMonitorBufferedDataHandle, ...
-            'XData', [], ...
-            'YData', []);
-      end
-      
+        
       % Utilities for changing calibration offsets (e.g., via GUI)
       function incrementCalibrationOffsetX(self, increment)
          self.setEyeCalibration(self.xyOffset + [increment 0], [], []);
@@ -597,15 +583,17 @@ classdef dotsReadableEye < dotsReadable
                
                % special case of mouse simulator
                self.calibrationUI = self.HIDmouse;
+               
+               % Deactivate all events
                self.calibrationUI.deactivateEvents();
+               
+               % Set button 1 to accept
                ids = getComponentIDs(self.HIDmouse);
-               self.calibrationUI.deactivateEvents();
-               self.calibrationUI.defineCalibratedEvent(ids(3), 'accept', 1, true);
+               self.calibrationUI.defineEvent('accept', true, 'component', ids(3));
             else
                
                % use the keyboard
                self.calibrationUI = dotsReadableHIDKeyboard();
-               self.calibrationUI.deactivateEvents();
                
                % Deactivate all events
                self.calibrationUI.deactivateEvents();
@@ -613,12 +601,7 @@ classdef dotsReadableEye < dotsReadable
                % Now add given events. Note that the third and fourth arguments
                %  to defineCalibratedEvent are Calibrated value and isActive --
                %  we could make those user controlled.
-               for ii = 1:size(self.calibrationUIEvents,1)
-                  self.calibrationUI.defineCalibratedEvent( ...
-                     self.calibrationUIEvents{ii,1}, ...
-                     self.calibrationUIEvents{ii,2}, ...
-                     1, true);
-               end
+               self.calibrationUI.defineEvents(self.calibrationUIEvents);
             end
             
             % Read during calls to get next event
@@ -969,6 +952,29 @@ classdef dotsReadableEye < dotsReadable
          status = double(~isCalibrated);
       end
       
+      % Possibly buffer and recenter gaze
+      %
+      % Arguments:
+      %  1. recenter    ... if true, recenter to [0 0]
+      %                  or use given values
+      %  2. useBuffer   ... flag to stop/start buffering
+      function resetDevice(self, varargin)
+         
+         % Conditionally re-center gaze (drift correct)
+         if nargin > 1 && ~isempty(varargin{1})
+            self.calibrate('d', varargin{1});
+         end
+         
+         % Conditionally set useBuffer flag
+         if nargin > 2 && ~isempty(varargin{2})
+            self.bufferGazeData = varargin{2};
+         end
+         
+         set(self.gazeMonitorBufferedDataHandle, ...
+            'XData', [], ...
+            'YData', []);
+      end
+      
       % Close the components and release the resources.
       %
       function closeComponents(self)
@@ -1184,38 +1190,44 @@ classdef dotsReadableEye < dotsReadable
       % Set up the gaze monitor and update the gazeWindow (circle)
       % associted with the given index
       function updateGazeMonitorWindow(self, index)
-         
-         % Possibly make a handle to the line object that we'll use to
-         % draw the gaze window circle
-         if isempty(self.gazeEvents(index).gazeWindowHandle)
-            axes(self.gazeMonitorAxes);
-            self.gazeEvents(index).gazeWindowHandle = line(0,0);
+
+         if nargin < 2 || isempty(index)
+            index = 1:length(self.gazeEvents);
          end
          
-         % If active, update the data to draw the circle
-         if self.gazeEvents(index).isActive
+         for ii = index
             
-            % Draw the circle
-            th = (0:pi/50:2*pi)';
-            if self.gazeEvents(index).isInverted
-               lineStyle = ':';
-            else
-               lineStyle = '-';
+            % Possibly make a handle to the line object that we'll use to
+            % draw the gaze window circle
+            if isempty(self.gazeEvents(ii).gazeWindowHandle)
+               axes(self.gazeMonitorAxes);
+               self.gazeEvents(ii).gazeWindowHandle = line(0,0);
             end
-            set(self.gazeEvents(index).gazeWindowHandle, ...
-               'XData', ...
-               self.gazeEvents(index).windowSize * cos(th) + ...
-               self.gazeEvents(index).centerXY(1), ...
-               'YData', ...
-               self.gazeEvents(index).windowSize * sin(th) + ...
-               self.gazeEvents(index).centerXY(2), ...
-               'LineStyle', ...
-               lineStyle);
-         else
             
-            % Remove the circle from the gaze monitor
-            set(self.gazeEvents(index).gazeWindowHandle, ...
-               'XData', 0, 'YData', 0);
+            % If active, update the data to draw the circle
+            if self.gazeEvents(ii).isActive
+               
+               % Draw the circle
+               if self.gazeEvents(ii).isInverted
+                  lineStyle = ':';
+               else
+                  lineStyle = '-';
+               end
+               set(self.gazeEvents(ii).gazeWindowHandle, ...
+                  'XData', ...
+                  self.gazeEvents(ii).windowSize * self.cosTh + ...
+                  self.gazeEvents(ii).centerXY(1), ...
+                  'YData', ...
+                  self.gazeEvents(ii).windowSize * self.sinTh + ...
+                  self.gazeEvents(ii).centerXY(2), ...
+                  'LineStyle', ...
+                  lineStyle);
+            else
+               
+               % Remove the circle from the gaze monitor
+               set(self.gazeEvents(ii).gazeWindowHandle, ...
+                  'XData', 0, 'YData', 0);
+            end
          end
          
          % update the plot

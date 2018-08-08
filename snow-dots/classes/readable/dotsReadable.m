@@ -13,12 +13,12 @@ classdef dotsReadable < handle
    %>   - openDevice()
    %>   - closeDevice()
    %>   - calibrateDevice()
-   %>   - defineCompoundEvent() -> Optional, see example in dotsReadableEye
    %>   - recordDevice()
+   %    - resetDevice()
    %>   - openComponents()
    %>   - closeComponents()
    %>   - readNewData()
-   %>   .
+   %> 
    %> These methods are invoked internally.  They encapsulate the details
    %> of how to read from any particular device.  See the documentation for
    %> each of these methods for more information about how subclasses
@@ -207,6 +207,13 @@ classdef dotsReadable < handle
          end
       end
       
+      % reset device
+      %  
+      %  subclass-specific methods
+      function reset(self, varargin)
+         self.resetDevice(varargin{:});
+      end
+      
       %> Release any resources acquired by initialize().
       function close(self)
          self.closeComponents();
@@ -355,17 +362,25 @@ classdef dotsReadable < handle
       end
       
       %> Define the event of interest for one of the input components.
-      %> @param ID one of the integer IDs in components
-      %> @param name string name for an event of interest
-      %> @param lowValue the lower bound on the event of interest
-      %> @param highValue the upper bound on the event of interest
-      %> @param isInverted whether to invert event detection logic
+      %
+      %  Required input:
+      %>    eventName   ... string name for an event of interest
+      %
+      %  Optional inputs:
+      %     isActive  	... whether event is current active
+      %>    isInverted  ... whether to invert event detection logic
+      %  property/value pairs for the following:
+      %> 	'component' ... string name or one of the integer IDs in components
+      %> 	'lowValue'  ... the lower bound on the event of interest
+      %>    'highValue' ... the upper bound on the event of interest
+      %
       %> @details
       %> defineEvent() sets parameters for detecting events of interest as
       %> the value of a component changes.  @a ID specifies which
       %> component.  Each component may define only one event of interest
       %> at a time, so repeated calls to defineEvent() with the same @a ID
       %> will replace previous event definitions.
+      %
       %> @details
       %> @a name is an arbitrary string identifying the event of
       %> interest.  @a lowValue and @a highValue define the boundaries of
@@ -387,48 +402,91 @@ classdef dotsReadable < handle
       %> noisiness of input sources.  To avoid redundant event detection,
       %> readNewData() may be implemented so as to smooth data, or the
       %> report data only when the value of a component changes.
-      function defineEvent(self, componentNameOrID, eventName, ...
-            lowValue, highValue, isInverted, isActive)
+      %
+      % Can be overloaded in subclasses
+      %
+      function event = defineEvent(self, name, varargin)
          
-         % nameOrID string or numeric ID for the component
-         if ischar(componentNameOrID)
-            index = self.getComponentIDbyName(componentNameOrID);
-         else
-            index = componentNameOrID;
+         % parse inputs
+         p = inputParser;
+         addRequired( p, 'self');
+         addRequired( p, 'name');
+         addOptional( p, 'isActive', false);
+         addOptional( p, 'isInverted', false);
+         addParameter(p, 'component', 1);
+         addParameter(p, 'lowValue', -inf);
+         addParameter(p, 'highValue', inf);
+
+         % call the parser
+         parse(p, self, name, varargin{:});        
+         
+         % component can be string or ID
+         if ischar(p.Results.component)
+            ID = self.getComponentIDbyName(p.Results.component);
+         else 
+            ID = p.Results.component;
          end
-         
-         % Check remainder of arguments
-         if nargin < 4 || isempty(lowValue)
-            lowValue = -inf;
-         end
-         
-         if nargin < 5 || isempty(highValue)
-            highValue = inf;
-         end
-         
-         if nargin < 6 || isempty(isInverted)
-            isInverted = false;
-         end
-         
-         if nargin < 7 || isempty(isActive)
-            isActive = false;
-         end
-         
+                  
          %> fill in this event definition with given values
-         self.eventDefinitions(index).name = eventName;
-         self.eventDefinitions(index).ID = index;
-         self.eventDefinitions(index).lowValue = lowValue;
-         self.eventDefinitions(index).highValue = highValue;
-         self.eventDefinitions(index).isInverted = isInverted;
-         self.eventDefinitions(index).isActive = isActive;
+         self.eventDefinitions(ID).name       = name;
+         self.eventDefinitions(ID).ID         = ID;
+         self.eventDefinitions(ID).isActive   = p.Results.isActive;
+         self.eventDefinitions(ID).isInverted = p.Results.isInverted;
+         self.eventDefinitions(ID).lowValue   = p.Results.lowValue;
+         self.eventDefinitions(ID).highValue  = p.Results.highValue;
+         
+         % possibly return the event
+         if nargout >= 1
+            event = self.eventDefinitions(ID);
+         end
       end
       
-      % defineCompoundEvent
+      % defineEvents
       %
-      % This should be defined by subclasses, if needed
-      function defineCompoundEvent(self, varargin)
-      end
+      % Takes an array of structs defining events
+      % The only required field is eventName
+      %  all others are optional
+      function defineEvents(self, eventStruct)
          
+         % Get list of fieldnames
+         fields = fieldnames(eventStruct);
+         
+         % Get optional fields
+         LisActive = strcmp('isActive', fields);
+         if any(LisActive)
+            isActive = [eventStruct.isActive];
+         else
+            isActive = false(size(eventStruct));
+         end
+         
+         LisInverted = strcmp('isInverted', fields);
+         if any(LisInverted)
+            isInverted = [eventStruct.isInverted];
+         else
+            isInverted = false(size(eventStruct));
+         end
+         
+         % get Logical array of indices of optional properties
+         Lopt = ~LisActive & ~LisInverted & ~strcmp('name', fields);
+            
+         % Get optional properties, put in a cell array with slots for
+         % values
+         props = cell(1, sum(Lopt)*2);
+         props(1:2:end) = fields(Lopt);
+         
+         % Loop through the eventStruct, calling defineEvent
+         for ii = 1:numel(eventStruct)
+            
+            % parse property/value pairs
+            args = struct2cell(eventStruct(ii));
+            props(2:2:end) = args(Lopt);
+            
+            % send to defineEvent
+            self.defineEvent(eventStruct(ii).name, isActive(ii), ...
+               isInverted(ii), props{:});
+         end
+      end
+      
       %> Delete the event for one of the input components.
       %> @param ID one of the integer IDs in components
       %> @details
@@ -447,18 +505,13 @@ classdef dotsReadable < handle
             index = componentNameOrID;
          end
          
-         self.eventDefinitions(index).name = '';
-         self.eventDefinitions(index).ID = index;
-         self.eventDefinitions(index).lowValue = nan;
-         self.eventDefinitions(index).highValue = nan;
+         % Clear the event definition
+         self.eventDefinitions(index).name       = '';
+         self.eventDefinitions(index).ID         = index;
+         self.eventDefinitions(index).lowValue   = nan;
+         self.eventDefinitions(index).highValue  = nan;
          self.eventDefinitions(index).isInverted = false;
-         self.eventDefinitions(index).isActive = false;
-      end
-      
-      % Reset events (define in subclasses)
-      %
-      %
-      function resetEvents(self, deactivateFlag, eventDefinitions)
+         self.eventDefinitions(index).isActive   = false;
       end
       
       % Activate all events
@@ -466,7 +519,9 @@ classdef dotsReadable < handle
       %  To do this separately for each event, call defineEvent and set
       %  isActive flag to true
       function activateEvents(self)         
-         [self.eventDefinitions(:).isActive] = deal(true);
+         if ~isempty(self.eventDefinitions)
+            [self.eventDefinitions(:).isActive] = deal(true);
+         end
       end
       
       % Deactivate all events
@@ -474,7 +529,9 @@ classdef dotsReadable < handle
       %  To do this separately for each event, call defineEvent and set
       %  isActive flag to true
       function deactivateEvents(self)
-         [self.eventDefinitions(:).isActive] = deal(false);
+         if ~isempty(self.eventDefinitions)
+            [self.eventDefinitions(:).isActive] = deal(false);
+         end
       end
       
       % Clear the event definitions
@@ -485,20 +542,47 @@ classdef dotsReadable < handle
          self.eventDefinitions = struct(padded{:});
       end
       
-      % Activate all compound events
-      %
-      %  Define in subclasses
-      function activateCompoundEvents(self)         
-      end
-      
-      % Deactivate all compound events
-      %
-      %  Define in subclasses
-      function deactivateCompoundEvents(self)
-      end
-      
-      % Delete all compoundEvents
-      function clearCompoundEvents(self)
+      % Set/unset activeFlag
+      function setEventsActiveFlag(self, activateList, deactivateList)
+         
+         % Need event definitions
+         if isempty(self.eventDefinitions)
+            return
+         end
+         
+         % Activate
+         if nargin > 1 && ~isempty(activateList)
+            if ischar(activateList)
+               ind = strcmp(activateList, {self.eventDefinitions.name});
+               if ~isempty(ind)
+                  self.eventDefinitions(ind).isActive = true;
+               end                  
+            else
+               for ii = 1:length(activateList)
+                  ind = strcmp(activateList{ii}, {self.eventDefinitions.name});
+                  if ~isempty(ind)
+                     self.eventDefinitions(ind).isActive = true;
+                  end
+               end
+            end
+         end
+         
+         % Deactivate
+         if nargin > 2 && ~isempty(deactivateList)
+            if ischar(deactivateList)
+               ind = strcmp(deactivateList, {self.eventDefinitions.name});
+               if ~isempty(ind)
+                  self.eventDefinitions(ind).isActive = false;
+               end
+            else
+               for ii = 1:length(deactivateList)
+                  ind = strcmp(deactivateList{ii}, {self.eventDefinitions.name});
+                  if ~isempty(ind)
+                     self.eventDefinitions(ind).isActive = false;
+                  end
+               end
+            end
+         end
       end
       
       %> Get the next event that was detected in read().
@@ -627,9 +711,9 @@ classdef dotsReadable < handle
       
       %> Get ID of component by name
       function ID = getComponentIDbyName(self, name)
-         index = find(strcmp(name, {self.components.name}));
-         if ~isempty(index)
-            ID = self.components(index).ID;
+         Lid = strcmp(name, {self.components.name});
+         if any(Lid)
+            ID = self.components(Lid).ID;
          else
             ID = [];
          end
@@ -637,9 +721,9 @@ classdef dotsReadable < handle
       
       %> Get name of component by ID
       function name = getComponentNameByID(self, ID)
-         index = find(ID==[self.components.ID],1);
-         if ~isempty(index)
-            name = self.components(index).name;
+         Lname = ID==[self.components.ID];
+         if any(Lname)
+            name = self.components(Lname).name;
          else
             name = [];
          end
@@ -813,6 +897,10 @@ classdef dotsReadable < handle
          self.isAvailable = false;
       end
       
+      % Reset the device
+      function resetDevice(self, varargin)
+      end
+      
       %> Calibrate the device (for subclasses).
       %> @details
       %> Subclasses must redefine calibrateDevice(). It should
@@ -895,7 +983,7 @@ classdef dotsReadable < handle
          % Event can only happen if there are data
          if isempty(data)
             isEvent = false;
-            return;
+            return
          end
          
          %> Get the event definition for each incoming ID

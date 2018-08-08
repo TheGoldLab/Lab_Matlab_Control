@@ -204,104 +204,36 @@ classdef dotsReadableHID < dotsReadable
       % event is defined as the component reaching its maximum value.
       % The event name will have the form "pressed @a keyName", including
       % the space.
-      % @details
-      % @a keyName must have a standard form.  For example, the "b" key
-      % must be named as "KeyboardB".  See mexHIDUsage or mexHIDUsage.gui
-      % for additional names.
-      % @details
-      % If @a keyName is found, returns the name of the new event.
-      % Returns as a second output the ID of the corresponding component.
-      % If @a keyName is not found, returns empty values.
+      %
+      % Arguments:
+      %  name       ... (required) string name of the event
+      %  isActive   ... (optional) boolean flag
+      %  isInverted ... (optional) boolean flag
+      %
+      % Required property/value pairs:
+      %  'component' ... string name (standard form; e.g., the "b" key
+      %                       must be named as "KeyboardB" ...  
+      %                       See mexHIDUsage or mexHIDUsage.gui)
+      %                  or component ID
+      %
+      % Optional property/value pairs:
+      %  'calibratedValues'
       %
       % Moved 6/5/2018 from dotsReadableHIDKeyboard
-      function [eventName, ID] = defineCalibratedEvent(self, componentNameOrID, ...
-            eventName, calibratedValues, isActive)
+      function event = defineEvent(self, name, varargin)
          
-         % nameOrID string or numeric ID for the component
-         if ischar(componentNameOrID)
-            name = componentNameOrID;
-            ID = self.getComponentIDbyName(componentNameOrID);
-         else
-            name = self.getComponentNameByID(componentNameOrID);
-            ID = componentNameOrID;
+         % Check name
+         if isempty(name)
+            name = ['pressed_'  varargin{find(strcmp('component', varargin))+1}];
          end
          
-         % Found the component ID
-         if ~isempty(ID)
-            
-            % eventName can be given or determined from componentNameOrID
-            if nargin < 3 || isempty(eventName)
-               eventName = ['pressed ' name];
-            end
-                        
-            % Possibly use calibration to return specific value
-            if nargin >= 4 && ~isempty(calibratedValues)
-               
-               if length(calibratedValues)==1
-                  calibratedValues=[0 calibratedValues];
-               end
-               
-               % Call setComponentCalibration
-               self.setComponentCalibration(ID, [], [], calibratedValues);
-            else
-               
-               % Default calibration
-               calibratedValues = [-inf inf];
-            end
-            
-            % Make active or not
-            if nargin < 5 || isempty(isActive)
-               isActive=false;
-            end
-            
-            % Add the event
-            self.defineEvent(ID, eventName, calibratedValues(1), ...
-               calibratedValues(2), [], isActive);
-         else
-            
-            % Component not found
-            eventName = '';
-         end
-      end
-      
-      % resetEvents
-      %
-      %  Convenient utility for clearing and resetting calibrated events
-      %
-      %  Arguments:
-      %     deactivateFlag   ... whether or not to deactivate all existing
-      %                            events
-      %     eventDefinitions ... array of structs with fields:
-      %                          name (required),
-      %                          eventName (required),
-      %                          calibratedValues (optional),
-      %                          isActive (optional)
-      function resetEvents(self, deactivateFlag, eventDefinitions)
+         % Use superclass method to define the event
+         event = defineEvent@dotsReadable(self, name, varargin{:});
          
-         % Conditinally deactivate all events
-         if nargin >= 2 && deactivateFlag
-            self.deactivateEvents();
-         end
-         
-         % Update the events
-         if nargin >= 3 && ~isempty(eventDefinitions)
-            
-            % Check fields
-            if ~isfield(eventDefinitions, 'calibratedValues')
-               [eventDefinitions.calibratedValues] = deal(1);
-            end
-            if ~isfield(eventDefinitions, 'isActive')
-               [eventDefinitions.isActive] = deal(true);
-            end
-            
-            % Now add given events.
-            for ii = 1:length(eventDefinitions)
-               self.defineCalibratedEvent( ...
-                  eventDefinitions(ii).name, ...
-                  eventDefinitions(ii).eventName, ...
-                  eventDefinitions(ii).calibratedValues, ...
-                  eventDefinitions(ii).isActive);
-            end
+         % Possibly set component calibration
+         if any(strcmp('lowValue', varargin) | strcmp('highValue', varargin))
+            self.setComponentCalibration(event.ID, [], [], ...
+               [event.lowValue event.highValue]);
          end
       end
    end
@@ -393,7 +325,7 @@ classdef dotsReadableHID < dotsReadable
          %   by mexHID('check'), via the queueCallback function
          mexHID('check');
          newData = self.queueCallbackData;
-         
+
          % only process new data once
          self.queueCallbackData = [];
       end

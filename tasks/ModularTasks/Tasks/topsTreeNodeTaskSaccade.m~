@@ -111,9 +111,9 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % ---- Keep track of changes to certain property structs
          %
          %  This will eventually be useful for real-time updating
-         self.registerSetListeners('drawables', 'readables');
+         self.addSetListeners({'drawables', 'readables'});
       end
-   
+      
       %% Start task method
       function startTask(self)
          
@@ -270,7 +270,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %
       function prepareReadables(self)
          
-         % ---- Reset the events for the given ui type
+          % ---- Reset the events for the given ui type
          %
          if self.updateFlags.readables
             
@@ -281,16 +281,18 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             
             % use it to call defineEvents with the appropriate event definitions
             self.readables.userInput.defineEvents(self.readables.(classType{:}));
-            
+
             % reset flag
             self.updateFlags.readables = false;
          end
+                  
+         % ---- Flush the UI
+         %
+         self.readables.userInput.flushData();
          
          % ---- Deactivate the events (they are activated in the statelist)
-         %     and flush the UI
          %
          self.readables.userInput.deactivateEvents();
-         self.readables.userInput.flushData();
       end
           
       %% Prepare stateMachine for this trial
@@ -361,7 +363,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % ---- Register the readable (for timing)
          %
-         self.registerReadableTiming(self.readables.userInput);
+         self.uiObjects = {self.readables.userInput};
          
          % ---- Set flag to update first time through
          %

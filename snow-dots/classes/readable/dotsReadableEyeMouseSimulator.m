@@ -44,7 +44,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
          % get the mouse object
          self.HIDmouse = dotsReadableHIDMouse(matching);
          
-         % Get and save mouse component IDs... first two are x,y, last is
+         % Get and save mouse component IDs... first two are x,y, third is
          % button press
          self.HIDmouseComponentIDs = getComponentIDs(self.HIDmouse);
          

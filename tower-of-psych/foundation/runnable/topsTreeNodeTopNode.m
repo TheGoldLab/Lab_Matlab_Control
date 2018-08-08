@@ -81,20 +81,6 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % Overloaded start function, to check for gui(s)
       function start(self)
          
-         % Start data logging
-         if ~isempty(self.filename)
-            
-            % Flush the log, log self, and save to the file
-            topsDataLog.flushAllData(); % Flush stale data, just in case
-            
-            % save self, without the gui handles
-            selfStruct = struct(self);
-            selfStruct.runGUIHandle = [];
-            selfStruct.databaseGUIHandle = [];
-            topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
-            topsDataLog.writeDataFile(self.filename);
-         end
-         
          % start databaseGUI
          if ~isempty(self.databaseGUIname) && isempty(self.databaseGUIHandle)
             self.databaseGUIHandle = feval(self.databaseGUIname);          
@@ -104,7 +90,25 @@ classdef topsTreeNodeTopNode < topsTreeNode
          if ~isempty(self.runGUIname) && isempty(self.runGUIHandle)
             self.runGUIHandle = feval(self.runGUIname, self, self.runGUIArgs{:});      
          else
+            
+            % Start data logging
+            if ~isempty(self.filename)
+               
+               % Flush the log, log self, and save to the file
+               topsDataLog.flushAllData(); % Flush stale data, just in case
+               
+               % save self, without the gui handles
+               selfStruct = struct(self);
+               selfStruct.runGUIHandle = [];
+               selfStruct.databaseGUIHandle = [];
+               topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
+               topsDataLog.writeDataFile(self.filename);
+            end
+         
+            % Run for realsies
             self.start@topsRunnable();
+            
+            % Set silly flag
             self.isStarted = true;
          end
       end
