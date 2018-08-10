@@ -14,7 +14,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         eyelinkIP = '100.1.1.1';
         
         % Default filename on eyelink machine
-        defaultFilename = 'readableEyeFile';
+        defaultFilename = 'readableEyeFile.edf';
         
         % Time for eyelink to switch to new mode (msec)
         waitForModeReadyTime = 50;
@@ -85,8 +85,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
         % Get the current time value from Eyelink. Units are in seconds.
         function time = getDeviceTime(self)
             
-            if self.isAvailable
-                time = Eyelink('TrackerTime');
+            if self.isAvailable && ~Eyelink('RequestTime')
+                pause(0.03);
+                time = Eyelink('ReadTime')/1000.0;
             else
                 time = feval(self.clockFunction);
             end
@@ -157,16 +158,13 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                Eyelink('CloseFile');
                
                % Get the file
-               status  = Eyelink('ReceiveFile', [], self.filename, self.filepath);
+               status = Eyelink('ReceiveFile', [], self.defaultFilename);
 
-               % Copy to the real filename. This keeps the tmp file around
-               % in case there were any problems copying
-               tmpname = fullfile(self.filepath, self.defaultFilename);
-               newname = fullfile(self.filepath, self.filename);               
-               if status > 0 || ~exist(tmpname, 'file')
+               % Copy to the data directory
+               if status == 0 || ~exist(self.defaultFilename, 'file')
                   disp('dotsReadableEyeEyelink: problems transferring data file')
                else
-                  copyfile(tmpname, newname);
+                  copyfile(self.defaultFilename, fullfile(self.filepath, [self.filename '.edf']));
                end
             end
             
@@ -297,8 +295,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             end
             
             % Turn on recording
-            Eyelink('StartRecording');
-            pause(0.2);
+            self.startRecording();
         end
         
         % calibrateValidate
@@ -475,48 +472,32 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                 
                 % Play alerting sound
                 play(self.calibrationPlayables{1});
+                
+                pause(0.2);
             end
+            
+            % Stop recording
+            self.stopRecording();
             
             % Start drift correction routine
             Eyelink('DriftCorrStart', ...
                self.windowCtr(1) + xy(1) * self.pixelsPerDegree, ...
                self.windowCtr(2) - xy(2) * self.pixelsPerDegree);
-            %pause(0.1);
-            %Eyelink( 'AcceptTrigger');
-            %Eyelink('ApplyDriftCorr');
-            %Eyelink('CalResult')
+  
             Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
-            Eyelink('StartRecording')
-            
-            %             % Wait for confirmation.
-            %             while Eyelink('CalResult') == self.NO_REPLY
-            %
-            %                 % Get user input
-            %                 switch self.calibrationUI.getNextEvent()
-            %
-            %                     case 'acceptCalibration'
-            %
-            %                         % Accept the trigger and apply the drift correction
-            %                         Eyelink('AcceptTrigger');
-            %                         Eyelink('ApplyDriftCorr');
-            %                         status = 0;
-            %
-            %                     case 'abortCalibration'
-            %                         status = 0; % no error (for now)
-            %                         break;
-            %                         % Possibly return to setup menu?
-            %                         % Eyelink('StartSetup');
-            %                         % Eyelink('WaitForModeReady', self.waitForModeReadyTime);
-            %                 end
-            %             end
+            pause(0.03);
             
             % Blank the screen if we drew the target
             if drawTarget
                 self.calibrationEnsemble.callObjectMethod(...
                     @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
             end
+            
+            % Start recording
+            self.startRecording();
+            
         end % drift correct
-        
+            
         % Overloaded startRecording method
         %
         function isRecording = startRecording(self)
@@ -582,11 +563,14 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             x =  (evt.gx(self.trackedEye) - self.windowCtr(1))/self.pixelsPerDegree;
             y = -(evt.gy(self.trackedEye) - self.windowCtr(2))/self.pixelsPerDegree;
             
+            % Convert time to seconds
+            time_s = evt.time/1000.0;
+            
             % package up data in dotsReadable format
             newData = [ ...
-                self.xID      x                       evt.time; ...
-                self.yID      y                       evt.time; ...
-                self.pupilID  evt.pa(self.trackedEye) evt.time];
+                self.xID      x                       time_s; ...
+                self.yID      y                       time_s; ...
+                self.pupilID  evt.pa(self.trackedEye) time_s];
             
         end % readRawEyeData
     end % Protected methods

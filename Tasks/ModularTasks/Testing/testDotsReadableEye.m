@@ -8,7 +8,7 @@ function testDotsReadableEye(tracker, useRemote, screenNumber)
 %  'dotsReadableEyeEyelink'
 %  'dotsReadableEyeMouseSimulator'
 if nargin < 1 || isempty(tracker)
-   tracker = 'dotsReadableEyePupilLabs';
+   tracker = 'dotsReadableEyeEyelink';
 end
 
 if nargin < 2 || isempty(useRemote)
@@ -16,7 +16,7 @@ if nargin < 2 || isempty(useRemote)
 end
 
 if nargin < 3 || isempty(screenNumber)
-   screenNumber = 0;
+   screenNumber = 2;
 end
 
 try
@@ -30,6 +30,9 @@ try
    
    % Run initial calibration routine
    e.calibrate();
+   
+   % drift correct
+   e.calibrate('d', [0 0], true);
    
    % e.calibrate('s');
    

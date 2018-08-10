@@ -142,7 +142,8 @@ classdef dotsReadableEye < dotsReadable
       % Keyboard event definitions: type, key/event pairs
       calibrationUIEvents = struct( ...
          'name',      {'accept', 'calibrate', 'dritfCorrect', 'abort', 'repeat', 'showEye', 'toggle'}, ...
-         'component', {'KeyboardSpacebar',  'KeyboardC', 'KeyboardD',  'KeyboardQ', 'KeyboardR',  'KeyboardS', 'KeyboardT'});
+         'component', {'KeyboardSpacebar',  'KeyboardC', 'KeyboardD',  'KeyboardQ', 'KeyboardR',  'KeyboardS', 'KeyboardT'}, ...
+         'isActive',  {true, true, true, true, true, true, true});
    end
    
    properties (SetAccess = protected)
@@ -961,8 +962,12 @@ classdef dotsReadableEye < dotsReadable
       function resetDevice(self, varargin)
          
          % Conditionally re-center gaze (drift correct)
-         if nargin > 1 && ~isempty(varargin{1})
-            self.calibrate('d', varargin{1});
+         if nargin > 1
+             if isnumeric(varargin{1}) && length(varargin{1})==2
+                 self.calibrate('d', varargin{1});
+             elseif ~(islogical(varargin{1}) && ~varargin{1})
+                 self.calibrate('d');
+             end
          end
          
          % Conditionally set useBuffer flag

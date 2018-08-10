@@ -181,7 +181,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             fileName, tableSize, targetSize)
          
          % Open a window with no gamma table
-         dotsTheScreen.reset('displayIndex', 0, 'gammaTableFileName', 'none');
+         dotsTheScreen.reset('gammaTableFileName', 'none');
          dotsTheScreen.openWindow();
          
          % check arguments

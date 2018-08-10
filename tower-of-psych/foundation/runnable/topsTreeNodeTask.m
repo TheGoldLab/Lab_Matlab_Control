@@ -276,8 +276,7 @@ classdef topsTreeNodeTask < topsTreeNode
                trial.time_ui_trialStart, ...
                trial.time_ui_roundTrip] = ...
                syncTiming(self.screenEnsemble, ...
-               self.uiObjects);
-            
+               self.uiObjects);            
          else
             % multiple ui objects, parse return arguments
             [trial.time_local_trialStart, ...
@@ -627,7 +626,7 @@ classdef topsTreeNodeTask < topsTreeNode
          % Call dotsReadable.getNext
          %
          % data has the form [ID, value, time]
-         [eventName, data] = getNextEvent(userInput, [], acceptedEvents);
+         [eventName, data] = userInput.getNextEvent([], acceptedEvents);
          
          if ~isempty(eventName)
             

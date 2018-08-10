@@ -592,7 +592,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          sch     = @(x)cat(2, {@setDotsChoice, self}, x);
 
          % drift correction
-         hfdc  = {@reset, self.readables.userInput, 1};
+         hfdc  = {@reset, self.readables.userInput, true};
          
          % Activate/deactivate readable events
          dce   = @setEventsActiveFlag;

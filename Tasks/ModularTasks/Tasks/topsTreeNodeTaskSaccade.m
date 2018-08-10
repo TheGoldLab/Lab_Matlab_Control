@@ -404,7 +404,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          sch    = @(x)cat(2, {@setSaccadeChoice, self}, x);
          
          % drift correction
-         hfdc  = {@reset, self.readables.userInput, 1};
+         hfdc  = {@reset, self.readables.userInput, true};
          
          % Activate/deactivate readable events
          dce   = @setEventsActiveFlag;
