@@ -147,19 +147,17 @@ classdef topsTreeNodeTopNode < topsTreeNode
                
                % Check if it needs the screen
                if isfield(ui, 'screenEnsemble')
-                  ui.screenEnsemble = self.sharedProperties.screenEnsemble;
+                  ui.screenEnsemble = self.drawables.screenEnsemble;
                end
                
                % Set up data recording
-               if ~isempty(self.filename)
-                  [path, name] = fileparts(self.filename);
-                  ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), 'dotsReadable');
-                  ui.filename = sprintf('%s_%s', name, readableNames{ii}(13:end));
-               end
+               [path, name] = fileparts(self.filename);
+               ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), 'dotsReadable');
+               ui.filename = sprintf('%s_%s', name, self.uiList{ii}(13:end));
                
                % Add start/finish fevalables -- remember the finishes run
                % in reverse order
-               self.addCall('start',  {@calibrate, ui}, 'calibrate ui');
+               self.addCall('start', {@calibrate, ui}, 'calibrate ui');
                self.addCall('start',  {@record, ui, true}, 'start recording ui');
                self.addCall('finish', {@close, ui}, 'close ui');
                self.addCall('finish', {@record, ui, false}, 'finish recording ui');
@@ -177,7 +175,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % start runGUI
          if ~isempty(self.runGUIname) && isempty(self.runGUIHandle)
-            self.runGUIHandle = feval(self.runGUIname, self, self.sharedProperties.readableList{:});      
+            self.runGUIHandle = feval(self.runGUIname, self, self.readables{:});      
          else
             
             % Start data logging

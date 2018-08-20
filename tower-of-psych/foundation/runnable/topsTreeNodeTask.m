@@ -19,10 +19,10 @@ classdef topsTreeNodeTask < topsTreeNode
    properties
       
       % Unique identifier
-      taskID = [];
+      taskID = -1;
       
       % Unique type identifier
-      taskTypeID = [];
+      taskTypeID = -1;
       
       % An array of structs describing each trial
       trialData = [];
@@ -50,17 +50,17 @@ classdef topsTreeNodeTask < topsTreeNode
       % needs them
       statusStrings = {};
       
-      % flag to use TTL pulses -- sets timing fields in trialData
-      sendTTLs = false;
+      % Registry of set listeners... see topsTreeNodeTask
+      setRegistry = {'drawables', 'readables'};
    end
    
    properties (SetAccess = protected)
       
       % The state machine, created locally
-      stateMachine = [];
+      stateMachine;
       
       % The state machine concurrent composite, created locally
-      stateMachineComposite = [];
+      stateMachineComposite;
       
       % Cell array used as input to topsStateMachine.addMultipleStates
       % DEFINE IN STARTTASK
@@ -74,17 +74,31 @@ classdef topsTreeNodeTask < topsTreeNode
       % DEFINE IN STARTTASK
       stateMachineCompositeChildren = {};
       
-      % Handle to screenEnsemble, for timing info
-      screenEnsemble = [];
-      
-      % Cell array of ui objects, for timing info
-      uiObjects = {};
+      % List of other children to add
+      otherChildren = {};
       
       % flag if successefully finished trial (or need to repeat)
       completedTrial = false;
       
       % property update flags, set by setListeners
-      updateFlags = [];
+      updateFlags;
+
+      % Properties that can be shared from the topsTreeNodeTopNode
+      %
+      % Handle to screenEnsemble, for timing info
+      screenEnsemble;
+      
+      % Handle to textEnsemble used for messages
+      textEnsemble;
+      
+      % Cell array of readable objects
+      readableList = {};
+      
+      % Cell array of playable objects
+      playableList = {};
+      
+      % flag to use TTL pulses -- sets timing fields in trialData
+      sendTTLs = false;
    end
    
    methods
@@ -127,12 +141,26 @@ classdef topsTreeNodeTask < topsTreeNode
                end
             end
          end
+         
+         % ---- Keep track of changes to certain property structs
+         %
+         %  This will eventually be useful for real-time updating
+         for ii = 1:length(self.setRegistry)
+            if isfield(self, self.setRegistry{ii})
+               self.updateFlags.(self.setRegistry{ii}) = false;
+               % jig commented for now - not needed until/if realtime updating is
+               %  added
+               % Add the listeners
+            %  addlistener(self, self.setRegistry{ii}, 'PostSet', @self.propertySetListener);
+            end
+         end
       end
       
       % Start task method
+      %
       function start(self)
          
-         % ---- Check status flags
+          % ---- Check status flags
          if self.caller.checkFlags(self) > 0
             return
          end
@@ -140,6 +168,22 @@ classdef topsTreeNodeTask < topsTreeNode
          % Do some bookkeeping via superclass
          self.start@topsRunnable();
          
+         % Get some properties from the topNode
+         if ~isempty(self.caller)
+            
+            % Find the topNode
+            topNode = self.caller;
+            while ~isempty(topNode.caller)
+               topNode = topNode.caller;
+            end
+            
+            for ff = fieldnames(topNode.sharedProperties)'
+               if isempty(self.(ff{:}))
+                  self.(ff{:}) = topNode.sharedProperties.(ff{:});
+               end
+            end
+         end
+
          % Possibly update the gui using the new task
          self.caller.updateGUI('_updateTask', self);
          
@@ -185,6 +229,11 @@ classdef topsTreeNodeTask < topsTreeNode
             % Add it as a child to the task
             %
             self.addChild(self.stateMachineComposite);
+            
+            % Add remaining children
+            for ii = 1:length(self.otherChildren)
+               self.addChild(self.otherChildren{ii});
+            end
          end
          
          % Figure out which timing fields to add
@@ -203,8 +252,8 @@ classdef topsTreeNodeTask < topsTreeNode
          end
          
          % uis
-         for ii = 1:length(self.uiObjects)
-            if length(self.uiObjects) > 1
+         for ii = 1:length(self.readableList)
+            if length(self.readableList) > 1
                uiStr = sprintf('ui%d', ii);
             else
                uiStr = 'ui';
@@ -224,6 +273,7 @@ classdef topsTreeNodeTask < topsTreeNode
       end
       
       % Finish task method
+      %
       function finish(self)
          
          % Do some bookkeeping
@@ -269,14 +319,14 @@ classdef topsTreeNodeTask < topsTreeNode
          trial = self.getTrial();
          
          % Get synchronization times
-         if length(self.uiObjects) <= 1
+         if length(self.readableList) <= 1
             [trial.time_local_trialStart, ...
                trial.time_screen_trialStart, ...
                trial.time_screen_roundTrip, ...
                trial.time_ui_trialStart, ...
                trial.time_ui_roundTrip] = ...
                syncTiming(self.screenEnsemble, ...
-               self.uiObjects);            
+               self.readableList);            
          else
             % multiple ui objects, parse return arguments
             [trial.time_local_trialStart, ...
@@ -285,9 +335,9 @@ classdef topsTreeNodeTask < topsTreeNode
                time_ui_trialStarts, ...
                time_ui_roundTrips] = ...
                syncTiming(self.screenEnsemble, ...
-               self.uiObjects);
+               self.readableList);
             
-            for ii = 1:length(self.uiObjects)
+            for ii = 1:length(self.readableList)
                uiStr = sprintf('ui%d', ii);
                trial.(['time_' uiStr '_trialStart']) = time_ui_trialStarts(ii);
                trial.(['time_' uiStr '_roundTrip']) = time_ui_roundTrips(ii);
@@ -313,6 +363,10 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       function finishTaskTrial(self)
          
+         % ---- Call the subclass finishTrial method
+         %
+         self.finishTrial();
+
          % ---- Save the current trial in the DataLog
          %
          %  We do this even if no choice was made, in case later we want
@@ -323,10 +377,73 @@ classdef topsTreeNodeTask < topsTreeNode
          %
          % We do this here instead of in startTrial because prepareForNextTrial
          % might terminate the task if no trials remain.
-         self.prepareForNextTrial();
+         self.prepareForNextTrial();         
+      end
+      
+      % makeTrials
+      %
+      %  Utility to make trialData array using indVars array of structs, 
+      %     which must be a property of the given task with fields:
+      %  
+      %     1. name: string name
+      %     2. values: vector of unique values
+      %     3. priors: vector of priors (or empty for equal priors)
+      %     4. minTrials: minimum number of trials per condition
+      %
+      function makeTrials(self)
          
-         % call the subclass finishTrial method
-         self.finishTrial();
+         % Loop through the arg list
+         args = {};
+         for ii = 1:length(self.indVars)
+            args = cat(2, args, cell(3,1));
+            args{1,end} = self.indVars(ii).name;
+            uvals       = self.indVars(ii).values;
+            priors      = self.indVars(ii).priors;
+            mtr         = self.indVars(ii).minTrials;
+            
+            if isempty(mtr)
+               mtr = self.settings.minTrialsPerCondition;
+            end
+            if isempty(priors)
+               priors = ones(size(uvals));
+            end
+            
+            % the "min" here ensures that the condition with the smallest
+            % relative prior gets at least "trials per condition"
+            priors = round(priors./min(priors).*mtr);
+            for jj = 1:length(priors)
+               args{2,end} = cat(1, args{2,end}, repmat(uvals(jj), priors(jj), 1));
+            end
+         end
+         
+         % ---- Fill in the trialData with relevant information
+         %
+         if ~isempty(args)
+            
+            % Make grids
+            [args{3,:}] = ndgrid(args{2,:});
+            
+            % Reformat
+            for ii = 1:size(args,2)
+               args{3,ii} = args{3,ii}(:)';
+            end
+            ntr = length(args{3,1});
+            
+            % Check for trial struct, otherwise make a dummy
+            if isempty(self.trialData)
+               self.trialData.taskID = nan;
+            end
+            
+            % make the trial struct array
+            self.trialData = dealMat2Struct(self.trialData(1), ...
+               'taskID',      repmat(self.taskTypeID,1,ntr), ...
+               'trialIndex',  1:ntr, ...
+               args{[1 3], :});
+         else
+            
+            % no trials given
+            self.trialData = [];
+         end
       end
       
       % Get a trial struct by trialCount index
@@ -442,33 +559,6 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Set up listener for changes to certain propoperties
-      %
-      % arguments are strings
-      function registerSetListeners(self, varargin)
-         
-         % make cell array of names
-         if nargin <= 1
-            return
-         end
-         
-         names = {};
-         for ii = 1:nargin-1
-            names = cat(2, names, varargin{ii});
-         end
-         
-         % make flags
-         self.updateFlags = cell2struct(num2cell(false(size(names))), names, 2);
-         
-         % jig commented for now - not needed until/if realtime updating is
-         %  added
-         % Add the listeners
-         %          for ii = 1:length(names)
-         %             addlistener(self, names{ii}, 'PostSet', @self.propertySetListener);
-         %          end
-         
-      end
-      
       % The listener
       %
       % Callback for PostSet event
@@ -478,16 +568,7 @@ classdef topsTreeNodeTask < topsTreeNode
          % h = event.AffectedObject;
          self.updateFlags.(source.Name) = true;
       end
-      
-      
-      % register UI objects to automatically calibrate timing per trial
-      function registerReadableTiming(self, varargin)
-         
-         for ii = 1:nargin-1
-            self.uiObjects = cat(2, self.uiObjects, varargin{ii});
-         end
-      end
-      
+            
       % show status
       function updateStatus(self, indices)
          
@@ -645,6 +726,177 @@ classdef topsTreeNodeTask < topsTreeNode
             self.stateMachine.editStateByName(thisState, 'next', nextStateIfTrue);
          else
             self.stateMachine.editStateByName(thisState, 'next', nextStateIfFalse);
+         end
+      end
+      
+      % setIndVarByName
+      %
+      % Utility... varargin is property/value pairs corresponding to the 
+      %  indVar struct array
+      function setIndVarByName(self, name, varargin)
+         
+         Lind = strcmp({self.indVars.name}, name);
+         for ii = 1:2:nargin-2
+            self.indVars(Lind).(varargin{ii}) = varargin{ii+1};
+         end
+      end
+      
+      % setIndVarsByName
+      %
+      % indVarList is {'<nameA>' {<propertyA1>, <valueA1>, ...}      
+      function setIndVarsByName(self, indVarList)
+         
+         for ii = 1:2:length(indVarList)
+            self.setIndVarByName(indVarList{ii}, indVarList{ii+1}{:});
+         end
+      end
+      
+      % Initialize Readables
+      %
+      % Create default readable. Should be overloaded in subclass if doing
+      % anything else.
+      function initializeReadables(self)
+
+         % ---- Setup user input device
+         %
+         if isempty(self.readables.userInput) && ~isempty(self.readableList)
+            
+            % default to first object given from parent
+            self.readables.userInput = self.readableList{1};
+            
+         elseif ~isempty(self.readables.userInput) && isempty(self.readableList)
+            
+            % Register the object
+            self.readableList = {self.readables.userInput};
+         end
+         
+         % Check for dotsReadableEye
+         if isa(self.readables.userInput, 'dotsReadableEye')
+
+            % Bind stimulus ensemble to gaze windows
+            [self.readables.dotsReadableEye.ensemble] = ...
+               deal(self.drawables.stimulusEnsemble);
+         end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.readables = true;
+      end      
+              
+      %% Initialize Drawables
+      %
+      % Create default drawables from the property list. 
+      %  Should be overloaded in subclass if doing anything else.
+      function initializeDrawables(self)
+      
+         % ---- Check for screen
+         %
+         if isempty(self.screenEnsemble)
+            error('topsTreeNodeTask: missing screenEnsemble');
+         end
+         
+         % ---- Check for other drawables
+         %
+         fields = fieldnames(self.drawables);
+         drawableSettings = strfind(fields, 'Settings');
+         for dd = find(cellfun(@isempty,drawableSettings))'
+            
+            switch fields{dd}
+               
+               case 'stimulusEnsemble'
+            
+                  if isempty(self.drawables.stimulusEnsemble)
+                     
+                     objects = {self.drawables.stimulusEnsembleSettings.type};
+                     for oo = 1:length(objects)
+                        objects{oo} = eval(objects{oo});
+                     end
+                     
+                     % Make the ensemble
+                     self.drawables.stimulusEnsemble = makeDrawableEnsemble( ...
+                        'stimulusEnsemble', objects, self.screenEnsemble, true);
+                  end
+                  
+               case 'textEnsemble'
+                  
+                  if isempty(self.drawables.textEnsemble)
+                     
+                     % Create the ensemble
+                     self.drawables.textEnsemble = makeTextEnsemble('textEnsemble', ...
+                        2, self.settings.textOffset, self.screenEnsemble);                     
+                  end
+                  
+               otherwise
+                  
+                  error('topsTreeNodeTask: unknown drawable type')
+            end
+         end
+
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.drawables = true;
+      end
+      
+      % Prepare readables for this trial
+      %
+      function prepareReadables(self)
+         
+         % ---- Reset the events for the given ui type
+         %
+         if self.updateFlags.readables
+            
+            % Utility for updating readables with standard property format
+            self.updateReadables();
+            
+            % reset flag
+            self.updateFlags.readables = false;
+         end
+         
+         % ---- Deactivate the events (they are activated in the statelist)
+         %     and flush the UI
+         %
+         self.readables.userInput.deactivateEvents();
+         self.readables.userInput.flushData();
+      end
+      
+      % updateReadables
+      %
+      % Utility for updating readables giving in properties in a standard
+      % format. See modularTasks for examples
+      function updateReadables(self)
+         
+         % parse the name
+         classType = intersect(fieldnames(self.readables), ...
+            cat(1, class(self.readables.userInput), ...
+            superclasses(self.readables.userInput)));
+         
+         % use it to call defineEvents with the appropriate event definitions
+         self.readables.userInput.defineEvents(self.readables.(classType{:}));         
+      end
+      
+      % updateDrawables
+      %
+      % Utility for updating drawables giving in properties in a standard
+      % format. See modularTasks for examples.
+      function updateDrawables(self)
+         
+         % Loop through the ensembles
+         fields = fieldnames(self.drawables);
+         drawableSettings = strfind(fields, 'Settings');
+         for dd = find(~cellfun(@isempty,drawableSettings))'
+            ensemble = self.drawables.(fields{dd}(1:drawableSettings{dd}-1));
+            ensembleSettings = self.drawables.(fields{dd});
+            
+            % For each ensemble object
+            for ss = 1:length(ensembleSettings)
+               settings = ensembleSettings(ss).settings;
+               
+               % For each field
+               for ff = fieldnames(settings)'
+                  ensemble.setObjectProperty(ff{:}, ...
+                     settings.(ff{:}), ss);
+               end
+            end
          end
       end
    end

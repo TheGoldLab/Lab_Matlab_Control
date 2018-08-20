@@ -1,28 +1,31 @@
-function FIRA = DBSmakeFIRA(filename)
-% function FIRA = DBSmakeFIRA(filename)
+function FIRA = makeFIRAfromModularTasks(filename, studyTag)
+% function FIRA = makeFIRAfromModularTasks(filename, studyTag)
 %
-% Make a FIRA data struct from the raw/pupil data of a DBS experiment. 
+% Make a FIRA data struct from the raw/pupil data of a set of modular tasks
 %
-% Calls topsDataLog.parseEcodes, which uses the trial data structure 
-%  defined in DBSconfigureTasks to determine the data column names then 
-%  fills in the data for each structure found (rows of the ecodes.data matrix)
+% Calls topsDataLog.parseEcodes, which assumes that the tag 'trial' corresponds
+%  to a trial data structure in the topsDataLog.
 %
 % Created 5/26/18 by jig
 
-%% Parse filenames
+%% Parse filename, studyTag
 %
+% Give defaults for debugging
 if nargin < 1 || isempty(filename)
-   % for debugging
    filename = 'data_2018_08_08_08_55';   
+end
+
+if nargin < 2 || isempty(studyTag)
+   studyTag = 'DBSStudy';
 end
 
 % Flush the data log
 topsDataLog.flushAllData();
 
 % Use the machine-specific data pathname to find the data
-DBSfilepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), 'DBSStudy');
-rawFile = fullfile(DBSfilepath, 'Raw', [filename '.mat']);
-eyeFile = fullfile(DBSfilepath, 'Pupil', [filename '_eye']);
+filepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), studyTag);
+rawFile  = fullfile(filepath, 'topsDataLog',  [filename '.mat']);
+uiFile   = fullfile(filepath, 'dotsReadable', [filename '_eye']);
 
 %% Get the ecode matrix using the topsDataLog utility
 %
@@ -39,8 +42,8 @@ FIRA.ecodes = topsDataLog.parseEcodes('trial');
 % Use constructor class static method to read the data file.
 %
 % for PupilLabs: Uses a python script...
-ui = mainTreeNode.nodeData{'Control'}{'userInputDevice'};
-[eyeData, tags] = feval([class(ui) '.readDataFromFile'], eyeFile);
+ui = mainTreeNode.uiObjects{1};
+[eyeData, tags] = feval([class(ui) '.readDataFromFile'], uiFile);
 eyeData = cell2num(eyeData);
 
 %% Synchronize timing

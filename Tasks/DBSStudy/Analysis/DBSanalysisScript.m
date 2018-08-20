@@ -4,7 +4,7 @@
 
 testFilename = 'data_2018_08_08_08_55';
 
-FIRA = DBSmakeFIRA(testFilename);
+FIRA = makeFIRAfromModularTasks(testFilename, 'DBSStudy');
 
 figure
 

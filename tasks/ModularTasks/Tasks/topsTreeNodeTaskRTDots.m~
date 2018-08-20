@@ -232,9 +232,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             self.quest = qpUpdate(self.quest, trial.coherence, trial.correct+1);
             
             % Update next guess, bounded between 0 and 100, if there is a next trial
-            if self.trialCount < length(self.trialIndices)
-               self.trialData(self.trialIndices(self.trialCount+1)).coherence = ...
-                  min(100, max(0, qpQuery(self.quest)));
+            val = min(100, max(0, qpQuery(self.quest)));
+            
+            if self.trialCount > 0
+               self.trialData(self.trialIndices(self.trialCount)).coherence = val;
             end
             
             % ---- Set reference coherence to current threshold and set reference RT

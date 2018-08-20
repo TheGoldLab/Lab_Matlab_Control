@@ -22,30 +22,34 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    properties % (SetObservable) % uncomment if adding listeners
       
       % Trial properties. 
-      %
-      % Set useQuest to a handle to a topsTreeNodeTaskRTDots to use it 
-      %     to get coherences
-      % Possible values of dotsDuration:
+      %  NOTE that certain properties can have special values:
+      %  -- coherences:
+      %     'Quest' ... use adaptive method
+      %     <topsTreeNodeTaskRTDots object> -- get coherences value there
+      %           (e.g., from a Quest task)
+      %  -- dotsDuration:
       %     [] (default) ... RT task
       %     [val] ... use given fixed value
       %     [min mean max] ... specify as pick from exponential distribution
       settings = struct( ...
-         'minTrialsPerCondition',         10,   ...
-         'useQuest',                      [],   ...
-         'coherencesFromQuest',           [],   ...
-         'directionPriors',               [80 20], ... % For asymmetric priors
-         'dotsDuration',                  [],   ... 
-         'referenceRT',                   [],   ...
+         'trialsPerCoherence',            10, ...
+         'directions',                    [0 180], ...
+         'directionPriors',               [80 20], ...
+         'coherences',                    [0 3.2 6.4 12.8 25.6 51.2], ...
+         'coherencesFromQuest',           [], ...
+         'coherencePriors',               [], ...
+         'dotsDuration',                  [], ...
+         'referenceRT',                   [], ...
          'fixationRTDim',                 0.4,  ...
          'targetDistance',                8,    ...
+         'textOffset',                    2,    ...
          'textStrings',                   '');
-           
-      % Array of structures of independent variables, used by makeTrials
+      
       indVars = struct( ...
          'name',        {'direction', 'coherence'}, ...
          'values',      {[0 180], [0 3.2 6.4 12.8 25.6 51.2]}, ...
-         'priors',      {[], []}, ...
-         'minTrials',   {1, []});
+         'priors',      {[50 50], []}, ...
+         'minTrials',   {[], []});
       
       % Timing properties
       timing = struct( ...
@@ -97,7 +101,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'pixelSize',                     6,                ...
          'diameter',                      8,                ...
          'density',                       150,              ...
-         'speed',                         3))));
+         'speed',                         3))), ...
+         ...
+         ...   % Text ensemble (no settings, use defaults)
+         'textEnsemble',                  []);
 
       % Readable settings
       readables = struct( ...
@@ -155,6 +162,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % task
       function startTask(self)
 
+                  self.initializeTrialData();
+return
+
          % ---- Configure each element - separated into different methods for
          % readability
          %
@@ -165,7 +175,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         drawTextEnsemble(self.textEnsemble, ...
+         drawTextEnsemble(self.drawables.textEnsemble, ...
             self.settings.textStrings, ...
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);
@@ -188,10 +198,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.prepareDrawables();
          self.prepareReadables();
          self.prepareStateMachine();
-         
-         % ---- Set default feedback
-         %
-         self.textEnsemble.setObjectProperty('string', 'No Choice', 1);
 
          % ---- Show information about the task/trial
          %
@@ -215,114 +221,82 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %
       % Could add stuff here
       function finishTrial(self)
-         
-         % Conditionally update Quest
-         if strcmp(self.name, 'Quest')
-
-            % ---- Check for bad trial
-            %
-            trial = self.getTrial();
-            if isempty(trial) || ~(trial.correct >= 0)
-               return
-            end
-            
-            % ---- Update Quest
-            %
-            % (expects 1=error, 2=correct)
-            self.quest = qpUpdate(self.quest, trial.coherence, trial.correct+1);
-            
-            % Update next guess, bounded between 0 and 100, if there is a next trial
-            if self.trialCount < length(self.trialIndices)
-               self.trialData(self.trialIndices(self.trialCount+1)).coherence = ...
-                  min(100, max(0, qpQuery(self.quest)));
-            end
-            
-            % ---- Set reference coherence to current threshold and set reference RT
-            %
-            self.settings.coherences  = self.getCoherencesFromQuest(self.settings.coherencesFromQuest);
-            self.settings.referenceRT = nanmedian([self.trialData.RT]);
-         end
       end
       
-       %% Check for choice
+      %% Set Choice
       %
       % Save choice/RT information and set up feedback for the dots task
-      function nextState = checkForChoice(self, events, eventTag)
+      function setDotsChoice(self, value)
          
-         % ---- Check for event
+         % ---- Get current task/trial and save the choice
          %
-         eventName = self.getEventWithTimestamp(self.readables.userInput, ...
-            events, eventTag);
-         
-         % Nothing... keep checking
-         if isempty(eventName)
-            nextState = [];
-            return
-         end
-         
-         % ---- Good choice!
-         %
-         % Override completedTrial flag
-         self.completedTrial = true;
-         
-         % Jump to next state when done
-         nextState = 'blank';
-         
-         % Get current task/trial
          trial = self.getTrial();
+         trial.correct = value;
+         trial.choice  = value;
          
-         % Save the choice
-         trial.choice = double(strcmp(eventName, 'choseRight'));
-         
-         % Mark as correct/error
-         trial.correct = double( ...
-            (trial.choice==0 && trial.direction==180) || ...
-            (trial.choice==1 && trial.direction==0));
-         
-         % Compute/save RT
-         %  Remember that dotsOn time might be from the remote computer, whereas
-         %  sacOn is from the local computer, so we need to account for clock
-         %  differences
-         if self.isRT
-            % RT trial, compute wrt dots on
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_dotsOn - trial.time_screen_trialStart);
-         else
-            % non-RT trial, compute wrt dots off
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_dotsOff - trial.time_screen_trialStart);
-         end
-         
-         % Set up feedback string
-         %  First Correct/error
-         if trial.correct == 1
-            feedbackString = 'Correct';
-         else
-            feedbackString = 'Error';
-         end
-         
-         %  Second possibly feedback about speed
-         if self.name(1) == 'S'
+         % ---- Parse choice info
+         %
+         if value<0
             
-            % Check current RT relative to the reference value
-            if isa(self.settings.referenceRT, 'topsTreeNodeTaskRTDots')
-               RTRefValue = self.settings.referenceRT.settings.referenceRT;
+            % NO CHOICE
+            %
+            % Set feedback for no choice, repeat trial
+            feedbackString = 'No choice';
+            
+         else
+            
+            % GOOD CHOICE
+            %
+            % Override completedTrial flag
+            self.completedTrial = true;
+
+            % Mark as correct/error
+            trial.correct = double( ...
+               (trial.choice==0 && trial.direction==180) || ...
+               (trial.choice==1 && trial.direction==0));
+            
+            % Compute/save RT
+            %  Remember that dotsOn time might be from the remote computer, whereas
+            %  sacOn is from the local computer, so we need to account for clock
+            %  differences
+            if self.isRT
+               % RT trial, compute wrt dots on
+               trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
+                  (trial.time_dotsOn - trial.time_screen_trialStart);
             else
-               RTRefValue = self.settings.referenceRT;
+               % non-RT trial, compute wrt dots off
+               trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
+                  (trial.time_dotsOff - trial.time_screen_trialStart);
             end
             
-            if isfinite(RTRefValue)
-               if trial.RT <= RTRefValue
-                  feedbackString = cat(2, feedbackString, ', in time');
+            % Set up feedback string
+            %  First Correct/error
+            if trial.correct == 1
+               feedbackString = 'Correct';
+            else
+               feedbackString = 'Error';
+            end
+            
+            %  Second possibly feedback about speed
+            if self.name(1) == 'S'
+               
+               % Check current RT relative to the reference value
+               if isa(self.settings.referenceRT, 'topsTreeNodeTaskRTDots')
+                  RTRefValue = self.settings.referenceRT.settings.referenceRT;
                else
-                  feedbackString = cat(2, feedbackString, ', try to decide faster');
+                  RTRefValue = self.settings.referenceRT;
+               end
+               
+               if isfinite(RTRefValue)
+                  if trial.RT <= RTRefValue
+                     feedbackString = cat(2, feedbackString, ', in time');
+                  else
+                     feedbackString = cat(2, feedbackString, ', try to decide faster');
+                  end
                end
             end
          end
          
-         % Set the feedback string
-         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
-
          % ---- Re-save the trial
          %
          self.setTrial(trial);
@@ -333,9 +307,42 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
             trial.direction, trial.coherence, feedbackString, trial.RT);
-         self.updateStatus(2); % just update the second one         
+         self.updateStatus(2); % just update the second one
+         
+         % ---- Set the feedback string
+         %
+         self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
       end
-                
+      
+      %% updateQuest
+      %
+      function updateQuest(self)
+         
+         % ---- check for bad trial
+         %
+         previousTrial = self.getTrial(self.trialCount-1);
+         if isempty(previousTrial) || previousTrial.correct < 0
+            return
+         end
+         
+         % ---- Update Quest 
+         %
+         % (expects 1=error, 2=correct)
+         self.quest = qpUpdate(self.quest, previousTrial.coherence, ...
+            previousTrial.correct + 1);
+         
+         % Update next guess, bounded between 0 and 100, if there is a next trial
+         val = min(100, max(0, qpQuery(self.quest)));
+         if self.trialCount > 0
+            self.trialData(self.trialIndices(self.trialCount)).coherence = val;
+         end
+         
+         % ---- Set reference coherence to current threshold and set reference RT
+         %
+         self.settings.coherences  = self.getCoherencesFromQuest(self.settings.coherencesFromQuest);
+         self.settings.referenceRT = nanmedian([self.trialData.RT]);
+      end
+      
       %% Get Coherences from Quest
       %
       % coherencesFromQuest is list of proportion correct values
@@ -360,12 +367,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             if isempty(coherencesFromQuest)
                
                % Just return threshold
-               cohs = psiParamsQuest(1,1);
+               cohs = psiParamsQuest(:,1);
             else
                
                cax = (0:0.1:100);
                predictedProportions =100*qpPFWeibull(cax', ...
-                  [psiParamsQuest(1,1) psiParamsQuest(1,2) 0.5 0]);
+                  [psiParamsQuest(:,1) psiParamsQuest(:,2) 0.5 0]);
                
                cohs = nans(size(coherencesFromQuest));
                for ii = 1:length(coherencesFromQuest)
@@ -414,15 +421,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             self.updateFlags.drawables = false;
          end
          
-         % ---- Set a new seed base for the dots random-number process
-         %
-         trial.randSeedBase = randi(99999);
-         self.setTrial(trial);
-        
-         % ---- Save the randBase, coherence, and direction to the dots object
+         % ---- Save the coherence and direction to the dots object
          %        in the stimulus ensemble
          %
-         ensemble.setObjectProperty('randBase',  trial.randSeedBase, 3);
          ensemble.setObjectProperty('coherence', trial.coherence, 3);
          ensemble.setObjectProperty('direction', trial.direction, 3);
          
@@ -444,12 +445,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %
       function initializeTrialData(self)
          
-         % ---- Get coherences
+         % ---- Check for special case of Quest
          %
+         % Otherwise get coherences
          if strcmp(self.name, 'Quest')
             
-            % This is a Quest task
-            %
             % Initialize and save Quest object
             self.quest = qpInitialize(qpParams( ...
                'stimParamsDomainList', { ...
@@ -461,20 +461,34 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                self.questSettings.lapseRange}));
             
             % Collect information to make trials
-            self.setIndVarByName('coherence', 'values', ...
-               min(100, max(0, qpQuery(self.quest))));
+            cohs = min(100, max(0, qpQuery(self.quest)));
+            self.settings.coherences = cohs;
             
-         elseif ~isempty(self.settings.useQuest)
+            % Make a quest callList to update quest status between trials
+            questCallList = topsCallList('questCallList');
+            questCallList.alwaysRunning = false;
+            questCallList.addCall({@updateQuest, self}, 'update');
+            self.addChild(questCallList);
             
-            % Getting coherence from a different Quest Task
-            self.setIndVarByName('coherence', 'values', ...
-               self.settings.useQuest.getCoherencesFromQuest( ...
-               self.settings.coherencesFromQuest));            
+         elseif isa(self.settings.coherences, 'topsTreeNodeTaskRTDots')
+            
+            % Use reference coherence (e.g., from Quest)
+            cohs = self.settings.coherences.getCoherencesFromQuest( ...
+               self.settings.coherencesFromQuest);
+            
+         else
+            
+            % Use the given coherences
+            cohs = self.settings.coherences;
          end
-                  
-         % ---- Call superclass makeTrials method
+         
+         % ---- Make array of directions, coherences, and hazards,
+         %           scaled by priors and num trials
          %
-         self.makeTrials();
+         self.makeTrials( ...
+            'direction', self.settings.directions, self.settings.directionPriors, 1, ...
+            'coherence', cohs, self.settings.coherencePriors, self.settings.trialsPerCoherence);
+
       end
       
       %% Initialize StateMachine
@@ -486,17 +500,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          blanks  = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
-         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choice'};
+         chkuic  = {@getEventWithTimestamp, self, self.readables.userInput, {'choseLeft' 'choseRight'}, 'choice'};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
          showt   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
-         showfb  = {@drawWithTimestamp, self, self.textEnsemble, 1, [], 'fdbkOn'};
+         showfb  = {@drawWithTimestamp, self, self.drawables.textEnsemble, 1, [], 'fdbkOn'};
          showdRT = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', self.settings.fixationRTDim.*[1 1 1], 1}, {'isVisible', true, 3}}, 'dotsOn'};
          showdFX = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 3, [], 'dotsOn'};
          hided   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], [1 3], 'dotsOff'};
          pdbr    = {@setNextState, self, 'isRT', 'preDots', 'showDotsRT', 'showDotsFX'};
          pse     = {@pause 0.005};
+         sch     = @(x)cat(2, {@setDotsChoice, self}, x);
 
          % drift correction
          hfdc  = {@reset, self.readables.userInput, true};
@@ -529,9 +544,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             'holdFixation'      gwfxh    chkuib   tfh        hfdc    'showTargets'     ; ...
             'showTargets'       showt    chkuib   txp        gwts    'preDots'         ; ...
             'preDots'           {}       {}       0          {}      ''                ; ...
-            'showDotsRT'        showdRT  chkuic   dtt        hided   'blank'           ; ...
+            'showDotsRT'        showdRT  chkuic   dtt        hided   'noChoice'        ; ...
             'showDotsFX'        showdFX  {}       dxp        hided   'waitForChoiceFX' ; ...
-            'waitForChoiceFX'   {}       chkuic   dtt        {}      'blank'           ; ...
+            'waitForChoiceFX'   {}       chkuic   dtt        {}      'noChoice'        ; ...
+            'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
+            'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
+            'choseLeft'         sch( 0)  {}       0          {}      'blank'           ; ...
+            'choseRight'        sch( 1)  {}       0          {}      'blank'           ; ...
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
@@ -567,22 +586,16 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %     <SAT> is 'N' for neutral, 'S' for speed, 'A' for accuracy
       %     <BIAS> is 'N' for neutral, 'L' for left more likely, 'R' for
       %     right more likely
-      function task = getStandardConfiguration(name, minTrialsPerCondition, indVarList, varargin)
+      function task = getStandardConfiguration(name, trialsPerCoherence, varargin)
                   
          % ---- Get the task object, with optional property/value pairs
          %
          task = topsTreeNodeTaskRTDots(name, varargin{:});
          
-         % ---- Set min trial count
+         % ---- Set block size
          %
-         if ~isempty(minTrialsPerCondition)
-            task.settings.minTrialsPerCondition = minTrialsPerCondition;
-         end
-         
-         % ---- Set independent variable properties
-         %
-         if ~isempty(indVarList)
-            task.setIndVarsByName(indVarList)
+         if ~isempty(trialsPerCoherence)
+            task.settings.trialsPerCoherence = trialsPerCoherence;
          end
          
          % ---- Instruction settings, by column:
@@ -610,9 +623,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          Lsat  = strcmp(name(1), SATsettings(:,1));
          Lbias = strcmp(name(2), BIASsettings(:,1));
-         task.settings.textStrings = {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
-         task.settings.referenceRT = SATsettings{Lsat, 3};
-         task.setIndVarByName('direction', 'priors', BIASsettings{Lbias, 3});
+         task.settings.textStrings     = {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
+         task.settings.referenceRT     = SATsettings{Lsat, 3};
+         task.settings.directionPriors = BIASsettings{Lbias, 3};
       end
    end
 end

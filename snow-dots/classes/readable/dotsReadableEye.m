@@ -136,9 +136,6 @@ classdef dotsReadableEye < dotsReadable
       % keeps failing (not within tolerances
       numberCalibrationTries = 5;
       
-      % ui for user feedback during/after calibration
-      calibrationUI = [];
-      
       % Keyboard event definitions: type, key/event pairs
       calibrationUIEvents = struct( ...
          'name',      {'accept', 'calibrate', 'dritfCorrect', 'abort', 'repeat', 'showEye', 'toggle'}, ...
@@ -651,8 +648,9 @@ classdef dotsReadableEye < dotsReadable
                   % feedback
                   self.calibrateNow();
                   
-                  if isa(self.calibrationUI, 'dotsReadableHIDKeyboard') && ...
-                        self.queryDuringCalibration
+                  if self.queryDuringCalibration && ...
+                        isa(self.calibrationUI, 'dotsReadableHIDKeyboard')
+                        
                      
                      if self.doShowEye
                         disp('space or s to show eye, r to repeat calibration, q to finish')

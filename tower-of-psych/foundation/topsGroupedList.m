@@ -172,7 +172,6 @@ classdef topsGroupedList < topsFoundation
            end
         end
         
-        
         % Combine multiple groups into another group.
         % @param sourceGroups cell array of strings or numbers identifying
         % groups to be merged.
@@ -444,6 +443,16 @@ classdef topsGroupedList < topsFoundation
                     break
                 end
             end
+        end
+        
+        % Convenient utility
+        function groupList = createGroupFromList(groupName, list)
+           
+           % Create the groupList
+           groupList = topsGroupedList();
+           
+           % fill it
+           groupList.makeGroupFromList(groupName, list)
         end
     end
 end

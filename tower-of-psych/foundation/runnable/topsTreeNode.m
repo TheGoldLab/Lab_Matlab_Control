@@ -50,7 +50,7 @@ classdef topsTreeNode < topsRunnableComposite
       % 'random' order
       iterationMethod = 'sequential';
       
-      % For any data used for this node
+      % For any node-specific data
       nodeData = [];
    end
    

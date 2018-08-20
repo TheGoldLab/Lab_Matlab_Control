@@ -66,10 +66,8 @@ trialData = struct( ...
 
 %% ---- Create topsTreeNodeTopNode to control the experiment
 %
-% Make the topsTreeNodeTopNode
-topNode = topsTreeNodeTopNode(name);
-
 % Add a topsGroupedList as the nodeData, plus other fields, then configure
+topNode          = topsTreeNodeTopNode(name);
 topNode.nodeData = topsGroupedList.createGroupFromList('Settings', settings);
 
 % Add GUIS

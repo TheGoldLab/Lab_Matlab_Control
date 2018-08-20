@@ -73,7 +73,7 @@ classdef dotsReadable < handle
       history;
       
       %> whether or not to to invoke read() during getValue(), etc.
-      isAutoRead = false;
+      isAutoRead = true;
       
       %> struct array defining events of interest, indexed by ID
       eventDefinitions;
@@ -91,13 +91,17 @@ classdef dotsReadable < handle
       filepath = [];
       
       %> controls whether or not to stop recording during calibration
-      recordDuringCalibration = false;
+      recordDuringCalibration = true;
       
       % Flag to use GUI for feedback, etc.
       useGUI = false;
       
       % Flag to skip calibration routine
       useExistingCalibration = false;
+
+      % Possibly use a keyboard or other UI to help with calibration
+      calibrationUI;
+      
    end
    
    properties (SetAccess = protected)
@@ -116,6 +120,9 @@ classdef dotsReadable < handle
       
       %> keep track of whether device is currenly writing to a data file
       isRecording=false;
+      
+      % Keep track of whether calibration occurs
+      didCalibrate = true;
    end
    
    methods
@@ -155,6 +162,9 @@ classdef dotsReadable < handle
       % successful, otherwise an error
       function calibrate(self, varargin)
          
+         % Set flag
+         self.didCalibrate = true;
+         
          % Call device-specific calibration routine and check status
          while self.calibrateDevice(varargin{:}) > 0
             
@@ -175,9 +185,11 @@ classdef dotsReadable < handle
          end
          
          % Log a time maker that we just calibrated the device
-         name = [class(self) '_calibration'];
-         data = feval(self.clockFunction);
-         topsDataLog.logDataInGroup(data, name);
+         if self.didCalibrate
+            name = [class(self) '_calibration'];
+            data = feval(self.clockFunction);
+            topsDataLog.logDataInGroup(data, name);
+         end
       end
       
       %> Open/close data file associated with the device
@@ -906,8 +918,9 @@ classdef dotsReadable < handle
       %> Subclasses must redefine calibrateDevice(). It should
       %> be safe to call calibrateDevice() multiple times in a row.
       function status = calibrateDevice(self, varargin)
-         disp('Calibrate!')
+         % disp('Calibrate!')
          status = 0;
+         self.didCalibrate = false;
       end
       
       %> Turn on data recording from the device (for subclasses).

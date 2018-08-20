@@ -5,10 +5,11 @@ function structArray = dealMat2Struct(structIn, varargin)
 %  arrays into the specified fields
 %
 % Arguments:
-%  structIn    ... a scalar structure
+%  structIn       ... a scalar structure
+%
 %  the remaining arguments are in pairs:
-%     fieldname      ... string name of the structure field to fill
-%     values         ... matrix of values to deal into the array. These all
+%     fieldname   ... string name of the structure field to fill
+%     values      ... matrix of values to deal into the array. These all
 %                          must be the same size
 %
 % Created 5/27/18 by jig

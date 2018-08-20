@@ -4,7 +4,7 @@
 function demoDrawableDotKinetogram(delay)
 
 if nargin < 1
-    delay = 10;
+    delay = .1;
 end
 
 gridSize = 4;
@@ -24,6 +24,7 @@ messy = dotsDrawableDotKinetogram();
 messy.stencilNumber = 2;
 messy.pixelSize = 3;
 messy.diameter = 6;
+messy.density = 150;
 messy.yCenter = gridSize;
 messy.xCenter = gridSize;
 messy.direction = 45;
@@ -38,6 +39,7 @@ messy.colors = [255 64 0];
 fancy = dotsDrawableDotKinetogram();
 fancy.stencilNumber = 3;
 fancy.diameter = 6;
+fancy.density = 150;
 fancy.yCenter = -gridSize;
 fancy.xCenter = -gridSize;
 fancy.pixelSize = 1;
@@ -51,6 +53,7 @@ fancy.colors = [255 255 0];
 silly = dotsDrawableDotKinetogram();
 silly.stencilNumber = 4;
 silly.diameter = 6;
+silly.density = 150;
 silly.yCenter = -gridSize;
 silly.xCenter = gridSize;
 silly.pixelSize = 5;
