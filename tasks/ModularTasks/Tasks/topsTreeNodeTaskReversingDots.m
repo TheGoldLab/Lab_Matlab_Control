@@ -92,10 +92,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'pixelSize',                     6,                ...
          'diameter',                      8,                ...
          'density',                       150,              ...
-         'speed',                         3))), ...
-         ...
-         ...   % Text ensemble (no settings, use defaults)
-         'textEnsemble',                  []);
+         'speed',                         3))));
 
       % Readable settings
       readables = struct( ...
@@ -163,7 +160,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         drawTextEnsemble(self.drawables.textEnsemble, ...
+         dotsDrawableText.drawEnsemble(self.textEnsemble, ...
             self.settings.textStrings, ...
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);
@@ -214,12 +211,12 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       %% Check for choice
       %
       % Save choice/RT information and set up feedback for the dots task
-      function nextState = checkForChoice(self)
+      function nextState = checkForChoice(self, events, eventTag)
          
          % ---- Check for event
          %
          eventName = self.getEventWithTimestamp(self.readables.userInput, ...
-            {'choseLeft' 'choseRight'}, 'choice');
+            events, eventTag);
          
          % Nothing... keep checking
          if isempty(eventName)
@@ -253,29 +250,41 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
             (trial.time_dotsOff - trial.time_screen_trialStart);
          
+         % ---- Re-save the trial
+         %
+         self.setTrial(trial);                  
+      end   
+      
+      %% Show feedback
+      %
+      function showFeedback(self)
+         
+         % Get current task/trial
+         trial = self.getTrial();
+
          % Set up feedback string
          %  First Correct/error
          if trial.correct == 1
             feedbackString = 'Correct';
-         else
+         elseif trial.correct == 0
             feedbackString = 'Error';
+         else
+            feedbackString = 'No choice';            
          end
-
-         % Set the feedback string
-         self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
-
-         % ---- Re-save the trial
-         %
-         self.setTrial(trial);
-                  
-         % --- Show trial feedback
+      
+         % --- Show trial feedback in GUI/text window
          %
          self.statusStrings{2} = ...
             sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
             trial.direction, trial.coherence, feedbackString, trial.RT);
-         self.updateStatus(2); % just update the second one
-      end      
+         self.updateStatus(2); % just update the second one   
+         
+         % --- Show trial feedback on the screen
+         %
+         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
+         self.drawWithTimestamp(self.textEnsemble, 1, [], 'fdbkOn');
+      end
       
       %% Check for flip
       %
@@ -471,7 +480,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          blanks  = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
-         chkuic  = {@checkForChoice, self};
+         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choice'};
          chkflp  = {@checkForFlip, self};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
@@ -504,7 +513,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % ---- Make the state machine. These will be added into the 
          %        stateMachine (in topsTreeNode)
          %
-         self.stateMachineStates = {...
+         states = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
             'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
@@ -524,7 +533,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          %        the given ensemble methods
          %
          % See activateEnsemblesByState for details.
-         self.stateMachineActiveList = {{ ...
+         activeList = {{ ...
             self.drawables.stimulusEnsemble, 'draw'; ...
             self.screenEnsemble, 'flip'}, ...
             {'preDots' 'showDotsRT' 'showDotsFX'}};
@@ -532,9 +541,12 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % --- List of children to add to the stateMachineComposite
          %        (the state list above is added automatically)
          %
-         self.stateMachineCompositeChildren = { ...
+         compositeChildren = { ...
             self.drawables.stimulusEnsemble, ...
             self.screenEnsemble};
+        
+         % Call utility to set up the state machine
+         self.addStateMachine(states, activeList, compositeChildren);
       end      
    end
    
