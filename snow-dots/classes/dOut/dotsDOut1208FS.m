@@ -359,7 +359,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         % preceeding interval did not seem to depend on the length of @a
         % signal.  Further testing would be warranted.
         % @details
-        % Here are the channels, "signal name"s and phisical device pins
+        % Here are the channels, "signal name"s and physical device pins
         % that dotsDOut1208FS expects to match:
         % <table border="0" cellpadding="3" cellspacing="2"
         %   frame="void" rules="all">
@@ -373,7 +373,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         %   <td>pin</td><td>13</td><td>14</td>
         % </tr>
         % </table>
-        function timestamp = sendTTLSignal( ...
+        function [timestamp, ref] = sendTTLSignal( ...
                 self, channel, signal, frequency)
             if ~self.isAvailable
                 timestamp = -1;
@@ -392,7 +392,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
             self.waitForRunningSignal;
             
             % send the new signal
-            [status, timing] = self.writeSignalSamples( ...
+            [status, timing, ref] = self.writeSignalSamples( ...
                 channel, signal, frequency);
                         
             if status < 0
@@ -507,7 +507,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         end
         
         % Write configuration and samples to analog output scan.
-        function [status, timing] = writeSignalSamples( ...
+        function [status, timing, ref] = writeSignalSamples( ...
                 self, channel, signal, frequency)
             % generate HID reports
             config = self.formatSignalConfig( ...
@@ -523,6 +523,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
             
             [status, timing] = mexHID('writeDeviceReport', ...
                 self.outputID, samples);
+             ref = mglGetSecs();
         end
     end
 end

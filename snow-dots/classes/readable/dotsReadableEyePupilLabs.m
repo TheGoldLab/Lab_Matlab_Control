@@ -283,12 +283,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          self.result = zmq.core.recv(self.reqPort);
          
          % Show instructions between blank screen2
-         drawTextEnsemble(makeTextEnsemble( ...
+         dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
             'textEnsemble', 1, [], self.screenEnsemble), ...
             {'Please look at each object'}, 3, 0.3);
          
          % Make a drawing ensemble for the calibration target
-         calibrationEnsemble = makeDrawableEnsemble(...
+         calibrationEnsemble = dotsDrawable.makeEnsemble(...
             'calibrationEnsemble', {}, self.screenEnsemble);
 
          % Generate calibration target location and sizes
@@ -616,12 +616,17 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       %  2. gaze x
       %  3. gaze y
       %  4. confidence
-      function [dataMatrix, tags] = readDataFromFile(dataPath)
+      function [dataMatrix, tags] = readRawDataFromFile(dataPath)
          
          % for debugging
          if nargin < 1 || isempty(dataPath)
-            filename = 'data_2018_06_19_10_48';
-            dataPath = fullfile(DBSfilepath(), 'Pupil', [filename '_pupilLabs']);
+            dataMatrix = [];
+            tags = [];
+            return
+         end
+         
+         if isempty(strfind(dataPath, '_EyePupilLabs'))
+            dataPath = [dataPath '_EyePupilLabs'];
          end
          
          % load into a temporary file... not sure how else to do this (yet)
@@ -648,6 +653,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       
          % clean up the tmp file
          system(sprintf('rm %s.mat', tmpFileName));
+         
+         % Convert from cell array
+         dataMatrix = cell2num(dataMatrix);
       end
    end
 end

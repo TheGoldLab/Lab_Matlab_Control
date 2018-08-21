@@ -580,7 +580,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       
       % readDataFromFile
       %
-      % Utility for reading data from a pupillabs folder
+      % Utility for reading data from an eyelink file
       %
       % dataPath is string pathname to where the pupil-labs folder is
       %
@@ -589,7 +589,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       %  2. gaze x
       %  3. gaze y
       %  4. confidence
-      function [dataMatrix, tags] = readDataFromFile(filenameWithPath)
+      function [dataMatrix, tags] = readRawDataFromFile(filenameWithPath)
          
          % for debugging
          if nargin < 1 || isempty(filenameWithPath)
@@ -599,30 +599,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          edf = Edf2Mat(filenameWithPath);
          
-         % load into a temporary file... not sure how else to do this (yet)
-         tmpFileName = 'tmpDataFile';
-         
          % Set up the return values
          tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
          dataMatrix = [];
          
-         % Loop through the subdirectories, getting the data
-         dirs = dir(fullfile(dataPath, '0*'));
-         for dd = 1:length(dirs)
-            rawFileWithPath = fullfile(dataPath, dirs(dd).name, 'pupil_data');
-            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s %s', ...
-               rawFileWithPath, tmpFileName);
-            system(commandStr);
-            
-            % collect the data
-            load(tmpFileName);
-            
-            % concatenate
-            dataMatrix = cat(1, dataMatrix, eval(tmpFileName));
-         end
-         
-         % clean up the tmp file
-         system(sprintf('rm %s.mat', tmpFileName));
       end
    end
 end

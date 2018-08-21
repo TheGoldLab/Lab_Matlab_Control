@@ -161,4 +161,107 @@ classdef dotsDrawableText < dotsDrawable
                 self.textureInfo, [self.x, self.y], 0, 0, self.rotation);
         end
     end
+    
+    methods (Static)
+       
+       % function ensemble = makeEnsemble(name, num, yOffset, screenEnsemble)
+       %
+       % Convenient utility for combining a bunch of dotsDrawableText objects that
+       %  will show vertically positioned strings into an ensemble
+       %
+       % Aguments:
+       %  name           ... optional <string> name of the ensemble/composite
+       %  num            ... number of objects to make
+       %  yOffset        ... vertical separation beween text strings on the screen
+       %  screenEnsemble ... ensemble containing the screen object, which we use
+       %                       to determine client/server behavior
+       %
+       function ensemble = makeEnsemble(name, num, yOffset, screenEnsemble)
+          
+          if nargin < 1 || isempty(name)
+             name = 'textEnsemble';
+          end
+          
+          if nargin < 2 || isempty(num)
+             num = 2;
+          end
+          
+          if nargin < 3 || isempty(yOffset)
+             yOffset = 3;
+          end
+          
+          % If no screen ensemble given, assume this is local
+          if nargin < 4 || isempty(screenEnsemble) || ...
+                ~isa(screenEnsemble, 'dotsClientEnsemble')
+             remoteInfo = {false};
+          else
+             remoteInfo = {true, ...
+                screenEnsemble.clientIP, ...
+                screenEnsemble.clientPort, ...
+                screenEnsemble.serverIP, ...
+                screenEnsemble.serverPort};
+          end
+          
+          % create the ensemble
+          ensemble = dotsEnsembleUtilities.makeEnsemble([name 'Ensemble'], remoteInfo{:});
+          
+          offsets = (0:num-1).*yOffset;
+          offsets = -(offsets - (offsets(end)-offsets(1))/2);
+          % make and add the objects
+          for ii = 1:num
+             text = dotsDrawableText();
+             text.y = offsets(ii);
+             ensemble.addObject(text);
+          end
+       end
+       
+       % function drawEnsemble(textEnsemble, textStrings, showDuration, pauseDuration)
+       %
+       % Show text strings using the given ensemble.
+       %
+       % Inputs:
+       %  textEnsemble  ... ensemble holding dotsDrawableText objects.
+       %  textStrings   ... cell array of strings; any can be empty to skip.
+       %                     rows are done in separate screens
+       %                     columns should correspond to the # of text objects in
+       %                     the ensemble to show at once
+       %  showDuration  ... Time (in sec) to show the text
+       %  pauseDuration ... Time (in sec) to pause after showing the text
+       %
+       function drawEnsemble(textEnsemble, textStrings, showDuration, pauseDuration)
+          
+          %% ---- Loop through each set
+          for ii = 1:size(textStrings, 1)
+             
+             % Set text strings in the given set
+             for jj = 1:size(textStrings, 2) % many possible text objects
+                if isempty(textStrings{ii,jj})
+                   textEnsemble.setObjectProperty('isVisible', false, jj);
+                else
+                   textEnsemble.setObjectProperty('string', textStrings{ii,jj}, jj);
+                   textEnsemble.setObjectProperty('isVisible', true, jj);
+                end
+             end
+             
+             %% ---- Draw, wait, blank
+             %
+             % Call runBriefly for the instruction ensemble
+             textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+             
+             % Wait
+             pause(showDuration);
+             
+             % Set visible flags to false
+             textEnsemble.setObjectProperty('isVisible', false);
+             
+             % Draw again to blank screen
+             textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+             
+             % Wait again
+             if nargin>3 && ~isempty(pauseDuration) && pauseDuration>0
+                pause(pauseDuration);
+             end
+          end
+       end
+    end
 end

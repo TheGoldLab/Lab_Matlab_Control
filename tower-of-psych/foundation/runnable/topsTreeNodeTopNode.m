@@ -32,13 +32,22 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % DatabaseGUI name
       databaseGUIname;
       
+      % For TTL pulses -- the object
+      TTLdOutObject;
+      
+      % For TTL pulses -- the channel
+      TTLchannel;
+      
+      % For TTL pulses -- pause between pulses
+      TTLpauseTime;
+      
       % Structure of properties shared with other (task) nodes
       sharedProperties = struct( ...
          'screenEnsemble',    [], ...
          'textEnsemble',      [], ...
          'readableList',      [], ...
          'playableList',      [], ...
-         'sendTTLs',          []);      
+         'sendTTLs',          []);
    end
    
    properties (Hidden)
@@ -50,7 +59,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
       databaseGUIHandle = [];
       
       % silly flag to avoid errors with GUI startup
-      isStarted = false;      
+      isStarted = false;
    end
    
    methods
@@ -61,7 +70,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % Make it
          self = self@topsTreeNode(varargin{:});
-
+         
          % ---- Create topsCallLists for start/finish fevalables
          %
          % These can be filled in by various configuration
@@ -81,7 +90,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          % files (see below) that each add chidren to it
          self.iterations = 1; % Go once through the set of tasks
          self.startFevalable = {@run, startCallList};
-         self.finishFevalable = {@run, finishCallList};        
+         self.finishFevalable = {@run, finishCallList};
          
          % ---- Set up default filename
          %
@@ -95,7 +104,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
             c(1), c(2), c(3), c(4), c(5)));
       end
-   
+      
       % Add the screen ensemble and possibly other common drawables
       %
       function addDrawables(self, displayIndex, remoteDrawing, addTextEnsemble)
@@ -106,21 +115,27 @@ classdef topsTreeNodeTopNode < topsTreeNode
             
             % Make the screen ensemble
             self.sharedProperties.screenEnsemble = ...
-               makeScreenEnsemble(remoteDrawing, displayIndex);
+               dotsTheScreen.makeEnsemble(remoteDrawing, displayIndex);
             
             % Add screen start/finish fevalables to the main topsTreeNode
             self.addCall('start', {@callObjectMethod, ...
                self.sharedProperties.screenEnsemble, @open}, 'openScreen');
             self.addCall('finish', {@callObjectMethod, ...
                self.sharedProperties.screenEnsemble, @close}, 'closeScreen');
-
+            
             % Possibly make a text ensemble for showing messages
             %
             % NOTE that for now it only makes the ensemble with 2 objects
             if nargin > 3 && addTextEnsemble
-               self.sharedProperties.textEnsemble = makeTextEnsemble('text', 2, ...
+               
+               % Make the ensemble
+               self.sharedProperties.textEnsemble = ...
+                  dotsDrawableText.makeEnsemble('text', 2, ...
                   [], self.sharedProperties.screenEnsemble);
-               self.addCall('finish', {@drawTextEnsemble, self.sharedProperties.textEnsemble, ...
+               
+               % Add a final message
+               self.addCall('finish', {@dotsDrawableText.drawEnsemble, ...
+                  self.sharedProperties.textEnsemble, ...
                   {'All done.', 'Thank you!'}, 2, 0}, 'finalMessage');
             end
          end
@@ -172,12 +187,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % start databaseGUI
          if ~isempty(self.databaseGUIname) && isempty(self.databaseGUIHandle)
-            self.databaseGUIHandle = feval(self.databaseGUIname);          
+            self.databaseGUIHandle = feval(self.databaseGUIname);
          end
          
          % start runGUI
          if ~isempty(self.runGUIname) && isempty(self.runGUIHandle)
-            self.runGUIHandle = feval(self.runGUIname, self, self.sharedProperties.readableList{:});      
+            self.runGUIHandle = feval(self.runGUIname, self, self.sharedProperties.readableList{:});
          else
             
             % Start data logging
@@ -193,7 +208,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
                topsDataLog.writeDataFile(self.filename);
             end
-         
+            
             % Run for realsies
             self.start@topsRunnable();
             
@@ -201,7 +216,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             self.isStarted = true;
          end
       end
-            
+      
       % Overloaded finish function, needed because we might have started
       %  GUI but did not run anything
       function finish(self)
@@ -211,7 +226,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
          
          % To be safe, always write data log to file
-         if ~isempty(self.filename)            
+         if ~isempty(self.filename)
             topsDataLog.writeDataFile();
          end
       end
@@ -277,6 +292,134 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % add the call
          addCall(callList, fevalable, name);
+      end
+      
+      % function [startTime, finishTime, refTime] = sendTTLsequence(numPulses)
+      %
+      % Utility for sending a sequence of TTL pulses with standard parameters.
+      % This way you only have to change it here.
+      %
+      function [startTime, finishTime, refTime] = sendTTLsequence(self, numPulses)
+         
+         if isempty(self.TTLdOutObject)
+            self.TTLdOutObject = feval( ...
+               dotsTheMachineConfiguration.getDefaultValue('dOutClassName'));
+            self.TTLchannel   = 0;
+            self.TTLpauseTime = 0.2;
+         end           
+         
+         % Check argument
+         if nargin < 1 || isempty(numPulses)
+            numPulses = 1;
+         end
+         
+         if numPulses < 1
+            startTime  = [];
+            finishTime = [];
+            return
+         end
+         
+         % Get time of first pulse
+         [startTime, refTime] = self.TTLdOutObject.sendTTLPulse(self.TTLchannel);
+         
+         % get the remaining pulses and save the finish time
+         finishTime = startTime;
+         for pp = 1:numPulses-1
+            pause(self.TTLpauseTime);
+            finishTime = self.TTLdOutObject.sendTTLPulse(self.TTLchannel);
+         end
+      end
+   end
+   
+   methods (Static)
+      
+      % Utility for making FIRA from a standard data file
+      %
+      % Make a FIRA data struct from the raw/pupil data of a set of modular tasks
+      %
+      % Calls topsDataLog.parseEcodes, which assumes that the tag 'trial' corresponds
+      %  to a trial data structure in the topsDataLog.
+      % Also calls dotsReadable.readDataFromFile using the given ui
+      %
+      % studyTag is the name of the topsTreeNodeTopNode and data dir
+      % refTime is the name of the column used as the reference time
+      %
+      % Created 5/26/18 by jig
+      %
+      function [topNode, FIRA] = getDataFromFile(filename, studyTag, refTime)
+         
+         %% Parse filename, studyTag
+         %
+         % Give defaults for debugging
+         if nargin < 1 || isempty(filename)
+            filename = 'data_2018_08_21_13_25';
+         end
+         
+         if nargin < 2 || isempty(studyTag)
+            studyTag = 'DBSStudy';
+         end
+         
+         if nargin < 3 || isempty(refTime)
+            refTime = 'time_screen_fixOn';
+         end
+         
+         % Flush the data log
+         topsDataLog.flushAllData();
+         
+         % Use the machine-specific data pathname to find the data
+         filepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), studyTag);
+         rawFile  = fullfile(filepath, 'topsDataLog',  [filename '.mat']);
+         uiFile   = fullfile(filepath, 'dotsReadable', filename);
+         
+         %% Get the ecode matrix using the topsDataLog utility
+         %
+         % get the mainTreeNode
+         mainTreeNodeStruct = topsDataLog.getTaggedData('mainTreeNode', rawFile);
+         topNode = mainTreeNodeStruct.item;
+         
+         % Now read the ecodes -- note that this works only if the trial struct was
+         % made only with SCALAR entries
+         FIRA.ecodes = topsDataLog.parseEcodes('trial');
+         
+         %% Synchronize timing
+         %
+         % use name prefixes to sync times
+         startInds = cell2num(strfind(FIRA.ecodes.name, 'trialStart'));
+         for ii = find(startInds>0)
+            Lmatch = cell2num(strfind(FIRA.ecodes.name, ...
+               FIRA.ecodes.name{ii}(1:startInds(ii)-2)))>0;
+            Lmatch(ii) = false;
+            FIRA.ecodes.data(:,Lmatch) = FIRA.ecodes.data(:,Lmatch) - ...
+               repmat(FIRA.ecodes.data(:,ii),1,sum(Lmatch));
+         end
+         
+         % Calibrate all times to ref time
+         timeInds = cell2num(strfind(FIRA.ecodes.name, 'time_'))>0;
+         if any(timeInds)
+            refInd   = strcmp(FIRA.ecodes.name, refTime);
+            timeInds(refInd) = false;
+            FIRA.ecodes.data(:,timeInds) = FIRA.ecodes.data(:,timeInds) - ...
+               repmat(FIRA.ecodes.data(:,refInd), 1, sum(timeInds));
+         end
+         
+         %% Get the gaze data
+         %
+         % Use constructor class static method to read the data file.
+         for ii = 1:length(topNode.sharedProperties.readableList)
+            
+            ui = topNode.sharedProperties.readableList{ii};
+            
+            % For now just for eye data... will need to generalize this later
+            if isa(ui, 'dotsReadableEye')
+               
+               calibrationData = topsDataLog.getTaggedData('dotsReadableEye calibration');
+               tli = find(strcmp(FIRA.ecodes.name, 'time_local_trialStart'), 1);
+               tui = find(strcmp(FIRA.ecodes.name, 'time_ui_trialStart'), 1);
+               twi = find(strcmp(FIRA.ecodes.name, refTime), 1);
+               FIRA.analog = ui.readDataFromFile(ui, uiFile, FIRA.ecodes.data(:,[tli tui twi]), ...
+                  calibrationData);
+            end
+         end
       end
    end
 end

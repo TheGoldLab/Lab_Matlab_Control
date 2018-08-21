@@ -1203,5 +1203,11 @@ classdef dotsReadable < handle
          data = [];
          readable = [];
       end
+      
+      % Utility to get data and put it in FIRA analog format
+      %
+      % Should be overloaded for class-specific routines
+      function data = readDataFromFile(varargin)
+      end
    end
 end

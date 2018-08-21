@@ -158,7 +158,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
       %  1. timestamp
       %  2. gaze x
       %  3. gaze y
-      function [data, tags] = readDataFromFile(filename)
+      function [data, tags] = readRawDataFromFile(filename)
          
          % for debugging
          if nargin < 1 || isempty(filename)

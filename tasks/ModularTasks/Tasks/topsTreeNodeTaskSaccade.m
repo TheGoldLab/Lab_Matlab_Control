@@ -74,10 +74,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'settings',                   struct(   ...
          'nSides',                     100,      ...
          'width',                      1.5,      ...
-         'height',                     1.5))), ...
-         ...
-         ...   % Text ensemble (no settings, use defaults)
-         'textEnsemble',               []);   
+         'height',                     1.5))));   
       
       % Readable settings
       readables = struct( ...
@@ -125,12 +122,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % 
          self.initializeDrawables();
          self.initializeReadables();
-         self.makeTrials();
+         self.makeTrials(); % uses the indVars struct
          self.initializeStateMachine();
          
          % ---- Show task-specific instructions
          %
-         drawTextEnsemble(self.drawables.textEnsemble, ...
+         dotsDrawableText.drawEnsemble(self.textEnsemble, ...
             self.settings.textStrings, ...
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);         
@@ -171,59 +168,76 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       end
       
        %% Set Choice method
-      %
-      % Save choice/RT information and set up feedback
-      function setSaccadeChoice(self, value)
-         
-         % ---- Get current task/trial and save the choice/correct flag
-         %
-         trial = self.getTrial();
-         trial.choice = value;
-         trial.correct = value;
-         
-         % ---- Parse choice info
-         %
-         if value<0
-            
-            % NO CHOICE
-            %
-            % Set feedback for no choice, repeat trial
-            feedbackString = 'No choice';
-
-         else
-            
-            % GOOD CHOICE
-            %
-            % Set feedback
-            feedbackString = 'Correct';
-
-            % Override completedTrial flag
-            self.completedTrial = true;
-
-            % Compute/save RT
-            %  Remember that time_choice time is from the UI, whereas
-            %    fixOff is from the remote computer, so we need to
-            %    account for clock differences
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_fixOff - trial.time_screen_trialStart);
-         end
-         
-         % ---- Re-save the trial
-         %
-         self.setTrial(trial);
-         
-         % ---- Set the feedback string
-         %
-         self.drawables.textEnsemble.setObjectProperty('string', feedbackString, 1);
-         
-         % --- Show trial feedback
-         %
-         self.statusStrings{2} = ...
-            sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, ...
+       %
+       % Save choice/RT information and set up feedback
+       function nextState = checkForChoice(self, events, eventTag)
+          
+          % ---- Check for event
+          %
+          eventName = self.getEventWithTimestamp(self.readables.userInput, ...
+             events, eventTag);
+          
+          % Nothing... keep checking
+          if isempty(eventName)
+             nextState = [];
+             return
+          end
+          
+          % ---- Good choice!
+          %
+          % Override completedTrial flag
+          self.completedTrial = true;
+          
+          % Jump to next state when done
+          nextState = 'blank';
+          
+          % Get current task/trial
+          trial = self.getTrial();
+          
+          % Mark as correct
+          trial.correct = 1;
+          
+          % Compute/save RT
+          %  Remember that time_choice time is from the UI, whereas
+          %    fixOff is from the remote computer, so we need to
+          %    account for clock differences
+          trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
+             (trial.time_screen_fixOff - trial.time_screen_trialStart);
+          
+          % ---- Re-save the trial
+          %
+          self.setTrial(trial);
+       end
+      
+       %% Show feedback
+       %
+       function showFeedback(self)
+          
+          % ---- Show trial feedback
+          %
+          trial = self.getTrial();
+          
+          % ---- Show the feedback string
+          %
+          if trial.correct == 1
+             feedbackString = 'Correct';
+          else
+             feedbackString = 'No choice';
+          end
+          
+          % --- Show trial feedback
+          %
+          self.statusStrings{2} = ...
+             sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
+             self.trialCount, numel(self.trialData)*self.trialIterations, ...
             trial.direction, feedbackString, trial.RT);
          self.updateStatus(2); % just update the second one
-      end
+
+         % --- Show trial feedback on the screen
+         %
+         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
+         self.drawWithTimestamp(self.textEnsemble, 1, [], 'fdbkOn');
+       end      
    end
    
    methods (Access = private)
@@ -285,13 +299,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          blanks = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
-         chkuic = {@getEventWithTimestamp, self, self.readables.userInput, {'choseTarget'}, 'choice'};
+         chkuic  = {@checkForChoice, self, {'choseTarget'}, 'choice'};
          showfx = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 1, 2, 'fixOn'};
          showt  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
          hidet  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], 2, 'targsOff'};
          hidefx = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], 1, 'fixOff'};
-         showfb = {@drawWithTimestamp, self, self.drawables.textEnsemble, 1, [], 'fdbkOn'};
-         sch    = @(x)cat(2, {@setSaccadeChoice, self}, x);
+         showfb = {@showFeedback, self};
          
          % drift correction
          hfdc  = {@reset, self.readables.userInput, true};
@@ -319,7 +332,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          % Note that the startTrial routine sets the target location and the 'next'
          % state after holdFixation, based on VGS vs MGS task
-         self.stateMachineStates = {...
+         states = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
             'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
@@ -327,15 +340,15 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             'VGSshowTarget'     showt    chkuib   vtd        gwt     'hideFix'         ; ... % VGS
             'MGSshowTarget'     showt    chkuib   mtd        {}      'MGSdelay'        ; ... % MGS
             'MGSdelay'          hidet    chkuib   mdd        gwt     'hideFix'         ; ...
-            'hideFix'           hidefx   chkuic   sto        {}      'noChoice'        ; ...
-            'brokeFixation'     sch(-2)  {}       0          {}      'blank'           ; ...
-            'noChoice'          sch(-1)  {}       0          {}      'blank'           ; ...
-            'choseTarget'       sch( 1)  {}       0          {}      'blank'           ; ...
+            'hideFix'           hidefx   chkuic   sto        {}      'blank'           ; ...
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
             'done'              dnow     {}       iti        {}      ''                ; ...
             };
+         
+         % make the state machine
+         self.addStateMachine(states);
       end
    end
    

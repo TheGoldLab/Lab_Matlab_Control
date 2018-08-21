@@ -8,11 +8,14 @@ classdef topsTreeNodeTask < topsTreeNode
    % that can make it easy to dump that struct into the topsDataLog and
    % keep track of what is going on.
    %
-   % Assumes trialData is a struct and automatically adds timing fields
+   % Assumes trialData is a struct and automatically adds timing fields.
+   % NOTE that this is not yet set up to handle multiple ui objects that
+   % each have their own time-base gracefully.
    %
    % Subclasses must re-define
    %  startTask
    %  finishTask
+   %
    
    % 5/27/18 created by jig
    
@@ -52,45 +55,41 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % Registry of set listeners... see topsTreeNodeTask
       setRegistry = {'drawables', 'readables'};
+      
+      % Specify which timing fields to add to the trialData struct
+      timingFields = struct( ...
+         'name', ...
+         struct('prefix', 'local', 'tags', {{'trialStart'}}), ...
+         'sendTTLs', ...
+         struct('prefix', 'local', 'tags', {{'TTLStart', 'TTLFinish'}}), ...
+         'screenEnsemble', ...
+         struct('prefix', 'screen', 'tags', {{'trialStart', 'roundTrip'}}), ...
+         'readableList', ...
+         struct('prefix', 'ui', 'tags', {{'trialStart', 'roundTrip'}}));
    end
    
    properties (SetAccess = protected)
       
-      % The state machine, created locally
-      stateMachine;
-      
-      % The state machine concurrent composite, created locally
-      stateMachineComposite;
-      
-      % Cell array used as input to topsStateMachine.addMultipleStates
-      % DEFINE IN STARTTASK
-      stateMachineStates = {};
-      
-      % Cell array used as input to activateEnsemblesByState
-      % DEFINE IN STARTTASK
-      stateMachineActiveList = {};
-      
-      % Cell array of children to add to the stateMachineComposite
-      % DEFINE IN STARTTASK
-      stateMachineCompositeChildren = {};
-      
-      % List of other children to add
-      otherChildren = {};
+      % The state machine
+      stateMachine
       
       % flag if successefully finished trial (or need to repeat)
       completedTrial = false;
       
       % property update flags, set by setListeners
       updateFlags;
+      
+      % the topsTreeNodeTopNode that can share properties
+      topNode;
 
       % Properties that can be shared from the topsTreeNodeTopNode
       %
       % Handle to screenEnsemble, for timing info
       screenEnsemble;
       
-      % Handle to textEnsemble used for messages
+      % textEnsemble, for showing messages
       textEnsemble;
-      
+
       % Cell array of readable objects
       readableList = {};
       
@@ -103,7 +102,7 @@ classdef topsTreeNodeTask < topsTreeNode
    
    methods
       
-      % Constuct with optional arguments.
+      %% Constuct with optional arguments.
       %
       % If any arguments are given, the first one must be the name.
       % Any remaining arguments are property/value pairs -- and note that
@@ -156,7 +155,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Start task method
+      %% Start task method
       %
       function start(self)
          
@@ -168,22 +167,6 @@ classdef topsTreeNodeTask < topsTreeNode
          % Do some bookkeeping via superclass
          self.start@topsRunnable();
          
-         % Get some properties from the topNode
-         if ~isempty(self.caller)
-            
-            % Find the topNode
-            topNode = self.caller;
-            while ~isempty(topNode.caller)
-               topNode = topNode.caller;
-            end
-            
-            for ff = fieldnames(topNode.sharedProperties)'
-               if isempty(self.(ff{:}))
-                  self.(ff{:}) = topNode.sharedProperties.(ff{:});
-               end
-            end
-         end
-
          % Possibly update the gui using the new task
          self.caller.updateGUI('_updateTask', self);
          
@@ -192,87 +175,54 @@ classdef topsTreeNodeTask < topsTreeNode
             return
          end
          
+         % Look for properties from the topNode
+         if ~isempty(self.caller)
+            
+            % Find the topNode
+            self.topNode = self.caller;
+            while ~isempty(self.topNode.caller)
+               self.topNode = self.topNode.caller;
+            end
+            
+            for ff = fieldnames(self.topNode.sharedProperties)'
+               if isempty(self.(ff{:}))
+                  self.(ff{:}) = self.topNode.sharedProperties.(ff{:});
+               end
+            end
+         end
+
          % Call sub-class startTask method
          self.startTask();
-         
-         % Set up the state machine
-         if ~isempty(self.stateMachineStates)
-            self.stateMachine = topsStateMachine();
-            self.stateMachine.addMultipleStates(self.stateMachineStates);
-            self.stateMachine.startFevalable  = {@self.startTaskTrial};
-            self.stateMachine.finishFevalable = {@self.finishTaskTrial};
+                  
+         % Add the timing fields to the trialData struct
+         for ff = fieldnames(self.timingFields)'
             
-            % Set up ensemble activation list.
-            %
-            % See activateEnsemblesByState for details.
-            % Note that the predots state is what allows us to get a good timestamp
-            %   of the dots onset... we start the flipping before, so the dots will start
-            %   as soon as we send the isVisible command in the entry fevalable of showDots
-            if ~isempty(self.stateMachineActiveList)
-               self.stateMachine.addSharedFevalableWithName( ...
-                  {@activateEnsemblesByState self.stateMachineActiveList}, ...
-                  'activateEnsembles', 'entry');
+            % Only if the property exists
+            if ~isempty(self.(ff{:}))
+               
+               % Special case of multiple objects -- use indexed prefix
+               if iscell(self.(ff{:})) && length(self.(ff{:})) > 1
+                  num = length(self.(ff{:}));
+               else
+                  num = 1;
+               end
+               prefix = self.timingFields.(ff{:}).prefix;
+               for nn = 1:num
+                  if num>1
+                     prefix = sprintf('%s%d', prefix, nn);
+                  end
+                  for tt = self.timingFields.(ff{:}).tags
+                     [self.trialData.(['time_' prefix '_' tt{:}])] = deal(nan);
+                  end
+               end
             end
-            
-            % Make a concurrent composite to interleave run calls
-            %
-            self.stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
-            
-            % Add the state machine
-            self.stateMachineComposite.addChild(self.stateMachine);
-            
-            % Add the other children from the given list
-            for ii = 1:length(self.stateMachineCompositeChildren)
-               self.stateMachineComposite.addChild(self.stateMachineCompositeChildren{ii});
-            end
-            
-            % Add it as a child to the task
-            %
-            self.addChild(self.stateMachineComposite);
-            
-            % Add remaining children
-            for ii = 1:length(self.otherChildren)
-               self.addChild(self.otherChildren{ii});
-            end
-         end
-         
-         % Figure out which timing fields to add
-         timingFields = {};
-         
-         % using TTLS
-         if self.sendTTLs
-            timingFields = cat(2, timingFields, ...
-               {'TTLStart', 'TTLFinish'});
-         end
-         
-         % screen object
-         if ~isempty(self.screenEnsemble)
-            timingFields = cat(2, timingFields, ...
-               {'screen_trialStart', 'screen_roundTrip'});
-         end
-         
-         % uis
-         for ii = 1:length(self.readableList)
-            if length(self.readableList) > 1
-               uiStr = sprintf('ui%d', ii);
-            else
-               uiStr = 'ui';
-            end
-            timingFields = cat(2, timingFields, ...
-               {[uiStr '_trialStart'], [uiStr '_roundTrip']});
-         end
-         
-         % Now add the fields
-         [self.trialData.time_local_trialStart] = deal(nan);
-         for ii = 1:length(timingFields)
-            [self.trialData.(['time_' timingFields{ii}])] = deal(nan);
          end
          
          % Get the first trial
          self.prepareForNextTrial();
       end
       
-      % Finish task method
+      %% Finish task method
       %
       function finish(self)
          
@@ -289,7 +239,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
        
-      % Blank startTask method -- overload in subclass
+      %% Blank startTask method -- overload in subclass
       %
       % Overloaded method can/should fill the following fields, as needed:
       %
@@ -300,7 +250,7 @@ classdef topsTreeNodeTask < topsTreeNode
       function startTask(self)
       end
       
-      % Blank finishTask method -- overload in subclass
+      %% Blank finishTask method -- overload in subclass
       %
       function finishTask(self)
       end
@@ -308,58 +258,134 @@ classdef topsTreeNodeTask < topsTreeNode
    
    methods (Access = protected)
 
-      % Start a trial ... can be overloaded in task subclass
+      %% Utility to add a state machine
+      %
+      % Arguments:
+      %  states      ... the cell array of state specs for 
+      %                       topsStateMachine.addMultipleStates
+      %  activeList  ... This determines which states will correspond to 
+      %                       automatic, repeated calls to the given 
+      %                       ensemble methods.
+      %                       See activateEnsemblesByState for details.
+      %  compositeChildren ... Cell array of children to add to the 
+      %                       stateMachineComposite
+      %  nodeChildren ... Cell array of children to add to this topsTreeNode     
+      function addStateMachine(self, states, activeList, compositeChildren, nodeChildren)
+         
+         % Set up the state machine
+         self.stateMachine = topsStateMachine();
+         self.stateMachine.addMultipleStates(states);
+         self.stateMachine.startFevalable  = {@self.startTaskTrial};
+         self.stateMachine.finishFevalable = {@self.finishTaskTrial};
+            
+         % Set up ensemble activation list.
+         %
+         % See activateEnsemblesByState for details.
+         % Note that the predots state is what allows us to get a good timestamp
+         %   of the dots onset... we start the flipping before, so the dots will start
+         %   as soon as we send the isVisible command in the entry fevalable of showDots
+         if nargin >= 3 && ~isempty(activeList)
+            self.stateMachine.addSharedFevalableWithName( ...
+               {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
+         end
+            
+         % Make a concurrent composite to interleave run calls
+         %
+         stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
+         
+         % Add the state machine
+         stateMachineComposite.addChild(self.stateMachine);
+            
+         % Add the other children from the given list
+         if nargin >= 3 && ~isempty(compositeChildren)
+            for ii = 1:length(compositeChildren)
+               stateMachineComposite.addChild(compositeChildren{ii});
+            end
+         end
+         
+         % Add it as a child to the task
+         %
+         self.addChild(stateMachineComposite);
+         
+         % Add remaining children to this task node
+         if nargin >= 5 && ~isempty(nodeChildren)
+            for ii = 1:length(nodeChildren)
+               self.addChild(nodeChildren{ii});
+            end
+         end
+      end
+      
+      %% Start a trial ... can be overloaded in task subclass
       %
       function startTaskTrial(self)
          
          % Reset completed flag
          self.completedTrial = false;
          
-         % Get the current trial
-         trial = self.getTrial();
-         
-         % Get synchronization times
-         if length(self.readableList) <= 1
-            [trial.time_local_trialStart, ...
-               trial.time_screen_trialStart, ...
-               trial.time_screen_roundTrip, ...
-               trial.time_ui_trialStart, ...
-               trial.time_ui_roundTrip] = ...
-               syncTiming(self.screenEnsemble, ...
-               self.readableList);            
-         else
-            % multiple ui objects, parse return arguments
-            [trial.time_local_trialStart, ...
-               trial.time_screen_trialStart, ...
-               trial.time_screen_roundTrip, ...
-               time_ui_trialStarts, ...
-               time_ui_roundTrips] = ...
-               syncTiming(self.screenEnsemble, ...
-               self.readableList);
-            
-            for ii = 1:length(self.readableList)
-               uiStr = sprintf('ui%d', ii);
-               trial.(['time_' uiStr '_trialStart']) = time_ui_trialStarts(ii);
-               trial.(['time_' uiStr '_roundTrip']) = time_ui_roundTrips(ii);
+         % Get screen synchronization times
+         if ~isempty(self.screenEnsemble)
+            screenRoundTripTime = inf;
+            start               = mglGetSecs();
+            after               = start;
+            while (screenRoundTripTime > 0.01) && ((after-start) < 0.5);
+               before              = mglGetSecs;
+               screenTime          = self.screenEnsemble.callObjectMethod(@getCurrentTime);
+               after               = mglGetSecs();
+               screenRoundTripTime = after - before;
             end
+            localTime = mean([before after]);
+         else
+            localTime           = mglGetSecs();
+            screenTime          = nan;
+            screenRoundTripTime = nan;
+         end         
+         
+         % Get ui times
+         if ~isempty(self.readableList)            
+            if iscell(self.readableList)
+               uiTimes          = nans(length(self.readableList), 1);
+               uiRoundTripTimes = nans(length(self.readableList), 1);
+               for ii = 1:length(self.readableList)
+                  start                = mglGetSecs;
+                  uiTimes(ii)          = self.readableList{ii}.getDeviceTime() - (start-localTime);
+                  uiRoundTripTimes(ii) = mglGetSecs - start;
+               end
+            else
+               start            = mglGetSecs;
+               uiTimes          = self.readableList.getDeviceTime() - (start-localTime);
+               uiRoundTripTimes = mglGetSecs - start;
+            end
+         else
+            uiTimes          = nan;
+            uiRoundTripTimes = nan;
          end
+
+         % Set them using stanard syntax
+         self.setTrialTime([], 'name',           1, localTime);
+         self.setTrialTime([], 'screenEnsemble', 1, screenTime);
+         self.setTrialTime([], 'screenEnsemble', 2, screenRoundTripTime);
+         self.setTrialTime([], 'readableList',   1, uiTimes);
+         self.setTrialTime([], 'readableList',   2, uiRoundTripTimes);
          
          % ---- Conditionally send TTL pulses (mod trial count)
          %
          if self.sendTTLs
-            [trial.time_TTLStart, trial.time_TTLFinish] = ...
-               sendTTLsequence(mod(self.trialCount,4)+1);
+            
+            % put in local frame of ref.. need to test whether this is
+            % necessary or not
+            [TTLStart, TTLFinish, TTLRef] = sendTTLsequence(mod(self.trialCount,4)+1);
+
+            % Set them using timing tags
+            start  = TTLRef - time_local_trialStart;
+            self.setTrialTime([], 'sendTTLs', 1, start);
+            self.setTrialTime([], 'sendTTLs', 2, (TTLFinish - TTLStart) + start);
          end
-         
-         % ---- Re-save the trial
-         %
-         self.setTrial(trial);
          
          % call the subclass startTrial method
          self.startTrial();
       end
       
-      % Finish a trial ... can be overloaded in task subclass
+      %% Finish a trial ... can be overloaded in task subclass
       %
       function finishTaskTrial(self)
          
@@ -380,7 +406,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.prepareForNextTrial();         
       end
       
-      % makeTrials
+      %% makeTrials
       %
       %  Utility to make trialData array using indVars array of structs, 
       %     which must be a property of the given task with fields:
@@ -446,7 +472,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Get a trial struct by trialCount index
+      %% Get a trial struct by trialCount index
       %
       function trial = getTrial(self, trialCount)
          
@@ -463,7 +489,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Set a trial struct by trialCount index
+      %% Set a trial struct by trialCount index
       %
       function setTrial(self, trial, trialCount)
          
@@ -478,7 +504,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Finish the current trial and figure out what happens next.
+      %% Finish the current trial and figure out what happens next.
       %     If done with this task, call the task's finish() routine,
       %     which should allow the parent topsTreeNode to find the next task.
       %
@@ -559,7 +585,7 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % The listener
+      %% The listeners
       %
       % Callback for PostSet event
       % Inputs: meta.property object, event.PropertyEvent
@@ -569,7 +595,8 @@ classdef topsTreeNodeTask < topsTreeNode
          self.updateFlags.(source.Name) = true;
       end
             
-      % show status
+      %% show status
+      %
       function updateStatus(self, indices)
          
          % Check arg
@@ -590,7 +617,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.caller.updateGUI('_updateTaskStatus', self, indices);
       end
       
-      % drawWithTimestamp(self, drawables, inds_on, inds_off, eventTag)
+      %% drawWithTimestamp(self, drawables, inds_on, inds_off, eventTag)
       %
       % Utility for setting isVisible flag of drawable objects to true/false,
       %  then possibly sending a screen flip command and saving the timing in the
@@ -631,15 +658,14 @@ classdef topsTreeNodeTask < topsTreeNode
             %   - isTight: whether this frame and the previous frame were
             %        adjacent (false if a frame was skipped)
             ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, ...
-               {}, [], true);
+               {}, [], true);           
             
-            % Store the timing data.
-            self.trialData(self.trialIndices(...
-               self.trialCount)).(sprintf('time_%s', eventTag)) = ret.onsetTime;
+            % Store the timing data
+            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)            
          end
       end
       
-      % setAndDrawWithTimestamp(self, drawables, args, eventTag)
+      %% setAndDrawWithTimestamp(self, drawables, args, eventTag)
       %
       % Slightly more generel utility than setAndDrawWithTimestamp (see
       % above)
@@ -682,13 +708,12 @@ classdef topsTreeNodeTask < topsTreeNode
             ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, ...
                {}, [], true);
             
-            % Store the timing data.
-            self.trialData(self.trialIndices(...
-               self.trialCount)).(sprintf('time_%s', eventTag)) = ret.onsetTime;
+            % Store the timing data           
+            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)            
          end
       end
       
-      % getEventWithTimestamp
+      %% getEventWithTimestamp
       %
       % Useful utility for saving the timing of the event in the trial data
       % struture.
@@ -712,14 +737,41 @@ classdef topsTreeNodeTask < topsTreeNode
          if ~isempty(eventName)
             
             % Store the timing data
-            self.trialData(self.trialIndices(...
-               self.trialCount)).(sprintf('time_%s', eventTag)) = data(3);
+            self.setTrialTime([], 'readableList', eventTag, data(3));
          end
       end
+
+      %% Utility to save timing data in the trialData struct using a
+      % standard format
+      %
+      function setTrialTime(self, trialIndex, timingType, tag, value, index)
+         
+         if isempty(trialIndex)
+            trialIndex = self.trialCount;
+         end
+         
+         if isnumeric(tag)
+            tag = self.timingFields.(timingType).tags{tag};
+         end
+         
+         if length(value)>1 || (nargin>=6 && ~isempty(index))
+            if nargin<6 || isempty(index)
+               index = 1:length(value);
+            end
+            for ii = index(:)'
+               self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s%d_%s', ...
+                  self.timingFields.(timingType).prefix, ii, tag)) = value;
+            end               
+         else
+            self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s_%s', ...
+               self.timingFields.(timingType).prefix, tag)) = value;
+         end
+      end      
       
-      % setNextState
+      %% setNextState
       %
       % Utility to conditionally set the next state
+      %
       function setNextState(self, condition, thisState, nextStateIfTrue, nextStateIfFalse)
          
          if self.(condition)
@@ -729,10 +781,11 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % setIndVarByName
+      %% setIndVarByName
       %
       % Utility... varargin is property/value pairs corresponding to the 
       %  indVar struct array
+      %
       function setIndVarByName(self, name, varargin)
          
          Lind = strcmp({self.indVars.name}, name);
@@ -741,9 +794,10 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % setIndVarsByName
+      %% setIndVarsByName
       %
       % indVarList is {'<nameA>' {<propertyA1>, <valueA1>, ...}      
+      %
       function setIndVarsByName(self, indVarList)
          
          for ii = 1:2:length(indVarList)
@@ -751,10 +805,11 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      % Initialize Readables
+      %% Initialize Readables
       %
       % Create default readable. Should be overloaded in subclass if doing
       % anything else.
+      %
       function initializeReadables(self)
 
          % ---- Setup user input device
@@ -813,7 +868,7 @@ classdef topsTreeNodeTask < topsTreeNode
                      end
                      
                      % Make the ensemble
-                     self.drawables.stimulusEnsemble = makeDrawableEnsemble( ...
+                     self.drawables.stimulusEnsemble = dotsDrawable.makeEnsemble( ...
                         'stimulusEnsemble', objects, self.screenEnsemble, true);
                   end
                   
@@ -822,7 +877,7 @@ classdef topsTreeNodeTask < topsTreeNode
                   if isempty(self.drawables.textEnsemble)
                      
                      % Create the ensemble
-                     self.drawables.textEnsemble = makeTextEnsemble('textEnsemble', ...
+                     self.drawables.textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
                         2, self.settings.textOffset, self.screenEnsemble);                     
                   end
                   
@@ -837,7 +892,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.updateFlags.drawables = true;
       end
       
-      % Prepare readables for this trial
+      %% Prepare readables for this trial
       %
       function prepareReadables(self)
          
@@ -859,7 +914,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.readables.userInput.flushData();
       end
       
-      % updateReadables
+      %% updateReadables
       %
       % Utility for updating readables giving in properties in a standard
       % format. See modularTasks for examples
@@ -874,7 +929,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.readables.userInput.defineEvents(self.readables.(classType{:}));         
       end
       
-      % updateDrawables
+      %% updateDrawables
       %
       % Utility for updating drawables giving in properties in a standard
       % format. See modularTasks for examples.

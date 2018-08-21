@@ -165,7 +165,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         drawTextEnsemble(self.textEnsemble, ...
+         dotsDrawableText.drawEnsemble(self.textEnsemble, ...
             self.settings.textStrings, ...
             self.timing.showInstructions, ...
             self.timing.waitAfterInstructions);
@@ -244,7 +244,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          end
       end
       
-       %% Check for choice
+      %% Check for choice
       %
       % Save choice/RT information and set up feedback for the dots task
       function nextState = checkForChoice(self, events, eventTag)
@@ -285,20 +285,34 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %  differences
          if self.isRT
             % RT trial, compute wrt dots on
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_dotsOn - trial.time_screen_trialStart);
+            trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
+               (trial.time_screen_dotsOn - trial.time_screen_trialStart);
          else
             % non-RT trial, compute wrt dots off
-            trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-               (trial.time_dotsOff - trial.time_screen_trialStart);
+            trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
+               (trial.time_screen_dotsOff - trial.time_screen_trialStart);
          end
          
+         % ---- Re-save the trial
+         %
+         self.setTrial(trial);
+      end
+      
+      %% Show feedback
+      %
+      function showFeedback(self)
+         
+         % Get current task/trial
+         trial = self.getTrial();
+
          % Set up feedback string
          %  First Correct/error
          if trial.correct == 1
             feedbackString = 'Correct';
-         else
+         elseif trial.correct == 0
             feedbackString = 'Error';
+         else
+            feedbackString = 'No choice';            
          end
          
          %  Second possibly feedback about speed
@@ -320,20 +334,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             end
          end
          
-         % Set the feedback string
-         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
-
-         % ---- Re-save the trial
-         %
-         self.setTrial(trial);
-                  
-         % --- Show trial feedback
+         % --- Show trial feedback in GUI/text window
          %
          self.statusStrings{2} = ...
             sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
             trial.direction, trial.coherence, feedbackString, trial.RT);
-         self.updateStatus(2); % just update the second one         
+         self.updateStatus(2); % just update the second one   
+         
+         % --- Show trial feedback on the screen
+         %
+         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
+         self.drawWithTimestamp(self.textEnsemble, 1, [], 'fdbkOn');
       end
                 
       %% Get Coherences from Quest
@@ -472,7 +484,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                self.settings.coherencesFromQuest));            
          end
                   
-         % ---- Call superclass makeTrials method
+         % ---- Call superclass makeTrials method, which uses the indVars
+         %           struct
          %
          self.makeTrials();
       end
@@ -490,7 +503,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
          showt   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
-         showfb  = {@drawWithTimestamp, self, self.textEnsemble, 1, [], 'fdbkOn'};
+         showfb  = {@showFeedback, self};
          showdRT = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', self.settings.fixationRTDim.*[1 1 1], 1}, {'isVisible', true, 3}}, 'dotsOn'};
          showdFX = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 3, [], 'dotsOn'};
@@ -513,16 +526,16 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          tft = self.timing.fixationTimeout;
          tfh = self.timing.holdFixation;
-         txp = {@sampleTime, self.timing.showTargetForeperiod};
+         txp = {@topsStateMachine.sampleTime, self.timing.showTargetForeperiod};
          dtt = self.timing.dotsTimeout;
-         dxp = {@sampleTime, self.settings.dotsDuration};
+         dxp = {@topsStateMachine.sampleTime, self.settings.dotsDuration};
          tsf = self.timing.showFeedback;
          iti = self.timing.InterTrialInterval;         
          
          % ---- Make the state machine. These will be added into the 
          %        stateMachine (in topsTreeNode)
          %
-         self.stateMachineStates = {...
+         states = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          pdbr    'waitForFixation' ; ...
             'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
@@ -543,7 +556,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %        the given ensemble methods
          %
          % See activateEnsemblesByState for details.
-         self.stateMachineActiveList = {{ ...
+         activeList = {{ ...
             self.drawables.stimulusEnsemble, 'draw'; ...
             self.screenEnsemble, 'flip'}, ...
             {'preDots' 'showDotsRT' 'showDotsFX'}};
@@ -551,9 +564,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % --- List of children to add to the stateMachineComposite
          %        (the state list above is added automatically)
          %
-         self.stateMachineCompositeChildren = { ...
+         compositeChildren = { ...
             self.drawables.stimulusEnsemble, ...
             self.screenEnsemble};
+         
+         % Call utility to set up the state machine
+         self.addStateMachine(states, activeList, compositeChildren);
       end      
    end
    
