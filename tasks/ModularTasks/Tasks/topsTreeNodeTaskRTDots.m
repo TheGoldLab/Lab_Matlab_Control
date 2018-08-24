@@ -161,8 +161,6 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Configure each element - separated into different methods for
          % readability
          %
-         self.initializeDrawables();
-         self.initializeReadables();         
          self.initializeTrialData();
          self.initializeStateMachine();         
          

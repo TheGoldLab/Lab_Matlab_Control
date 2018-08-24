@@ -150,12 +150,10 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       % Put stuff here that you want to do before each time you run this
       % task
       function startTask(self)
-         
+                  
          % ---- Configure each element - separated into different methods for
          % readability
          %
-         self.initializeDrawables();
-         self.initializeReadables();         
          self.initializeTrialData();
          self.initializeStateMachine();         
          

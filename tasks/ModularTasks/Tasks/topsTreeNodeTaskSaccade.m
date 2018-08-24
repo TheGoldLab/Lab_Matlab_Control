@@ -122,8 +122,6 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % ---- Configure each element - separated for readability
          % 
-         self.initializeDrawables();
-         self.initializeReadables();
          self.makeTrials(); % uses the indVars struct
          self.initializeStateMachine();
          

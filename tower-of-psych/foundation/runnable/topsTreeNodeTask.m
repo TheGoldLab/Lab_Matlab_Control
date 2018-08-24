@@ -217,6 +217,13 @@ classdef topsTreeNodeTask < topsTreeNode
                end
             end
          end
+                 
+         % initialize registered classes
+         for fields = self.setRegistry
+            if isfield(struct(self), fields{:})
+               eval(sprintf('self.initialize_%s();', fields{:}))
+            end
+         end
          
          % Call sub-class startTask method
          self.startTask();
@@ -866,7 +873,7 @@ classdef topsTreeNodeTask < topsTreeNode
       % Create default readable. Should be overloaded in subclass if doing
       % anything else.
       %
-      function initializeReadables(self)
+      function initialize_readables(self)
          
          % ---- Setup user input device
          %
@@ -879,6 +886,11 @@ classdef topsTreeNodeTask < topsTreeNode
             
             % Register the object
             self.readableList = {self.readables.userInput};
+            
+         else
+            
+            % Neither are present, do nothing
+            return
          end
          
          % Check for dotsReadableEye
@@ -898,7 +910,7 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       % Create default drawables from the property list.
       %  Should be overloaded in subclass if doing anything else.
-      function initializeDrawables(self)
+      function initialize_drawables(self)
          
          % ---- Check for screen
          %
