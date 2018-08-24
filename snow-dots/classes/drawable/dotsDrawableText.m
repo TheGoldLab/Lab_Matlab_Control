@@ -164,7 +164,63 @@ classdef dotsDrawableText < dotsDrawable
     
     methods (Static)
        
-       % function ensemble = makeEnsemble(name, num, yOffset, screenEnsemble)
+        % Utlity to show text strings using the given ensemble.
+        %
+        % Inputs:
+        %  textEnsemble  ... topsEnsemble holding the text object
+        %  textStrings   ... cell array of strings; any can be empty to skip.
+        %                     rows are done in separate screens
+        %                     columns should correspond to the # of text objects in
+        %                     the ensemble to show at once
+        %  showDuration  ... Time (in sec) to show the text
+        %  pauseDuration ... Time (in sec) to pause after showing the text
+        %
+        function ret = drawEnsemble(textEnsemble, textStrings, showDuration, pauseDuration)
+           
+           % Check ensemble
+           if isempty(textEnsemble)
+              return
+           end
+           
+           % ---- Loop through each set
+           for ii = 1:size(textStrings, 1)
+              
+              % Set text strings in the given set
+              for jj = 1:size(textStrings, 2) % many possible text objects
+                 if isempty(textStrings{ii,jj})
+                    textEnsemble.setObjectProperty('isVisible', false, jj);
+                 else
+                    textEnsemble.setObjectProperty('string', textStrings{ii,jj}, jj);
+                    textEnsemble.setObjectProperty('isVisible', true, jj);
+                 end
+              end
+              
+              % ---- Draw, wait, blank
+              %
+              % Call runBriefly for the instruction ensemble
+              ret = textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+              
+              % If more args given, wait..
+              if nargin >= 3 && ~isempty(showDuration)                 
+                 
+                 % Wait while showing
+                 pause(showDuration);
+                 
+                 % Set visible flags to false
+                 textEnsemble.setObjectProperty('isVisible', false);
+                 
+                 % Draw again to blank screen
+                 textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+                 
+                 % Wait again
+                 if nargin>4 && ~isempty(pauseDuration)
+                    pause(pauseDuration);
+                 end
+              end
+           end
+        end
+        
+        % function ensemble = makeEnsemble(name, num, yOffset, screenEnsemble)
        %
        % Convenient utility for combining a bunch of dotsDrawableText objects that
        %  will show vertically positioned strings into an ensemble
@@ -212,55 +268,6 @@ classdef dotsDrawableText < dotsDrawable
              text = dotsDrawableText();
              text.y = offsets(ii);
              ensemble.addObject(text);
-          end
-       end
-       
-       % function drawEnsemble(textEnsemble, textStrings, showDuration, pauseDuration)
-       %
-       % Show text strings using the given ensemble.
-       %
-       % Inputs:
-       %  textEnsemble  ... ensemble holding dotsDrawableText objects.
-       %  textStrings   ... cell array of strings; any can be empty to skip.
-       %                     rows are done in separate screens
-       %                     columns should correspond to the # of text objects in
-       %                     the ensemble to show at once
-       %  showDuration  ... Time (in sec) to show the text
-       %  pauseDuration ... Time (in sec) to pause after showing the text
-       %
-       function drawEnsemble(textEnsemble, textStrings, showDuration, pauseDuration)
-          
-          %% ---- Loop through each set
-          for ii = 1:size(textStrings, 1)
-             
-             % Set text strings in the given set
-             for jj = 1:size(textStrings, 2) % many possible text objects
-                if isempty(textStrings{ii,jj})
-                   textEnsemble.setObjectProperty('isVisible', false, jj);
-                else
-                   textEnsemble.setObjectProperty('string', textStrings{ii,jj}, jj);
-                   textEnsemble.setObjectProperty('isVisible', true, jj);
-                end
-             end
-             
-             %% ---- Draw, wait, blank
-             %
-             % Call runBriefly for the instruction ensemble
-             textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-             
-             % Wait
-             pause(showDuration);
-             
-             % Set visible flags to false
-             textEnsemble.setObjectProperty('isVisible', false);
-             
-             % Draw again to blank screen
-             textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-             
-             % Wait again
-             if nargin>3 && ~isempty(pauseDuration) && pauseDuration>0
-                pause(pauseDuration);
-             end
           end
        end
     end

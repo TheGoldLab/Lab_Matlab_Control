@@ -64,6 +64,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
    
    methods
       
+      %% Constructor method
+      %
       % Constuct with optional argument:
       %  name ... string name of the top node
       function self = topsTreeNodeTopNode(varargin)
@@ -105,7 +107,10 @@ classdef topsTreeNodeTopNode < topsTreeNode
             c(1), c(2), c(3), c(4), c(5)));
       end
       
-      % Add the screen ensemble and possibly other common drawables
+      %% Utility: add default drawables
+      %
+      % Add the screen ensemble and possibly other drawables used across
+      % tasks
       %
       function addDrawables(self, displayIndex, remoteDrawing, addTextEnsemble)
          
@@ -141,7 +146,9 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
-      % Add the common readables
+      %% Utility: add default readables
+      %
+      % Add the readables used across tasks
       %
       function addReadables(self, readableNames)
          
@@ -182,7 +189,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
-      % Overloaded start function, to check for gui(s)
+      %% Start
+      %
+      % Overloaded start function, which checks for gui(s) and sets up the
+      % topsDataLog
+      %
       function start(self)
          
          % start databaseGUI
@@ -217,8 +228,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
+      %% Finish
+      %
       % Overloaded finish function, needed because we might have started
       %  GUI but did not run anything
+      %
       function finish(self)
          
          if self.isStarted
@@ -231,6 +245,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
+      %% updateGUI
+      %
       % Does GUI need updating?
       function updateGUI(self, name, varargin)
          
@@ -241,7 +257,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
-      % Check status flags. Return ~0 if something happened
+      %% checkFlags
+      %
+      % Check status flags, which might be set by the GUI. 
+      %  Return ~0 if something happened
+      %
       function ret = checkFlags(self, child)
          
          % Default return value
@@ -280,7 +300,14 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
-      % add call to start/finish call list
+      %% addCall
+      %
+      % Utility to easily add a call to the start/finish call list
+      %
+      % type is 'start' or 'finish' (default)
+      % fevalable is a cell array that can be used as an argument to feval
+      % name is a string name of the fevalable
+      %
       function addCall(self, type, fevalable, name)
          
          % get the start/finish call list from the fevalable
@@ -294,6 +321,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          addCall(callList, fevalable, name);
       end
       
+      %% sentTTLsequence
+      %
       % function [startTime, finishTime, refTime] = sendTTLsequence(numPulses)
       %
       % Utility for sending a sequence of TTL pulses with standard parameters.
@@ -333,7 +362,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
    
    methods (Static)
       
-      % Utility for making FIRA from a standard data file
+      %% Utility for making FIRA from a standard data file created by an
+      % experiment run using a topsTreeNodeTopNode
       %
       % Make a FIRA data struct from the raw/pupil data of a set of modular tasks
       %
@@ -402,7 +432,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                repmat(FIRA.ecodes.data(:,refInd), 1, sum(timeInds));
          end
          
-         %% Get the gaze data
+         %% Get the analog data
          %
          % Use constructor class static method to read the data file.
          for ii = 1:length(topNode.sharedProperties.readableList)

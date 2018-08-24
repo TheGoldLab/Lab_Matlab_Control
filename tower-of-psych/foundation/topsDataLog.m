@@ -493,15 +493,55 @@ classdef (Sealed) topsDataLog < topsGroupedList
          % If we found something
          if ~isempty(logStruct)
             
+            % Loop through the unique groups
+            groups = {logStruct.group};    
+            [~, igroups] = unique(groups);
+            for ii = sort(igroups)'
+            
+               % Get the names, data for this group
+               inds = find(strcmp(groups(ii), groups));
+               grname = fieldnames(logStruct(inds(1)).item)';
+               grdata = cell2mat(permute(struct2cell(...
+                  [logStruct(inds).item]),[3 1 2]));
+            
+               if ii==1
+                  
+                  % Just save the names, data
+                  name = grname;
+                  data = grdata;
+                  
+               else
+                  
+                  % Check for new names (columns)
+                  newNames = setdiff(grname, name);
+                  if ~isempty(newNames)
+                     
+                     % Merge names
+                     name = cat(2, name, newNames);
+                     
+                     % Add data rows
+                     data(:,end+1:end+length(newNames)) = nan;
+                  end
+                  
+                  % Get column indices of new data
+                  [~,B] = ismember(grname, name);
+                  inds = B(B>0);
+                  
+                  % Merge data
+                  rows = size(data,1)+(1:size(grdata,1));
+                  data(rows,:)    = nan;
+                  data(rows,inds) = grdata;
+               end
+            end
+               
             % Make the FIRA ecodes struct
             %  Names is list of fieldnames (data columns)
             %  Types are ignored
             %  data is the matrix, rows are trials, columns are fieldnames
             ecodes = struct( ...
-               'name', {fieldnames(logStruct(1).item)'}, ...
-               'type', [], ...
-               'data', cell2mat(permute(struct2cell(...
-               [logStruct.item]),[3 1 2])));            
+               'name',  {name}, ...
+               'type',  [], ...
+               'data',  data);
          else
             ecodes = [];
          end
@@ -519,7 +559,8 @@ classdef (Sealed) topsDataLog < topsGroupedList
          
          % Find the structs in the named group
          if ~isempty(logStruct)
-            data = logStruct(strcmp(group, {logStruct.group}));
+            % jig changed to strncmp, avoid nested tag names
+            data = logStruct(strncmp(group, {logStruct.group}, length(group)));
          else
             data = [];
          end

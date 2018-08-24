@@ -426,6 +426,9 @@ classdef topsStateMachine < topsConcurrent
             if isscalar(currentState.timeout)
                self.currentTimeoutTime = ...
                   self.currentEntryTime + currentState.timeout;
+            elseif isnumeric(currentState.timeout)
+               self.currentTimeoutTime = ...
+                  self.currentEntryTime + self.sampleTime(currentState.timeout);
             elseif iscell(currentState.timeout)
                self.currentTimeoutTime = ...
                   self.currentEntryTime + feval(currentState.timeout{:});

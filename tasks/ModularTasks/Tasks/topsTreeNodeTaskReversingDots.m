@@ -32,25 +32,28 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'targetDistance',                8,       ...
          'targetSeparationAngle',         30,      ...
          'textOffset',                    2,       ...
-         'textStrings',                   '');
+         'textStrings',                   '',      ...
+         'gazeWindowSize',                5,       ...
+         'gazeWindowDuration',            0.15);
       
       % Array of structures of independent variables, used by makeTrials
       indVars = struct( ...
          'name',        {'direction', 'coherence', 'hazard'}, ...
-         'values',      {[0 180], [nan nan]}, ...
+         'values',      {[0 180], [40 80], [1 3]}, ...
          'priors',      {[], [], []}, ...
          'minTrials',   {1, [], 1});
       
       % Timing properties
       timing = struct( ...
-         'showInstructions',              10.0, ...
-         'waitAfterInstructions',         0.5, ...
-         'fixationTimeout',               5.0, ...
-         'holdFixation',                  0.5, ...
-         'showFeedback',                  1.0, ...
-         'InterTrialInterval',            1.0, ...
-         'showTargetForeperiod',          [0.2 0.5 1.0], ...
-         'dotsDuration',                  [1.0 2.0 5.0]);
+         'showInstructions_shi',          10.0, ...
+         'waitAfterInstructions_wai',     0.5, ...
+         'fixationTimeout_fxt',           5.0, ...
+         'holdFixation_hfx',              0.5, ...
+         'showFeedback_sfb',              1.0, ...
+         'interTrialInterval_iti',        1.0, ...
+         'showTargetForeperiod_stf',      [0.2 0.5 1.0], ...
+         'dotsDuration_ddr',              [1.0 2.0 5.0],   ...
+         'choiceTimeout_cto',             3.0);
       
       % Drawables settings
       drawables = struct( ...
@@ -87,7 +90,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'settings',                      struct( ...
          'xCenter',                       0,                ...
          'yCenter',                       0,                ...
-         'coherenceSTD',                  10,               ...
+         'coherenceSTD',                  20,               ...
          'stencilNumber',                 1,                ...
          'pixelSize',                     6,                ...
          'diameter',                      8,                ...
@@ -104,8 +107,8 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'dotsReadableEye', struct( ...
          'name',              {'holdFixation', 'breakFixation', 'choseLL', 'choseLR', 'choseHL', 'choseHR'}, ...
          'isInverted',        {false, true, false, false, false, false}, ...
-         'windowSize',        {8, 8, 8, 8, 8, 8}, ...
-         'windowDur',         {0.15, 0.15, 0.15, 0.15, 0.15, 0.15}, ...
+         'windowSize',        {[], [], [], [], [], []}, ...
+         'windowDur',         {[], [], [], [], [], []}, ...
          'ensemble',          {[], [], [], [], [], []}, ... % ensemble object to bind to
          'ensembleIndices',   {[1 1], [1 1], [2 1], [2 2], [2 3], [2 4]}), ... % object/item indices
          ...
@@ -117,19 +120,17 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
    
    properties (SetAccess = protected)
       
-      % Array of planned dot reversal times for this trial
-      plannedDotReversalTimes;
-      
       % Time of next dot reversal
       nextDotReversalTime;
       
-      % Array of actual dot reversal times (saved to data log after each
-      % trial)
-      actualDotReversalTimes;      
+      % Array of actual dot reversal times (saved to data log after each trial)
+      dotReversalTimes;      
       
       % Keep for speed
-      thisDirection;
-      nextDirection;    
+      directions;
+      
+      % For feedback
+      feedbackString;
    end
    
    methods
@@ -160,10 +161,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         dotsDrawableText.drawEnsemble(self.textEnsemble, ...
-            self.settings.textStrings, ...
-            self.timing.showInstructions, ...
-            self.timing.waitAfterInstructions);
+         self.showText(self.settings.textStrings, [], ...
+            self.timing.showInstructions_shi, ...
+            self.timing.waitAfterInstructions_wai);       
       end
       
       %% Finish task (overloaded)
@@ -196,9 +196,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             sum([self.trialData.correct]==0), ...
             nanmean([self.trialData.RT])), ...
             ... % Trial info
-            sprintf('Trial %d/%d, dir=%d, coh=%d', ...
+            sprintf('Trial %d/%d, dir=%d, coh=%d, haz=%d', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence)};
+            trial.direction, trial.coherence, trial.hazard)};
          self.updateStatus();
       end
             
@@ -220,7 +220,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % Nothing... keep checking
          if isempty(eventName)
-            nextState = [];
+            nextState = '';
             return
          end
          
@@ -235,20 +235,52 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % Get current task/trial
          trial = self.getTrial();
          
-         % Save the choice
-         trial.choice = double(strcmp(eventName, 'choseRight'));
+         % Save the direction/choice
+         trial.direction = self.directions(1);
+         trial.choice = find(strcmp(eventName, {self.readables.dotsReadableEye(3:6).name}));
          
          % Mark as correct/error
-         trial.correct = double( ...
-            (trial.choice==0 && trial.direction==180) || ...
-            (trial.choice==1 && trial.direction==0));
+         %  0   = both wrong
+         %  0.1 = correct hazard, wrong direction
+         %  0.2 = wrong hazard, correct direction
+         %  1 = both correct
+         dirs    = self.indVars(strcmp('direction', {self.indVars.name})).values;
+         hazards = self.indVars(strcmp('hazard', {self.indVars.name})).values;
          
+         % Find direction choice
+         if trial.choice==1 || trial.choice==3
+            choiceDir = dirs(cosd(dirs)<0); % LEFT
+         else
+            choiceDir = dirs(cosd(dirs)>0); % RIGHT
+         end
+         
+         % Find hazard choice
+         if trial.choice <= 2
+            choiceHaz = min(hazards);
+         else
+            choiceHaz = max(hazards);
+         end
+         
+         if choiceDir == trial.direction && choiceHaz == trial.hazard
+            trial.correct = 1;
+            self.feedbackString = 'Both correct';
+         elseif choiceDir == trial.direction && choiceHaz ~= trial.hazard
+            trial.correct = 0.2;
+            self.feedbackString = 'Direction correct';
+         elseif choiceDir ~= trial.direction && choiceHaz == trial.hazard
+            trial.correct = 0.1;
+            self.feedbackString = 'Hazard correct';
+         else
+            trial.correct = 0;
+            self.feedbackString = 'Error';
+         end
+                 
          % Compute/save RT wrt dots off
          %  Remember that dotsOn time might be from the remote computer, whereas
          %  sacOn is from the local computer, so we need to account for clock
          %  differences
-         trial.RT = (trial.time_choice - trial.time_ui_trialStart) - ...
-            (trial.time_dotsOff - trial.time_screen_trialStart);
+         trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
+            (trial.time_screen_dotsOff - trial.time_screen_trialStart);
          
          % ---- Re-save the trial
          %
@@ -262,39 +294,26 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % Get current task/trial
          trial = self.getTrial();
 
-         % Set up feedback string
-         %  First Correct/error
-         if trial.correct == 1
-            feedbackString = 'Correct';
-         elseif trial.correct == 0
-            feedbackString = 'Error';
-         else
-            feedbackString = 'No choice';            
-         end
-      
          % --- Show trial feedback in GUI/text window
          %
          self.statusStrings{2} = ...
-            sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
+            sprintf('Trial %d/%d, dir=%d, coh=%d, haz=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, feedbackString, trial.RT);
+            trial.direction, trial.coherence, trial.hazard, self.feedbackString, trial.RT);
          self.updateStatus(2); % just update the second one   
          
          % --- Show trial feedback on the screen
          %
-         self.textEnsemble.setObjectProperty('string', feedbackString, 1);
-         self.drawWithTimestamp(self.textEnsemble, 1, [], 'fdbkOn');
+         self.showText(self.feedbackString, 'fdbkOn');
       end
       
       %% Check for flip
       %
       %
-      function checkForFlip(self)
-              
-         % Nothing to do
-         if isempty(self.plannedDotReversalTimes)
-            return
-         end
+      function next = checkForFlip(self)
+         
+         % For now, never return anything
+         next = '';
          
          % Get the trial for timing info
          trial = self.getTrial();
@@ -304,48 +323,38 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
           
             % Set it
             self.nextDotReversalTime = trial.time_local_trialStart + ...
-               (trial.time_dotsOn - trial.time_screen_trialStart) + ...
-               self.plannedDotReversalTimes(1);
+               (trial.time_screen_dotsOn - trial.time_screen_trialStart) + ...
+               exprnd(1/trial.hazard);
             
-            % remove it from the queue
-            self.plannedDotReversalTimes(1) = [];
+            %             disp(sprintf('Hazard is %.2f, next flip in %.2f sec', ...
+            %                trial.hazard, self.nextDotReversalTime - mglGetSecs))
          end
             
          % Check for reversal time
          if mglGetSecs >= self.nextDotReversalTime
             
             % Set the values
-            old = self.thisDirection;
-            self.thisDirection = self.nextDirection;
-            self.nextDirection = old;
+            self.directions = fliplr(self.directions);
             
             % Set the direction
             self.drawables.stimulusEnsemble.setObjectProperty( ...
-               'direction', self.thisDirection, 3);
+               'direction', self.directions(1), 3);
 
             % Explicitly flip here so we can get the timestamp
             ret = self.drawables.stimulusEnsemble.callObjectMethod( ...
                @dotsDrawable.drawFrame, {}, [], true);
 
-            % Set next flip time
-            if isempty(self.plannedDotReversalTimes)
-               
-               % No more flips
-               self.nextDotReversalTime = inf;
-            else
-               
-               % Set it
-               self.nextDotReversalTime = trial.time_local_trialStart + ...
-                  (ret.onsetTime - trial.time_screen_trialStart) + ...
-                  self.plannedDotReversalTimes(1);
-               
-               % remove it from the queue
-               self.plannedDotReversalTimes(1) = [];
-            end
-            
+            % Set next reversal time
+            self.nextDotReversalTime = trial.time_local_trialStart + ...
+               (ret.onsetTime - trial.time_screen_trialStart) + ...
+               exprnd(1/trial.hazard);
+
+%             disp(sprintf('FLIPPED from %d to %d, next flip in %.2f sec', ...
+%                self.directions(2), self.directions(1), ...
+%                self.nextDotReversalTime - mglGetSecs))
+
             % Save the flip time
-            self.actualDotReversalTimes = cat(2, self.actualDotReversalTimes, ...
-               ret.onsetTime);
+            self.dotReversalTimes(end+1) = ret.onsetTime;
          end
       end
    end
@@ -388,41 +397,24 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             self.updateFlags.drawables = false;
          end
          
-         % ---- Prepare the dot reversals
+         % ---- Set dots parameters for this trial
          %
-         % Set the dot duration
-         duration = self.sampleTime(self.settings.dotsDuration);
-         editStateByName(self.stateMachine, 'showDots', 'timeout', duration);
-
-         % Get the reversal times
-         revs = exprnd(1/trial.hazard, 1000, 1);
-         Lrev = cumsum(revs)<=duration;
-         self.plannedDotReversalTimes = revs(Lrev);
-         self.nextDotReversalTime = []; % this gets set in checkForFlip
-         
-         % Possibly re-code the direction         
-         if rem(sum(Lrev),2)==0
-            self.thisDirection = trial.direction;
-            self.nextDirection = setdiff(self.indVars(1).values, trial.direction);
-         else
-            self.thisDirection = setdiff(self.indVars(1).values, trial.direction);
-            self.nextDirection = trial.direction;
+         % Set current/alternative direction, so it's easy to flip
+         self.directions = self.indVars(strcmp('direction', {self.indVars.name})).values;
+         if self.directions(1) ~= trial.direction;         
+            self.directions = fliplr(self.directions);
          end
+         self.nextDotReversalTime = [];
+         self.feedbackString = 'No Choice';
          
-         % ---- Set a new seed base for the dots random-number process
-         %
+         % Pick a new seed base (for now), and save it
          trial.randSeedBase = randi(99999);
          self.setTrial(trial);
-        
-         % ---- Save the randBase, coherence, and direction to the dots object
-         %        in the stimulus ensemble
-         %
+         
+         % Set the ensemble properties and prepare to draw
          ensemble.setObjectProperty('randBase',  trial.randSeedBase, 3);
          ensemble.setObjectProperty('coherence', trial.coherence, 3);
-         ensemble.setObjectProperty('direction', self.thisDirection, 3);
-         
-         % ---- Prepare to draw dots stimulus
-         %
+         ensemble.setObjectProperty('direction', trial.direction, 3);
          ensemble.callObjectMethod(@prepareToDrawInWindow);
       end
       
@@ -445,27 +437,6 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
                self.settings.coherencesFromQuest));
          end
          
-         % ---- Set up the trialData struct
-         %
-         self.trialData = struct( ...
-            'taskID',            nan, ...
-            'trialIndex',        nan, ...
-            'direction',         nan, ...
-            'coherence',         nan, ...
-            'hazard',            nan, ...
-            'randSeedBase',      nan, ...
-            'choice',            nan, ...
-            'RT',                nan, ...
-            'correct',           nan, ...
-            'time_fixOn',        nan, ...
-            'time_targsOn',      nan, ...
-            'time_dotsOn',       nan, ...
-            'time_targsOff',     nan, ...
-            'time_fixOff',       nan, ...
-            'time_choice',       nan, ...
-            'time_dotsOff',      nan, ...
-            'time_fdbkOn',       nan);
-         
          % ---- Call superclass makeTrials method
          %
          self.makeTrials();         
@@ -480,12 +451,12 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          blanks  = {@callObjectMethod, self.screenEnsemble, @blank};
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
-         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choice'};
+         chkuic  = {@checkForChoice, self, {self.readables.dotsReadableEye(3:6).name}, 'choice'};
          chkflp  = {@checkForFlip, self};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
          showt   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
-         showfb  = {@drawWithTimestamp, self, self.drawables.textEnsemble, 1, [], 'fdbkOn'};
+         showfb  = {@showFeedback, self};
          showd   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 3, [], 'dotsOn'};
          hided   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], [1 3], 'dotsOff'};
          pse     = {@pause 0.005};
@@ -497,18 +468,14 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          dce   = @setEventsActiveFlag;
          gwfxw = {dce, self.readables.userInput, 'holdFixation'};
          gwfxh = {}; 
-         gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'holdFixation'};
+         gwts  = {dce, self.readables.userInput, {self.readables.dotsReadableEye(3:6).name}, 'holdFixation'};
          % gwfxh = {}; % {dce, self.readables.userInput, 'brokeFixation', 'holdFixation'};
          % gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'brokeFixation'};
          
-         % ---- Timing variables
+         % ---- Timing variables, read directly from the timing property struct
          %
-         tft = self.timing.fixationTimeout;
-         tfh = self.timing.holdFixation;
-         txp = {@sampleTime, self.timing.showTargetForeperiod};
-         dtt = self.timing.dotsTimeout;
-         tsf = self.timing.showFeedback;
-         iti = self.timing.InterTrialInterval;         
+         fn = fieldnames(self.timing);
+         to = @(x) self.timing.(fn{cell2num(strfind(fn, x))~=0});
          
          % ---- Make the state machine. These will be added into the 
          %        stateMachine (in topsTreeNode)
@@ -516,16 +483,16 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          states = {...
             'name'              'entry'  'input'  'timeout'  'exit'  'next'            ; ...
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
-            'waitForFixation'   gwfxw    chkuif   tft        {}      'blankNoFeedback' ; ...
-            'holdFixation'      gwfxh    chkuib   tfh        hfdc    'showTargets'     ; ...
-            'showTargets'       showt    chkuib   txp        gwts    'preDots'         ; ...
-            'preDots'           {}       {}       0          {}      ''                ; ...
-            'showDots'          showd    chkflp   0          hided   'waitForChoice'   ; ...
-            'waitForChoice'     {}       chkuic   dtt        {}      'blank'           ; ...
+            'waitForFixation'   gwfxw    chkuif   to('fxt')  {}      'blankNoFeedback' ; ...
+            'holdFixation'      gwfxh    chkuib   to('hfx')  hfdc    'showTargets'     ; ...
+            'showTargets'       showt    chkuib   to('stf')  gwts    'preDots'         ; ...
+            'preDots'           {}       {}       0          {}      'showDots'        ; ...
+            'showDots'          showd    chkflp   to('ddr')  hided   'waitForChoice'   ; ...
+            'waitForChoice'     {}       chkuic   to('cto')  {}      'blank'           ; ...
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
-            'showFeedback'      showfb   {}       tsf        blanks  'done'            ; ...
+            'showFeedback'      showfb   {}       to('sfb')  blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
-            'done'              pse      {}       iti        {}      ''                ; ...
+            'done'              pse      {}       to('iti')  {}      ''                ; ...
             };
                   
          % ---- Set up ensemble activation list. This determines which
@@ -536,7 +503,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          activeList = {{ ...
             self.drawables.stimulusEnsemble, 'draw'; ...
             self.screenEnsemble, 'flip'}, ...
-            {'preDots' 'showDotsRT' 'showDotsFX'}};
+            {'preDots' 'showDots'}};
          
          % --- List of children to add to the stateMachineComposite
          %        (the state list above is added automatically)
@@ -564,48 +531,41 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
                   
          % ---- Get the task object, with optional property/value pairs
          %
-         task = topsTreeNodeTaskRTDots(name, varargin{:});
+         task = topsTreeNodeTaskReversingDots(name, varargin{:});
          
          % ---- Set min trial count
          %
-         if ~isempty(minTrialsPerCondition)
+         if nargin >= 2 && ~isempty(minTrialsPerCondition)
             task.settings.minTrialsPerCondition = minTrialsPerCondition;
          end
          
          % ---- Set independent variable properties
          %
-         if ~isempty(indVarList)
+         if nargin >= 3 && ~isempty(indVarList)
             task.setIndVarsByName(indVarList)
          end
          
-         % ---- Instruction settings, by column:
-         %  1. tag (first character of name)
-         %  2. Text string #1
-         %  3. RTFeedback flag
+         % ---- Default trialData
          %
-         SATsettings = { ...
-            'S' 'Be as fast as possible.'                 task.settings.referenceRT; ...
-            'A' 'Be as accurate as possible.'             nan;...
-            'N' 'Be as fast and accurate as possible.'    nan};
-         
-         dp = task.settings.directionPriors;
-         BIASsettings = { ...
-            'L' 'Left is more likely.'                    [max(dp) min(dp)]; ...
-            'R' 'Right is more likely.'                   [min(dp) max(dp)]; ...
-            'N' 'Both directions are equally likely.'     [50 50]};
-         
-         % For instructions
-         if strcmp(name, 'Quest')
-            name = 'NN';
-         end
-         
-         % ---- Set strings, priors based on type
+         task.setTrialData( ...
+            {'direction', 'coherence', 'randSeedBase', 'choice', 'RT', 'correct'}, ...
+            {'screenEnsemble', {'fixOn', 'targsOn', 'dotsOn', 'targsOff', 'fixOff', 'dotsOff', 'fdbkOn'}, ...
+            'readableList', {'choice'}});
+
+         % ---- Default gaze windows
          %
-         Lsat  = strcmp(name(1), SATsettings(:,1));
-         Lbias = strcmp(name(2), BIASsettings(:,1));
-         task.settings.textStrings = {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
-         task.settings.referenceRT = SATsettings{Lsat, 3};
-         task.setIndVarByName('direction', 'priors', BIASsettings{Lbias, 3});
+         [task.readables.dotsReadableEye.windowSize] = deal(task.settings.gazeWindowSize);
+         [task.readables.dotsReadableEye.windowDur]  = deal(task.settings.gazeWindowDuration);
+
+         % ---- Set the instruction strings
+         %
+         task.settings.textStrings = { ...
+            'The flickering dots will switch directions back-and-forth', ...
+            'Please indicate the final direction it was moving when extinguished'};
+         
+         % ---- Have it loop forever until instructed to stop
+         %
+         task.iterations = inf;
       end
    end
 end

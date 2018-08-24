@@ -28,7 +28,9 @@ classdef topsTreeNodeTask < topsTreeNode
       taskTypeID = -1;
       
       % An array of structs describing each trial
-      trialData = [];
+      trialData = struct( ...
+         'taskID',      [], ...
+         'trialIndex',  []);
       
       % Index of current trial (in trialIndices array)
       trialCount = 0;
@@ -81,7 +83,7 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % the topsTreeNodeTopNode that can share properties
       topNode;
-
+      
       % Properties that can be shared from the topsTreeNodeTopNode
       %
       % Handle to screenEnsemble, for timing info
@@ -89,7 +91,7 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % textEnsemble, for showing messages
       textEnsemble;
-
+      
       % Cell array of readable objects
       readableList = {};
       
@@ -150,7 +152,32 @@ classdef topsTreeNodeTask < topsTreeNode
                % jig commented for now - not needed until/if realtime updating is
                %  added
                % Add the listeners
-            %  addlistener(self, self.setRegistry{ii}, 'PostSet', @self.propertySetListener);
+               %  addlistener(self, self.setRegistry{ii}, 'PostSet', @self.propertySetListener);
+            end
+         end
+      end     
+      
+      %% Set up trialData
+      %
+      % values is cell array of string names
+      % times is cell array of:
+      %     <previx>, {<names> ...}
+      function setTrialData(self, values, times)
+      
+         % Values
+         if nargin >= 2 && ~isempty(values)
+            for ii = 1:length(values)
+               self.trialData.(values{ii}) = nan;
+            end
+         end
+         
+         % Times
+         if nargin >= 3 && ~isempty(times)
+            for ii = 1:2:length(times)
+               prefix = self.timingFields.(times{ii}).prefix;
+               for jj = 1:length(times{ii+1})
+                  self.trialData.(['time_' prefix '_' times{ii+1}{jj}]) = nan;
+               end
             end
          end
       end
@@ -159,7 +186,7 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       function start(self)
          
-          % ---- Check status flags
+         % ---- Check status flags
          if self.caller.checkFlags(self) > 0
             return
          end
@@ -190,10 +217,10 @@ classdef topsTreeNodeTask < topsTreeNode
                end
             end
          end
-
+         
          % Call sub-class startTask method
          self.startTask();
-                  
+         
          % Add the timing fields to the trialData struct
          for ff = fieldnames(self.timingFields)'
             
@@ -238,7 +265,7 @@ classdef topsTreeNodeTask < topsTreeNode
             topsDataLog.writeDataFile();
          end
       end
-       
+      
       %% Blank startTask method -- overload in subclass
       %
       % Overloaded method can/should fill the following fields, as needed:
@@ -257,19 +284,19 @@ classdef topsTreeNodeTask < topsTreeNode
    end
    
    methods (Access = protected)
-
+      
       %% Utility to add a state machine
       %
       % Arguments:
-      %  states      ... the cell array of state specs for 
+      %  states      ... the cell array of state specs for
       %                       topsStateMachine.addMultipleStates
-      %  activeList  ... This determines which states will correspond to 
-      %                       automatic, repeated calls to the given 
+      %  activeList  ... This determines which states will correspond to
+      %                       automatic, repeated calls to the given
       %                       ensemble methods.
       %                       See activateEnsemblesByState for details.
-      %  compositeChildren ... Cell array of children to add to the 
+      %  compositeChildren ... Cell array of children to add to the
       %                       stateMachineComposite
-      %  nodeChildren ... Cell array of children to add to this topsTreeNode     
+      %  nodeChildren ... Cell array of children to add to this topsTreeNode
       function addStateMachine(self, states, activeList, compositeChildren, nodeChildren)
          
          % Set up the state machine
@@ -277,7 +304,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.stateMachine.addMultipleStates(states);
          self.stateMachine.startFevalable  = {@self.startTaskTrial};
          self.stateMachine.finishFevalable = {@self.finishTaskTrial};
-            
+         
          % Set up ensemble activation list.
          %
          % See activateEnsemblesByState for details.
@@ -288,14 +315,14 @@ classdef topsTreeNodeTask < topsTreeNode
             self.stateMachine.addSharedFevalableWithName( ...
                {@activateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
          end
-            
+         
          % Make a concurrent composite to interleave run calls
          %
          stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
          
          % Add the state machine
          stateMachineComposite.addChild(self.stateMachine);
-            
+         
          % Add the other children from the given list
          if nargin >= 3 && ~isempty(compositeChildren)
             for ii = 1:length(compositeChildren)
@@ -338,10 +365,10 @@ classdef topsTreeNodeTask < topsTreeNode
             localTime           = mglGetSecs();
             screenTime          = nan;
             screenRoundTripTime = nan;
-         end         
+         end
          
          % Get ui times
-         if ~isempty(self.readableList)            
+         if ~isempty(self.readableList)
             if iscell(self.readableList)
                uiTimes          = nans(length(self.readableList), 1);
                uiRoundTripTimes = nans(length(self.readableList), 1);
@@ -359,7 +386,7 @@ classdef topsTreeNodeTask < topsTreeNode
             uiTimes          = nan;
             uiRoundTripTimes = nan;
          end
-
+         
          % Set them using stanard syntax
          self.setTrialTime([], 'name',           1, localTime);
          self.setTrialTime([], 'screenEnsemble', 1, screenTime);
@@ -374,7 +401,7 @@ classdef topsTreeNodeTask < topsTreeNode
             % put in local frame of ref.. need to test whether this is
             % necessary or not
             [TTLStart, TTLFinish, TTLRef] = sendTTLsequence(mod(self.trialCount,4)+1);
-
+            
             % Set them using timing tags
             start  = TTLRef - time_local_trialStart;
             self.setTrialTime([], 'sendTTLs', 1, start);
@@ -392,25 +419,25 @@ classdef topsTreeNodeTask < topsTreeNode
          % ---- Call the subclass finishTrial method
          %
          self.finishTrial();
-
+         
          % ---- Save the current trial in the DataLog
          %
          %  We do this even if no choice was made, in case later we want
          %     to re-parse the UI data
-         topsDataLog.logDataInGroup(self.getTrial(), 'trial');
+         topsDataLog.logDataInGroup(self.getTrial(), ['trial_' self.name]);
          
          % ---- Prepare for the next trial
          %
          % We do this here instead of in startTrial because prepareForNextTrial
          % might terminate the task if no trials remain.
-         self.prepareForNextTrial();         
+         self.prepareForNextTrial();
       end
       
       %% makeTrials
       %
-      %  Utility to make trialData array using indVars array of structs, 
+      %  Utility to make trialData array using indVars array of structs,
       %     which must be a property of the given task with fields:
-      %  
+      %
       %     1. name: string name
       %     2. values: vector of unique values
       %     3. priors: vector of priors (or empty for equal priors)
@@ -594,7 +621,7 @@ classdef topsTreeNodeTask < topsTreeNode
          % h = event.AffectedObject;
          self.updateFlags.(source.Name) = true;
       end
-            
+      
       %% show status
       %
       function updateStatus(self, indices)
@@ -620,7 +647,7 @@ classdef topsTreeNodeTask < topsTreeNode
       %% drawWithTimestamp(self, drawables, inds_on, inds_off, eventTag)
       %
       % Utility for setting isVisible flag of drawable objects to true/false,
-      %  then possibly sending a screen flip command and saving the timing in the
+      %  then sending a screen flip command and saving the timing in the
       %  current trial structure
       %
       % Arguments:
@@ -644,24 +671,21 @@ classdef topsTreeNodeTask < topsTreeNode
             drawables.setObjectProperty('isVisible', false, inds_off);
          end
          
-         % Possibly draw now
+         % Draw the next frame. This returns a struct with args:
+         %   - onsetTime: estimated onset time for this frame, which
+         %        might be a time in the future
+         %   - onsetFrame: number of frames elapsed between open() and
+         %        this frame
+         %   - swapTime: estimated time of the last video hardware
+         %        refresh (e.g. "vertical blank"), which is alwasy a
+         %        time in the past
+         %   - isTight: whether this frame and the previous frame were
+         %        adjacent (false if a frame was skipped)
+         ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, {}, [], true);
+            
+         % Possibly store the timing data
          if nargin >= 5 && ~isempty(eventTag)
-            
-            % Draw the next frame. This returns a struct with args:
-            %   - onsetTime: estimated onset time for this frame, which
-            %        might be a time in the future
-            %   - onsetFrame: number of frames elapsed between open() and
-            %        this frame
-            %   - swapTime: estimated time of the last video hardware
-            %        refresh (e.g. "vertical blank"), which is alwasy a
-            %        time in the past
-            %   - isTight: whether this frame and the previous frame were
-            %        adjacent (false if a frame was skipped)
-            ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, ...
-               {}, [], true);           
-            
-            % Store the timing data
-            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)            
+            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)
          end
       end
       
@@ -708,11 +732,43 @@ classdef topsTreeNodeTask < topsTreeNode
             ret = callObjectMethod(drawables, @dotsDrawable.drawFrame, ...
                {}, [], true);
             
-            % Store the timing data           
-            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)            
+            % Store the timing data
+            self.setTrialTime([], 'screenEnsemble', eventTag, ret.onsetTime)
          end
       end
       
+      %% showText
+      %
+      % Utility to show text using the textEnsemble or command window
+      %
+      % Optional arguments are:
+      %  showDuration
+      %  pauseDuration
+      function showText(self, textStrings, eventTag, varargin)
+
+         % check string format
+         if ischar(textStrings)
+            textStrings = {textStrings};
+         end
+         
+         if ~isempty(self.textEnsemble)
+            
+            % Draw using ensemble, getting timestamp
+            ret  = dotsDrawableText.drawEnsemble(self.textEnsemble, textStrings, varargin{:});
+            drawTime = ret.onsetTime;
+         else
+            % Just show in the command window
+            for ii = 1:length(textStrings)
+               disp(textStrings{ii});
+            end
+            drawTime = mglGetSecs;
+         end
+         
+         if nargin >= 3 && ~isempty(eventTag)
+            self.setTrialTime([], 'screenEnsemble', eventTag, drawTime);
+         end
+      end
+
       %% getEventWithTimestamp
       %
       % Useful utility for saving the timing of the event in the trial data
@@ -740,7 +796,7 @@ classdef topsTreeNodeTask < topsTreeNode
             self.setTrialTime([], 'readableList', eventTag, data(3));
          end
       end
-
+      
       %% Utility to save timing data in the trialData struct using a
       % standard format
       %
@@ -761,12 +817,12 @@ classdef topsTreeNodeTask < topsTreeNode
             for ii = index(:)'
                self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s%d_%s', ...
                   self.timingFields.(timingType).prefix, ii, tag)) = value;
-            end               
+            end
          else
             self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s_%s', ...
                self.timingFields.(timingType).prefix, tag)) = value;
          end
-      end      
+      end
       
       %% setNextState
       %
@@ -783,7 +839,7 @@ classdef topsTreeNodeTask < topsTreeNode
       
       %% setIndVarByName
       %
-      % Utility... varargin is property/value pairs corresponding to the 
+      % Utility... varargin is property/value pairs corresponding to the
       %  indVar struct array
       %
       function setIndVarByName(self, name, varargin)
@@ -796,7 +852,7 @@ classdef topsTreeNodeTask < topsTreeNode
       
       %% setIndVarsByName
       %
-      % indVarList is {'<nameA>' {<propertyA1>, <valueA1>, ...}      
+      % indVarList is {'<nameA>' {<propertyA1>, <valueA1>, ...}
       %
       function setIndVarsByName(self, indVarList)
          
@@ -804,14 +860,14 @@ classdef topsTreeNodeTask < topsTreeNode
             self.setIndVarByName(indVarList{ii}, indVarList{ii+1}{:});
          end
       end
-      
+           
       %% Initialize Readables
       %
       % Create default readable. Should be overloaded in subclass if doing
       % anything else.
       %
       function initializeReadables(self)
-
+         
          % ---- Setup user input device
          %
          if isempty(self.readables.userInput) && ~isempty(self.readableList)
@@ -827,7 +883,7 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % Check for dotsReadableEye
          if isa(self.readables.userInput, 'dotsReadableEye')
-
+            
             % Bind stimulus ensemble to gaze windows
             [self.readables.dotsReadableEye.ensemble] = ...
                deal(self.drawables.stimulusEnsemble);
@@ -836,14 +892,14 @@ classdef topsTreeNodeTask < topsTreeNode
          % ---- Set flag to update first time through
          %
          self.updateFlags.readables = true;
-      end      
-              
+      end
+      
       %% Initialize Drawables
       %
-      % Create default drawables from the property list. 
+      % Create default drawables from the property list.
       %  Should be overloaded in subclass if doing anything else.
       function initializeDrawables(self)
-      
+         
          % ---- Check for screen
          %
          if isempty(self.screenEnsemble)
@@ -859,7 +915,7 @@ classdef topsTreeNodeTask < topsTreeNode
             switch fields{dd}
                
                case 'stimulusEnsemble'
-            
+                  
                   if isempty(self.drawables.stimulusEnsemble)
                      
                      objects = {self.drawables.stimulusEnsembleSettings.type};
@@ -878,7 +934,7 @@ classdef topsTreeNodeTask < topsTreeNode
                      
                      % Create the ensemble
                      self.drawables.textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
-                        2, self.settings.textOffset, self.screenEnsemble);                     
+                        2, self.settings.textOffset, self.screenEnsemble);
                   end
                   
                otherwise
@@ -886,7 +942,7 @@ classdef topsTreeNodeTask < topsTreeNode
                   error('topsTreeNodeTask: unknown drawable type')
             end
          end
-
+         
          % ---- Set flag to update first time through
          %
          self.updateFlags.drawables = true;
@@ -926,7 +982,7 @@ classdef topsTreeNodeTask < topsTreeNode
             superclasses(self.readables.userInput)));
          
          % use it to call defineEvents with the appropriate event definitions
-         self.readables.userInput.defineEvents(self.readables.(classType{:}));         
+         self.readables.userInput.defineEvents(self.readables.(classType{:}));
       end
       
       %% updateDrawables

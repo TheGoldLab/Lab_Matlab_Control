@@ -566,13 +566,13 @@ classdef dotsReadable < handle
          if nargin > 1 && ~isempty(activateList)
             if ischar(activateList)
                ind = strcmp(activateList, {self.eventDefinitions.name});
-               if ~isempty(ind)
+               if any(ind)
                   self.eventDefinitions(ind).isActive = true;
                end                  
             else
                for ii = 1:length(activateList)
                   ind = strcmp(activateList{ii}, {self.eventDefinitions.name});
-                  if ~isempty(ind)
+                  if any(ind)
                      self.eventDefinitions(ind).isActive = true;
                   end
                end
@@ -583,13 +583,13 @@ classdef dotsReadable < handle
          if nargin > 2 && ~isempty(deactivateList)
             if ischar(deactivateList)
                ind = strcmp(deactivateList, {self.eventDefinitions.name});
-               if ~isempty(ind)
+               if any(ind)
                   self.eventDefinitions(ind).isActive = false;
                end
             else
                for ii = 1:length(deactivateList)
                   ind = strcmp(deactivateList{ii}, {self.eventDefinitions.name});
-                  if ~isempty(ind)
+                  if any(ind)
                      self.eventDefinitions(ind).isActive = false;
                   end
                end
