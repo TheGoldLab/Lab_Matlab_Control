@@ -14,6 +14,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % Data filename with path
       filename;
       
+      % subdirectory for raw files
+      rawDirectory = 'topsDataLog';
+      
+      % subdirectory for readable files
+      readableDirectory = 'dotsReadable';
+
       % Abort experiment
       abortFlag=false;
       
@@ -102,7 +108,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          c = clock;
          self.filename = fullfile( ...
             dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-            self.name, 'topsDataLog', ...
+            self.name, self.rawDirectory, ...
             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
             c(1), c(2), c(3), c(4), c(5)));
       end
@@ -168,14 +174,14 @@ classdef topsTreeNodeTopNode < topsTreeNode
                self.sharedProperties.readableList{ii} = ui;
                
                % Check if it needs the screen
-               if isfield(ui, 'screenEnsemble')
+               if isfield(struct(ui), 'screenEnsemble')
                   ui.screenEnsemble = self.sharedProperties.screenEnsemble;
                end
                
                % Set up data recording
                if ~isempty(self.filename)
                   [path, name] = fileparts(self.filename);
-                  ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), 'dotsReadable');
+                  ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), self.readableDirectory);
                   ui.filename = sprintf('%s_%s', name, readableNames{ii}(13:end));
                end
                
@@ -398,8 +404,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % Use the machine-specific data pathname to find the data
          filepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), studyTag);
-         rawFile  = fullfile(filepath, 'topsDataLog',  [filename '.mat']);
-         uiFile   = fullfile(filepath, 'dotsReadable', filename);
+         rawFile  = fullfile(filepath, self.rawDirectory,      [filename '.mat']);
+         uiFile   = fullfile(filepath, self.readableDirectory, filename);
          
          %% Get the ecode matrix using the topsDataLog utility
          %
