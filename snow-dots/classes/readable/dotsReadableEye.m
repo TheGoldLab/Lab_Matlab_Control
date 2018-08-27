@@ -648,10 +648,9 @@ classdef dotsReadableEye < dotsReadable
                   % feedback
                   self.calibrateNow();
                   
-                  if self.queryDuringCalibration && ...
+                  if ~self.useExistingCalibration && self.queryDuringCalibration && ...
                         isa(self.calibrationUI, 'dotsReadableHIDKeyboard')
-                        
-                     
+                                             
                      if self.doShowEye
                         disp('space or s to show eye, r to repeat calibration, q to finish')
                      else

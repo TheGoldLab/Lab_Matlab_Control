@@ -14,7 +14,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       eyelinkIP = '100.1.1.1';
       
       % Default filename on eyelink machine
-      defaultFilename = 'readableEyeFile.edf';
+      defaultFilename = 'dotseye.edf';
       
       % Time for eyelink to switch to new mode (msec)
       waitForModeReadyTime = 50;
@@ -135,7 +135,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             if ~isempty(self.filename)
                
                % Open data file on eyelink computer
-               Eyelink('OpenFile', self.defaultFilename);
+               Eyelink('OpenFile', defaultFilename);
             end
             
          catch err
@@ -193,14 +193,13 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             disp(self.windowCtr)
          end
          
-         % flag to skip
-         if self.useExistingCalibration
-            status = 1;
-            return
-         end
-         
          % default return
          status = 0;
+         
+         % flag to skip
+         if self.useExistingCalibration
+            return
+         end
          
          % Check for connection
          if ~Eyelink('IsConnected')
