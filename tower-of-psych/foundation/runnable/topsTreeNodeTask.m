@@ -362,7 +362,7 @@ classdef topsTreeNodeTask < topsTreeNode
             start               = mglGetSecs();
             after               = start;
             while (screenRoundTripTime > 0.01) && ((after-start) < 0.5);
-               before              = mglGetSecs;
+               before              = mglGetSecs();
                screenTime          = self.screenEnsemble.callObjectMethod(@getCurrentTime);
                after               = mglGetSecs();
                screenRoundTripTime = after - before;
@@ -380,14 +380,18 @@ classdef topsTreeNodeTask < topsTreeNode
                uiTimes          = nans(length(self.readableList), 1);
                uiRoundTripTimes = nans(length(self.readableList), 1);
                for ii = 1:length(self.readableList)
-                  start                = mglGetSecs;
-                  uiTimes(ii)          = self.readableList{ii}.getDeviceTime() - (start-localTime);
-                  uiRoundTripTimes(ii) = mglGetSecs - start;
+                  before               = mglGetSecs();
+                  deviceTime           = self.readableList{ii}.getDeviceTime();
+                  after                = mglGetSecs();       
+                  uiTimes(ii)          = deviceTime - after + localTime;
+                  uiRoundTripTimes(ii) = after - before;
                end
             else
-               start            = mglGetSecs;
-               uiTimes          = self.readableList.getDeviceTime() - (start-localTime);
-               uiRoundTripTimes = mglGetSecs - start;
+               before           = mglGetSecs();
+               deviceTime       = self.readableList.getDeviceTime();
+               after            = mglGetSecs();
+               uiTimes          = deviceTime - after + localTime;
+               uiRoundTripTimes = after - before;
             end
          else
             uiTimes          = nan;

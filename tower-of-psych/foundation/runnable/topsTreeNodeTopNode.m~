@@ -472,19 +472,14 @@ classdef topsTreeNodeTopNode < topsTreeNode
                
                % For now just for eye data... will need to generalize this later
                if isa(ui, 'dotsReadableEye')
-                  calibrationData = topsDataLog.getTaggedData('dotsReadableEye calibration');
-               else
-                  calibrationData = [];
+                  
+                 calibrationData = topsDataLog.getTaggedData('dotsReadableEye calibration');
+                  tli = find(strcmp(FIRA.ecodes.name, 'time_local_trialStart'), 1);
+                  tui = find(strcmp(FIRA.ecodes.name, 'time_ui_trialStart'), 1);
+                  twi = find(strcmp(FIRA.ecodes.name, refTime), 1);
+                  FIRA.analog = ui.readDataFromFile(ui, uiFile, FIRA.ecodes.data(:,[tli tui twi]), ...
+                     calibrationData);
                end
-               
-               % Get synch times
-               tli = find(strcmp(FIRA.ecodes.name, 'time_local_trialStart'), 1);
-               tui = find(strcmp(FIRA.ecodes.name, 'time_ui_trialStart'), 1);
-               twi = find(strcmp(FIRA.ecodes.name, refTime), 1);
-               
-               % Call the class-specific method
-               FIRA.analog = ui.readDataFromFile(uiFile, FIRA.ecodes.data(:,[tli tui twi]), ...
-                  calibrationData);
             end
          end
       end

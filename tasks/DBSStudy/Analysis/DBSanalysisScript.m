@@ -3,18 +3,9 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2018_08_22_10_45';
+testFilename = 'data_2018_08_27_12_19';
+%testFilename = 'data_2018_08_22_10_45';
 [topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
-
-% timing indices
-sgis = cat(2, ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_targsOn'), 1), ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_dotsOn'), 1), ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_targsOff'), 1), ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_fixOff'), 1), ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_dotsOff'), 1), ...
-   find(strcmp(FIRA.ecodes.name, 'time_screen_fdbkOn'), 1));
-rti = find(strcmp(FIRA.ecodes.name, 'RT'), 1);
 
 % task indices
 %  1  = VGS
@@ -22,7 +13,7 @@ rti = find(strcmp(FIRA.ecodes.name, 'RT'), 1);
 %  3  = Quest dots
 %  7  = Speed, no bias
 %  10 = Accuracy, no bias
-figure
+%figure
 tis = [1 2 3 7 10];
 nts = length(tis);
 lm  = 15;
@@ -38,16 +29,22 @@ for tt = 1:nts
             
       % get index of saccade soon after RT
       if FIRA.ecodes.data(ii,1) <= 2
-         refTime = FIRA.ecodes.data(ii,sgis(4)); % Fix off for VGS/MGS
+         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fixOff')); % Fix off for VGS/MGS
       else
-         refTime = FIRA.ecodes.data(ii,sgis(2)); % Dots on
+         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_dotsOn')); % Dots on
       end
       
-      sacEndTime  = refTime+FIRA.ecodes.data(ii,rti)+0.2;
-      fixIndex    = find(tax>=FIRA.ecodes.data(ii,sgis(4)),1);
+      % Event times
+      fixIndex    = find(tax>=FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fixOff')),1);
+      sacEndTime  = refTime+FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'RT'))+0.2;
       sacEndIndex = find(tax>=(sacEndTime),1);
-      Lgood       = tax>=(refTime-0.4) & tax<=min(sacEndTime+0.5, FIRA.ecodes.data(ii,sgis(6))-0.5);
-
+      Lgood       = tax>=(refTime-0.4) & tax<=min(sacEndTime+0.5, ...
+         FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fdbkOn')));
+   
+      % rezero just before fpoff
+      xs = xs - nanmean(xs(fixIndex-10:fixIndex));
+      ys = ys - nanmean(ys(fixIndex-10:fixIndex));
+      
       % x vs y
       subplot(nts, 2, (tt-1)*2+1); hold on;
       plot([-lm lm], [0 0], 'k:');

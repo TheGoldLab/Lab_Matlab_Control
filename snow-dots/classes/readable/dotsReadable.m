@@ -881,6 +881,10 @@ classdef dotsReadable < handle
             end
          end
       end
+      
+      % Read from file -- needs to be overloaded in subclasses
+      function data = readDataFromFile(self, filename, synchTimes, calibrationData)
+      end
    end
    
    methods (Access = protected)
@@ -1202,12 +1206,6 @@ classdef dotsReadable < handle
          waitTime = clocker.getDeviceTime() - startTime;
          data = [];
          readable = [];
-      end
-      
-      % Utility to get data and put it in FIRA analog format
-      %
-      % Should be overloaded for class-specific routines
-      function data = readDataFromFile(varargin)
       end
    end
 end

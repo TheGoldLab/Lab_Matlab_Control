@@ -203,9 +203,9 @@ classdef (Sealed) topsDataLog < topsGroupedList
       % log's clockFunction, to use some custom timer.  In that case you would
       % get the log using this method, and set the value of log.clockFunction
       % just like you would set the value of any object property.
-      function log = theDataLog()
+      function log = theDataLog(clearTheLog)
          persistent theLog
-         if isempty(theLog) || ~isvalid(theLog)
+         if isempty(theLog) || ~isvalid(theLog) || (nargin>=1 && clearTheLog)
             theLog = topsDataLog;
          end
          log = theLog;

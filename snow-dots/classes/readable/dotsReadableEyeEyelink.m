@@ -93,6 +93,40 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          end
       end
       
+      % readDataFromFile
+      %
+      % Utility for reading data from an eyelink file
+      %
+      % dataPath is string pathname to where the pupil-labs folder is
+      %
+      % Returns data matrix, rows are times, columns are:
+      %  1. timestamp
+      %  2. gaze x
+      %  3. gaze y
+      %  4. confidence
+      function [dataMatrix, tags] = readRawDataFromFile(self, filenameWithPath)
+         
+         % for debugging
+         if nargin < 1 || isempty(filenameWithPath)
+            filenameWithPath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
+               'DBSStudy', 'dotsReadable', 'data_2018_08_27_12_19_EyeEyelink.edf');
+         end
+         
+         if isempty(strfind(filenameWithPath, '_EyeEyelink.edf'))
+            filenameWithPath = [filenameWithPath '_EyeEyelink.edf'];
+         end         
+         
+         edf = Edf2Mat(filenameWithPath);
+         
+         % Set up the return values
+         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil'};
+         dataMatrix = [ ...
+            edf.Samples.time./1000, ... % in sec
+            (edf.Samples.posX  - self.windowCtr(1))/self.pixelsPerDegree, ...
+            -(edf.Samples.posY  - self.windowCtr(2))/self.pixelsPerDegree, ...
+            double(isfinite(edf.Samples.posX)), ...
+            edf.Samples.pupilSize];
+      end
    end % Public methods
    
    methods (Access = protected)
@@ -574,34 +608,4 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
       end % readRawEyeData
    end % Protected methods
-   
-   methods (Static)
-      
-      % readDataFromFile
-      %
-      % Utility for reading data from an eyelink file
-      %
-      % dataPath is string pathname to where the pupil-labs folder is
-      %
-      % Returns data matrix, rows are times, columns are:
-      %  1. timestamp
-      %  2. gaze x
-      %  3. gaze y
-      %  4. confidence
-      function [dataMatrix, tags] = readRawDataFromFile(filenameWithPath)
-         
-         % for debugging
-         if nargin < 1 || isempty(filenameWithPath)
-            filenameWithPath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-               'DBSStudy', 'Pupil', 'data_2018_08_10_14_37_eye.EDF');
-         end
-         
-         edf = Edf2Mat(filenameWithPath);
-         
-         % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
-         dataMatrix = [];
-         
-      end
-   end
 end
