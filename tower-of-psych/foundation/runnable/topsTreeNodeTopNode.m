@@ -38,9 +38,6 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % DatabaseGUI name
       databaseGUIname;
       
-      % For TTL pulses -- the object
-      TTLdOutObject;
-      
       % For TTL pulses -- the channel
       TTLchannel;
       
@@ -63,6 +60,9 @@ classdef topsTreeNodeTopNode < topsTreeNode
       
       % databaseGUI name
       databaseGUIHandle = [];
+      
+      % For TTL pulses -- the object
+      TTLdOutObject;
       
       % silly flag to avoid errors with GUI startup
       isStarted = false;
@@ -174,7 +174,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                self.sharedProperties.readableList{ii} = ui;
                
                % Check if it needs the screen
-               if isfield(struct(ui), 'screenEnsemble')
+               if any(strcmp(properties(ui), 'screenEnsemble'))
                   ui.screenEnsemble = self.sharedProperties.screenEnsemble;
                end
                
@@ -241,22 +241,23 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %
       function finish(self)
          
+         % This is needed because it might have been started in the gui
          if self.isStarted
+            
+            % Stop the runnable
             self.finish@topsRunnable();
-         end
-         
-         % Save self and always write data log to file
-         if ~isempty(self.filename)
             
-            % save self, without the gui handles
-            selfStruct = struct(self);
-            selfStruct.runGUIHandle = [];
-            selfStruct.databaseGUIHandle = [];
-            topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
-            topsDataLog.writeDataFile(self.filename);
-            
-            % Write it
-            topsDataLog.writeDataFile();
+            % Save self and always write data log to file
+            if ~isempty(self.filename)
+               
+               % save self, without the gui handles
+               warning('OFF', 'MATLAB:structOnObject');
+               selfStruct = struct(self);
+               selfStruct.runGUIHandle = [];
+               selfStruct.databaseGUIHandle = [];
+               topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
+               topsDataLog.writeDataFile();
+            end
          end
       end
       

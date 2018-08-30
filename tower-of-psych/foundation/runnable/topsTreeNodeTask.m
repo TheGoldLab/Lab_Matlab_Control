@@ -81,9 +81,6 @@ classdef topsTreeNodeTask < topsTreeNode
       % property update flags, set by setListeners
       updateFlags;
       
-      % the topsTreeNodeTopNode that can share properties
-      topNode;
-      
       % Properties that can be shared from the topsTreeNodeTopNode
       %
       % Handle to screenEnsemble, for timing info
@@ -206,14 +203,14 @@ classdef topsTreeNodeTask < topsTreeNode
          if ~isempty(self.caller)
             
             % Find the topNode
-            self.topNode = self.caller;
-            while ~isempty(self.topNode.caller)
-               self.topNode = self.topNode.caller;
+            topNode = self.caller;
+            while ~isempty(topNode.caller)
+               topNode = topNode.caller;
             end
             
-            for ff = fieldnames(self.topNode.sharedProperties)'
+            for ff = fieldnames(topNode.sharedProperties)'
                if isempty(self.(ff{:}))
-                  self.(ff{:}) = self.topNode.sharedProperties.(ff{:});
+                  self.(ff{:}) = topNode.sharedProperties.(ff{:});
                end
             end
          end

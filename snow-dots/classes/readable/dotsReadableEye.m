@@ -10,20 +10,7 @@ classdef dotsReadableEye < dotsReadable
    % @details
    % dotsReadableEye transforms x and y position data from raw eye
    % tracker coordinates into a user-defined coordinate system that
-   % might be more natural, such as degrees of visual angle.  It uses
-   % inputRect to impose a coordinate system on the raw data and presents
-   % data in a coordinate sytem relative to xyRect.
-   % @details
-   % inputRect and xyRect should have the form [x y width height].  Both
-   % rectangles should describe the same region, such as part of a
-   % calibration pattern.  inputRect should use units that are native to
-   % the eye tracker.  These units will be "divided out".  xyRect should
-   % be in units that will be useful to experiment code, such as degrees
-   % of visual angle.
-   % @details
-   % The width or height of either rectangle may negative, in order to
-   % flip the corresponding axis.  If both rectangles are equal, no unit
-   % transformation will happen.
+   % might be more natural, such as degrees of visual angle. 
    % @details
    % <b>Subclasses</b>
    % @details
@@ -47,20 +34,6 @@ classdef dotsReadableEye < dotsReadable
    % coordinates.
    
    properties
-      
-      % rectangle desctibing eye tracker device coordinates ([x y w h])
-      % @details
-      % inputRect describes a rectangular region of interest using the
-      % eye tracker's native coordinate system.  dotsReadableEye
-      % transforms raw position data <b>out of</b> these coordinates.
-      inputRect = [0 0 1 1];
-      
-      % rectangle desctibing user-defined coordinates ([x y w h])
-      % @details
-      % xyRect describes a rectangular region of interest using
-      % arbitrary, user-defined coordinates.  dotsReadableEye transforms
-      % raw position data <b>into</b> these coordinates.
-      xyRect = [0 0 1 1];
       
       % the current "x" position of the eye in user-defined coordinates.
       x;
@@ -96,72 +69,46 @@ classdef dotsReadableEye < dotsReadable
       % samples to plot during showEye
       samplesToShow = 1000;
       
-      % Ask for input during calibration
-      queryDuringCalibration = true;
-      
-      % query wait time during calibration (sec)
-      queryTimeout = 5;
-      
-      % automatically show eye after calibration
-      doShowEye = true;
-      
-      % Number of samples to collect for calibration offset
-      offsetCalibrationN = 30;
-      
-      % Number of samples to collect for full calibation
-      fullCalibrationN = 100;
-      
-      % x offset for calibration target grid
-      calibrationFPX = 10;
-      
-      % y offset for calibration target grid
-      calibrationFPY = 5;
-      
-      % Size of calibration target
-      calibrationFPSize = 1.5;
-      
-      % Tolerance for using calibration values -- determined by
-      % trial-and-error
-      calibrationVarTolerance = 0.0001;
-      
-      % Tolerance for using calibration values -- determined by
-      % trial-and-error
-      OffsetVarTolerance = 2.0;
-      
-      % Tolerance for using calibration values -- determined by
-      % trial-and-error
-      calibrationTransformTolerance = 4.0;
-      
-      % number of times to try calibrating before giving a message if it
-      % keeps failing (not within tolerances
-      numberCalibrationTries = 5;
-      
-      % Keyboard event definitions: type, key/event pairs
-      calibrationUIEvents = struct( ...
+      % Structure of calibration properties. Note that tolerances were
+      % determined via trial-and-error and likely need adjusting for
+      % different systems, contexts, subjects, ets.
+      calibrationProperties = struct( ...
+         'queryDuringCalibration',     true, ... % Ask for input during calibration
+         'queryTimeout',               5,    ... % query wait time during calibration (sec)
+         'showEye',                    true, ... % automatically show eye after calibration
+         'offsetN',                    30,   ... % Number of samples to collect for calibration offset
+         'fullN',                      100,  ... % Number of samples to collect for full calibation
+         'fpX',                        10,   ... % x offset for calibration target grid
+         'fpY',                        5,    ... % y offset for calibration target grid
+         'fpSize',                     1.5,  ... % Size of calibration target
+         'varTolerance',               0.0001, ... % Tolerance for using calibration values
+         'offsetVarTolerance',         2.0,  ... % Tolerance for using calibration values
+         'transformTolerance',         4.0,  ... % Tolerance for using calibration values
+         'numberTries',                5,    ... % number of times to try calibrating
+         'targetEnsemble',             [],   ... % for calibration targets
+         'eyeEnsemble',                [],   ... % the showing eye position 
+         'uiEvents',    struct( ... % input during calibration
          'name',      {'accept', 'calibrate', 'dritfCorrect', 'abort', 'repeat', 'showEye', 'toggle'}, ...
          'component', {'KeyboardSpacebar',  'KeyboardC', 'KeyboardD',  'KeyboardQ', 'KeyboardR',  'KeyboardS', 'KeyboardT'}, ...
-         'isActive',  {true, true, true, true, true, true, true});
+         'isActive',  {true, true, true, true, true, true, true}));
    end
    
    properties (SetAccess = protected)
       
-      % how to offset raw x,y gaze data, before scaling
-      xyOffset = [0 0];
-      
-      % how to scale raw x,y gaze data, after ofsetting
-      xyScale = [1 1];
-      
-      % how to rotate x,y gaze data
-      rotation = [1 0; 0 1];
-      
+      % current gaze calibration properties
+      gazeCalibration = struct( ...
+         'timestamp',      [],   ...      % when the calibration occurred
+         'xyOffset',       [0 0], ...     % how to offset raw x,y gaze data, before scaling
+         'xyScale',        [1 1], ...     % how to scale raw x,y gaze data, after ofsetting
+         'rotation',       [1 0; 0 1]);   % how to rotate x,y gaze data
+
+      % current pupil calibration properties
+      pupilCalibration = struct( ...
+         'offset',         0,    ...     % how to offset pupil data, before scaling
+         'scale',        	1);   ...     % how to scale pupil data, after ofsetting
+
       % flag if any transformation is necessary
       doTransform = false;
-      
-      % how to offset raw pupil data, before scaling
-      pupilOffset = 0;
-      
-      % how to scale raw pupil data, after ofsetting
-      pupilScale = 1;
       
       % integer identifier for x-position component
       xID = 1;
@@ -173,10 +120,7 @@ classdef dotsReadableEye < dotsReadable
       pupilID = 3;
       
       % Array of gazeWindow event structures
-      gazeEvents = [];
-      
-      % target for calibration
-      calibrationEnsemble = [];
+      gazeEvents = [];      
    end
    
    properties (SetAccess = private)
@@ -495,11 +439,11 @@ classdef dotsReadableEye < dotsReadable
         
       % Utilities for changing calibration offsets (e.g., via GUI)
       function incrementCalibrationOffsetX(self, increment)
-         self.setEyeCalibration(self.xyOffset + [increment 0], [], []);
+         self.setEyeCalibration(self.gazeCalibration.xyOffset + [increment 0], [], []);
       end
       
       function incrementCalibrationOffsetY(self, increment)
-         self.setEyeCalibration(self.xyOffset + [0 increment], [], []);
+         self.setEyeCalibration(self.gazeCalibration.xyOffset + [0 increment], [], []);
       end
       
       % Set the calibration parameters and dump to the data log.
@@ -510,27 +454,27 @@ classdef dotsReadableEye < dotsReadable
          % Conditionally set the inputs..note that all arguments must
          %  be given, but use [] as flag not to change
          if ~isempty(xyOffsets)
-            self.xyOffset = xyOffsets;
+            self.gazeCalibration.xyOffset = xyOffsets;
          end
          if ~isempty(xyScales)
-            self.xyScale = xyScales;
+            self.gazeCalibration.xyScale = xyScales;
          end
          if ~isempty(rotations)
-            self.rotation = rotations;
+            self.gazeCalibration.rotation = rotations;
          end
          
          % check if the tranformation parameters are used
-         if any(self.xyOffset~=0) || any(self.xyScale~=1) || ...
-               any(self.rotation(:)~=[1 0 0 1]')
+         if any(self.gazeCalibration.xyOffset~=0) || ...
+               any(self.gazeCalibration.xyScale~=1) || ...
+               any(self.gazeCalibration.rotation(:)~=[1 0 0 1]')
             self.doTransform = true;
          else
             self.doTransform = false;
          end
          
          % Save it to the log
-         topsDataLog.logDataInGroup( ...
-            {feval(self.clockFunction) self.xyOffset, self.xyScale, self.rotation}, ...
-            'dotsReadableEye calibration');
+         self.gazeCalibration.timestamp = feval(self.clockFunction);
+         topsDataLog.logDataInGroup(self.gazeCalibration, 'dotsReadableEye calibration');
       end
       
       % Overloaded utility to get data and put it in FIRA analog format
@@ -542,13 +486,13 @@ classdef dotsReadableEye < dotsReadable
       %        1. local start time
       %        2. ui start time
       %        3. trial reference time
-      %  4. pupilCalibration is tagged calibration data from the
+      %  4. self.gazeCalibration is tagged calibration data from the
       %  topsDataLog, each item is:
       %      	1. timestamp
       %       	2. xyOffset
       %      	3. xyScale
       %       	4. rotation matrix
-      function analog = readDataFromFile(self, filename, syncTimes, pupilCalibration)
+      function analog = readDataFromFile(self, filename, syncTimes, gazeCalibration)
          
          %% Get the raw data and tags
          %
@@ -590,11 +534,11 @@ classdef dotsReadableEye < dotsReadable
          
          %% Conditionally calibrate the raw eye signals
          %
-         if nargin >= 4 && ~isempty(pupilCalibration)
+         if nargin >= 4 && ~isempty(gazeCalibration)
             
             % expects time, gx, gy
             rawData(:,[eti exi eyi]) = dotsReadableEye.calibrateGazeSets( ...
-               rawData(:,[eti exi eyi]), pupilCalibration);
+               rawData(:,[eti exi eyi]), gazeCalibration);
          end
              
          %% Collect trial-wise data
@@ -697,7 +641,8 @@ classdef dotsReadableEye < dotsReadable
                % Now add given events. Note that the third and fourth arguments
                %  to defineCalibratedEvent are Calibrated value and isActive --
                %  we could make those user controlled.
-               self.calibrationUI.defineEvents(self.calibrationUIEvents);
+               self.calibrationUI.defineEvents( ...
+                  self.calibrationProperties.uiEvents);
             end
             
             % Read during calls to get next event
@@ -712,12 +657,22 @@ classdef dotsReadableEye < dotsReadable
          %
          % We will create a single drawable object to represent the fixation cue.
          % Then, we simply adjust the location of the cue each time we present it.
-         if isempty(self.calibrationEnsemble)
-            fixationCue = dotsDrawableTargets();
-            fixationCue.width  = [1 0.1] * self.calibrationFPSize;
-            fixationCue.height = [0.1 1] * self.calibrationFPSize;
-            self.calibrationEnsemble = dotsDrawable.makeEnsemble(...
-               'calibrationEnsemble', {fixationCue}, self.screenEnsemble);
+         if isempty(self.calibrationProperties.targetEnsemble)
+            
+            % make the target ensemble
+            fixationCue        = dotsDrawableTargets();
+            fixationCue.width  = [1 0.1] * self.calibrationProperties.fpSize;
+            fixationCue.height = [0.1 1] * self.calibrationProperties.fpSize;
+            self.calibrationProperties.targetEnsemble = dotsDrawable.makeEnsemble( ...
+               'targetEnsemble', {fixationCue}, self.screenEnsemble);
+            
+            % make the eye ensemble
+            eyeCue                      = dotsDrawableTargets();
+            eyeCue.width                = 0.5;
+            eyeCue.height               = 0.5;
+            eyeCue.isColorByVertexGroup = true;
+            self.calibrationProperties.eyeEnsemble = dotsDrawable.makeEnsemble( ...
+               'eyeEnsemble', {eyeCue}, self.screenEnsemble);
          end
          
          % Default no error
@@ -746,10 +701,10 @@ classdef dotsReadableEye < dotsReadable
                   % feedback
                   self.calibrateNow();
                   
-                  if ~self.useExistingCalibration && self.queryDuringCalibration && ...
+                  if ~self.useExistingCalibration && self.calibrationProperties.queryDuringCalibration && ...
                         isa(self.calibrationUI, 'dotsReadableHIDKeyboard')
                                              
-                     if self.doShowEye
+                     if self.calibrationProperties.showEye
                         disp('space or s to show eye, r to repeat calibration, q to finish')
                      else
                         disp('s to show eye, r to repeat calibration, space or q to finish')
@@ -757,14 +712,15 @@ classdef dotsReadableEye < dotsReadable
                      
                      % Wait for keyboard input
                      [didHappen, ~, ~, ~, nextEvent] = dotsReadable.waitForEvent( ...
-                        self.calibrationUI, [], self.queryTimeout);
+                        self.calibrationUI, [], self.calibrationProperties.queryTimeout);
                      
                      % Made it through timeout, just continue. Otherwise
                      % wait for key up
                      if ~didHappen
                         nextEvent = 'accept';
                      else
-                        dotsReadable.waitForEvent(self.calibrationUI, [], self.queryTimeout);
+                        dotsReadable.waitForEvent(self.calibrationUI, ...
+                           [], self.gazeCalibration.queryTimeout);
                      end
                      
                      if ~strcmp(nextEvent, 'repeat')
@@ -772,7 +728,7 @@ classdef dotsReadableEye < dotsReadable
                         
                         % possibly show eye
                         if ~strcmp(nextEvent, 'abort') && ...
-                              (self.doShowEye || strcmp(nextEvent, 'showEye'))
+                              (self.calibrationProperties.showEye || strcmp(nextEvent, 'showEye'))
                            self.showEyePosition();
                         end
                      end
@@ -802,16 +758,16 @@ classdef dotsReadableEye < dotsReadable
          
          % possibly show target
          if showTarget
-            self.calibrationEnsemble.setObjectProperty('xCenter', currentXY(1));
-            self.calibrationEnsemble.setObjectProperty('yCenter', currentXY(2));
-            self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            self.calibrationProperties.targetEnsemble.setObjectProperty('xCenter', currentXY(1));
+            self.calibrationProperties.targetEnsemble.setObjectProperty('yCenter', currentXY(2));
+            self.calibrationProperties.targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             % wait to settle
             pause(0.3);
          end
          
          % Collect transformed x,y data
-         gazeXY = nans(self.offsetCalibrationN, 2);
-         for ii = 1:self.offsetCalibrationN
+         gazeXY = nans(self.calibrationProperties.offsetN, 2);
+         for ii = 1:self.calibrationProperties.offsetN
             dataMatrix = self.transformRawData(self.readRawEyeData());
             gazeXY(ii,:) = dataMatrix([self.xID, self.yID], 2)';
          end
@@ -819,9 +775,9 @@ classdef dotsReadableEye < dotsReadable
          % Now add the offsets if within tolerance, and flush the queue
          % of the older, uncalibrated samples
          % var(gazeXY)
-         if all(var(gazeXY) < self.OffsetVarTolerance)
+         if all(var(gazeXY) < self.calibrationProperties.offsetVarTolerance)
             self.setEyeCalibration( ...
-               self.xyOffset + currentXY - median(gazeXY), [], []);
+               self.gazeCalibration.xyOffset + currentXY - median(gazeXY), [], []);
             self.flushData();
          else
             disp('dotsReadableEye calibration recenter failed')
@@ -829,7 +785,7 @@ classdef dotsReadableEye < dotsReadable
          
          % Possibly hide target
          if showTarget
-            self.calibrationEnsemble.callObjectMethod( ...
+            self.calibrationProperties.targetEnsemble.callObjectMethod( ...
                @dotsDrawable.blankScreen, {}, [], true);
          end
       end
@@ -842,17 +798,11 @@ classdef dotsReadableEye < dotsReadable
          % Help message
          disp('In showEyePosition. Press <space> to exit')
          
-         % Make ensemble of target objects to show
-         targetEnsemble = dotsDrawable.makeEnsemble('spots', ...
-            {dotsDrawableTargets}, self.screenEnsemble, false);
-         
-         targetEnsemble.setObjectProperty('width', 0.5);
-         targetEnsemble.setObjectProperty('height', 0.5);
-         targetEnsemble.setObjectProperty('isColorByVertexGroup', true);
+         % Get ensemble of target objects to show as eye position
+         eyeEnsemble = self.calibrationProperties.eyeEnsemble;
          
          % blank the screen
-         self.calibrationEnsemble.callObjectMethod( ...
-            @dotsDrawable.blankScreen, {}, [], true);
+         eyeEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
          
          % keep history
          xyData = nans(self.samplesToShow, 5);
@@ -884,19 +834,18 @@ classdef dotsReadableEye < dotsReadable
             Lgood = ~isnan(xyData(:,1));
             
             if any(Lgood)
-               targetEnsemble.setObjectProperty('xCenter', xyData(Lgood,1));
-               targetEnsemble.setObjectProperty('yCenter', xyData(Lgood,2));
-               targetEnsemble.setObjectProperty('colors',  xyData(Lgood,3:5));
+               seyeEnsemble.setObjectProperty('xCenter', xyData(Lgood,1));
+               eyeEnsemble.setObjectProperty('yCenter', xyData(Lgood,2));
+               eyeEnsemble.setObjectProperty('colors',  xyData(Lgood,3:5));
                
                % show it
-               targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+               eyeEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             end
             
          end
          
          % blank the screen
-         self.calibrationEnsemble.callObjectMethod( ...
-            @dotsDrawable.blankScreen, {}, [], true);
+         eyeEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
       end
       
       % calibrateNow
@@ -909,39 +858,42 @@ classdef dotsReadableEye < dotsReadable
          % fig = figure;
          % cla reset; hold on;
          
+         % get the ensemble
+         targetEnsemble = self.calibrationProperties.targetEnsemble;
+         
          % Set up matrices to present cues and collect fixation data
          targetXY = [ ...
-            -self.calibrationFPX  self.calibrationFPY;
-            self.calibrationFPX  self.calibrationFPY;
-            self.calibrationFPX -self.calibrationFPY;
-            -self.calibrationFPX -self.calibrationFPY];
+            -self.calibrationProperties.fpX  self.calibrationProperties.fpY;
+            self.calibrationProperties.fpX  self.calibrationProperties.fpY;
+            self.calibrationProperties.fpX -self.calibrationProperties.fpY;
+            -self.calibrationProperties.fpX -self.calibrationProperties.fpY];
          numFixations = size(targetXY, 1);
          
          % show it once, after a delay sometimes needed for graphics to
          % initialize
          pause(0.7);
-         self.calibrationEnsemble.setObjectProperty('xCenter', targetXY(1,[1 1]));
-         self.calibrationEnsemble.setObjectProperty('yCenter', targetXY(1,[2 2]));
-         self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         targetEnsemble.setObjectProperty('xCenter', targetXY(1, [1 1]));
+         targetEnsemble.setObjectProperty('yCenter', targetXY(1, [2 2]));
+         targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
          pause(0.5);
          
          % Variables to check for success
-         gazeRawXY = nans(self.fullCalibrationN, 2);
+         gazeRawXY = nans(self.calibrationProperties.fullN, 2);
          gazeXY = nans(numFixations, 2);
          checkCalibrationCounter = 1;
          isCalibrated = false;
          
          while ~isCalibrated && ...
-               checkCalibrationCounter < self.numberCalibrationTries
+               checkCalibrationCounter < self.calibrationProperties.numberTries
             
             % Loop through each target to get eye position samples
             gazeXY(:) = nan;
             for ii = 1:numFixations
                
                % Show the fixation point
-               self.calibrationEnsemble.setObjectProperty('xCenter', targetXY(ii,[1 1]));
-               self.calibrationEnsemble.setObjectProperty('yCenter', targetXY(ii,[2 2]));
-               self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+               targetEnsemble.setObjectProperty('xCenter', targetXY(ii,[1 1]));
+               targetEnsemble.setObjectProperty('yCenter', targetXY(ii,[2 2]));
+               targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
                
                % Wait for fixation
                pause(0.4);
@@ -954,16 +906,16 @@ classdef dotsReadableEye < dotsReadable
                checkFixationCounter = 1;
                while ~isSampled && ...
                      checkFixationCounter < ...
-                     self.numberCalibrationTries*numFixations
+                     self.calibrationProperties.numberTries*numFixations
                   
                   % Collect a bunch of samples
-                  for jj = 1:self.fullCalibrationN
+                  for jj = 1:self.calibrationProperties.fullN
                      dataMatrix = self.readRawEyeData();
                      gazeRawXY(jj,:) = dataMatrix([self.xID, self.yID], 2)';
                   end
                   
                   % Check tolerance
-                  if all(var(gazeRawXY) < self.calibrationVarTolerance)
+                  if all(var(gazeRawXY) < self.calibrationProperties.varTolerance)
                      % Good! Save median and go on to next sample
                      gazeXY(ii,:) = nanmedian(gazeRawXY);
                      isSampled = true;
@@ -981,8 +933,7 @@ classdef dotsReadableEye < dotsReadable
                end
                
                % Briefly blank the screen
-               self.calibrationEnsemble.callObjectMethod( ...
-                  @dotsDrawable.blankScreen, {}, [], true);
+               targetEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
                
                % wait a moment
                pause(0.7);
@@ -1033,7 +984,7 @@ classdef dotsReadableEye < dotsReadable
             
             % check for accuracy
             if all(sqrt(sum((targetXY-transformedData).^2,2)) < ...
-                  self.calibrationTransformTolerance)
+                  self.calibrationProperties.transformTolerance)
                
                % Done!
                self.setEyeCalibration(xyOffsetVals, xyScaleVals, rotationVals);
@@ -1261,23 +1212,25 @@ classdef dotsReadableEye < dotsReadable
          % be true
          if any(Lx)
             
-            % Scale, rotate, then offset
-            transformedData = ...
-               [self.xyScale(1).*newData(Lx,2) self.xyScale(2).*newData(Ly,2)] * ...
-               self.rotation + repmat(self.xyOffset, sum(Lx), 1);
-            
+            % Scale, rotate, then offset            
+            calibratedXY = [ ...
+               self.gazeCalibration.xyScale(1).*newData(Lx,2) ...
+               self.gazeCalibration.xyScale(2).*newData(Ly,2)] * ...
+               self.gazeCalibration.rotation + ...
+               repmat(self.gazeCalibration.xyOffset, sum(Lx), 1);
+
             % Save the transformed x value(s)
-            newData(Lx,2) = transformedData(:,1);
+            newData(Lx,2) = calibratedXY(:,1);
             
             % Save the transformed y value(s)
-            newData(Ly,2) = transformedData(:,2);
+            newData(Ly,2) = calibratedXY(:,2);
          end
-         
+                  
          % Transform the pupil
          pupilSelector = newData(:,1) == self.pupilID;
          if any(pupilSelector)
-            transPupil = self.pupilScale ...
-               *(self.pupilOffset + newData(pupilSelector,2));
+            transPupil = self.pupilCalibration.scale ...
+               *(self.pupilCalibration.offset + newData(pupilSelector,2));
             newData(pupilSelector,2) = transPupil;
             self.pupil = transPupil(end);
          end
@@ -1340,23 +1293,22 @@ classdef dotsReadableEye < dotsReadable
       % Utility for using a topsDataLog 'dotsReadableEye calibration'
       %  item to calibrate gaze for a single chunk of data
       %
-      %  calibrationCell is the cell array stored in the topsDataLog
-      %     in setEyeCalibration, above.
-      %  cell contents:
+      %  gazeCalibration is the structure in the property list, above, with
+      %  fields:
       %     1. timestamp
       %     2. xyOffset
       %     3. xyScale
-      %     4. rotation matrix
-      function calibratedXY = calibrateGaze(rawXY, calibrationCell)
+      %     4. rotation
+      function calibratedXY = calibrateGaze(rawXY, gazeCalibration)
          
          numSamples = size(rawXY, 1);
          if numSamples > 0
             
             % Scale, rotate, then offset
             calibratedXY = [ ...
-               calibrationCell{3}(1).*rawXY(:,1) ...
-               calibrationCell{3}(2).*rawXY(:,2)] * ...
-               calibrationCell{4} + repmat(calibrationCell{2}, numSamples, 1);
+               gazeCalibration.xyScale(1).*rawXY(:,1) ...
+               gazeCalibration.xyScale(2).*rawXY(:,2)] * ...
+               gazeCalibration.rotation + repmat(gazeCalibration.xyOffset, numSamples, 1);
          else
             calibratedXY = [];
          end
@@ -1366,20 +1318,22 @@ classdef dotsReadableEye < dotsReadable
       % containing 'dotsReadableEye calibration' items
       %
       % Raw values columns are time, gaze_x, gaze_y
-      function calibratedValues = calibrateGazeSets(rawValues, calibrationSets)
+      function calibratedValues = calibrateGazeSets(rawValues, gazeCalibrations)
          
          % Make array of calibration timestamps ... remember these are in local time
-         calibrationCell = cat(1, calibrationSets.item);
-         calibrationTimes = cat(1, calibrationCell{:,1}, inf);
+         gazeCalibration = cat(1, gazeCalibrations.item);
+         calibrationTimes = cat(1, gazeCalibration.timestamp, inf);
          
          % Calibrate gaze, in chunks
-         for cc = 1:size(calibrationTimes)-1
+         for cc = 1:size(calibrationTimes,1)-1
             
             % get relevant samples
             Lcal = rawValues(:,1) >= calibrationTimes(cc) & ...
                rawValues(:,1) < calibrationTimes(cc+1);
+            
+            % transform            
             rawValues(Lcal,2:3) = dotsReadableEye.calibrateGaze( ...
-               rawValues(Lcal,2:3), calibrationCell(cc,:));
+               rawValues(Lcal,2:3), gazeCalibrations(cc));
          end
          calibratedValues = rawValues;
       end

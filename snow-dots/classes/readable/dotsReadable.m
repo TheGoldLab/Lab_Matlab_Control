@@ -100,8 +100,7 @@ classdef dotsReadable < handle
       useExistingCalibration = false;
 
       % Possibly use a keyboard or other UI to help with calibration
-      calibrationUI;
-      
+      calibrationUI;      
    end
    
    properties (SetAccess = protected)

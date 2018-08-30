@@ -54,19 +54,20 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       pixelsPerDegree = [];
       
       % Return values from Eyelink
-      NO_REPLY=1000;              % no reply yet (for polling test)
-      KB_PRESS=10;                % pressed keyboard
-      MISSING=-32768;             % eyedata.h
-      IN_DISCONNECT_MODE=16384;   % disconnected
-      IN_UNKNOWN_MODE=0;    		% mode fits no class (i.e setup menu)
-      IN_IDLE_MODE=1;    			% off-line
-      IN_SETUP_MODE=2;   			% setup or cal/val/dcorr
-      IN_RECORD_MODE=4;           % data flowing
-      IN_TARGET_MODE=8;           % some mode that needs fixation targets
-      IN_DRIFTCORR_MODE=16;       % drift correction
-      IN_IMAGE_MODE=32;   			% image-display mode
-      IN_USER_MENU=64;				% user menu
-      IN_PLAYBACK_MODE=256;       % tracker sending playback data
+      eyelinkVals = struct( ...
+      'NO_REPLY',             1000,    ... 	% no reply yet (for polling test)
+      'KB_PRESS',             10,      ... 	% pressed keyboard
+      'MISSING',              -32768,  ...	% eyedata.h
+      'IN_DISCONNECT_MODE',   16384,   ... 	% disconnected
+      'IN_UNKNOWN_MODE',      0,       ... 	% mode fits no class (i.e setup menu)
+      'IN_IDLE_MODE',         1,       ...   % off-line
+      'IN_SETUP_MODE',        2,       ...   % setup or cal/val/dcorr
+      'IN_RECORD_MODE',       4,       ...   % data flowing
+      'IN_TARGET_MODE',       8,       ...   % some mode that needs fixation targets
+      'IN_DRIFTCORR_MODE',    16,      ...   % drift correction
+      'IN_IMAGE_MODE',        32,      ...   % image-display mode
+      'IN_USER_MENU',         64,      ...   % user menu
+      'IN_PLAYBACK_MODE',     256);% tracker sending playback data
       
    end % Protected properties
    
@@ -115,6 +116,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if isempty(strfind(filenameWithPath, '_EyeEyelink.edf'))
             filenameWithPath = [filenameWithPath '_EyeEyelink.edf'];
          end         
+         filenameWithPath
          
          edf = Edf2Mat(filenameWithPath);
          
@@ -345,15 +347,15 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          count = 0;
          
          % Set mode
-         Eyelink('SendKeyButton', double(mode), 0, self.KB_PRESS);
+         Eyelink('SendKeyButton', double(mode), 0, self.eyelinkVals.KB_PRESS);
          pause(0.2);
          if autoTrigger
-            Eyelink('SendKeyButton', double('A'), 0, self.KB_PRESS);
+            Eyelink('SendKeyButton', double('A'), 0, self.eyelinkVals.KB_PRESS);
          end
          
          % Loop through the protocol
-         targetOldX           = self.MISSING;
-         targetOldY           = self.MISSING;
+         targetOldX           = self.eyelinkVals.MISSING;
+         targetOldY           = self.eyelinkVals.MISSING;
          continueCalibration  = true;
          while continueCalibration
             
@@ -372,32 +374,32 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             
             % Check for end of calibrate/validate or no more setup/target mode
             if count >= 10 && ((targetCheck==0 && result~=0) || ...
-                  ~bitand(currentMode, self.IN_SETUP_MODE) || ...
-                  ~bitand(currentMode, self.IN_TARGET_MODE))
+                  ~bitand(currentMode, self.eyelinkVals.IN_SETUP_MODE) || ...
+                  ~bitand(currentMode, self.eyelinkVals.IN_TARGET_MODE))
                if mode == 'c'
-                  % Eyelink('SendKeyButton', 88, 0, self.KB_PRESS)
+                  % Eyelink('SendKeyButton', 88, 0, self.eyelinkVals.KB_PRESS)
                   pause(0.5)
                   calibrateValidate(self, 'v', autoTrigger);
                   return;
                else
                   pause(0.2);
-                  Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
+                  Eyelink('SendKeyButton', 13, 0, self.eyelinkVals.KB_PRESS);
                   pause(0.2);
                   break;
                end
             end
             
             % Check to erase or (re)draw the target
-            if targetCheck==0 || targetX == self.MISSING || ...
-                  targetY == self.MISSING
+            if targetCheck==0 || targetX == self.eyelinkVals.MISSING || ...
+                  targetY == self.eyelinkVals.MISSING
                
                % Blank the screen
                self.calibrationEnsemble.callObjectMethod(...
                   @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
                
                % Indicate not drawn
-               targetOldX = self.MISSING;
-               targetOldY = self.MISSING;
+               targetOldX = self.eyelinkVals.MISSING;
+               targetOldY = self.eyelinkVals.MISSING;
                waitingForAcceptance = false;
                
             elseif targetCheck==1
@@ -446,7 +448,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                   
                   % Aceept current calibration target
                   if waitingForAcceptance
-                     % Eyelink('SendKeyButton', 32, 0, self.KB_PRESS);
+                     % Eyelink('SendKeyButton', 32, 0, self.eyelinkVals.KB_PRESS);
                      Eyelink('AcceptTrigger');
                      waitingForAcceptance = false;
                   end
@@ -479,7 +481,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          %status = 0;
          %return
          % Send mode key
-         %Eyelink('SendKeyButton', double('d'), 0, self.KB_PRESS);
+         %Eyelink('SendKeyButton', double('d'), 0, self.eyelinkVals.KB_PRESS);
          
          % Check args
          if nargin <= 1 || isempty(xy)
@@ -518,7 +520,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             self.windowCtr(1) + xy(1) * self.pixelsPerDegree, ...
             self.windowCtr(2) - xy(2) * self.pixelsPerDegree);
          
-         Eyelink('SendKeyButton', 13, 0, self.KB_PRESS);
+         Eyelink('SendKeyButton', 13, 0, self.eyelinkVals.KB_PRESS);
          pause(0.03);
          
          % Blank the screen if we drew the target
