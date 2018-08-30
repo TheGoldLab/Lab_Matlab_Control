@@ -120,7 +120,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the userInput type
          'dotsReadableHIDKeyboard', struct( ...
          'name',              {'holdFixation', 'choseLeft', 'choseRight', 'calibrate'}, ...
-         'component',         {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}));
+         'component',         {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}), ...
+         ...
+         ...    % Ashwin's magic buttons
+         'dotsReadableHIDButtons', struct( ...
+         'name',              {'choseLeft', 'choseRight'}, ...
+         'component',         {'KeyboardLeftShift', 'KeyboardRightShift'}));
       
       % Quest properties
       questSettings = struct( ...
@@ -483,6 +488,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %           struct
          %
          self.makeTrials();
+      end
+      
+      %% Check for fixation
+      function ret = checkForFixation(self)
+          
       end
       
       %% Initialize StateMachine

@@ -1190,6 +1190,10 @@ classdef dotsReadable < handle
             %> get a queued event for this readable
             readable.read();
             [name, data] = readable.getNextEvent();
+            if ~isempty(name)
+                disp(name)
+            end
+            
             if ~isempty(name) && (strcmp(name, eventName) || ...
                   isempty(eventName))
                waitTime = clocker.getDeviceTime() - startTime;

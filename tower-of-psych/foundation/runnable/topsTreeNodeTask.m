@@ -995,7 +995,7 @@ classdef topsTreeNodeTask < topsTreeNode
             superclasses(self.readables.userInput)));
          
          % use it to call defineEvents with the appropriate event definitions
-         self.readables.userInput.defineEvents(self.readables.(classType{:}));
+         self.readables.userInput.defineEvents(self.readables.(classType{1}));
       end
       
       %% updateDrawables

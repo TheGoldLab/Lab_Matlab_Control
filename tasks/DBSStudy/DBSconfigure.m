@@ -69,11 +69,20 @@ topNode.addReadables(topNode.nodeData{'Settings'}{'uiList'});
 % Welcome call list
 welcome = topsCallList();
 welcome.alwaysRunning = false;
-welcome.addCall({@dotsDrawableText.drawEnsemble, topNode.sharedProperties.textEnsemble, { ...
-   'Work at your own pace.', ...
-   'Each trial starts by fixating the central cross'}, ...
-   topNode.nodeData{'Settings'}{'instructionDuration'}, 1}, 'text');
-
+if strncmp(topNode.nodeData{'Settings'}{'uiList'}, 'dotsReadableEye', length('dotsReadableEye'))
+    startStr = 'Each trial starts by fixating the central cross';
+elseif strcmp(topNode.nodeData{'Settings'}{'uiList'}, 'dotsReadableHIDButtons')
+    startStr = 'Each trial starts by pusing either button';
+elseif strcmp(topNode.nodeData{'Settings'}{'uiList'}, 'dotsReadableHIDKeyboard')
+    startStr = 'Each trial starts by pressing the space bar';
+else
+    startStr = 'You are on your own';
+end
+welcome.addCall({@dotsDrawableText.drawEnsemble, ...
+    topNode.sharedProperties.textEnsemble, ...
+    {'Work at your own pace.', startStr}, ...
+    topNode.nodeData{'Settings'}{'instructionDuration'}, 1}, 'text');
+    
 % Countdown call list
 countdown = topsCallList();
 countdown.alwaysRunning = false;
