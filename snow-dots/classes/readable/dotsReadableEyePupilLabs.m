@@ -113,7 +113,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       function self = dotsReadableEyePupilLabs()
          self = self@dotsReadableEye();
          self.sampleFrequency=200; % is there a way to query this?
-         self.queryDuringCalibration = false; % turn this off by default
+         self.calibrationProperties.queryDuringCalibration = false; % turn this off by default
 
          % Initialize the object
          self.initialize();
