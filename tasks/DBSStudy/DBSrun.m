@@ -30,6 +30,8 @@ if nargin < 1 || isempty(location)
    location = 'OR';
 end
 
+% add something different
+
 switch location
    
    case {'or' 'OR'}
