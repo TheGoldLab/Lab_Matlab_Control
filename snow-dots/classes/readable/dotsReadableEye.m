@@ -72,7 +72,7 @@ classdef dotsReadableEye < dotsReadable
       % determined via trial-and-error and likely need adjusting for
       % different systems, contexts, subjects, ets.
       calibration = struct( ...
-         'query',                      true, ... % Ask for input during calibration
+         'query',                      false, ... % Ask for input during calibration
          'queryTimeout',               5,    ... % query wait time during calibration (sec)
          'showEye',                    true, ... % automatically show eye after calibration
          'offsetN',                    30,   ... % Number of samples to collect for calibration offset
