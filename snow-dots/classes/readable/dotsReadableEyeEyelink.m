@@ -19,27 +19,16 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % Time for eyelink to switch to new mode (msec)
       waitForModeReadyTime = 50;
       
-      % Whether or not to automatically do validation after calibration
-      validateAfterCalibration = true;
-      
-      % calibration/validation pacing: 0 (for manual trigger) or
-      %  500, 1000, or 1500 (msec)
-      defaultPacing = 0;
-      
-      % do calibration step during calibration
-      doCalibration = true;
-      
-      % do validation step during calibration
-      doValidation = true;
-      
-      % Frequency/duration/intensity values for calibration feedback tones
-      calibrationTargetBeep  = [1250 0.05 0.6];
-      calibrationSuccessBeep = [ 400 0.25 0.8];
-      calibrationFailureBeep = [ 800 0.25 0.8];
+      % Calibration properties for Eyelink
+      ELcalibration = struct( ...
+         'defaultPacing',                 0,    ... % calibration/validation pacing: 0 (for manual trigger) or 500, 1000, or 1500 (msec)
+         'TargetBeep',                    [1250 0.05 0.6], ... % Frequency/duration/intensity values
+         'SuccessBeep',                   [ 400 0.25 0.8], ...
+         'FailureBeep',                   [ 800 0.25 0.8]);
       
    end % Public properties
    
-   properties (SetAccess = protected)
+   properties (SetAccess = private)
       
       % Which eye are we tracking?
       trackedEye = [];
@@ -68,6 +57,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       'IN_IMAGE_MODE',        32,      ...   % image-display mode
       'IN_USER_MENU',         64,      ...   % user menu
       'IN_PLAYBACK_MODE',     256);% tracker sending playback data
+      
+      % dummy for returning vals
+      blankData;
       
    end % Protected properties
    
@@ -116,18 +108,18 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if isempty(strfind(filenameWithPath, '_EyeEyelink.edf'))
             filenameWithPath = [filenameWithPath '_EyeEyelink.edf'];
          end         
+         % jig
          filenameWithPath
          
+         % parse the edf file
          edf = Edf2Mat(filenameWithPath);
          
+         % transform the data
+         xyt = transformRawData(self, [edf.Samples.posX edf.Samples.posY edf.Samples.time]);
+
          % Set up the return values
          tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil'};
-         dataMatrix = [ ...
-            edf.Samples.time./1000, ... % in sec
-            (edf.Samples.posX  - self.windowCtr(1))/self.pixelsPerDegree, ...
-            -(edf.Samples.posY  - self.windowCtr(2))/self.pixelsPerDegree, ...
-            double(isfinite(edf.Samples.posX)), ...
-            edf.Samples.pupilSize];
+         dataMatrix = cat(2, xyt(:,[3 1 2]), double(isfinite(xyt(:,1))), edf.Samples.pupilSize);
       end
    end % Public methods
    
@@ -162,18 +154,21 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             %
             if isempty(self.calibrationPlayables)
                self.calibrationPlayables = { ...
-                  dotsPlayableTone.makePlayableTone(self.calibrationTargetBeep), ...
-                  dotsPlayableTone.makePlayableTone(self.calibrationSuccessBeep), ...
-                  dotsPlayableTone.makePlayableTone(self.calibrationFailureBeep)};
+                  dotsPlayableTone.makePlayableTone(self.ELcalibration.targetBeep), ...
+                  dotsPlayableTone.makePlayableTone(self.ELcalibration.successBeep), ...
+                  dotsPlayableTone.makePlayableTone(self.ELcalibration.failureBeep)};
             end
             
             % open the data file
             if ~isempty(self.filename)
                
                % Open data file on eyelink computer
-               Eyelink('OpenFile', defaultFilename);
+               Eyelink('OpenFile', self.defaultFilename);
             end
             
+            % make the blank data
+            self.blankData = cat(2, [self.xID self.yID self.pupilID]', nans(3,2));
+
          catch err
             warning(err.message);
          end
@@ -264,13 +259,13 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % Possibly toggle pacing
          pacingVals = [0 500 1000 1500];
-         pacingI = find(self.defaultPacing==pacingVals,1);
+         pacingI = find(self.ELcalibration.defaultPacing==pacingVals,1);
          isCalibrated = false;
          
          while ~isCalibrated
             
             % Possibly query for input
-            if self.queryDuringCalibration && ...
+            if self.calibration.query && ...
                   isa(self.calibrationUI, 'dotsReadableHIDKeyboard')
                
                % flush keyboard
@@ -557,7 +552,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
       end % stopRecording
       
-      % Read raw Eyelink data.
+      %% Read raw Eyelink data.
       %
       % Reads out the current data sample from Eyelink, for on-line checking.
       %  NOTE: possibly update to read buffered data, if we end up missing
@@ -595,19 +590,26 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          % get the sample in the form of an event structure
          evt = Eyelink('NewestFloatSample');
          
-         % Convert to degrees visual angle wrt center of the screen
-         x =  (evt.gx(self.trackedEye) - self.windowCtr(1))/self.pixelsPerDegree;
-         y = -(evt.gy(self.trackedEye) - self.windowCtr(2))/self.pixelsPerDegree;
-         
-         % Convert time to seconds
-         time_s = evt.time/1000.0;
+         % Convert x,y,t
+         xyt = self.tranformRawData([evt.gx(self.trackedEye), evt.gx(self.trackedEye), evt.time]);
          
          % package up data in dotsReadable format
-         newData = [ ...
-            self.xID      x                       time_s; ...
-            self.yID      y                       time_s; ...
-            self.pupilID  evt.pa(self.trackedEye) time_s];
+         newData = self.blankData;
+         newData(:,2) = [xyt(1:2)'; evt.pa(self.trackedEye)];
+         newData(:,3) = xyt(3);
          
       end % readRawEyeData
+      
+      %% Transform data into screen coordinates
+      %
+      function xyt = transformRawData(self, xyt)
+         
+         % Convert x,y to degrees visual angle wrt center of the screen
+         xyt(:,1) =  (xyt(:,1) - self.windowCtr(1))/self.pixelsPerDegree;
+         xyt(:,2) = -(xyt(:,2) - self.windowCtr(2))/self.pixelsPerDegree;
+         
+         % Convert time to seconds
+         xyt(:,3) = xyt(:,3)/1000.0;         
+      end
    end % Protected methods
 end

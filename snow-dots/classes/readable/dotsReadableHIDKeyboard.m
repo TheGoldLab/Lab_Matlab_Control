@@ -30,6 +30,9 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       
       % Matching properties for machine-specific hardware - Usage
       PrimaryUsage=6;
+      
+      % Get rid of annoying rollover event
+     
    end
    
    methods

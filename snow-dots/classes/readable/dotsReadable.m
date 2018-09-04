@@ -290,6 +290,10 @@ classdef dotsReadable < handle
          %> remove history of data and queued events
          self.history = zeros(0,3);
          self.resizeEventQueue(self.initialEventQueueSize, true);
+         
+         % Not waiting for release
+         [self.eventDefinitions.waitingForRelease] = deal(false);
+         
       end
       
       %> Record current and historical data in topsDataLog.
@@ -424,6 +428,7 @@ classdef dotsReadable < handle
          addRequired( p, 'name');
          addOptional( p, 'isActive', false);
          addOptional( p, 'isInverted', false);
+         addOptional( p, 'isRelease', false);
          addParameter(p, 'component', 1);
          addParameter(p, 'lowValue', -inf);
          addParameter(p, 'highValue', inf);
@@ -445,6 +450,8 @@ classdef dotsReadable < handle
          self.eventDefinitions(ID).isInverted = p.Results.isInverted;
          self.eventDefinitions(ID).lowValue   = p.Results.lowValue;
          self.eventDefinitions(ID).highValue  = p.Results.highValue;
+         self.eventDefinitions(ID).isRelease  = p.Results.isRelease;
+         self.eventDefinitions(ID).waitingForRelease = false;
          
          % possibly return the event
          if nargout >= 1
@@ -523,6 +530,9 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).highValue  = nan;
          self.eventDefinitions(index).isInverted = false;
          self.eventDefinitions(index).isActive   = false;
+         self.eventDefinitions(index).isRelease  = false;
+         self.eventDefinitions(index).waitingForRelease = false;
+
       end
       
       % Activate all events
@@ -561,16 +571,19 @@ classdef dotsReadable < handle
             return
          end
          
+         % list of event names 
+         names = {self.eventDefinitions.name};
+         
          % Activate
          if nargin > 1 && ~isempty(activateList)
             if ischar(activateList)
-               ind = strcmp(activateList, {self.eventDefinitions.name});
+               ind = strcmp(activateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = true;
                end                  
             else
                for ii = 1:length(activateList)
-                  ind = strcmp(activateList{ii}, {self.eventDefinitions.name});
+                  ind = strcmp(activateList{ii}, names);
                   if any(ind)
                      self.eventDefinitions(ind).isActive = true;
                   end
@@ -581,13 +594,13 @@ classdef dotsReadable < handle
          % Deactivate
          if nargin > 2 && ~isempty(deactivateList)
             if ischar(deactivateList)
-               ind = strcmp(deactivateList, {self.eventDefinitions.name});
+               ind = strcmp(deactivateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = false;
                end
             else
                for ii = 1:length(deactivateList)
-                  ind = strcmp(deactivateList{ii}, {self.eventDefinitions.name});
+                  ind = strcmp(deactivateList{ii}, names);
                   if any(ind)
                      self.eventDefinitions(ind).isActive = false;
                   end
@@ -644,6 +657,16 @@ classdef dotsReadable < handle
             data = self.history(historyIndex, :);
             ID = data(1);
             name = self.eventDefinitions(ID).name;
+            
+            % check release flag
+            if self.eventDefinitions(ID).isRelease && ...
+                  ~self.eventDefinitions(ID).waitingForRelease
+               self.eventDefinitions(ID).waitingForRelease = true;
+               name = '';
+               data = [];
+            else
+               self.eventDefinitions(ID).waitingForRelease = false;
+            end
             
             % Possibly check for acceptedEvent
             if nargin > 2 && ~isempty(acceptedEvents) && ...

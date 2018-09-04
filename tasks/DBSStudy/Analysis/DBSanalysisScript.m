@@ -3,7 +3,7 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2018_08_30_15_32';
+testFilename = 'data_2018_08_31_07_55';
 %testFilename = 'data_2018_08_22_10_45';
 [topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
 
@@ -35,15 +35,15 @@ for tt = 1:nts
       end
       
       % Event times
-      fixIndex    = find(tax>=FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fixOff')),1);
-      sacEndTime  = refTime+FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'RT'))+0.2;
+      fixIndex    = find(tax>=refTime,1);
+      sacEndTime  = refTime+FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'RT'))+0.1;
       sacEndIndex = find(tax>=(sacEndTime),1);
       Lgood       = tax>=(refTime-0.4) & tax<=min(sacEndTime+0.5, ...
          FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fdbkOn')));
    
       % rezero just before fpoff
-      xs = xs - nanmean(xs(fixIndex-10:fixIndex));
-      ys = ys - nanmean(ys(fixIndex-10:fixIndex));
+      %xs = xs - nanmean(xs(fixIndex-10:fixIndex));
+      %ys = ys - nanmean(ys(fixIndex-10:fixIndex));
       
       % x vs y
       subplot(nts, 2, (tt-1)*2+1); hold on;

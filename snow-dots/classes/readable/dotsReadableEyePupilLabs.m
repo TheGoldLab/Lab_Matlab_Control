@@ -28,64 +28,37 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
    
    properties
       
-      % IP address of PupilLab Remote plugin (string)
-      pupilLabIP = '127.0.0.1';
-      
-      % Port for PupilLab Remote plugin (string)
-      pupilLabPort = '50020';
-      
+      % Communication with the pupil labs software and device
+      PLcommunication = struct( ...
+         'IP',                      '127.0.0.1',... % IP address
+         'port',                    '50020',    ... % Port number
+         'socketRefreshInterval',   1,          ... % in sec, may need to refresh socket
+         'timeout',                 5000);          % Communiation timeout, in ms
+
+      % Calibration of the pupil-labs device
+      PLcalibration = struct( ...         
+         'deltaX',                  10,         ... % How far on the X axis the calibration markers should be placed
+         'deltaY',                  6,          ... % How far on the Y axis the calibration markers should be placed
+         'size',                    1,          ... % Size of calibration marker (arbitrary units)
+         'timeout',                 20);            % Calibration timeout, in sec
+         
       % Whether or not to get each eye data along with overall gaze
       getRawEyeData = false;
-      
-      % How far on the X axis the calibration markers should be placed
-      calibDeltaX = 10;
-      
-      % How far on the Y axis the calibration markers should be placed
-      calibDeltaY = 6;
-      
-      % Size of calibration marker (arbitrary units)
-      calibSize = 1;
-      
-      % Communiation timeout, in ms
-      timeout = 5000;
-      
-      % Calibration timeout, in sec
-      calibrationTimeout = 20;
-      
-      % Need to keep refreshing the socket to make sure the data arrives
-      %  This is the time, in sec, defining the refresh interval. It is
-      %  checked automatically during readRawData
-      socketRefreshInterval = 1;
    end
    
    properties (SetAccess = protected)
       
+      % Define data component names
+      componentNames = { ...
+         'gaze x', 'gaze y', 'gaze confidence'...
+         'eye0 x', 'eye0 y', 'eye0 pupil', 'eye0 confidence'...
+         'eye1 x', 'eye1 y', 'eye1 pupil', 'eye1 confidence'}';
+
       % Data index for gaze signal confidence
-      cID = [];
+      cID;
       
-      % Data index for eye x, left and right eye
-      pXIDs = [];
-      
-      % Data index for eye y, left and right eye
-      pYIDs = [];
-      
-      % Data index for pupil diameter, left and right eye
-      pDIDs = [];
-      
-      % Data index for data confidence, left and right eye
-      pCIDs = [];
-      
-      % dummy index
-      blankID = -1;
-      
-      % Monitor round-trip time
-      roundTripTime = nan;
-      
-      % Latest received message
-      result;
-      
-      % Keep track of socket refresh
-      lastSocketRefresh = [];
+      % Data indices for eye 0, 1: x, y, pupil confidence
+      eIDs;
    end
    
    properties (Access = private)
@@ -97,13 +70,25 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       zmqContext;
       
       % Communication port for control commands
-      reqPort = [];
+      reqPort;
 
       % Communication port for obtaining data
-      gazePort = [];
+      gazePort;
       
       % blank data matrix, to compute once and copy when we get data
-      blankData = [];
+      blankData;
+      
+      % Monitor round-trip time
+      roundTripTime = nan;
+      
+      % Latest received message
+      result;
+      
+      % Keep track of socket refresh
+      lastSocketRefresh;
+      
+      % dummy index
+      blankID = -1;
    end
    
    %% Public methods
@@ -113,7 +98,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       function self = dotsReadableEyePupilLabs()
          self = self@dotsReadableEye();
          self.sampleFrequency=200; % is there a way to query this?
-         self.calibrationProperties.queryDuringCalibration = false; % turn this off by default
+         self.calibration.query = false; % turn this off by default
 
          % Initialize the object
          self.initialize();
@@ -241,12 +226,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
    %% Protected methods
    methods (Access = protected)
       
+      %% openDevice
+      %
+      % This function connects this instance to the PupilLabs software.
+      % Therefore, you must ensure that the software is up and running
+      % for this function to work properly.
       function isOpen = openDevice(self)
-         % openDevice
-         %
-         % This function connects this instance to the PupilLabs software.
-         % Therefore, you must ensure that the software is up and running
-         % for this function to work properly.
          
          % Dumb check for zmq library for communicating with the pupil-labs
          % device
@@ -265,11 +250,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          self.reqPort = zmq.core.socket(self.zmqContext,'ZMQ_REQ');
          
          % Set timeouts to avoid blocking if there are commumication issues
-         zmq.core.setsockopt(self.reqPort,'ZMQ_SNDTIMEO',self.timeout);
+         zmq.core.setsockopt(self.reqPort,'ZMQ_SNDTIMEO',self.PLcommunication.timeout);
          %zmq.core.setsockopt(self.reqPort,'ZMQ_RCVTIMEO',self.timeout);
          
          % Open the communication channel
-         isOpen = ~zmq.core.connect(self.reqPort,['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
+         isOpen = ~zmq.core.connect(self.reqPort,['tcp://' self.PLcommunication.IP ':' self.PLcommunication.port]);
          
          % Only continue if we have successfully opened a REQ connection
          if isOpen
@@ -284,7 +269,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             zmq.core.send(self.reqPort,uint8('SUB_PORT'));
             self.result = zmq.core.recv(self.reqPort);
             self.pupilLabSubAddress = ...
-               ['tcp://' self.pupilLabIP ':' char(self.result)];
+               ['tcp://' self.PLcommunication.IP ':' char(self.result)];
             
             % Request a ZMQ_SUB port
             self.gazePort = zmq.core.socket(self.zmqContext,'ZMQ_SUB');
@@ -301,7 +286,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
       end
       
-      % calibrateDevice
+      %% calibrateDevice
       %
       %  Run pupil labs internal calibration routines with respect
       %   to world camera, then call dotsReadableEye.calibrateDevice
@@ -348,12 +333,11 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             'calibrationEnsemble', {}, self.screenEnsemble);
 
          % Generate calibration target location and sizes
-         xDist = self.calibDeltaX;
-         yDist = self.calibDeltaY;
+         xDist = self.PLcalibration.deltaX;
+         yDist = self.PLcalibration.deltaY;
          targetPositions = [0 0; -xDist yDist; xDist yDist; xDist -yDist;...
             -xDist -yDist; xDist 0; -xDist 0; 0 yDist; 0 -yDist];
-         sizes = 3:-1:1;
-         sizes = sizes * self.calibSize;
+         sizes = (3:-1:1) .* self.PLcalibration.size;
          
          % Create the target. We only need to create the dotsDrawables
          % once, put it into the ensemble, and then change the x/y
@@ -392,7 +376,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             
             % Wait for PupilLab calibration sample done message
             msg = [];
-            endTime = feval(self.clockFunction) + self.calibrationTimeout;
+            endTime = feval(self.clockFunction) + self.PLcalibration.timeout;
             while (isempty(strfind(msg, 'marker_sample_completed')) || ...
                   isempty(strfind(msg, 'timestamp'))) && ...
                   feval(self.clockFunction) < endTime
@@ -430,7 +414,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % Wait for 'stopped' message from PupilLab
          warning('off','zmq:core:recv:bufferTooSmall');
          msg = [];
-         endTime = feval(self.clockFunction) + self.calibrationTimeout;
+         endTime = feval(self.clockFunction) + self.PLcalibration.timeout;
          while isempty(strfind(msg, 'stopped')) && feval(self.clockFunction) < endTime
             msg = char(zmq.core.recv(calNotify,500));
          end
@@ -459,7 +443,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
       end % calibrateDevice
       
-      % Overloaded startRecording function
+      %% Overloaded startRecording function
+      %
       function isRecording = startRecording(self)
          
          % Check for filename
@@ -480,7 +465,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          isRecording = true;
       end % startRecording
       
-      % Overloaded stopRecording function
+      %% Overloaded stopRecording function
+      %
       function isRecording = stopRecording(self)
          
          % Turn off recording
@@ -489,36 +475,33 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          isRecording = false;
       end % stopRecording
       
-      % Overrides method from dotsReadableEye
+      %% Overrides method from dotsReadableEye
+      %
       function components = openComponents(self)
-         
-         % Define data component names
-         names = { ...
-            'gaze x', 'gaze y', 'gaze confidence'...
-            'pupil0 x', 'pupil0 y', 'pupil0 size', 'pupil0 confidence'...
-            'pupil1 x', 'pupil1 y', 'pupil1 size', 'pupil1 confidence'}';
          
          % Check whether getting all data or just gaze
          if self.getRawEyeData
             
             % Make all the components
-            components = struct('ID', num2cell((1:size(names,2))'), 'name', names);
+            components = struct('ID', num2cell((1:size(self.componentNames,2))'), ...
+               'name', self.componentNames);
             
             % Save raw eye IDs
-            self.pXIDs = [find(strcmp('pupil0 x', names)) find(strcmp('pupil1 x', names))];
-            self.pYIDs = [find(strcmp('pupil0 y', names)) find(strcmp('pupil1 y', names))];
-            self.pDIDs = [find(strcmp('pupil0 size', names)) find(strcmp('pupil1 size', names))];
-            self.pCIDs = [find(strcmp('pupil0 confidence', names)) find(strcmp('pupil1 confidence', names))];
+            fstr = @(n,x) find(strcmp(['eye' num2str(n) ' ' x], self.componentNames));
+            self.eIDs = [ ...
+               fstr(0, 'x'), fstr(0, 'y'), fstr(0, 'pupil'), fstr(0, 'confidence'); ...
+               fstr(1, 'x'), fstr(1, 'y'), fstr(1, 'pupil'), fstr(1, 'confidence')];
          else
             
             % Just make the gaze components
-            components = struct('ID', num2cell((1:3)'), 'name', names(1:3));
+            components = struct('ID', num2cell((1:3)'), ...
+               'name', self.componentNames(1:3));
          end
          
          % Alwats save gaze IDs
-         self.xID = find(strcmp('gaze x', names));
-         self.yID = find(strcmp('gaze y', names));
-         self.cID = find(strcmp('gaze confidence', names));
+         self.xID = find(strcmp('gaze x', self.componentNames));
+         self.yID = find(strcmp('gaze y', self.componentNames));
+         self.cID = find(strcmp('gaze confidence', self.componentNames));
 
          % Make a blank data matrix of the correct size. When data come in,
          % we just copy and fill this
@@ -527,22 +510,22 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
 
       end
       
+      %% readRawEyeData
+      %
+      % Get data from PupilLabs. The format of this data is a struct
+      % and details can be found here:
+      %
+      %   https://docs.pupil-labs.com/#pupil-datum-format
+      %
+      % We convert it to the dotsReadable format depending on what
+      % value the dataTypeSelector flag is set to.
       function newData = readRawEyeData(self)
-         % readRawEyeData
-         %
-         % Get data from PupilLabs. The format of this data is a struct
-         % and details can be found here:
-         %
-         %   https://docs.pupil-labs.com/#pupil-datum-format
-         %
-         % We convert it to the dotsReadable format depending on what
-         % value the dataTypeSelector flag is set to.
          
          % Possibly refresh the socket
-         if ~isempty(self.socketRefreshInterval)
+         if ~isempty(self.PLcommunication.socketRefreshInterval)
             if isempty(self.lastSocketRefresh) || ...
                   ((feval(self.clockFunction) - self.lastSocketRefresh) > ...
-                  self.socketRefreshInterval)
+                  self.PLcommunication.socketRefreshInterval)
                self.refreshSocket();
             end
          end
@@ -567,13 +550,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % Collect the data from the parsed struct
          gazePos = cell2num(cell(dataStruct.norm_pos));
-         time = dataStruct.timestamp;
-         confidence = dataStruct.confidence;
+         time    = dataStruct.timestamp;
          
          % Set the data
          newData(self.xID,:) = [self.xID gazePos(1) time];
          newData(self.yID,:) = [self.yID gazePos(2) time];
-         newData(self.cID,:) = [self.cID confidence time];
+         newData(self.cID,:) = [self.cID dataStruct.confidence time];
          
          % Conveniently, the gaze data struct contains the raw data
          %  for each individual eye used to determine the gaze. Thus,
@@ -591,16 +573,17 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
                time = pupilDataStruct.timestamp;
                id = int64(pupilDataStruct.id);
                
-               newData(self.pXIDs(id+1),:) = [self.pXIDs(id+1) pupilPos(1) time];
-               newData(self.pYIDs(id+1),:) = [self.pYIDs(id+1) pupilPos(2) time];
-               newData(self.pDIDs(id+1),:) = [self.pDIDs(id+1) pupilSize time];
-               newData(self.pCIDs(id+1),:) = [self.pCIDs(id+1) confidence time];
+               newData(self.eIDs(id+1,1),:) = [self.eIDs(id+1,1) pupilPos(1)  time];
+               newData(self.eIDs(id+1,2),:) = [self.eIDs(id+1,2) pupilPos(2)  time];
+               newData(self.eIDs(id+1,3),:) = [self.eIDs(id+1,3) pupilSize    time];
+               newData(self.eIDs(id+1,4),:) = [self.eIDs(id+1,4) confidence   time];
             end
          end
       end
       
-      % Transform the normalized x/y eye data into screen coordinates
+      %% Transform the normalized x/y eye data into screen coordinates
       %  with units of degrees visual angle
+      %
       function newData = transformRawData(self, newData)
          
          % Transform gaze x,y
@@ -609,27 +592,23 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % check for all data
          if self.getRawEyeData
             
-            % Transform left eye x,y: scale, rotate, then offset
-            newData([self.pXIDs(1), self.pYIDs(1)], 2) = ...
-               [self.xyScale(1).*newData(self.pXIDs(1),2) ...
-               self.xyScale(2).*newData(self.pYIDs(1),2)] * ...
-               self.rotation + self.xyOffset;
-
-            % Transform right eye x,y: scale, rotate, then offset
-            newData([self.pXIDs(2), self.pYIDs(2)], 2) = ...
-               [self.xyScale(1).*newData(self.pXIDs(2),2) ...
-               self.xyScale(2).*newData(self.pYIDs(2),2)] * ...
-               self.rotation + self.xyOffset;
+            for ee = 1:2
+               % Calibrate each eye separately
+               newData = self.transformRawData@dotsReadableEye( ...
+                  newData, self.eIDs(ee,[1 2]));
+            end            
          end            
       end
       
-      % Override default setupCoordinateRectTransform function
+      %% Override default setupCoordinateRectTransform function
       %  from dotsReadableEye because we do our own calibration here and
       %  don't want to use those transformations
+      %
       function setupCoordinateRectTransform(self)
       end
       
-      % Close the communication channels with pupilLab
+      %% Close the communication channels with pupilLab
+      %
       function closeDevice(self)
          
          % Dumb check that this isn't a loaded file
@@ -648,7 +627,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             self.gazePort = [];
             
             % Disconnect and close the control port
-            zmq.core.disconnect(self.reqPort, ['tcp://' self.pupilLabIP ':' self.pupilLabPort]);
+            zmq.core.disconnect(self.reqPort, ['tcp://' self.PLcommunication.IP ':' self.PLcommunication.port]);
             zmq.core.close(self.reqPort);
             self.reqPort = [];
             
