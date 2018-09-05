@@ -56,28 +56,32 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
             if ~isempty(eitherEvent) && self.eventDefinitions(self.buttonEitherID).isActive && ...
                   (isempty(acceptedEvents) || any(strcmp(eitherEvent, acceptedEvents)))
                
-               % Save active flags
-               LeftIsActive  = self.eventDefinitions(self.buttonLeftID).isActive;
-               RightIsActive = self.eventDefinitions(self.buttonRightID).isActive;
+               % Save event definitions
+               leftEvent  = self.eventDefinitions(self.buttonLeftID);
+               rightEvent = self.eventDefinitions(self.buttonRightID);
                
-               % Set both to active
-               self.eventDefinitions(self.buttonLeftID).isActive  = true;
-               self.eventDefinitions(self.buttonRightID).isActive = true;
+               % Set to either event (except ID)
+               self.eventDefinitions(self.buttonLeftID).isActive   = true;
+               self.eventDefinitions(self.buttonLeftID).isRelease  = self.eventDefinitions(self.buttonEitherID).isRelease;
+               self.eventDefinitions(self.buttonRightID).isActive  = true;
+               self.eventDefinitions(self.buttonRightID).isRelease = self.eventDefinitions(self.buttonEitherID).isRelease;
                
                % call getNextEvent
                [name, data] = self.getNextEvent@dotsReadable(isPeek);
                
                % Check for event
                if (strcmp(name, self.eventDefinitions(self.buttonLeftID).name) && ...
-                     ~LeftIsActive) || ...
+                     ~leftEvent.isActive) || ...
                      (strcmp(name, self.eventDefinitions(self.buttonRightID).name) && ...
-                     ~RightIsActive)                  
+                     ~rightEvent.isActive)                 
                   name = eitherEvent;
                end
                
-               % Reset active flags
-               self.eventDefinitions(self.buttonLeftID).isActive = LeftIsActive;
-               self.eventDefinitions(self.buttonRightID).isActive = RightIsActive;
+               % Reset active/release flags
+               self.eventDefinitions(self.buttonLeftID).isActive   = leftEvent.isActive;
+               self.eventDefinitions(self.buttonLeftID).isRelease  = leftEvent.isRelease;
+               self.eventDefinitions(self.buttonRightID).isActive  = rightEvent.isActive;
+               self.eventDefinitions(self.buttonRightID).isRelease = rightEvent.isRelease;
                
                % done
                return
