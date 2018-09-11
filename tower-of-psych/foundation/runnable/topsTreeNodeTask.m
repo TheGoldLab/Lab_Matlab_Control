@@ -58,16 +58,15 @@ classdef topsTreeNodeTask < topsTreeNode
       % Registry of set listeners... see topsTreeNodeTask
       setRegistry = {'drawables', 'readables'};
       
+      % Whether or not to send TTLs
+      sendTTLs = false;
+      
       % Specify which timing fields to add to the trialData struct
       timingFields = struct( ...
-         'name', ...
-         struct('prefix', 'local', 'tags', {{'trialStart'}}), ...
-         'sendTTLs', ...
-         struct('prefix', 'local', 'tags', {{'TTLStart', 'TTLFinish'}}), ...
-         'screenEnsemble', ...
-         struct('prefix', 'screen', 'tags', {{'trialStart', 'roundTrip'}}), ...
-         'readableList', ...
-         struct('prefix', 'ui', 'tags', {{'trialStart', 'roundTrip'}}));
+         'name',           struct('prefix', 'local',  'tags', {{'trialStart'}}), ...
+         'sendTTLs',       struct('prefix', 'local',  'tags', {{'TTLStart', 'TTLFinish'}}), ...
+         'screenEnsemble', struct('prefix', 'screen', 'tags', {{'trialStart', 'roundTrip'}}), ...
+         'readableList',   struct('prefix', 'ui',     'tags', {{'trialStart', 'roundTrip'}}));
    end
    
    properties (SetAccess = protected)
@@ -81,6 +80,12 @@ classdef topsTreeNodeTask < topsTreeNode
       % property update flags, set by setListeners
       updateFlags;
       
+      % For sending TTLs
+      TTLs = struct(       ...
+         'channel',        0,       ... % Which channel
+         'pauseTime',      0.2,     ... % Time (in sec) between pulses in a sequence
+         'dOutObject',     []);         % The object
+
       % Properties that can be shared from the topsTreeNodeTopNode
       %
       % Handle to screenEnsemble, for timing info
@@ -94,9 +99,6 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % Cell array of playable objects
       playableList = {};
-      
-      % flag to use TTL pulses -- sets timing fields in trialData
-      sendTTLs = false;
    end
    
    methods
@@ -208,11 +210,18 @@ classdef topsTreeNodeTask < topsTreeNode
                topNode = topNode.caller;
             end
             
-            for ff = fieldnames(topNode.sharedProperties)'
+            % Get shared helpers
+            for ff = fieldnames(topNode.sharedHelpers)'
                if isempty(self.(ff{:}))
-                  self.(ff{:}) = topNode.sharedProperties.(ff{:});
+                  self.(ff{:}) = topNode.sharedHelpers.(ff{:});
                end
             end
+         end
+            
+         % Check for TTLs -- if so, get the object
+         if self.sendTTLs
+            self.TTLs.dOutObject = feval( ...
+               dotsTheMachineConfiguration.getDefaultValue('dOutClassName'));
          end
                  
          % initialize registered classes
@@ -265,7 +274,8 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % Write data from the log to disk if the topNode defines a
          % filename
-         if ~isempty(self.caller.filename)
+         if isa(self.caller, 'topsTreeNodeTopNode') && ...
+               ~isempty(self.caller.dataFiles.filename)
             topsDataLog.writeDataFile();
          end
       end
@@ -395,7 +405,7 @@ classdef topsTreeNodeTask < topsTreeNode
             uiRoundTripTimes = nan;
          end
          
-         % Set them using stanard syntax
+         % Set them using standard syntax
          self.setTrialTime([], 'name',           1, localTime);
          self.setTrialTime([], 'screenEnsemble', 1, screenTime);
          self.setTrialTime([], 'screenEnsemble', 2, screenRoundTripTime);
@@ -404,14 +414,20 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % ---- Conditionally send TTL pulses (mod trial count)
          %
-         if self.sendTTLs
+         if ~isempty(self.sendTTLs)
             
-            % put in local frame of ref.. need to test whether this is
-            % necessary or not
-            [TTLStart, TTLFinish, TTLRef] = sendTTLsequence(mod(self.trialCount,4)+1);
+            % Get time of first pulse
+            [TTLStart, TTLRef] = self.TTLs.dOutObject.sendTTLPulse(self.TTLs.channel);
+
+            % get the remaining pulses and save the finish time
+            TTLFinish = TTLStart;
+            for pp = 1:mod(self.trialCount,4)
+               pause(self.TTLs.pauseTime);
+               TTLFinish = self.TTLs.dOutObject.sendTTLPulse(self.TTLs.channel);
+            end
             
             % Set them using timing tags
-            start  = TTLRef - time_local_trialStart;
+            start  = TTLRef - localTime;
             self.setTrialTime([], 'sendTTLs', 1, start);
             self.setTrialTime([], 'sendTTLs', 2, (TTLFinish - TTLStart) + start);
          end

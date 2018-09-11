@@ -8,7 +8,7 @@ if nargin < 1
 end
 
 % get a drawing window
-dotsTheScreen.reset();
+dotsTheScreen.reset('displayIndex', 0);
 dotsTheScreen.openWindow();
 
 % create a lines object

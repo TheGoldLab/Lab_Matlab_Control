@@ -4,7 +4,7 @@
 function demoDrawableDotKinetogram(delay)
 
 if nargin < 1
-    delay = .1;
+    delay = 10;
 end
 
 gridSize = 4;

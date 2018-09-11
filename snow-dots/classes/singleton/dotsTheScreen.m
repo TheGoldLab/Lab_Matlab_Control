@@ -364,15 +364,13 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          mglSetParam('multisampling', double(self.multisample));
          
          % open window, may use default size and frame rate
-         if isempty(self.windowRect)
-            w = [];
-            h = [];
-         else
+         if isempty(self.windowRect) && isempty(self.bitDepth)
+             mglOpen(self.displayIndex);
+         else             
             w = self.windowRect(3) - self.windowRect(1);
             h = self.windowRect(4) - self.windowRect(2);
+            mglOpen(self.displayIndex,w,h,[],self.bitDepth);
          end
-         frameRate = [];
-         mglOpen(self.displayIndex, w, h, frameRate, self.bitDepth);
          
          % choose full scene antialiasing again
          %   once the context has been created

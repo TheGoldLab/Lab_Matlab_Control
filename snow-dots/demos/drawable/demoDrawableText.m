@@ -4,7 +4,7 @@
 function demoDrawableText(delay)
 
 if nargin < 1
-    delay = 2;
+    delay = 4;
 end
 
 % get a drawing window
@@ -21,7 +21,7 @@ tx2.color = [250 25 250];
 tx.string = 'Juniper juice';
 tx.color = [0 128 64];
 dotsDrawable.drawFrame({tx tx2});
-%pause(delay)
+pause(delay)
 
 % close the OpenGL drawing window
 dotsTheScreen.closeWindow();

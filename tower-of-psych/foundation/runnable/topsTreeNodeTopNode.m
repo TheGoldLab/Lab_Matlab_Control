@@ -5,64 +5,47 @@ classdef topsTreeNodeTopNode < topsTreeNode
    % a tree-like structure that runs all of its children as an experiment.
    %
    %  Unlike other topsTreeNodes because it has guis and other helper
-   % objects associated with it
+   % objects associated with it.
+   %
+   %  After creating, use these methods to extend functionality (see below
+   %  for details):
+   %  
+   %  addGUIs
+   %  addDrawables
+   %  addReadables
+   %  addTTLs
    %
    % Created 7/24/18 by jig
    
    properties (SetObservable)
       
-      % Data filename with path
-      filename;
-      
-      % subdirectory for raw files
-      rawDirectory = 'topsDataLog';
-      
-      % subdirectory for readable files
-      readableDirectory = 'dotsReadable';
+      % files/directories for storing data
+      dataFiles = struct( ...
+         'filename',          [],               ... % Data filename with path
+         'rawDirectory',      'topsDataLog',    ... % Subdirectory for raw files
+         'readableDirectory', 'dotsReadable');      % Subdirectory for readable files
 
-      % Abort experiment
-      abortFlag=false;
-      
-      % Pause experiment
-      pauseFlag=false;
-      
-      % Skip to next task
-      skipFlag=false;
-      
-      % Recalibrate
-      calibrateObject;
-      
-      % Run GUI name or fevalable
-      runGUIname;
-      
-      % DatabaseGUI name
-      databaseGUIname;
-      
-      % For TTL pulses -- the channel
-      TTLchannel;
-      
-      % For TTL pulses -- pause between pulses
-      TTLpauseTime;
+      % Flags for on-line flow control (used by run GUI)
+      controlFlags = struct( ...
+         'abort',       false, ...  % abort experiment
+         'pause',       false, ...  % pause experiment
+         'skip',        false, ...  % skip to next task
+         'calibrate',   []);        % calibrate given object (I know, not a flag)
       
       % Structure of properties shared with other (task) nodes
-      sharedProperties = struct( ...
+      sharedHelpers = struct( ...
          'screenEnsemble',    [], ...
          'textEnsemble',      [], ...
          'readableList',      [], ...
-         'playableList',      [], ...
-         'sendTTLs',          []);
+         'playableList',      []);
    end
    
    properties (Hidden)
       
-      % handle to taskGui interface
-      runGUIHandle = [];
-      
-      % databaseGUI name
-      databaseGUIHandle = [];
-      
-      % For TTL pulses -- the object
-      TTLdOutObject;
+      % GUIs
+      GUIs = struct( ...
+         'database',    struct('name', [], 'handle', []), ...
+         'run',         struct('name', [], 'handle', []));
       
       % silly flag to avoid errors with GUI startup
       isStarted = false;
@@ -106,11 +89,22 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %  Can override simply by setting to new value
          %  Set to empty matrix to turn off data storage
          c = clock;
-         self.filename = fullfile( ...
+         self.dataFiles.filename = fullfile( ...
             dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-            self.name, self.rawDirectory, ...
+            self.name, self.dataFiles.rawDirectory, ...
             sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
             c(1), c(2), c(3), c(4), c(5)));
+      end
+      
+      %% Utility: add GUIs
+      %
+      %
+      function addGUIs(self, varargin)
+         
+         % varargin is GUI type/name pairs
+         for ii=1:2:nargin-1
+            self.GUIs.(varargin{ii}).name = varargin{ii+1};
+         end
       end
       
       %% Utility: add default drawables
@@ -125,14 +119,14 @@ classdef topsTreeNodeTopNode < topsTreeNode
          if displayIndex >= 0
             
             % Make the screen ensemble
-            self.sharedProperties.screenEnsemble = ...
+            self.sharedHelpers.screenEnsemble = ...
                dotsTheScreen.makeEnsemble(remoteDrawing, displayIndex);
             
             % Add screen start/finish fevalables to the main topsTreeNode
             self.addCall('start', {@callObjectMethod, ...
-               self.sharedProperties.screenEnsemble, @open}, 'openScreen');
+               self.sharedHelpers.screenEnsemble, @open}, 'openScreen');
             self.addCall('finish', {@callObjectMethod, ...
-               self.sharedProperties.screenEnsemble, @close}, 'closeScreen');
+               self.sharedHelpers.screenEnsemble, @close}, 'closeScreen');
             
             % Possibly make a text ensemble for showing messages
             %
@@ -140,13 +134,13 @@ classdef topsTreeNodeTopNode < topsTreeNode
             if nargin > 3 && addTextEnsemble
                
                % Make the ensemble
-               self.sharedProperties.textEnsemble = ...
+               self.sharedHelpers.textEnsemble = ...
                   dotsDrawableText.makeEnsemble('text', 2, ...
-                  [], self.sharedProperties.screenEnsemble);
+                  [], self.sharedHelpers.screenEnsemble);
                
                % Add a final message
                self.addCall('finish', {@dotsDrawableText.drawEnsemble, ...
-                  self.sharedProperties.textEnsemble, ...
+                  self.sharedHelpers.textEnsemble, ...
                   {'All done.', 'Thank you!'}, 2, 0}, 'finalMessage');
             end
          end
@@ -166,22 +160,22 @@ classdef topsTreeNodeTopNode < topsTreeNode
                readableNames = {readableNames};
             end
             
-            self.sharedProperties.readableList = cell(size(readableNames));
+            self.sharedHelpers.readableList = cell(size(readableNames));
             for ii = 1:length(readableNames)
                
                % Get and save the ui object
                ui = eval(readableNames{ii});
-               self.sharedProperties.readableList{ii} = ui;
+               self.sharedHelpers.readableList{ii} = ui;
                
                % Check if it needs the screen
                if any(strcmp(properties(ui), 'screenEnsemble'))
-                  ui.screenEnsemble = self.sharedProperties.screenEnsemble;
+                  ui.screenEnsemble = self.sharedHelpers.screenEnsemble;
                end
                
                % Set up data recording
-               if ~isempty(self.filename)
-                  [path, name] = fileparts(self.filename);
-                  ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), self.readableDirectory);
+               if ~isempty(self.dataFiles.filename)
+                  [path, name] = fileparts(self.dataFiles.filename);
+                  ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), self.dataFiles.readableDirectory);
                   ui.filename = sprintf('%s_%s', name, readableNames{ii}(13:end));
                end
                
@@ -203,17 +197,17 @@ classdef topsTreeNodeTopNode < topsTreeNode
       function start(self)
          
          % start databaseGUI
-         if ~isempty(self.databaseGUIname) && isempty(self.databaseGUIHandle)
-            self.databaseGUIHandle = feval(self.databaseGUIname);
+         if ~isempty(self.GUIs.database.name) && isempty(self.GUIs.database.handle)
+            self.GUIs.database.handle = feval(self.GUIs.database.name);
          end
          
          % start runGUI
-         if ~isempty(self.runGUIname) && isempty(self.runGUIHandle)
-            self.runGUIHandle = feval(self.runGUIname, self, self.sharedProperties.readableList{:});
+         if ~isempty(self.GUIs.run.name) && isempty(self.GUIs.run.handle)
+            self.GUIs.run.handle = feval(self.GUIs.run.name, self, self.sharedHelpers.readableList{:});
          else
             
             % Start data logging
-            if ~isempty(self.filename)
+            if ~isempty(self.dataFiles.filename)
                
                % Flush the log
                topsDataLog.theDataLog(true);
@@ -223,7 +217,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                
                % Write it to "filename" for the first time; later calls
                %  don't need to keep track of filename
-               topsDataLog.writeDataFile(self.filename);
+               topsDataLog.writeDataFile(self.dataFiles.filename);
             end
             
             % Run for realsies
@@ -248,13 +242,13 @@ classdef topsTreeNodeTopNode < topsTreeNode
             self.finish@topsRunnable();
             
             % Save self and always write data log to file
-            if ~isempty(self.filename)
+            if ~isempty(self.dataFiles.filename)
                
                % save self, without the gui handles
                warning('OFF', 'MATLAB:structOnObject');
                selfStruct = struct(self);
-               selfStruct.runGUIHandle = [];
-               selfStruct.databaseGUIHandle = [];
+               selfStruct.GUIs.run.handle = [];
+               selfStruct.GUIs.database.handle = [];
                topsDataLog.logDataInGroup(selfStruct, 'mainTreeNode');
                topsDataLog.writeDataFile();
             end
@@ -266,10 +260,10 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % Does GUI need updating?
       function updateGUI(self, name, varargin)
          
-         if ~isempty(self.runGUIHandle)
+         if ~isempty(self.GUIs.run.handle)
             
-            feval(self.runGUIname, [self.runGUIname name], ...
-               self.runGUIHandle, [], guidata(self.runGUIHandle), varargin{:});
+            feval(self.GUIs.run.name, [self.GUIs.run.name name], ...
+               self.GUIs.run.handle, [], guidata(self.GUIs.run.handle), varargin{:});
          end
       end
       
@@ -284,32 +278,32 @@ classdef topsTreeNodeTopNode < topsTreeNode
          ret = 0;
          
          % Possibly check gui
-         if ~isempty(self.runGUIHandle)
+         if ~isempty(self.GUIs.run.handle)
             drawnow;
          end
          
          % Pause experiment, wait for ui
-         while self.pauseFlag && ~self.abortFlag
+         while self.controlFlags.pause && ~self.controlFlags.abort
             pause(0.01);
          end
          
          % Abort experiment
-         if self.abortFlag
-            self.abortFlag=false;
+         if self.controlFlags.abort
+            self.controlFlags.abort=false;
             self.abort();
             ret = 1;
             return
          end
          
          % Recalibrate
-         if ~isempty(self.calibrateObject)
-            calibrate(self.calibrateObject);
-            self.calibrateObject = [];
+         if ~isempty(self.controlFlags.calibrate)
+            calibrate(self.controlFlags.calibrate);
+            self.controlFlags.calibrate = [];
          end
          
          % Skip to next task
-         if self.skipFlag
-            self.skipFlag=false;
+         if self.controlFlags.skip
+            self.controlFlags.skip=false;
             child.abort();
             ret = 1;
             return
@@ -336,52 +330,14 @@ classdef topsTreeNodeTopNode < topsTreeNode
          % add the call
          addCall(callList, fevalable, name);
       end
-      
-      %% sentTTLsequence
-      %
-      % function [startTime, finishTime, refTime] = sendTTLsequence(numPulses)
-      %
-      % Utility for sending a sequence of TTL pulses with standard parameters.
-      % This way you only have to change it here.
-      %
-      function [startTime, finishTime, refTime] = sendTTLsequence(self, numPulses)
-         
-         if isempty(self.TTLdOutObject)
-            self.TTLdOutObject = feval( ...
-               dotsTheMachineConfiguration.getDefaultValue('dOutClassName'));
-            self.TTLchannel   = 0;
-            self.TTLpauseTime = 0.2;
-         end           
-         
-         % Check argument
-         if nargin < 1 || isempty(numPulses)
-            numPulses = 1;
-         end
-         
-         if numPulses < 1
-            startTime  = [];
-            finishTime = [];
-            return
-         end
-         
-         % Get time of first pulse
-         [startTime, refTime] = self.TTLdOutObject.sendTTLPulse(self.TTLchannel);
-         
-         % get the remaining pulses and save the finish time
-         finishTime = startTime;
-         for pp = 1:numPulses-1
-            pause(self.TTLpauseTime);
-            finishTime = self.TTLdOutObject.sendTTLPulse(self.TTLchannel);
-         end
-      end
    end
    
    methods (Static)
       
-      %% Utility for making FIRA from a standard data file created by an
-      % experiment run using a topsTreeNodeTopNode
+      %% getDataFromFile
       %
-      % Make a FIRA data struct from the raw/pupil data of a set of modular tasks
+      % Utility for making FIRA from a standard data file created by an
+      % experiment run using a topsTreeNodeTopNode
       %
       % Calls topsDataLog.parseEcodes, which assumes that the tag 'trial' corresponds
       %  to a trial data structure in the topsDataLog.
@@ -416,7 +372,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          [filepath, fname] = fileparts(filename);
          if nargin>=2 && ~isempty(studyTag)
             filepath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), studyTag);
-            filewithpath  = fullfile(filepath, 'topsDataLog',  [fname '.mat']);
+            filewithpath = fullfile(filepath, 'topsDataLog',  [fname '.mat']);
          end
          
          %% Get the ecode matrix using the topsDataLog utility
@@ -462,14 +418,16 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %% Get the analog data
          %
          % Use constructor class static method to read the data file.
-         if ~isempty(topNode.sharedProperties.readableList)
+         if ~isempty(topNode.sharedHelpers.readableList)
             
-            % Get the readables file
-            uiFile = fullfile(filepath, 'dotsReadable', fname);
+            % Get the readables file base name
+            uiFile = fullfile(filepath, topNode.dataFiles.readableDirectory, fname);
             
-            for ii = 1:length(topNode.sharedProperties.readableList)
+            % Loop through the readables
+            for ii = 1:length(topNode.sharedHelpers.readableList)
                
-               ui = topNode.sharedProperties.readableList{ii};
+               % Get the current readable
+               ui = topNode.sharedHelpers.readableList{ii};
                
                % For now just for eye data... will need to generalize this later
                if isa(ui, 'dotsReadableEye')
