@@ -414,7 +414,7 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % ---- Conditionally send TTL pulses (mod trial count)
          %
-         if ~isempty(self.sendTTLs)
+         if self.sendTTLs
             
             % Get time of first pulse
             [TTLStart, TTLRef] = self.TTLs.dOutObject.sendTTLPulse(self.TTLs.channel);
