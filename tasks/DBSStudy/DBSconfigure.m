@@ -62,10 +62,11 @@ topNode.addDrawables(topNode.nodeData{'Settings'}{'displayIndex'}, ...
    topNode.nodeData{'Settings'}{'remoteDrawing'}, true);
 
 % Add the user interface device(s)
-if length(topNode.nodeData{'Settings'}{'uiList'}) == 1
-   topNode.addReadables(topNode.nodeData{'Settings'}{'uiList'});
+uiList = topNode.nodeData{'Settings'}{'uiList'};
+if ischar(uiList) || length(uiList) == 1
+   topNode.addReadables(uiList);
 else
-   topNode.addReadables(topNode.nodeData{'Settings'}{'uiList'}, false, true);
+   topNode.addReadables(uiList, false, true);
 end
 
 %% ---- Make call lists to show text between tasks
