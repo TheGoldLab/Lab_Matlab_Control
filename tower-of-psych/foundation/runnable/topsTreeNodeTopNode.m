@@ -150,7 +150,13 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %
       % Add the readables used across tasks
       %
-      function addReadables(self, readableNames)
+      % readableNames can be:
+      %     - string name of class to use
+      %     - cell array of string names of classes to use
+      %  doCalibration: logical array of flags to calibrate each object
+      %  doRecording: logical array of flags to record for each object
+      
+      function addReadables(self, readableNames, doCalibration, doRecording)
          
          % ---- Check for readables
          %
@@ -159,9 +165,22 @@ classdef topsTreeNodeTopNode < topsTreeNode
             if ~iscell(readableNames)
                readableNames = {readableNames};
             end
+            numReadables = length(readableNames);
+            
+            if nargin <= 3 || isempty(doCalibration)
+               doCalibration = true(1,numReadables);
+            elseif length(doCalibration) == 1 && numReadables > 1
+               doCalibration = repmat(doCalibration, 1, numReadables);
+            end
+            
+            if nargin <= 4 || isempty(doRecording)
+               doRecording = true(1, numReadables);
+            elseif length(doRecording) == 1 && numReadables > 1
+               doRecording = repmat(doRecording, 1, numReadables);
+            end
             
             self.sharedHelpers.readableList = cell(size(readableNames));
-            for ii = 1:length(readableNames)
+            for ii = 1:numReadables
                
                % Get and save the ui object
                ui = eval(readableNames{ii});
@@ -181,10 +200,16 @@ classdef topsTreeNodeTopNode < topsTreeNode
                
                % Add start/finish fevalables -- remember the finishes run
                % in reverse order
-               self.addCall('start',  {@calibrate, ui}, 'calibrate ui');
-               self.addCall('start',  {@record, ui, true}, 'start recording ui');
+               if doCalibration(ii)
+                  self.addCall('start',  {@calibrate, ui}, 'calibrate ui');
+               end
+               if doRecording(ii)
+                  self.addCall('start',  {@record, ui, true}, 'start recording ui');
+               end
                self.addCall('finish', {@close, ui}, 'close ui');
-               self.addCall('finish', {@record, ui, false}, 'finish recording ui');
+               if doRecording(ii)
+                  self.addCall('finish', {@record, ui, false}, 'finish recording ui');
+               end
             end
          end
       end

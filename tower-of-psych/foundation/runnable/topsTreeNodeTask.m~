@@ -842,11 +842,17 @@ classdef topsTreeNodeTask < topsTreeNode
          self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s_%s', ...
             self.timingFields.(timingType).prefix, tag)) = value(index(1));
 
-         if length(index)>1
-            for ii = index(2:end)'
-               self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s%d_%s', ...
-                  self.timingFields.(timingType).prefix, ii, tag)) = value(ii);
+         if length(index)>1 || (nargin>=6 && ~isempty(index))
+            if nargin<6 || isempty(index)
+               index = 1:length(value);
             end
+            for ii = index(:)'
+               self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s%d_%s', ...
+                  self.timingFields.(timingType).prefix, ii, tag)) = value;
+            end
+         else
+            self.trialData(self.trialIndices(trialIndex)).(sprintf('time_%s_%s', ...
+               self.timingFields.(timingType).prefix, tag)) = value;
          end
       end
       
