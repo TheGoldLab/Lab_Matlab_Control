@@ -1,6 +1,12 @@
 classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    % @class topsTreeNodeTaskRTDots
    %
+   % Adrian's comments:
+   % the class topsTreeNodeTask can be found in 
+   % /home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/foundation/runnable/topsTreeNodeTask.m
+   % so I suggest to do:
+   % addpath('/home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/foundation/runnable');
+   %
    % Response-time dots (RTD) task
    %
    % For standard configurations, call:
