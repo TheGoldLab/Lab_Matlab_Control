@@ -2,10 +2,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    % @class topsTreeNodeTaskRTDots
    %
    % Adrian's comments:
-   % the class topsTreeNodeTask can be found in 
+   % required class topsTreeNodeTask can be found in 
    % /home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/foundation/runnable/topsTreeNodeTask.m
+   % required class topsFoundation can be found in 
+   % /home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/foundation/topsFoundation.m
+   %
+   % required function dealMat2Struct be found in 
+   % /home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/utilities/dealMat2Struct.m
+   %
+   % missing function cell2num --> I found it from FileExchange
+   %
    % so I suggest to do:
-   % addpath('/home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/foundation/runnable');
+   % addpath(genpath('/home/adrian/Git/GitHub/work/Lab-Matlab-Control/tower-of-psych/'));
    %
    % Response-time dots (RTD) task
    %
