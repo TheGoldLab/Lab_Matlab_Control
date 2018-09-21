@@ -21,14 +21,14 @@ classdef dotsReadableEyeEyelinkSAVE < dotsReadableEye
         isEyelinkTime = true;
         
         % function that returns the current time as a number
-        clockFunction = mglGetSecs();
+        %clockFunction = mglGetSecs();
     end
     
     methods
        
         % Constructor takes no arguments.
         function self = dotsReadableEyeEyelink()
-            self = self@dotsReadableEye();
+            self = dotsReadableEyeEyelink@dotsReadableEye();
             self.initialize();
         end
         
