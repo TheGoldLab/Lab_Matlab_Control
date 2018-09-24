@@ -13,7 +13,8 @@ classdef dotsReadable < handle
    %>   - openDevice()
    %>   - closeDevice()
    %>   - calibrateDevice()
-   %>   - recordDevice()
+   %>   - startRecording()
+   %    - stopRecording()
    %    - resetDevice()
    %>   - openComponents()
    %>   - closeComponents()
@@ -208,7 +209,7 @@ classdef dotsReadable < handle
          % Check for on/off
          if onFlag && ~self.isRecording
             
-            % use overloaded recordDevice for device-specific calls
+            % use overloaded startRecording for device-specific calls
             self.isRecording = self.startRecording();
             
          elseif ~onFlag && self.isRecording
@@ -1035,10 +1036,13 @@ classdef dotsReadable < handle
          lows = [definitions.lowValue];
          highs = [definitions.highValue];
          isInverted = [definitions.isInverted];
-         isActive = [definitions.isActive];
-         
+         isActive = [definitions.isActive];         
          isInRange = (newValues <= highs) & (newValues >= lows);
          isEvent = isActive & xor(isInRange, isInverted);
+         
+         if any(data(:,2)>3)
+            disp(data)
+         end
          
          % disp(data(:,2))
          % disp(isEvent)

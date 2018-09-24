@@ -38,6 +38,9 @@ classdef topsTreeNodeTopNode < topsTreeNode
          'textEnsemble',      [], ...
          'readableList',      [], ...
          'playableList',      []);
+      
+      % Flag to re-seed random number generator
+      randSeed = true;
    end
    
    properties (Hidden)
@@ -243,6 +246,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
                % Write it to "filename" for the first time; later calls
                %  don't need to keep track of filename
                topsDataLog.writeDataFile(self.dataFiles.filename);
+            end
+            
+            % Seed random-number generator
+            if self.randSeed
+               rng('shuffle');
             end
             
             % Run for realsies
