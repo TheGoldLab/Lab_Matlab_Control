@@ -9,5 +9,12 @@
 		"type": "git",
 		"update": "",
 		"url": "https://github.com/aernesto/Lab-Matlab-Control.git"
+	},
+	{
+		"flavor": "Adrian_tests",
+		"name": "lmu_forked",
+		"pathPlacement": "append",
+		"type": "git",
+		"url": "https://github.com/aernesto/Lab-Matlab-Utilities.git"
 	}
 ]
