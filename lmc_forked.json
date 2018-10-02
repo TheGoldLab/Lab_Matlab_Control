@@ -16,5 +16,10 @@
 		"name": "mgl",
 		"type": "git",
 		"url": "https://github.com/justingardner/mgl.git"
+	},
+	{
+		"name": "tcp_udp_ip",
+		"type": "git",
+		"url": "https://github.com/jmcanana/tcp_udp_ip.git"
 	}
 ]
