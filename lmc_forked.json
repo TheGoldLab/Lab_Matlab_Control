@@ -1,21 +1,20 @@
 [
 	{	
 		"flavor": "Adrian_Tests",
-		"hook": "",
 		"name": "lmc_forked",
-		"pathPlacement": "append",
-		"subfolder": "",
-		"toolboxRoot": "",
 		"type": "git",
-		"update": "",
 		"url": "https://github.com/aernesto/Lab-Matlab-Control.git"
 	},
 	{
 		"flavor": "Adrian_tests",
 		"name": "lmu_forked",
-		"pathPlacement": "append",
 		"type": "git",
 		"url": "https://github.com/aernesto/Lab-Matlab-Utilities.git",
 		"toolboxRoot": "#lmu_forked"
+	},
+	{
+		"name": "mgl",
+		"type": "git",
+		"url": "https://github.com/justingardner/mgl.git"
 	}
 ]
