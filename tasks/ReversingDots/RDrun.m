@@ -9,10 +9,10 @@ UI = 'dotsReadableEyeMouseSimulator';
 topNode = topsTreeNodeTopNode('dotsReversal');
       
 % Use the GUI
-topNode.runGUIname = 'eyeGUI';
+%topNode.runGUIname = 'eyeGUI';
 
 % Turn off file saving
-topNode.filename = [];
+topNode.dataFiles.filename = [];
 
 % Add the screen and text ensemble
 topNode.addDrawables(DIPSLAY_INDEX, USE_REMOTE, false);
