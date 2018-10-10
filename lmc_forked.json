@@ -1,6 +1,5 @@
 [
 	{	
-		"flavor": "Adrian_Tests",
 		"name": "lmc_forked",
 		"type": "git",
 		"url": "https://github.com/aernesto/Lab-Matlab-Control.git"
@@ -16,10 +15,5 @@
 		"name": "mgl",
 		"type": "git",
 		"url": "https://github.com/justingardner/mgl.git"
-	},
-	{
-		"name": "tcp_udp_ip",
-		"type": "git",
-		"url": "https://github.com/jmcanana/tcp_udp_ip.git"
 	}
 ]
