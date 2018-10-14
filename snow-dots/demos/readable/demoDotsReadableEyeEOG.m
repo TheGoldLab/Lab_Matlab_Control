@@ -5,7 +5,7 @@ clear classes
 
 % Get the object
 m = dotsReadableEyeEOG();
-m.deviceParameters.gains = [100 100];
+m.deviceParameters.gains = [25 25];
 
 % Open the gaze monitor
 m.openGazeMonitor();

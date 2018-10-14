@@ -80,9 +80,9 @@ classdef dotsReadableEye < dotsReadable
          'fpX',                        10,   ... % x offset for calibration target grid
          'fpY',                        5,    ... % y offset for calibration target grid
          'fpSize',                     1.5,  ... % Size of calibration target
-         'varTolerance',               0.0001, ... % Tolerance for using calibration values
+         'varTolerance',               5, ...  %0.0001, ... % Tolerance for using calibration values
          'offsetVarTolerance',         2.0,  ... % Tolerance for using calibration values
-         'transformTolerance',         4.0,  ... % Tolerance for using calibration values
+         'transformTolerance',         15.0, ... % 4.0,  ... % Tolerance for using calibration values
          'numberTries',                5,    ... % number of times to try calibrating
          'targetEnsemble',             [],   ... % for calibration targets
          'eyeEnsemble',                [],   ... % the showing eye position 
@@ -883,7 +883,7 @@ classdef dotsReadableEye < dotsReadable
                targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
                
                % Wait for fixation
-               pause(0.4);
+               pause(0.3);
                
                % flush the eye data
                self.flushData();
@@ -896,11 +896,27 @@ classdef dotsReadableEye < dotsReadable
                      self.calibration.numberTries*numFixations
                   
                   % Collect a bunch of samples
-                  for jj = 1:self.calibration.fullN
+                  self.beginTrial();
+                  pause(0.1);
+                  ind = 1;
+                  while ind < self.calibration.fullN
                      dataMatrix = self.readRawEyeData();
-                     gazeRawXY(jj,:) = dataMatrix([self.xID, self.yID], 2)';
+                     if ~isempty(dataMatrix)
+                         xs = dataMatrix(dataMatrix(:,1)==self.xID, 2);
+                         ys = dataMatrix(dataMatrix(:,1)==self.yID, 2);
+                         num_samples = length(xs);
+                         if num_samples > 0 && num_samples == length(ys)
+                             num_samples = min(num_samples, self.calibration.fullN-ind+1);
+                             gazeRawXY(ind+(0:num_samples-1),1) = xs(1:num_samples);
+                             gazeRawXY(ind+(0:num_samples-1),2) = ys(1:num_samples);
+                             ind = ind + num_samples;
+                         end
+                     end
                   end
+                  self.endTrial();
                   
+                  disp(var(gazeRawXY))
+                  disp(self.calibration.varTolerance)
                   % Check tolerance
                   if all(var(gazeRawXY) < self.calibration.varTolerance)
                      % Good! Save median and go on to next sample
@@ -923,7 +939,7 @@ classdef dotsReadableEye < dotsReadable
                targetEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
                
                % wait a moment
-               pause(0.7);
+               pause(0.5);
             end
             
             % Get vectors connecting each point

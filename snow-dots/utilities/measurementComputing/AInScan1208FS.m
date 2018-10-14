@@ -100,7 +100,7 @@ classdef AInScan1208FS < handle
         productID = 130;
         
         % differential(0-7) or single-ended(8:15) input channels to scan
-        channels = [8,9];
+        channels = [8 9];
         
         % precision-and-range selection for differential channels
         gains = [0 7];
