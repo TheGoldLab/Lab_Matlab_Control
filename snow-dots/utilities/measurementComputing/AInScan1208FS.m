@@ -32,7 +32,7 @@ classdef AInScan1208FS < handle
     % @details
     % In particular, for each transaction that it initiates, mexHID()
     % returns a pre- and post-transaction frame number, each with its own
-    % timetsamp.  The pre-post interval indicates how many frames (usually
+    % timestamp.  The pre-post interval indicates how many frames (usually
     % 2) or seconds it took to carry out a transaction.  Large intervals
     % might indicate a problem.  The post-transaction timestamps tend to
     % align with the discrete USB frame edges.
@@ -192,8 +192,7 @@ classdef AInScan1208FS < handle
         % Matlab-side cache of raw HID report data
         baseElementCache;
     end
-    
-    
+        
     methods
         % Open and configure the 1208FS device with mexHID().
         % @param properties optional struct of HID device properties for
@@ -205,7 +204,7 @@ classdef AInScan1208FS < handle
         % 1208FS and determines which is the primary front-end (primaryID)
         % and which is the analog output scan device (outputID).
         function self = AInScan1208FS(properties)
-            
+ 
             % do some byte-level accounting to use during sample
             % reconstruction
             self.allInputCookies = ...
@@ -300,11 +299,11 @@ classdef AInScan1208FS < handle
         % necessary, with stopScan().  Get scan data in a useable form with
         % getScanWaveform().
         % @details
-        % Returns a positive tchannelsimestamp for when the "prepare" command was
+        % Returns a positive timestamp for when the "prepare" command was
         % acknowleged by the device, as measured with the host CPU clock.
         % This timestamp corresponds to a USB frame and has 1ms
         % granularity.  Returns a negative value if there was an error.
-        function timestamp = prepareToScan(self)
+        function timestamp = prepareToScan(self, stopScanFlag)
             if ~self.isAvailable
                 timestamp = -1;
                 return;
@@ -314,7 +313,9 @@ classdef AInScan1208FS < handle
             self.buildHIDReports();
             
             % previous scan may not be running now
-            self.stopScan();
+            if nargin < 2 || stopScanFlag
+               self.stopScan();
+            end
             
             % configure scan with current channels and gains
             [status, configTiming] = mexHID('writeDeviceReport', ...
@@ -583,8 +584,7 @@ classdef AInScan1208FS < handle
             self.stopScan();
         end
     end
-    
-    
+        
     methods (Access = protected)
         % Remake the config, start, and stop output reports.
         function buildHIDReports(self)

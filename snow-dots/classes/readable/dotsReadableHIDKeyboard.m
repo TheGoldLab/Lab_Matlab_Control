@@ -82,6 +82,9 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          
          % flush
          self.flushData();
+         
+         % jig
+         self.deviceInfo
       end
       
       % Wrapper for define event

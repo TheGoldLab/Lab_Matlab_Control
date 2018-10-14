@@ -17,8 +17,8 @@ assert(aIn.isAvailable, '1208FS unavailable')
 
 % choose some differential channels
 %   these have configurable gains, making for a fuller test
-aIn.channels = [8 9 10 11];
-aIn.gains = [0 2 4 6];
+aIn.channels = 0; %[0 9 10 11];
+aIn.gains = 1; %[1 2 4 6];
 
 % choose other scan parameters arbitrarily
 duration = 1;

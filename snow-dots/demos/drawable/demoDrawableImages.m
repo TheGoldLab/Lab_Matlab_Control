@@ -8,13 +8,13 @@ if nargin < 1
 end
 
 % get a drawing window
-dotsTheScreen.reset();
+dotsTheScreen.reset('displayIndex', 0);
 dotsTheScreen.openWindow();
 
 % create an object which can read an image file for OpenGL display
 %   the 'Tetons-Sunset.jpg' image is included along with this demo
 im = dotsDrawableImages();
-im.fileNames = {'Tetons-Sunset.jpg'};
+im.fileNames = {'GoodJob.jpg'};
 im.prepareToDrawInWindow();
 
 % show the image without stretching
