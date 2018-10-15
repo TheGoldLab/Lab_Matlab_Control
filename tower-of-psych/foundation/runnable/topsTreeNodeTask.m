@@ -825,8 +825,8 @@ classdef topsTreeNodeTask < topsTreeNode
          end
       end
       
-      %% Utility to save timing data in the trialData struct using a
-      % standard format
+      %% Utility to save timing data in the trialData struct 
+      %     using a standard format
       %
       function setTrialTime(self, trialIndex, timingType, tag, value, index)
          
