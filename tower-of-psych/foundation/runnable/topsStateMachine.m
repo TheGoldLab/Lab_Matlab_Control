@@ -524,6 +524,10 @@ classdef topsStateMachine < topsConcurrent
             
             % args = [min mean max] of exponential random
             time_ = args(1) + min(exprnd(args(2)), args(3));
+            
+         elseif length(args) > 3
+             
+             time_ = args(randi(length(args)));
          end
          
       end
