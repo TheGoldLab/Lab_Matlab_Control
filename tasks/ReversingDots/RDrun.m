@@ -5,17 +5,19 @@ DIPSLAY_INDEX = 0;
 USE_REMOTE = false;
 UI = 'dotsReadableEyeMouseSimulator';
 
+
 % Make the top Node
 topNode = topsTreeNodeTopNode('dotsReversal');
       
 % Use the GUI
-%topNode.runGUIname = 'eyeGUI';
+% topNode.runGUIname = 'eyeGUI';
 
 % Turn off file saving
-topNode.dataFiles.filename = [];
+topNode.dataFiles.filename = '/Users/lab/GoldLabPsychophysics/Downloaded/Lab-Matlab-Control-eyeDev/tasks/ReversingDots/Data/Subject1';
 
 % Add the screen and text ensemble
 topNode.addDrawables(DIPSLAY_INDEX, USE_REMOTE, false);
+
 
 % Add the user interface device(s)
 topNode.addReadables(UI);
@@ -28,4 +30,3 @@ topNode.addChild(task);
 
 % Run it!
 topNode.run();
-
