@@ -13,6 +13,8 @@ classdef dotsReadable < handle
    %>   - openDevice()
    %>   - closeDevice()
    %>   - calibrateDevice()
+   %>   - beginTrial()
+   %>   - endTrial()
    %>   - startRecording()
    %    - stopRecording()
    %    - resetDevice()
@@ -533,14 +535,13 @@ classdef dotsReadable < handle
          self.eventDefinitions(index).isActive   = false;
          self.eventDefinitions(index).isRelease  = false;
          self.eventDefinitions(index).waitingForRelease = false;
-
       end
       
       % Activate all events
       %
       %  To do this separately for each event, call defineEvent and set
       %  isActive flag to true
-      function activateEvents(self)         
+      function activateEvents(self)      
          if ~isempty(self.eventDefinitions)
             [self.eventDefinitions(:).isActive] = deal(true);
          end
@@ -565,6 +566,9 @@ classdef dotsReadable < handle
       end
       
       % Set/unset activeFlag
+      %
+      % NOTE: if anything changes here, be careful to update activateEvents
+      % and deactivateEvents, above, as appropriate
       function setEventsActiveFlag(self, activateList, deactivateList)
          
          % Need event definitions
@@ -793,6 +797,20 @@ classdef dotsReadable < handle
          
          self.deviceResetTime = feval(self.clockFunction) - val;
       end
+      
+      %> beginTrial()
+      %
+      % In case you need to turn on/off recording at the beginning of each
+      % trial (e.g., dotsReadableEyeEOG, using the PMD1208FS device)
+      function beginTrial(self)
+      end
+      
+      %> endTrial()
+      %
+      % In case you need to turn on/off recording at the beginning of each
+      % trial (e.g., dotsReadableEyeEOG, using the PMD1208FS device)
+      function endTrial(self)
+      end      
       
       %> Open a figure with continuously read device data.
       %> @details
@@ -1039,13 +1057,6 @@ classdef dotsReadable < handle
          isActive = [definitions.isActive];         
          isInRange = (newValues <= highs) & (newValues >= lows);
          isEvent = isActive & xor(isInRange, isInverted);
-         
-         if any(data(:,2)>3)
-            disp(data)
-         end
-         
-         % disp(data(:,2))
-         % disp(isEvent)
       end
       
       %> Resize and optionally clear the event queue (used internally).

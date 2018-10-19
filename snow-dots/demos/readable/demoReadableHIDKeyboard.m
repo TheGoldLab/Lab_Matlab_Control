@@ -6,8 +6,16 @@
 %% Initialize the class
 %
 % Use certain matching properties to find a particular keyboard
-matching.ProductID = 36;
-matching.VendorID = 1008;
+doMatch = false;
+
+if doMatch
+   matching.ProductID = 36;
+   matching.VendorID = 1008;
+else
+   matching = [];
+end
+
+% Get the keyboard
 kb = dotsReadableHIDKeyboard(matching);
 
 % Wait to press "J" key

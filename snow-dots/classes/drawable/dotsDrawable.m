@@ -98,8 +98,6 @@ classdef dotsDrawable < handle
          end
       end
       
-      % function ensemble = makeEnsemble(name, objects, screenEnsemble, automateDraw)
-      %
       % Convenient utility for combining a bunch of drawables into an ensemble
       %
       % Aguments:
@@ -139,6 +137,58 @@ classdef dotsDrawable < handle
          % possibly automate drawing
          if nargin > 3 && automateDraw
             ensemble.automateObjectMethod('draw', @mayDrawNow);
+         end
+      end
+      
+       % Convenient utility for drawing an ensemble
+      %
+      % Aguments:
+      %  ensemble    ... the ensemble
+      %  args        ... cell array of cell arrays of property/value pairs
+      %                    for each object in the ensemble
+      %  prepareFlag ... whether to call prepareToDrawInWindow
+      %  showDuration ... in sec
+      %  pauseDuration ... in sec
+      %
+      function ret = drawEnsemble(ensemble, args, prepareFlag, showDuration, pauseDuration)
+         
+         % Arguments given?
+         if nargin >= 2 && ~isempty(args)
+            for ii = 1:length(args)
+               for pp = 1:2:length(args{ii})
+                  ensemble.setObjectProperty(args{ii}{pp}, args{ii}{pp+1}, ii);
+               end
+            end
+         end
+         
+         % Prepare?
+         if nargin >= 3 && prepareFlag
+            ensemble.callObjectMethod(@prepareToDrawInWindow);
+         end
+         
+         % Call runBriefly to draw it & flip the buffers
+         ret = ensemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            
+         % Pause while showing?
+         if nargin >= 4 && showDuration > 0
+         
+            % Wait while showing
+            pause(showDuration);
+            
+            % check for hide
+            if nargin >= 5 && pauseDuration > 0
+               
+               % Set visible flags to false
+               ensemble.setObjectProperty('isVisible', false);
+               
+               % Draw again to blank screen
+               ensemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+               
+               % Wait again
+               pause(pauseDuration);
+            end
+         else
+            ret = [];
          end
       end
    end

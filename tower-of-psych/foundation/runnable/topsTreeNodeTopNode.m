@@ -9,11 +9,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
    %
    %  After creating, use these methods to extend functionality (see below
    %  for details):
-   %  
+   %
    %  addGUIs
-   %  addDrawables
-   %  addReadables
-   %  addTTLs
+   %  addSharedDrawables
+   %  addSharedReadables
+   %  addSharedPlayables
    %
    % Created 7/24/18 by jig
    
@@ -24,7 +24,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          'filename',          [],               ... % Data filename with path
          'rawDirectory',      'topsDataLog',    ... % Subdirectory for raw files
          'readableDirectory', 'dotsReadable');      % Subdirectory for readable files
-
+      
       % Flags for on-line flow control (used by run GUI)
       controlFlags = struct( ...
          'abort',       false, ...  % abort experiment
@@ -35,9 +35,9 @@ classdef topsTreeNodeTopNode < topsTreeNode
       % Structure of properties shared with other (task) nodes
       sharedHelpers = struct( ...
          'screenEnsemble',    [], ...
-         'textEnsemble',      [], ...
-         'readableList',      [], ...
-         'playableList',      []);
+         'drawables',         {{}}, ...
+         'readables',         {{}}, ...
+         'playables',         {{}});
       
       % Flag to re-seed random number generator
       randSeed = true;
@@ -110,84 +110,143 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
-      %% Utility: add default drawables
+      %% Utility: add shared drawables
       %
       % Add the screen ensemble and possibly other drawables used across
       % tasks
       %
-      function addDrawables(self, displayIndex, remoteDrawing, addTextEnsemble)
+      %  displayIndex   ...   used by dotsTheScreen
+      %  remoteDrawing  ...   flag
+      %  drawableList   ...   string or cell array of strings of
+      %                             dotsDrawable class names
+      %  makeEnsemble   ...   flag to make an ensemble (true) or just a
+      %                             cell array of objects
+      %
+      function addSharedDrawables(self, displayIndex, remoteDrawing, ...
+            drawableList, drawableListSettings, makeEnsemble, addFinalMessage)
          
-         % ---- Check for drawables
+         % Check args
+         if nargin < 2 || isempty(displayIndex)
+            displayIndex = 0;
+         end
+         
+         if nargin < 2 || isempty(remoteDrawing)
+            remoteDrawing = false;
+         end
+         
+         % Check for drawables
+         if isempty(displayIndex) || displayIndex < 0
+            return
+         end
+         
+         % Make the screen ensemble
+         self.sharedHelpers.screenEnsemble = ...
+            dotsTheScreen.makeEnsemble(remoteDrawing, displayIndex);
+         
+         % Add screen start/finish fevalables to the main topsTreeNode
+         self.addCall('start', {@callObjectMethod, ...
+            self.sharedHelpers.screenEnsemble, @open}, 'openScreen');
+         self.addCall('finish', {@callObjectMethod, ...
+            self.sharedHelpers.screenEnsemble, @close}, 'closeScreen');
+         
+         % add shared drawables to a single ensemble
          %
-         if displayIndex >= 0
+         if nargin >= 4 && ~isempty(drawableList)
             
-            % Make the screen ensemble
-            self.sharedHelpers.screenEnsemble = ...
-               dotsTheScreen.makeEnsemble(remoteDrawing, displayIndex);
+            % Check drawableListSettings
+            if nargin < 5 || isempty(drawableListSettings)
+               drawableListSettings = cell(size(drawableList));
+            elseif ischar(drawableListSettings{1})
+               drawableListSettings = repmat({drawableListSettings}, size(playableList));
+            end
             
-            % Add screen start/finish fevalables to the main topsTreeNode
-            self.addCall('start', {@callObjectMethod, ...
-               self.sharedHelpers.screenEnsemble, @open}, 'openScreen');
-            self.addCall('finish', {@callObjectMethod, ...
-               self.sharedHelpers.screenEnsemble, @close}, 'closeScreen');
-            
-            % Possibly make a text ensemble for showing messages
-            %
-            % NOTE that for now it only makes the ensemble with 2 objects
-            if nargin > 3 && addTextEnsemble
+            % Make each drawable by name
+            self.sharedHelpers.drawables = cell(1, length(drawableList));
+            for ii = 1:length(drawableList)
                
-               % Make the ensemble
-               self.sharedHelpers.textEnsemble = ...
-                  dotsDrawableText.makeEnsemble('text', 2, ...
-                  [], self.sharedHelpers.screenEnsemble);
+               % Make the drawable
+               drawable = eval(drawableList{ii});
                
-               % Add a final message
-               self.addCall('finish', {@dotsDrawableText.drawEnsemble, ...
-                  self.sharedHelpers.textEnsemble, ...
-                  {'All done.', 'Thank you!'}, 2, 0}, 'finalMessage');
+               % Add settings
+               for jj = 1:2:length(drawableListSettings{ii})
+                  drawable.(drawableListSettings{ii}{jj}) = drawableListSettings{ii}{jj+1};
+               end
+               
+               % Add to the shared list
+               self.sharedHelpers.drawables{ii} = drawable;
+            end
+            
+            % Conditionally make the ensemble (default = true)
+            if nargin < 6 || makeEnsemble
+               self.sharedHelpers.drawables = dotsDrawable.makeEnsemble( ...
+                  'sharedEnsemble', self.sharedHelpers.drawables, ...
+                  self.sharedHelpers.screenEnsemble, true);
+               
+               % possibly add final message
+               if nargin >= 7 && addFinalMessage && ...
+                     length(drawableList) >= 2 && ...
+                     all(strcmp('dotsDrawableText', drawableList(1:2)))
+                  
+                  self.addCall('finish', {@dotsDrawableText.drawEnsemble, ...
+                     self.sharedHelpers.drawables, ...
+                     {'All done.' 'Thank you!'}, true, 2}, 'finalMessage');
+               end
             end
          end
       end
       
-      %% Utility: add default readables
+      %% Utility: add shared readables
       %
       % Add the readables used across tasks
       %
-      % readableNames can be:
+      % readableList can be:
       %     - string name of class to use
       %     - cell array of string names of classes to use
+      %  readableListSettings: TO DO - jig
       %  doCalibration: logical array of flags to calibrate each object
       %  doRecording: logical array of flags to record for each object
       
-      function addReadables(self, readableNames, doCalibration, doRecording)
+      function addSharedReadables(self, readableList, readableListSettings, ...
+            doCalibration, doRecording)
          
          % ---- Check for readables
          %
-         if nargin > 1 && ~isempty(readableNames)
+         if nargin > 1 && ~isempty(readableList)
             
-            if ~iscell(readableNames)
-               readableNames = {readableNames};
+            if ~iscell(readableList)
+               readableList = {readableList};
             end
-            numReadables = length(readableNames);
+            numReadables = length(readableList);
             
-            if nargin <= 3 || isempty(doCalibration)
+            % Check playableListSettings
+            if nargin < 3 || isempty(readableListSettings)
+               readableListSettings = cell(size(readableList));
+            elseif ischar(readableListSettings{1})
+               readableListSettings = repmat({readableListSettings}, size(playableList));
+            end
+            
+            if nargin <= 4 || isempty(doCalibration)
                doCalibration = true(1,numReadables);
             elseif length(doCalibration) == 1 && numReadables > 1
                doCalibration = repmat(doCalibration, 1, numReadables);
             end
             
-            if nargin <= 4 || isempty(doRecording)
+            if nargin <= 5 || isempty(doRecording)
                doRecording = true(1, numReadables);
             elseif length(doRecording) == 1 && numReadables > 1
                doRecording = repmat(doRecording, 1, numReadables);
             end
             
-            self.sharedHelpers.readableList = cell(size(readableNames));
+            self.sharedHelpers.readables = cell(size(readableList));
             for ii = 1:numReadables
                
-               % Get and save the ui object
-               ui = eval(readableNames{ii});
-               self.sharedHelpers.readableList{ii} = ui;
+               % Create the ui object
+               ui = eval(readableList{ii});
+               
+               % Add settings
+               for jj = 1:2:length(readableListSettings{ii})
+                  ui.(readableListSettings{ii}{jj}) = readableListSettings{ii}{jj+1};
+               end
                
                % Check if it needs the screen
                if any(strcmp(properties(ui), 'screenEnsemble'))
@@ -198,8 +257,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
                if ~isempty(self.dataFiles.filename)
                   [path, name] = fileparts(self.dataFiles.filename);
                   ui.filepath = fullfile(path(1:find(path==filesep,1,'last')-1), self.dataFiles.readableDirectory);
-                  ui.filename = sprintf('%s_%s', name, readableNames{ii}(13:end));
+                  ui.filename = sprintf('%s_%s', name, readableList{ii}(13:end));
                end
+               
+               % Save it
+               self.sharedHelpers.readables{ii} = ui;
                
                % Add start/finish fevalables -- remember the finishes run
                % in reverse order
@@ -217,6 +279,55 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
+      %% Utility: add shared playables
+      %
+      % Add the playables used across tasks. For now only handles
+      % playableFiles
+      %
+      % playableList can be:
+      %     - string name of file to use
+      %     - cell array of string names of files to use
+      % playableListSettings: cell array of property/value pairs
+      %  isBlocking: flag or logical array of flags
+      function addSharedPlayables(self, playableList, playableListSettings)
+         
+         if nargin < 2 || isempty(playableList)
+            return
+         end
+         
+         % Check playableListSettings
+         if nargin < 3 || isempty(playableListSettings)
+            playableListSettings = cell(size(playableList));
+         elseif ~iscell(playableListSettings{1})
+            playableListSettings = repmat({playableListSettings}, size(playableList));
+         end
+         
+         % Make the playables
+         self.sharedHelpers.playables = cell(1, length(playableList));
+         for ii = 1:length(playableList)
+            
+            % Make the playable
+            if strncmp(playableList{ii}, 'dotsPlayable', length('dotsPlayable'))
+               playable = feval(playableList{ii});
+            else
+               % use playableFile and input as filename
+               playable = dotsPlayableFile();
+               playable.fileName = playableList{ii};
+            end
+            
+            % Add settings
+            for jj = 1:2:length(playableListSettings{ii})
+               playable.(playableListSettings{ii}{jj}) = playableListSettings{ii}{jj+1};
+            end
+            
+            % Prepare to play
+            playable.prepareToPlay();
+            
+            % Add to sharedHelpers
+            self.sharedHelpers.playables{ii} = playable;
+         end
+      end
+      
       %% Start
       %
       % Overloaded start function, which checks for gui(s) and sets up the
@@ -231,7 +342,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % start runGUI
          if ~isempty(self.GUIs.run.name) && isempty(self.GUIs.run.handle)
-            self.GUIs.run.handle = feval(self.GUIs.run.name, self, self.sharedHelpers.readableList{:});
+            self.GUIs.run.handle = feval(self.GUIs.run.name, self, self.sharedHelpers.readables{:});
          else
             
             % Start data logging
@@ -302,7 +413,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
       
       %% checkFlags
       %
-      % Check status flags, which might be set by the GUI. 
+      % Check status flags, which might be set by the GUI.
       %  Return ~0 if something happened
       %
       function ret = checkFlags(self, child)
@@ -429,7 +540,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             % Find the times from the same source
             Lmatch = cell2num(strfind(FIRA.ecodes.name, ...
                FIRA.ecodes.name{ii}(1:startInds(ii)-2)))>0 & roundTripInds==0;
-
+            
             % Leave the raw trialStart times unchanged.
             Lmatch(ii) = false;
             
@@ -451,16 +562,16 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %% Get the analog data
          %
          % Use constructor class static method to read the data file.
-         if ~isempty(topNode.sharedHelpers.readableList)
+         if ~isempty(topNode.sharedHelpers.readables)
             
             % Get the readables file base name
             uiFile = fullfile(filepath, topNode.dataFiles.readableDirectory, fname);
             
             % Loop through the readables
-            for ii = 1:length(topNode.sharedHelpers.readableList)
+            for ii = 1:length(topNode.sharedHelpers.readables)
                
                % Get the current readable
-               ui = topNode.sharedHelpers.readableList{ii};
+               ui = topNode.sharedHelpers.readables{ii};
                
                % For now just for eye data... will need to generalize this later
                if isa(ui, 'dotsReadableEye')

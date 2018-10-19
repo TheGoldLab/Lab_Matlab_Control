@@ -80,9 +80,9 @@ classdef dotsReadableEye < dotsReadable
          'fpX',                        10,   ... % x offset for calibration target grid
          'fpY',                        5,    ... % y offset for calibration target grid
          'fpSize',                     1.5,  ... % Size of calibration target
-         'varTolerance',               0.0001, ... % Tolerance for using calibration values
+         'varTolerance',               5, ...  %0.0001, ... % Tolerance for using calibration values
          'offsetVarTolerance',         2.0,  ... % Tolerance for using calibration values
-         'transformTolerance',         4.0,  ... % Tolerance for using calibration values
+         'transformTolerance',         15.0, ... % 4.0,  ... % Tolerance for using calibration values
          'numberTries',                5,    ... % number of times to try calibrating
          'targetEnsemble',             [],   ... % for calibration targets
          'eyeEnsemble',                [],   ... % the showing eye position 
@@ -263,41 +263,15 @@ classdef dotsReadableEye < dotsReadable
       % Activate gaze windows
       function activateEvents(self)
          
-         % Call dotsReadable method
-         activateEvents@dotsReadable(self);
-
-         % Activate all of the gaze windows
-         if ~isempty(self.gazeEvents)
-            [self.gazeEvents.isActive] = deal(true);
-         end
-         
-         % Show the gazeMonitor windows
-         if self.useGUI
-            self.updateGazeMonitorWindow();
-         end
+         % Call setEventsActiveFlag to do the work
+         self.setEventsActiveFlag('all');
       end
       
       % De-activate gaze windows
       function deactivateEvents(self)
          
-         % Call dotsReadable method
-         deactivateEvents@dotsReadable(self);
-
-         % Deactivate all of the gaze windows and clear the data buffers
-         for ii = 1:length(self.gazeEvents)
-            self.gazeEvents(ii).isActive = false;
-            self.gazeEvents(ii).sampleBuffer(:) = nan;
-         end
-         
-         % Clear the gaze windo data buffer
-         set(self.gazeMonitorBufferedDataHandle, ...
-            'XData', [], ...
-            'YData', []);
-
-         % Hide the gazeMonitor windows
-         if self.useGUI
-            self.updateGazeMonitorWindow();
-         end
+         % Call setEventsActiveFlag to do the work
+         self.setEventsActiveFlag([], 'all');
       end
       
       % Delete all compoundEvents
@@ -305,7 +279,7 @@ classdef dotsReadableEye < dotsReadable
          
          % Deactivate the current gaze events so the monitor window is
          % appropriately cleared
-         self.deactivateEvents;
+         self.deactivateEvents();
          
          % Now clear them
          self.gazeEvents = [];
@@ -315,18 +289,31 @@ classdef dotsReadableEye < dotsReadable
       end
       
       % Set/unset activeFlag
+      % 
+      % Recognizes keyword 'all' for activateList and deactivateList
       function setEventsActiveFlag(self, activateList, deactivateList)
-                           
+              
+         if isempty(self.gazeEvents)
+            return
+         end
+         
+         % Collect names of gaze events
+         names = {self.gazeEvents.name};
+         
          % Activate
          if nargin > 1 && ~isempty(activateList)
             if ischar(activateList)
-               Lind = strcmp(activateList, {self.gazeEvents.name});
-               if any(Lind)
-                  self.gazeEvents(Lind).isActive = true;
+               if strcmp(activateList, 'all')
+                  [self.gazeEvents.isActive] = deal(true);
+               else
+                  Lind = strcmp(activateList, names);
+                  if any(Lind)
+                     self.gazeEvents(Lind).isActive = true;
+                  end
                end
             else
                for ii = 1:length(activateList)
-                  Lind = strcmp(activateList{ii}, {self.gazeEvents.name});
+                  Lind = strcmp(activateList{ii}, names);
                   if any(Lind)
                      self.gazeEvents(Lind).isActive = true;
                   end
@@ -336,19 +323,20 @@ classdef dotsReadableEye < dotsReadable
             activateList = {};
          end
          
-         % Deactivate
+         % Deactivate -- need also to clear buffer(s)
          if nargin > 2 && ~isempty(deactivateList)
             if ischar(deactivateList)
-               Lind = strcmp(deactivateList, {self.gazeEvents.name});
+               if strcmp(deactivateList, 'all')
+                  deactivateList = names;
+               else
+                  deactivateList = {deactivateList};
+               end
+            end
+            for ii = 1:length(deactivateList)
+               Lind = strcmp(deactivateList{ii}, names);
                if any(Lind)
                   self.gazeEvents(Lind).isActive = false;
-               end
-            else
-               for ii = 1:length(deactivateList)
-                  Lind = strcmp(deactivateList{ii}, {self.gazeEvents.name});
-                  if any(Lind)
-                     self.gazeEvents(Lind).isActive = false;
-                  end
+                  self.gazeEvents(Lind).sampleBuffer(:) = nan;
                end
             end
          else
@@ -895,7 +883,7 @@ classdef dotsReadableEye < dotsReadable
                targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
                
                % Wait for fixation
-               pause(0.4);
+               pause(0.3);
                
                % flush the eye data
                self.flushData();
@@ -908,11 +896,27 @@ classdef dotsReadableEye < dotsReadable
                      self.calibration.numberTries*numFixations
                   
                   % Collect a bunch of samples
-                  for jj = 1:self.calibration.fullN
+                  self.beginTrial();
+                  pause(0.1);
+                  ind = 1;
+                  while ind < self.calibration.fullN
                      dataMatrix = self.readRawEyeData();
-                     gazeRawXY(jj,:) = dataMatrix([self.xID, self.yID], 2)';
+                     if ~isempty(dataMatrix)
+                         xs = dataMatrix(dataMatrix(:,1)==self.xID, 2);
+                         ys = dataMatrix(dataMatrix(:,1)==self.yID, 2);
+                         num_samples = length(xs);
+                         if num_samples > 0 && num_samples == length(ys)
+                             num_samples = min(num_samples, self.calibration.fullN-ind+1);
+                             gazeRawXY(ind+(0:num_samples-1),1) = xs(1:num_samples);
+                             gazeRawXY(ind+(0:num_samples-1),2) = ys(1:num_samples);
+                             ind = ind + num_samples;
+                         end
+                     end
                   end
+                  self.endTrial();
                   
+                  disp(var(gazeRawXY))
+                  disp(self.calibration.varTolerance)
                   % Check tolerance
                   if all(var(gazeRawXY) < self.calibration.varTolerance)
                      % Good! Save median and go on to next sample
@@ -935,7 +939,7 @@ classdef dotsReadableEye < dotsReadable
                targetEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {}, [], true);
                
                % wait a moment
-               pause(0.7);
+               pause(0.5);
             end
             
             % Get vectors connecting each point
@@ -1163,7 +1167,7 @@ classdef dotsReadableEye < dotsReadable
                
             else
                
-               % Looking for first/last samples indide window
+               % Looking for first/last samples inside window
                Lgood = ev.sampleBuffer(:,2) <= ev.windowSize;
                
                if Lgood(end) && any(Lgood(1:end-1))
@@ -1270,6 +1274,15 @@ classdef dotsReadableEye < dotsReadable
                set(self.gazeEvents(ii).gazeWindowHandle, ...
                   'XData', 0, 'YData', 0);
             end
+         end
+         
+         % Check for any gaze windows. If not, clear gaze data buffer.
+         if isempty(self.gazeEvents) || ~any([self.gazeEvents.isActive])
+            
+            % Clear the gaze window data buffer
+            set(self.gazeMonitorBufferedDataHandle, ...
+               'XData', [], ...
+               'YData', []);
          end
          
          % update the plot

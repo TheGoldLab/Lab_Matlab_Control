@@ -2,28 +2,31 @@
 clear all
 clear mex
 clear classes
-mexHID('initialize');
-infoStruct = mexHID('summarizeDevices');
+% mexHID('initialize');
+% infoStruct = mexHID('summarizeDevices');
+% 
+% if any([infoStruct.ProductID]==772)
+%    % Josh's optical mouse
+%    matching.ProductID = 772;
+%    matching.PrimaryUsage = 2;
+% else
+%    matching = [];
+% end
+% 
+% m = dotsReadableEyeMouseSimulator(matching);
 
-if any([infoStruct.ProductID]==772)
-   % Josh's optical mouse
-   matching.ProductID = 772;
-   matching.PrimaryUsage = 2;
-else
-   matching = [];
-end
+m = dotsReadableEyePupilLabs();
+m.screenEnsemble = dotsTheScreen.makeEnsemble(false, 0);
+m.screenEnsemble.callObjectMethod(@open);
 
-m = dotsReadableEyeMouseSimulator(matching);
-
-m.showGazeMonitor = true;
-m.addGazeWindow('fpWindow', ...
+m.calibrate();
+m.openGazeMonitor();
+m.defineEvent('fpWindow', true, false, ...
          'eventName',   'holdFixation', ...
          'centerXY',    [0 0], ...
          'channelsXY',  [m.xID m.yID], ...
-         'windowSize',  3, ...
-         'isActive',    true);
-
-
+         'windowSize',  3);
+     
 for ii = 1:100
    m.read();
    pause(0.1);

@@ -84,6 +84,7 @@ classdef topsCallList < topsConcurrent
         % Returns the index into the calls struct array where @a fevalable
         % was appended or inserted.
         function index = addCall(self, fevalable, name)
+           
             % is this a new name or a replacement?
             index = topsFoundation.findStructName(self.calls, name);
             

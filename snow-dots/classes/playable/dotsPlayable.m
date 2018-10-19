@@ -75,4 +75,19 @@ classdef dotsPlayable < handle
             self.isAudible = false;
         end
     end
+    
+    methods (Static)
+       
+       % Pick a sound!
+       function playSound(playableList, indices)
+          
+          if nargin < 2 || isempty(indices)
+             indices = 1;
+          elseif length(indices) > 1
+             indices = indices(randi(length(indices)));
+          end
+          
+          play(playableList{indices});
+       end
+    end
 end
