@@ -40,10 +40,25 @@ classdef dotsDrawableImages < dotsDrawableTextures
             self.textureMakerFevalable = ...
                 {@dotsDrawableImages.imageTextureMakerFunction};
             self.prepareToDrawInWindow@dotsDrawableTextures();
+            
+            % possibly rescale image based on raw dimensions
+            if ~isempty(self.pixelWidths) && ~isempty(self.pixelHeights)
+               
+               % Width
+               if isempty(self.width) && ~isempty(self.height)
+                  self.width = self.height.*self.pixelWidths./self.pixelHeights;
+               end
+               
+               % Height
+               if isempty(self.height) && ~isempty(self.width)
+                  self.height = self.width.*self.pixelHeights./self.pixelWidths;
+               end
+            end
         end
     end
     
     methods (Static)
+       
         % Read each image file and create a texture for each.
         function textureInfo = imageTextureMakerFunction(self)
             nImages = numel(self.fileNames);

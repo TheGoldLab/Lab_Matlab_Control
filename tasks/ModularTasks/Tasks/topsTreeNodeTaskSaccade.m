@@ -5,14 +5,14 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    %
    % For standard configurations, call:
    %  topsTreeNodeTaskSaccade.getStandardConfiguration
-   % 
+   %
    % Otherwise:
    %  1. Create an instance directly:
    %        task = topsTreeNodeTaskSaccade();
    %
    %  2. Set properties. These are required:
    %        task.drawables.screenEnsemble
-   %        task.readables.userInput
+   %        task.readables.theObject
    %     Others can use defaults
    %
    %  3. Add this as a child to another topsTreeNode
@@ -28,7 +28,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'textOffset',                 2,   ...
          'textStrings',                '',  ...
          'gazeWindowSize',             6,   ...
-         'gazeWindowDuration',         0.15);
+         'gazeWindowDuration',         0.15, ...
+         'showFunGraphics',            true, ...
+         'correctPlayableIndices',     1,    ...
+         'errorPlayableIndices',       2);
       
       % Array of structures of independent variables, used by makeTrials
       indVars = struct( ...
@@ -36,7 +39,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'values',                     {0:45:315},          ...
          'priors',                     {[]},                ...
          'minTrials',                  {[]});
-
+      
       % Task timing, all in sec
       timing = struct( ...
          'showInstructions_shi',       10.0, ...
@@ -53,7 +56,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % Drawables settings
       drawables = struct( ...
          ...
-         ...   % Ensembles
+         ...   % The main stimulus ensemble
          'stimulusEnsemble',           [],	...
          'stimulusEnsembleSettings',   cat(2,   ...
          ...
@@ -73,16 +76,16 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          struct(  ...
          'name',                       'target', ...
          'type',                       'dotsDrawableTargets', ...
-         'settings',                   struct(   ...
+         'settings',                   struct(   ......
          'nSides',                     100,      ...
          'width',                      1.5,      ...
-         'height',                     1.5))));   
+         'height',                     1.5))));
       
       % Readable settings
       readables = struct( ...
          ...
          ...   % The readable object
-         'userInput',                  [],      ...
+         'theObject',                  [],      ...
          ...
          ...   % Gaze windows
          'dotsReadableEye', struct( ...
@@ -92,13 +95,13 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'ensemble',          {[], [], []}, ... % ensemble object to bind to
          'ensembleIndices',   {[1 1], [1 1], [2 1]}), ... % object/item indices
          ...
-         ...   % Keyboard events 
+         ...   % Keyboard events
          'dotsReadableHIDKeyboard', struct( ...
          'name',        {'holdFixation', 'choseTarget', 'calibrate'}, ...
          'component',   {'KeyboardSpacebar', 'KeyboardT', 'KeyboardC'}, ...
          'isRelease',   {true, false, false}), ...
          ...
-         ...   % Gamepad 
+         ...   % Gamepad
          'dotsReadableHIDGamepad', struct( ...
          'name',        {'holdFixation', 'choseTarget'}, ...
          'component',   {'Button1', 'Trigger1'}, ...
@@ -119,7 +122,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    properties (SetAccess = private)
       
       % keep track of target x,y
-      targetXY = [nan nan];      
+      targetXY = [nan nan];
    end
    
    methods
@@ -134,12 +137,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          self = self@topsTreeNodeTask(varargin{:});
       end
-   
+      
       %% Start task method
       function startTask(self)
          
          % ---- Configure each element - separated for readability
-         % 
+         %
          self.makeTrials(); % uses the indVars struct
          self.initializeStateMachine();
          
@@ -147,11 +150,11 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          self.showText(self.settings.textStrings, [], ...
             self.timing.showInstructions_shi, ...
-            self.timing.waitAfterInstructions_wai);       
+            self.timing.waitAfterInstructions_wai);
       end
       
       %% Finish task method
-      function finishTask(self)         
+      function finishTask(self)
       end
       
       %% Start trial method
@@ -161,6 +164,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          self.prepareDrawables();
          self.prepareReadables();
+         % self.preparePlayables();
          self.prepareStateMachine();
          
          % ---- Show information about the task/trial
@@ -184,87 +188,124 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       function finishTrial(self)
       end
       
-       %% Set Choice method
-       %
-       % Save choice/RT information and set up feedback
-       function nextState = checkForChoice(self, events, eventTag)
-          
-          % ---- Check for event
-          %
-          eventName = self.getEventWithTimestamp(self.readables.userInput, ...
-             events, eventTag);
-          
-          % Nothing... keep checking
-          if isempty(eventName)
-             nextState = [];
-             return
-          end
-          
-          % ---- Good choice!
-          %
-          % Override completedTrial flag
-          self.completedTrial = true;
-          
-          % Jump to next state when done
-          nextState = 'blank';
-          
-          % Get current task/trial
-          trial = self.getTrial();
-          
-          % Mark as correct
-          trial.correct = 1;
-          
-          % Compute/save RT
-          %  Remember that time_choice time is from the UI, whereas
-          %    fixOff is from the remote computer, so we need to
-          %    account for clock differences
-          trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
-             (trial.time_screen_fixOff - trial.time_screen_trialStart);
-          
-          % ---- Re-save the trial
-          %
-          self.setTrial(trial);
-       end
-      
-       %% Show feedback
-       %
-       function showFeedback(self)
-          
-          % ---- Show trial feedback
-          %
-          trial = self.getTrial();
-          
-          % ---- Show the feedback string
-          %
-          if trial.correct == 1
-             feedbackString = 'Correct';
-          else
-             feedbackString = 'No choice';
-          end
-          
-          % --- Show trial feedback
-          %
-          self.statusStrings{2} = ...
-             sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
-             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, feedbackString, trial.RT);
-         self.updateStatus(2); % just update the second one
-
-         % --- Show trial feedback on the screen
+      %% Set Choice method
+      %
+      % Save choice/RT information and set up feedback
+      function nextState = checkForChoice(self, events, eventTag)
+         
+         % ---- Check for event
          %
-         self.showText(feedbackString, 'fdbkOn');
-       end      
+         eventName = self.getEventWithTimestamp(self.readables.theObject, ...
+            events, eventTag);
+         
+         % Nothing... keep checking
+         if isempty(eventName)
+            nextState = [];
+            return
+         end
+         
+         % ---- Good choice!
+         %
+         % Override completedTrial flag
+         self.completedTrial = true;
+         
+         % Jump to next state when done
+         nextState = 'blank';
+         
+         % Get current task/trial
+         trial = self.getTrial();
+         
+         % Mark as correct
+         trial.correct = 1;
+         
+         % Compute/save RT
+         %  Remember that time_choice time is from the UI, whereas
+         %    fixOff is from the remote computer, so we need to
+         %    account for clock differences
+         disp([trial.time_ui_choice trial.time_ui_trialStart ...
+             trial.time_screen_fixOff trial.time_screen_trialStart]./1000)
+         trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
+            (trial.time_screen_fixOff - trial.time_screen_trialStart);
+         
+         % ---- Re-save the trial
+         %
+         self.setTrial(trial);
+      end
+      
+      %% Show feedback
+      %
+      function showFeedback(self)
+         
+         % ---- Show trial feedback
+         %
+         trial = self.getTrial();
+         
+         % ---- Feedback values:
+         %
+         % 1. formal string
+         % 2. feedback string
+         % 3. show smiley
+         % 4. sound index
+         %
+         if trial.correct == 1
+            feedbackValues = {'Correct', 'Correct!', true, self.settings.correctPlayableIndices};
+         else
+            feedbackValues = {'No choice', 'Try Again!', false, self.settings.errorPlayableIndices};
+         end
+         
+         % --- Show trial feedback
+         %
+         self.statusStrings{2} = ...
+            sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
+            self.trialCount, numel(self.trialData)*self.trialIterations, ...
+            trial.direction, feedbackValues{1}, trial.RT);
+         self.updateStatus(2); % just update the second one
+                  
+         % ---- Possibly show smiley face
+         %
+         if ~isempty(self.settings.showFunGraphics)
+            
+            % Set the text and draw object
+            dotsDrawable.drawEnsemble(self.sharedHelpers.drawables, { ...
+               {'isVisible', true, 'string', feedbackValues{2}}, ...
+               {'isVisible', false}, ...
+               {'isVisible', feedbackValues{3}}, ...
+               {'isVisible', false}});
+         else
+            
+            % Show text feedback on the screen
+            self.showText(feedbackString, 'fdbkOn');
+         end
+         
+         % ---- Possibly play sound
+         %
+         if ~isempty(self.sharedHelpers.playables)
+            dotsPlayable.playSound(self.sharedHelpers.playables, feedbackValues{4});
+         end
+      end
    end
    
-   methods (Access = private)
+   methods (Access = protected)
       
       %% Prepare drawables for this trial
       %
       function prepareDrawables(self)
          
          % ---- Get the current trial
-         % 
+         %
          trial = self.getTrial();
+         
+         % ---- Conditionally update all stimulusEnsemble objects with
+         %        default values
+         %
+         if self.updateFlags.drawables
+            
+            % All other stimulus ensemble properties
+            self.updateDrawables();
+            
+            % Unset the flag
+            self.updateFlags.drawables = false;
+         end
          
          % ---- Always set target location
          %
@@ -283,15 +324,16 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             self.targetXY = [newX newY];
          end
          
-         % ---- Conditionally update all stimulusEnsemble objects
+         % ---- Possibly update feedback
          %
-         if self.updateFlags.drawables
+         if ~isempty(self.settings.showFunGraphics)
             
-            % All other stimulus ensemble properties
-            self.updateDrawables();
-
-            % Unset the flag
-            self.updateFlags.drawables = false;
+            % Set x, y
+            self.sharedHelpers.drawables.setObjectProperty('x', newX, 3);
+            self.sharedHelpers.drawables.setObjectProperty('y', newY, 3);
+            
+            % Prepare the smiley object
+            self.sharedHelpers.drawables.callObjectMethod(@prepareToDrawInWindow, [], 3);
          end
       end
       
@@ -312,9 +354,9 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % ---- Fevalables for state list
          %
          dnow   = {@drawnow};
-         blanks = {@callObjectMethod, self.screenEnsemble, @blank};
-         chkuif = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
-         chkuib = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
+         blanks = {@callObjectMethod, self.sharedHelpers.screenEnsemble, @blank};
+         chkuif = {@getNextEvent, self.readables.theObject, false, {'holdFixation'}};
+         chkuib = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
          chkuic = {@checkForChoice, self, {'choseTarget'}, 'choice'};
          showfx = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 1, 2, 'fixOn'};
          showt  = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
@@ -323,21 +365,21 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          showfb = {@showFeedback, self};
          
          % drift correction
-         hfdc  = {@reset, self.readables.userInput, true};
+         hfdc  = {@reset, self.readables.theObject, true};
          
          % Activate/deactivate readable events
          sea   = @setEventsActiveFlag;
-         gwfxw = {sea, self.readables.userInput, 'holdFixation'};
-         gwfxh = {}; 
-         gwt   = {sea, self.readables.userInput, 'choseTarget', 'holdFixation'};
-         % gwfxh = {}; % {dce, self.readables.userInput, 'brokeFixation', 'holdFixation'};
-         % gwts  = {dce, self.readables.userInput, 'choseTarget', 'brokeFixation'};
-
+         gwfxw = {sea, self.readables.theObject, 'holdFixation'};
+         gwfxh = {};
+         gwt   = {sea, self.readables.theObject, 'choseTarget', 'holdFixation'};
+         % gwfxh = {}; % {dce, self.readables.theObject, 'brokeFixation', 'holdFixation'};
+         % gwts  = {dce, self.readables.theObject, 'choseTarget', 'brokeFixation'};
+         
          % ---- Timing variables, read directly from the timing property struct
          %
          fn = fieldnames(self.timing);
          to = @(x) self.timing.(fn{cell2num(strfind(fn, x))~=0});
-
+         
          % ---- Make the state machine
          %
          % Note that the startTrial routine sets the target location and the 'next'
@@ -392,7 +434,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          task.setTrialData( ...
             {'direction', 'RT', 'correct'}, ...
             {'screenEnsemble', {'fixOn', 'targsOn', 'targsOff', 'fixOff', 'fdbkOn'}, ...
-            'readableList', {'choice'}});
+            'readables', {'choice'}});
          
          % ---- Default gaze windows
          %
@@ -404,11 +446,11 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          switch name
             case 'VGS'
                task.settings.textStrings = { ...
-                  'Look at the red cross. When it disappears,', ...
+                  'Look at the white cross. When it disappears,', ...
                   'look at the visual target.'};
             otherwise
                task.settings.textStrings = { ...
-                  'Look at the red cross. When it disappears,', ...
+                  'Look at the white cross. When it disappears,', ...
                   'look at the remebered location of the visual target.'};
          end
          

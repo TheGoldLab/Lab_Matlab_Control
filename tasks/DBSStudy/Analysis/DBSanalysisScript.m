@@ -3,7 +3,7 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2018_09_11_15_26';
+testFilename = 'data_2018_10_14_15_39';
 %testFilename = 'data_2018_08_22_10_45';
 [topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
 

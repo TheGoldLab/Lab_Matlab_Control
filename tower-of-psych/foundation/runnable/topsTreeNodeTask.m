@@ -56,7 +56,7 @@ classdef topsTreeNodeTask < topsTreeNode
       statusStrings = {};
       
       % Registry of set listeners... see topsTreeNodeTask
-      setRegistry = {'drawables', 'readables'};
+      setRegistry = {'drawables', 'readables', 'playables'};
       
       % Whether or not to send TTLs
       sendTTLs = false;
@@ -66,7 +66,7 @@ classdef topsTreeNodeTask < topsTreeNode
          'name',           struct('prefix', 'local',  'tags', {{'trialStart'}}), ...
          'sendTTLs',       struct('prefix', 'local',  'tags', {{'TTLStart', 'TTLFinish'}}), ...
          'screenEnsemble', struct('prefix', 'screen', 'tags', {{'trialStart', 'roundTrip'}}), ...
-         'readableList',   struct('prefix', 'ui',     'tags', {{'trialStart', 'roundTrip'}}));
+         'readables',      struct('prefix', 'ui',     'tags', {{'trialStart', 'roundTrip'}}));
    end
    
    properties (SetAccess = protected)
@@ -88,17 +88,7 @@ classdef topsTreeNodeTask < topsTreeNode
 
       % Properties that can be shared from the topsTreeNodeTopNode
       %
-      % Handle to screenEnsemble, for timing info
-      screenEnsemble;
-      
-      % textEnsemble, for showing messages
-      textEnsemble;
-      
-      % Cell array of readable objects
-      readableList = {};
-      
-      % Cell array of playable objects
-      playableList = {};
+      sharedHelpers;
    end
    
    methods
@@ -160,7 +150,7 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       % values is cell array of string names
       % times is cell array of:
-      %     <previx>, {<names> ...}
+      %     <prefix>, {<names> ...}
       function setTrialData(self, values, times)
       
          % Values
@@ -211,11 +201,7 @@ classdef topsTreeNodeTask < topsTreeNode
             end
             
             % Get shared helpers
-            for ff = fieldnames(topNode.sharedHelpers)'
-               if isempty(self.(ff{:}))
-                  self.(ff{:}) = topNode.sharedHelpers.(ff{:});
-               end
-            end
+            self.sharedHelpers = topNode.sharedHelpers;
          end
             
          % Check for TTLs -- if so, get the object
@@ -225,9 +211,10 @@ classdef topsTreeNodeTask < topsTreeNode
          end
                  
          % initialize registered classes
+         sself = struct(self);
          for fields = self.setRegistry
-            if isfield(struct(self), fields{:})
-               eval(sprintf('self.initialize_%s();', fields{:}))
+            if isfield(sself, fields{:})
+               eval(sprintf('self.start_%s();', fields{:}))
             end
          end
          
@@ -237,11 +224,12 @@ classdef topsTreeNodeTask < topsTreeNode
          % Add the timing fields to the trialData struct
          for ff = fieldnames(self.timingFields)'
             
+            %% jig needs to fix
             % Only if the property exists
-            if ~isempty(self.(ff{:}))
+            if true % ~isempty(self.sharedHelpers.(ff{:}))
                
                % Special case of multiple objects -- use indexed prefix
-               if iscell(self.(ff{:})) && length(self.(ff{:})) > 1
+               if false %iscell(self.(ff{:})) && length(self.(ff{:})) > 1
                   num = length(self.(ff{:}));
                else
                   num = 1;
@@ -360,17 +348,17 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       function startTaskTrial(self)
          
-         % Reset completed flag
+         % ---- Reset completed flag
          self.completedTrial = false;
          
-         % Get screen synchronization times
-         if ~isempty(self.screenEnsemble)
+         % ---- Get screen synchronization times
+         if ~isempty(self.sharedHelpers.screenEnsemble)
             screenRoundTripTime = inf;
             start               = mglGetSecs();
             after               = start;
             while (screenRoundTripTime > 0.01) && ((after-start) < 0.5);
                before              = mglGetSecs();
-               screenTime          = self.screenEnsemble.callObjectMethod(@getCurrentTime);
+               screenTime          = self.sharedHelpers.screenEnsemble.callObjectMethod(@getCurrentTime);
                after               = mglGetSecs();
                screenRoundTripTime = after - before;
             end
@@ -381,21 +369,21 @@ classdef topsTreeNodeTask < topsTreeNode
             screenRoundTripTime = nan;
          end
          
-         % Get ui times
-         if ~isempty(self.readableList)
-            if iscell(self.readableList)
-               uiTimes          = nans(length(self.readableList), 1);
-               uiRoundTripTimes = nans(length(self.readableList), 1);
-               for ii = 1:length(self.readableList)
+         % ---- Get ui times
+         if ~isempty(self.sharedHelpers.readables)
+            if iscell(self.sharedHelpers.readables)
+               uiTimes          = nans(length(self.sharedHelpers.readables), 1);
+               uiRoundTripTimes = nans(length(self.sharedHelpers.readables), 1);
+               for ii = 1:length(self.sharedHelpers.readables)
                   before               = mglGetSecs();
-                  deviceTime           = self.readableList{ii}.getDeviceTime();
+                  deviceTime           = self.sharedHelpers.readables{ii}.getDeviceTime();
                   after                = mglGetSecs();       
                   uiTimes(ii)          = deviceTime - after + localTime;
                   uiRoundTripTimes(ii) = after - before;
                end
             else
                before           = mglGetSecs();
-               deviceTime       = self.readableList.getDeviceTime();
+               deviceTime       = self.sharedHelpers.readables.getDeviceTime();
                after            = mglGetSecs();
                uiTimes          = deviceTime - after + localTime;
                uiRoundTripTimes = after - before;
@@ -405,12 +393,12 @@ classdef topsTreeNodeTask < topsTreeNode
             uiRoundTripTimes = nan;
          end
          
-         % Set them using standard syntax
+         % ---- Set them using standard syntax
          self.setTrialTime([], 'name',           1, localTime);
          self.setTrialTime([], 'screenEnsemble', 1, screenTime);
          self.setTrialTime([], 'screenEnsemble', 2, screenRoundTripTime);
-         self.setTrialTime([], 'readableList',   1, uiTimes);
-         self.setTrialTime([], 'readableList',   2, uiRoundTripTimes);
+         self.setTrialTime([], 'readables',      1, uiTimes);
+         self.setTrialTime([], 'readables',      2, uiRoundTripTimes);
          
          % ---- Conditionally send TTL pulses (mod trial count)
          %
@@ -432,7 +420,12 @@ classdef topsTreeNodeTask < topsTreeNode
             self.setTrialTime([], 'sendTTLs', 2, (TTLFinish - TTLStart) + start);
          end
          
-         % call the subclass startTrial method
+         % ---- Call beginTrial method for the ui(s)
+         for ii = 1:length(self.sharedHelpers.readables)
+            self.sharedHelpers.readables{ii}.beginTrial();
+         end
+         
+         % ---- call the subclass startTrial method
          self.startTrial();
       end
       
@@ -443,6 +436,12 @@ classdef topsTreeNodeTask < topsTreeNode
          % ---- Call the subclass finishTrial method
          %
          self.finishTrial();
+         
+         % ---- Call endTrial method for the ui(s)
+         %
+         for ii = 1:length(self.sharedHelpers.readables)
+            self.sharedHelpers.readables{ii}.endTrial();
+         end
          
          % ---- Save the current trial in the DataLog
          %
@@ -775,12 +774,17 @@ classdef topsTreeNodeTask < topsTreeNode
             textStrings = {textStrings};
          end
          
-         if ~isempty(self.textEnsemble)
+         % jig : need to make more robust checks at some point
+         if ~isempty(self.sharedHelpers.drawables)
+%                length(self.sharedDrawableEnsemble.objects) >= size(textStrings,2) && ...
+%                isa(self.sharedDrawableEnsemble.objects{1}, 'dotsDrawableText')
             
             % Draw using ensemble, getting timestamp
-            ret  = dotsDrawableText.drawEnsemble(self.textEnsemble, textStrings, varargin{:});
+            ret  = dotsDrawableText.drawEnsemble(self.sharedHelpers.drawables, ...
+               textStrings, true, varargin{:});
             drawTime = ret.onsetTime;
          else
+            
             % Just show in the command window
             for ii = 1:length(textStrings)
                disp(textStrings{ii});
@@ -799,30 +803,30 @@ classdef topsTreeNodeTask < topsTreeNode
       % struture.
       %
       % Arguments:
-      %  userInput      ... dotsReadable object used to get the event
+      %  theObject      ... dotsReadable object used to get the event
       %  acceptedEvents ... cell array of strings acceptedEvents to list
       %                       names of events that can be used.
       %  eventTag       ... string used to store timing information in trial
       %                       struct. Assumes that the current trialData
       %                       struct has an entry called time_<eventTag>.
       %
-      function eventName = getEventWithTimestamp(self, userInput, ...
+      function eventName = getEventWithTimestamp(self, theObject, ...
             acceptedEvents, eventTag)
          
          % Call dotsReadable.getNext
          %
          % data has the form [ID, value, time]
-         [eventName, data] = userInput.getNextEvent([], acceptedEvents);
+         [eventName, data] = theObject.getNextEvent([], acceptedEvents);
          
          if ~isempty(eventName)
             
             % Store the timing data
-            self.setTrialTime([], 'readableList', eventTag, data(3));
+            self.setTrialTime([], 'readables', eventTag, data(3));
          end
       end
       
-      %% Utility to save timing data in the trialData struct using a
-      % standard format
+      %% Utility to save timing data in the trialData struct 
+      %     using a standard format
       %
       function setTrialTime(self, trialIndex, timingType, tag, value, index)
          
@@ -886,119 +890,63 @@ classdef topsTreeNodeTask < topsTreeNode
             self.setIndVarByName(indVarList{ii}, indVarList{ii+1}{:});
          end
       end
-           
-      %% Initialize Readables
-      %
-      % Create default readable. Should be overloaded in subclass if doing
-      % anything else.
-      %
-      function initialize_readables(self)
-         
-         % ---- Setup user input device
-         %
-         if isempty(self.readables.userInput) && ~isempty(self.readableList)
             
-            % default to first object given from parent
-            self.readables.userInput = self.readableList{1};
-            
-         elseif ~isempty(self.readables.userInput) && isempty(self.readableList)
-            
-            % Register the object
-            self.readableList = {self.readables.userInput};
-            
-         else
-            
-            % Neither are present, do nothing
-            return
-         end
-         
-         % Check for dotsReadableEye
-         if isa(self.readables.userInput, 'dotsReadableEye')
-            
-            % Bind stimulus ensemble to gaze windows
-            [self.readables.dotsReadableEye.ensemble] = ...
-               deal(self.drawables.stimulusEnsemble);
-         end
-         
-         % ---- Set flag to update first time through
-         %
-         self.updateFlags.readables = true;
-      end
-      
-      %% Initialize Drawables
-      %
-      % Create default drawables from the property list.
-      %  Should be overloaded in subclass if doing anything else.
-      function initialize_drawables(self)
-         
-         % ---- Check for screen
-         %
-         if isempty(self.screenEnsemble)
-            error('topsTreeNodeTask: missing screenEnsemble');
-         end
-         
-         % ---- Check for other drawables
-         %
-         fields = fieldnames(self.drawables);
-         drawableSettings = strfind(fields, 'Settings');
-         for dd = find(cellfun(@isempty,drawableSettings))'
-            
-            switch fields{dd}
-               
-               case 'stimulusEnsemble'
-                  
-                  if isempty(self.drawables.stimulusEnsemble)
-                     
-                     objects = {self.drawables.stimulusEnsembleSettings.type};
-                     for oo = 1:length(objects)
-                        objects{oo} = eval(objects{oo});
-                     end
-                     
-                     % Make the ensemble
-                     self.drawables.stimulusEnsemble = dotsDrawable.makeEnsemble( ...
-                        'stimulusEnsemble', objects, self.screenEnsemble, true);
-                  end
-                  
-               case 'textEnsemble'
-                  
-                  if isempty(self.drawables.textEnsemble)
-                     
-                     % Create the ensemble
-                     self.drawables.textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
-                        2, self.settings.textOffset, self.screenEnsemble);
-                  end
-                  
-               otherwise
-                  
-                  error('topsTreeNodeTask: unknown drawable type')
-            end
-         end
-         
-         % ---- Set flag to update first time through
-         %
-         self.updateFlags.drawables = true;
-      end
-      
       %% Prepare readables for this trial
       %
       function prepareReadables(self)
          
-         % ---- Reset the events for the given ui type
+         % ---- Reset the events for the given ui type from the property
+         %        struct
          %
          if self.updateFlags.readables
-            
-            % Utility for updating readables with standard property format
             self.updateReadables();
-            
-            % reset flag
-            self.updateFlags.readables = false;
          end
          
          % ---- Deactivate the events (they are activated in the statelist)
          %     and flush the UI
          %
-         self.readables.userInput.deactivateEvents();
-         self.readables.userInput.flushData();
+         self.readables.theObject.deactivateEvents();
+         self.readables.theObject.flushData();
+      end
+      
+      %% Prepare drawables for this trial
+      %
+      % Overload in subclass if more functionality needed
+      %
+      function prepareDrawables(self)
+         
+         % ---- Conditionally update all stimulusEnsemble objects with
+         %        default values
+         %
+         if self.updateFlags.drawables
+            self.updateDrawables();
+         end   
+      end
+      
+      %% Prepare playables for this trial
+      %
+      % Overload in subclass if more functionality needed
+      %
+      function preparePlayables(self)
+         
+         % ---- Conditionally update all playables with values in property
+         %        struct
+         %
+         if self.updateFlags.playables
+            self.updatePlayables();
+         end   
+         
+         % ---- Call prepareToPlay methods for each playable
+         %
+         if any(strcmp('playables', fieldnames(self)))
+            for ff = fieldnames(self.playables)'
+               if isa(self.playables.(ff{:}), 'dotsPlayable')
+                  for pp = 1:length(self.playables.(ff{:}))
+                     self.playables.(ff{:})(pp).prepareToPlay();
+                  end
+               end
+            end
+         end
       end
       
       %% updateReadables
@@ -1009,11 +957,14 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % parse the name
          classType = intersect(fieldnames(self.readables), ...
-            cat(1, class(self.readables.userInput), ...
-            superclasses(self.readables.userInput)));
+            cat(1, class(self.readables.theObject), ...
+            superclasses(self.readables.theObject)));
          
          % use it to call defineEvents with the appropriate event definitions
-         self.readables.userInput.defineEvents(self.readables.(classType{1}));
+         self.readables.theObject.defineEvents(self.readables.(classType{1}));
+         
+         % Unset flag
+         self.updateFlags.readables = false;
       end
       
       %% updateDrawables
@@ -1040,6 +991,174 @@ classdef topsTreeNodeTask < topsTreeNode
                end
             end
          end
+         
+         % Unset the flag
+         self.updateFlags.drawables = false;
+      end
+      
+      %% updatePlayables
+      %
+      % Utility for updating readables giving in properties in a standard
+      % format. See modularTasks for examples
+      function updatePlayables(self)
+         
+         % Loop through the settings structs
+         fields = fieldnames(self.playables);
+         playableSettings = strfind(fields, 'Settings');
+         for pp = find(~cellfun(@isempty,playableSettings))'
+            object = self.playables.(fields{pp}(1:playableSettings{pp}-1));
+            objectSettings = self.playables.(fields{pp});
+            
+            % For each object
+            for ss = 1:length(objectSettings)
+               
+               % For each field
+               for ff = fieldnames(objectSettings(ss))'
+                  object(ss).(ff{:}) = objectSettings(ss).(ff{:});
+               end
+            end
+         end
+         
+         % Unset flag
+         self.updateFlags.playables = false;
+      end
+   end
+   
+   methods (Access = private)
+             
+      %% Initialize drawables at the beginning of the task using the property struct
+      %
+      % Create default drawables from the property list.
+      %  Should be overloaded in subclass if doing anything else.
+      function start_drawables(self)
+         
+         % ---- Check for screen
+         %
+         if isempty(self.sharedHelpers.screenEnsemble)
+            error('topsTreeNodeTask: missing screenEnsemble');
+         end
+         
+         % ---- Check for new drawable ensembles
+         %
+         fields = fieldnames(self.drawables);
+         for dd = find(~cellfun(@isempty, regexp(fields, 'Ensemble$')))'
+            
+            if isempty(self.drawables.(fields{dd}))
+               
+               switch fields{dd}
+                  
+                  case 'textEnsemble'
+                     
+                     % Create the ensemble
+                     self.drawables.textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
+                        2, self.settings.textOffset, self.sharedHelpers.screenEnsemble);
+                     
+                  otherwise % case 'stimulusEnsemble'
+                     
+                     sname = [fields{dd} 'Settings'];
+                     if isfield(self.drawables, sname) && ~isempty(self.drawables.(sname))
+                        objects = {self.drawables.(sname).type};
+                        for oo = 1:length(objects)
+                           objects{oo} = eval(objects{oo});
+                        end
+                        
+                        % Make the ensemble
+                        self.drawables.(fields{dd}) = dotsDrawable.makeEnsemble( ...
+                           fields{dd}, objects, self.sharedHelpers.screenEnsemble, true);
+                     end
+               end
+            end
+         end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.drawables = true;
+      end
+      
+
+      %% Initialize readables at the beginning of the task using the property struct
+      %
+      % Create default readable. Should be overloaded in subclass if doing
+      % anything else.
+      %
+      function start_readables(self)
+         
+         % ---- Setup user input device
+         %
+         if isempty(self.readables.theObject) && ~isempty(self.sharedHelpers.readables)
+            
+            % default to first object given from parent
+            self.readables.theObject = self.sharedHelpers.readables{1};
+            
+         elseif ~isempty(self.readables.theObject) && isempty(self.sharedHelpers.readables)
+            
+            % Register the object
+            self.sharedHelpers.readables = {self.readables.theObject};
+            
+         else
+            
+            % Neither are present, do nothing
+            return
+         end
+         
+         % Check for dotsReadableEye
+         if isa(self.readables.theObject, 'dotsReadableEye')
+            
+            % Bind stimulus ensemble to gaze windows
+            [self.readables.dotsReadableEye.ensemble] = ...
+               deal(self.drawables.stimulusEnsemble);
+         end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.readables = true;
+      end
+      
+      %% Initialize playables at the beginning of the task using the property struct
+      %
+      % Create default playables from the property list.
+      %  Should be overloaded in subclass if doing anything else.
+      %
+      %  Example list:
+      %       % Playable settings
+      %       playables = struct( ...
+      %          'dotsPlayableFile',              [], ...
+      %          'dotsPlayableFileSettings',      struct( ...
+      %          'fileName',                      {'', ''}, ...
+      %          'isBlocking',                    {false, false}));
+      %
+      function start_playables(self)
+         
+         % ---- Create playables
+         %
+         fields = fieldnames(self.playables);
+         for dd = find(~cellfun(@isempty, ...
+               strfind(fields, 'dotsPlayable')) & ...
+               cellfun(@isempty, strfind(fields, 'Settings')))'
+            
+            % Check for settings struct
+            if isfield(self.playables, [fields{dd} 'Settings'])
+               settings = self.playables.([fields{dd} 'Settings']);
+               
+               % make array of playables
+               properties = fieldnames(settings);
+               for ii = 1:length(settings)
+                  playable = feval(fields{dd});
+                  for pp = 1:length(properties)
+                     playable.(properties{pp}) = settings(ii).(properties{pp});
+                  end
+                  self.playables.(fields{dd}) = cat(2, ...
+                      self.playables.(fields{dd}), playable);
+               end
+               
+            else
+               self.playables.(fields{dd}) = feval(fields{dd});
+            end
+         end
+         
+         % ---- Set flag to update first time through
+         %
+         self.updateFlags.playables = true;
       end
    end
 end

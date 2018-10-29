@@ -26,7 +26,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
    %
    %  2. Set properties. These are required:
    %        task.screenEnsemble
-   %        task.readables.userInput
+   %        task.readables.theObject
    %     Others can use defaults
    %
    %  3. Add this as a child to another topsTreeNode
@@ -53,8 +53,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'targetDistance',                8,    ...
          'textStrings',                   '',      ...
          'gazeWindowSize',                6,       ...
-         'gazeWindowDuration',            0.15);
-           
+         'gazeWindowDuration',            0.15,    ...
+         'showFunGraphics',            true, ...
+         'correctPlayableIndices',     1,    ...
+         'errorPlayableIndices',       2);
+          
       % Array of structures of independent variables, used by makeTrials
       indVars = struct( ...
          'name',        {'direction', 'coherence'}, ...
@@ -112,15 +115,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'coherenceSTD',                  10,               ...
          'stencilNumber',                 1,                ...
          'pixelSize',                     6,                ...
-         'diameter',                      8,                ...
-         'density',                       150,              ...
-         'speed',                         3))));
+         'diameter',                      10,                ...
+         'density',                       180,              ...
+         'speed',                         2))));
 
       % Readable settings
       readables = struct( ...
          ...
          ...   % The readable object
-         'userInput',                     [],               ...
+         'theObject',                     [],               ...
          ...
          ...   % The gaze windows
          'dotsReadableEye', struct( ...
@@ -131,7 +134,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'ensemble',          {[], [], [], []}, ... % ensemble object to bind to
          'ensembleIndices',   {[1 1], [1 1], [2 1], [2 2]}), ... % object/item indices
          ...
-         ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the userInput type
+         ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the theObject type
          'dotsReadableHIDKeyboard', struct( ...
          'name',              {'holdFixation', 'choseLeft', 'choseRight', 'calibrate'}, ...
          'component',         {'KeyboardSpacebar', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}, ...
@@ -198,9 +201,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         self.showText(self.settings.textStrings, [], ...
-            self.timing.showInstructions_shi, ...
-            self.timing.waitAfterInstructions_wai);       
+         if self.settings.showFunGraphics
+            
+         else
+            self.showText(self.settings.textStrings, [], ...
+               self.timing.showInstructions_shi, ...
+               self.timing.waitAfterInstructions_wai);
+         end
       end
       
       %% Finish task (overloaded)
@@ -219,6 +226,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          self.prepareDrawables();
          self.prepareReadables();
+         % self.preparePlayables();
          self.prepareStateMachine();
          
          % ---- Show information about the task/trial
@@ -279,7 +287,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Check for event
          %
-         eventName = self.getEventWithTimestamp(self.readables.userInput, ...
+         eventName = self.getEventWithTimestamp(self.readables.theObject, ...
             events, eventTag);
          
          % Nothing... keep checking
@@ -337,8 +345,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %  First Correct/error
          if trial.correct == 1
             feedbackString = 'Correct';
+            feedbackSound = self.settings.correctPlayableIndices;
          elseif trial.correct == 0
             feedbackString = 'Error';
+            feedbackSound = self.settings.errorPlayableIndices;
          else
             feedbackString = 'No choice';            
          end
@@ -373,6 +383,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % --- Show trial feedback on the screen
          %
          self.showText(feedbackString, 'fdbkOn');
+         
+         % ---- Possibly play sound
+         %
+         if ~isempty(self.sharedHelpers.playables) && trial.correct >= 0
+            dotsPlayable.playSound(self.sharedHelpers.playables, feedbackSound);
+         end
       end
                 
       %% Get Coherences from Quest
@@ -418,7 +434,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       end
    end
    
-   methods (Access = private)
+   methods (Access = protected)
            
       %% Prepare drawables for this trial
       %
@@ -528,9 +544,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Fevalables for state list
          %
-         blanks  = {@callObjectMethod, self.screenEnsemble, @blank};
-         chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
-         chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
+         blanks  = {@callObjectMethod, self.sharedHelpers.screenEnsemble, @blank};
+         chkuif  = {@getNextEvent, self.readables.theObject, false, {'holdFixation'}};
+         chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
          chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choice'};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
             {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
@@ -544,15 +560,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          pse     = {@pause 0.005};
 
          % drift correction
-         hfdc  = {@reset, self.readables.userInput, true};
+         hfdc  = {@reset, self.readables.theObject, true};
          
          % Activate/deactivate readable events
          sea   = @setEventsActiveFlag;
-         gwfxw = {sea, self.readables.userInput, 'holdFixation'};
+         gwfxw = {sea, self.readables.theObject, 'holdFixation'};
          gwfxh = {}; 
-         gwts  = {sea, self.readables.userInput, {'choseLeft', 'choseRight'}, 'holdFixation'};
-         % gwfxh = {}; % {dce, self.readables.userInput, 'brokeFixation', 'holdFixation'};
-         % gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'brokeFixation'};
+         gwts  = {sea, self.readables.theObject, {'choseLeft', 'choseRight'}, 'holdFixation'};
+         % gwfxh = {}; % {dce, self.readables.theObject, 'brokeFixation', 'holdFixation'};
+         % gwts  = {dce, self.readables.theObject, {'choseLeft', 'choseRight'}, 'brokeFixation'};
          
          % ---- Timing variables, read directly from the timing property struct
          %
@@ -585,7 +601,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % See activateEnsemblesByState for details.
          activeList = {{ ...
             self.drawables.stimulusEnsemble, 'draw'; ...
-            self.screenEnsemble, 'flip'}, ...
+            self.sharedHelpers.screenEnsemble, 'flip'}, ...
             {'preDots' 'showDotsRT' 'showDotsFX'}};
          
          % --- List of children to add to the stateMachineComposite
@@ -593,7 +609,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          compositeChildren = { ...
             self.drawables.stimulusEnsemble, ...
-            self.screenEnsemble};
+            self.sharedHelpers.screenEnsemble};
          
          % Call utility to set up the state machine
          self.addStateMachine(states, activeList, compositeChildren);
@@ -633,7 +649,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          task.setTrialData( ...
             {'direction', 'coherence', 'randSeedBase', 'choice', 'RT', 'correct'}, ...
             {'screenEnsemble', {'fixOn', 'targsOn', 'dotsOn', 'targsOff', 'fixOff', 'dotsOff', 'fdbkOn'}, ...
-            'readableList', {'choice'}});
+            'readables', {'choice'}});
 
          % ---- Default gaze windows
          %
@@ -646,9 +662,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %  3. RTFeedback flag
          %
          SATsettings = { ...
-            'S' 'Be as fast as possible.'                 task.settings.referenceRT; ...
-            'A' 'Be as accurate as possible.'             nan;...
-            'N' 'Be as fast and accurate as possible.'    nan};
+            'S' 'Be as FAST as possible.'                 task.settings.referenceRT; ...
+            'A' 'Be as ACCURATE as possible.'             nan;...
+            'N' 'Be as FAST and ACCURATE as possible.'    nan};
          
          dp = task.settings.directionPriors;
          BIASsettings = { ...
