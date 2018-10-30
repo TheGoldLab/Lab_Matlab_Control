@@ -1,10 +1,8 @@
 function topNode =  SingleCPReversingDots_configure(varargin)
-%% function topNode =  DBSconfigure(varargin)
+%% function topNode =  SingleCPReversingDots_configure(varargin)
 %
-% This function sets up a DBS experiment. We keep this logic separate from
-% running and cleaning up an experiment because we may want to decide
-% when/how do do those other things on the fly (e.g., add/subtract tasks
-% depending on the subject's motivation, etc).
+% This function sets up a Single change point reversing dots experiment. 
+% It follows the organization of the DBSconfigure.m script.
 %
 % Arguments:
 %  varargin  ... optional <property>, <value> pairs for settings variables
@@ -14,11 +12,11 @@ function topNode =  SingleCPReversingDots_configure(varargin)
 % Returns:
 %  mainTreeNode ... the topsTreeNode at the top of the hierarchy
 %
-% 11/17/18   jig wrote it
+% 10/30/18   aer wrote it
 
 %% ---- Parse arguments for configuration settings
 %
-% Name of the experiment, which determines where data are are stored
+% Name of the experiment, which determines where data are stored
 name = 'SingleCPReversingDots';
 
 % Other defaults
@@ -73,6 +71,8 @@ topNode.addSharedDrawables( ...
    true, true);
          
 % Add the user interface device(s) with default settings
+% is it here that  I should define the mapping from button/key presses to
+% events?
 topNode.addSharedReadables(topNode.nodeData{'Settings'}{'uiList'}, [], ...
    topNode.nodeData{'Settings'}{'doCalibration'}, ...
    topNode.nodeData{'Settings'}{'doRecording'});
@@ -92,7 +92,7 @@ welcome.alwaysRunning = false;
 paceStr = 'Work at your own pace.';
 strs = { ...
    'dotsReadableEye',         paceStr, 'Each trial starts by fixating the central cross.'; ...
-   'dotsReadableHIDButtons',  paceStr, 'Each trial starts by pusing either button.'; ...
+   'dotsReadableHIDButtons',  paceStr, 'Each trial starts by pushing either button.'; ...
    'dotsReadableHIDKeyboard', paceStr, 'Each trial starts by pressing the space bar.'; ...
    'dotsReadableDummy',       '',      'Each trial starts automatically.'; ...
    'default',                 '',      'You are on your own.'};
@@ -136,7 +136,7 @@ for ii = 1:2:length(taskSpecs)
       {'timing',    'showInstructions_shi'},	topNode.nodeData{'Settings'}{'instructionDuration'}, ...
       'sendTTLs',                            topNode.nodeData{'Settings'}{'sendTTLs'}, ...
       'taskID',                              (ii+1)/2, ...
-      'taskTypeID',  find(strcmp(taskSpecs{ii}, {'VGS' 'MGS' 'Quest' 'NN' 'NL' 'NR' 'SN' 'SL' 'SR' 'AN' 'AL' 'AR'}),1)};
+      'taskTypeID',  find(strcmp(taskSpecs{ii}, {'Quest' 'CP'}),1)};
    
    switch taskSpecs{ii}
       
@@ -157,8 +157,8 @@ for ii = 1:2:length(taskSpecs)
                {'settings' 'referenceRT'}, QuestTask});
          end
          
-         % Make RTDots task with args
-         task = topsTreeNodeTaskRTDots.getStandardConfiguration( ...
+         % Make SingleCPReversingDots task with args
+         task = topsTreeNodeTaskSingleCPReversingDots.getStandardConfiguration( ...
             taskSpecs{ii}, taskSpecs{ii+1}, ...
             {'direction', {'values', topNode.nodeData{'Settings'}{'dotDirections'}}}, ...
             args{:});

@@ -3,18 +3,17 @@ function topNode = SingleCPReversingDots_run(location)
 %
 %
 % This function configures, initializes, runs, and cleans up a single change point reversal dots  
-%  experiment (OR or office)
+%  experiment 
 %
 % 10/29/18   aer wrote it
 
 %% ---- Clear globals
 %
-% umm, duh
 clear globals
 
 %% ---- Configure experiment based on location
 %
-%   locations are 'office' (default), 'OR', or 'debug'
+%   locations are 'office', 'saccades', 'buttons', or 'debug' (default)
 %
 % UIs:
 %  'dotsReadableEyeEyelink'
@@ -26,7 +25,7 @@ clear globals
 %  'dotsReadableHIDGamepad'
 
 if nargin < 1 || isempty(location)
-   location = 'OR';
+   location = 'debug';
 end
 
 % add something different
@@ -51,9 +50,10 @@ switch location
    case {'debug' 'Debug'}
       arglist = { ...
          'taskSpecs',            {'CP' 1}, ...% 'Quest' 4 'SN' 1 'AN' 1}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
-         'uiList',               'dotsReadableEyePupilLabs', ... 
+         'uiList',               'dotsReadableHIDKeyboard', ... 
          'displayIndex',         0, ... % 0=small, 1=main
          'remoteDrawing',        false, ...
+         'instructionDuration',  20.0,...
          };
       
    otherwise % office
