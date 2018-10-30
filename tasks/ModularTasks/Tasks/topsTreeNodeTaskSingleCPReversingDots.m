@@ -1,14 +1,14 @@
 classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
-   % @class topsTreeNodeTaskReversingDots
+   % @class topsTreeNodeTaskSingleCPReversingDots
    %
-   % Reversing-dots task
+   % Single change point Reversing-dots task
    %
    % For standard configurations, call:
-   %  topsTreeNodeTaskRTDots.getStandardConfiguration
+   %  topsTreeNodeTaskSingleCPReversingDots.getStandardConfiguration
    % 
    % Otherwise:
    %  1. Create an instance directly:
-   %        task = topsTreeNodeTaskReversingDots();
+   %        task = topsTreeNodeTaskSingleCPReversingDots();
    %
    %  2. Set properties. These are required:
    %        task.screenEnsemble
@@ -17,7 +17,7 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
    %
    %  3. Add this as a child to another topsTreeNode
    %
-   % 5/28/18 created by jig
+   % 10/30/18 created by aer
    
    properties % (SetObservable) % uncomment if adding listeners
       
@@ -40,9 +40,9 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
       % Array of structures of independent variables, used by makeTrials
       indVars = struct( ...
          'name',        {'direction', 'coherence', 'TrialTimes', 'CPP'}, ... 
-         'values',      {[0 180], [20 30 40 50 60 70 80], [0.1 0.2 0.3 0.4 0.5], [0.5]}, ...
+         'values',      {[0 180], [50], [0.1 0.2 0.3 0.4 0.5], [0.5]}, ...
          'priors',      {[], [], [], []}, ...
-         'minTrials',   {1, [], 1, 1});
+         'minTrials',   {1, 1, 1, 1});
       
       % Timing properties
       timing = struct( ...
@@ -54,7 +54,7 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
          'interTrialInterval_iti',        1.0, ...
          'showTargetForeperiod_stf',      [0.2 0.5 1.0], ...
          'dotsDuration_ddr',              [1],   ...
-         'choiceTimeout_cto',             3.0);
+         'choiceTimeout_cto',             1.0);
       
       % Drawables settings
       drawables = struct( ...
@@ -94,7 +94,7 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
          'yCenter',                       0,                ...
          'coherenceSTD',                  10,               ...
          'stencilNumber',                 1,                ...
-         'pixelSize',                     6,                ...
+         'pixelSize',                     2,                ...
          'diameter',                      10,                ...
          'density',                       180,              ...
          'speed',                         2)),              ...
@@ -150,7 +150,7 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
       %% Constuctor
       %  Use topsTreeNodeTask method, which can parse the argument list
       %  that can set properties (even those nested in structs)
-      function self = topsTreeNodeTaskReversingDots(varargin)
+      function self = topsTreeNodeTaskSingleCPReversingDots(varargin)
 
          % ---- Make it from the superclass
          %
@@ -473,7 +473,7 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
       end
    end
    
-   methods (Access = private)
+   methods (Access = protected)
            
       %% Prepare drawables for this trial
       %
@@ -646,15 +646,12 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
       %
       % name is string:
       %  'Quest' for adaptive threshold procedure
-      %  or '<SAT><BIAS>' tag, where:
-      %     <SAT> is 'N' for neutral, 'S' for speed, 'A' for accuracy
-      %     <BIAS> is 'N' for neutral, 'L' for left more likely, 'R' for
-      %     right more likely
+      %  or 'CP' for standard task
       function task = getStandardConfiguration(name, minTrialsPerCondition, indVarList, varargin)
                   
          % ---- Get the task object, with optional property/value pairs
          %
-         task = topsTreeNodeTaskReversingDots(name, varargin{:});
+         task = topsTreeNodeTaskSingleCPReversingDots(name, varargin{:});
          
          % ---- Set min trial count
          %
@@ -669,11 +666,11 @@ classdef topsTreeNodeTaskSingleCPReversingDots < topsTreeNodeTask
          end
          
          % ---- Default trialData
-         %
+         % the following method comes from the superclass topsTreeNodeTask
          task.setTrialData( ...
             {'direction', 'coherence', 'randSeedBase', 'choice', 'RT', 'correct' 'CPPflag' 'choiceCPP'}, ...
             {'screenEnsemble', {'fixOn', 'targsOn', 'dotsOn', 'targsOff', 'fixOff', 'dotsOff', 'fdbkOn', 'YesNoOn'}, ...
-            'readableList', {'choice'}});
+            'readables', {'choice'}});
 
          % ---- Default gaze windows
          %
