@@ -485,7 +485,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                   
          % ---- Set a new seed base for the dots random-number process
          %
-         trial.randSeedBase = randi(999);
+         trial.randSeedBase = randi(99999);
          self.setTrial(trial);
         
          % ---- Save the randBase, coherence, and direction to the dots object
@@ -500,9 +500,14 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          if self.timing.showSmileyFace > 0
             
             % Set x
-            ensemble.setObjectProperty('x', ...
-               fpX + sign(cosd(trial.direction))*td, 3);
+            if cosd(trial.direction) > 0            
+               stimulusEnsemble.setObjectProperty('x', , 3);
+            stimulusEnsemble.setObjectProperty('y', newY, 3);
+            
+            % Prepare the smiley object
+            stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow, [], 3);
          end
+         
          
          % ---- Prepare to draw dots stimulus
          %

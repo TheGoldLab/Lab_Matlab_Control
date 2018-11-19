@@ -36,7 +36,8 @@ classdef (Sealed) topsDataLog < topsGroupedList
    
    properties
       % any function that returns the current time as a number
-      clockFunction = @topsClock;
+      % jig moved to topsFoundation
+      % clockFunction = @topsClock;
       
       % true or false, whether to print info as data are logged
       printLogging = false;

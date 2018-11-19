@@ -225,7 +225,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             self.settings.addItemToGroupWithMnemonic( ...
                 1, group, 'height');
             self.settings.addItemToGroupWithMnemonic( ...
-                2, group, 'distance');
+                60, group, 'distance');
             self.settings.addItemToGroupWithMnemonic( ...
                 [], group, 'bitDepth');
             self.settings.addItemToGroupWithMnemonic( ...
@@ -330,7 +330,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             self = dotsTheMachineConfiguration.theObject();
             
             group = self.defaultGroup;
-            if self.settings.containsMnemonicInGroup(name, group);
+            if self.settings.containsMnemonicInGroup(name, group)
                 value = self.settings.getItemFromGroupWithMnemonic( ...
                     group, name);
             else

@@ -32,9 +32,9 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
          self = self@dotsReadableHIDKeyboard(devicePreference);
          
          % Get the "buttonEither" component ID
-         self.buttonLeftID   = self.getComponentIDbyName(self.buttonLeft);
-         self.buttonRightID  = self.getComponentIDbyName(self.buttonRight);
-         self.buttonEitherID = self.getComponentIDbyName(self.buttonEither);
+         self.buttonLeftID   = self.getComponentID(self.buttonLeft);
+         self.buttonRightID  = self.getComponentID(self.buttonRight);
+         self.buttonEitherID = self.getComponentID(self.buttonEither);
       end
       
       

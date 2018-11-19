@@ -22,17 +22,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % parameters.
       keyMatching;
       
-      % Matching properties for machine-specific hardware - Vendor
-      VendorID;
-      
-      % Matching properties for machine-specific hardware - Product
-      ProductID;
-      
-      % Matching properties for machine-specific hardware - Usage
-      PrimaryUsage=6;
-      
-      % Get rid of annoying rollover event
-     
+      % Get rid of annoying rollover event     
    end
    
    methods
@@ -48,17 +38,11 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          if nargin > 0
             self.devicePreference = devicePreference;
          else
+            self.devicePreference.VendorID     = 1452;
+            self.devicePreference.ProductID    = 632;
+            self.devicePreference.PrimaryUsage = 6;
             mc = dotsTheMachineConfiguration.theObject();
             mc.applyClassDefaults(self);
-            if ~isempty(self.VendorID)
-               self.devicePreference.VendorID = self.VendorID;
-            end
-            if ~isempty(self.ProductID)
-               self.devicePreference.ProductID = self.ProductID;
-            end
-            if ~isempty(self.PrimaryUsage)
-               self.devicePreference.PrimaryUsage = self.PrimaryUsage;
-            end
          end
          
          % choose basic device identification criteria
@@ -76,17 +60,10 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          self.initialize();
          
          % define the "pressed" event for each key
-         for ii = 1:numel(self.components)
-            self.defineKeyboardEvent(self.components(ii).name);
-         end
-         
+         self.defineEventsFromComponents();
+   
          % flush
          self.flushData();
-      end
-      
-      % Wrapper for define event
-      function event = defineKeyboardEvent(self, componentName)         
-         event = self.defineEvent([], true, 'component', componentName);
       end
    end
    
@@ -193,7 +170,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            event = kbs(ii).defineKeyboardEvent(keyName);
+            event = kbs(ii).defineEvent(keyName, 'isActive', true);
          end
          
          [isPressed, data, kb] = ...
@@ -231,7 +208,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          % get event name
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            event = kbs(ii).defineKeyboardEvent(keyName);
+            event = kbs(ii).defineEvent(keyName, 'isActive', true);
          end
                   
          [isPressed, waitTime, data, kb] = ...

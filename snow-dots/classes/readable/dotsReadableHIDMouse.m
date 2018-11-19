@@ -71,8 +71,11 @@ classdef dotsReadableHIDMouse < dotsReadableHID
       % choosing among suitable devices, assigned to the
       % devicePreference property.
       function self = dotsReadableHIDMouse(devicePreference)
+         
+         % Make the HID
          self = self@dotsReadableHID();
          
+         % Get device preferences
          if nargin > 0 && ~isempty(devicePreference)
             self.devicePreference = devicePreference;
          else
@@ -89,18 +92,18 @@ classdef dotsReadableHIDMouse < dotsReadableHID
             end
          end
          
-         % choose basic device identification criteria
+         % Choose basic device identification criteria
          usagePage = mexHIDUsage.numberForPageName('GenericDesktop');
          usage = mexHIDUsage.numberForUsageNameOnPage( ...
             'Mouse', usagePage);
          self.deviceMatching.PrimaryUsagePage = usagePage;
          self.deviceMatching.PrimaryUsage = usage;
          
-         % choose button selection criteria
+         % Choose button selection criteria
          usagePage = mexHIDUsage.numberForPageName('Button');
          self.buttonMatching.UsagePage = usagePage;
          
-         % choose x anx y axis selection criteria
+         % Choose x and y axis selection criteria
          usagePage = mexHIDUsage.numberForPageName('GenericDesktop');
          usage = mexHIDUsage.numberForUsageNameOnPage('X', usagePage);
          self.xMatching.UsagePage = usagePage;
@@ -109,22 +112,26 @@ classdef dotsReadableHIDMouse < dotsReadableHID
          self.yMatching.UsagePage = usagePage;
          self.yMatching.Usage = usage;
          
-         % use a special callback which sums x and y change data
-         self.queueCallback = ...
-            @dotsReadableHIDMouse.mexHIDMouseQueueCallback;
+         % Use a special callback which sums x and y change data
+         self.queueCallback = @dotsReadableHIDMouse.mexHIDMouseQueueCallback;
          
-         % open device and elements
+         % Open device and elements
          self.initialize();
          
-         % define the "pressed" event for each button
+         % Define the "pressed" event for each button
          IDs = [self.components.ID];
-         nButtons = numel(self.buttonIDs);
-         for ii = 1:nButtons
+         for ii = 1:numel(self.buttonIDs)
             comp = self.components(IDs == self.buttonIDs(ii));
-            self.defineEvent(['pressed ' comp.name], true, false, ...
-               'component', comp.ID, 'lowValue', comp.CalibrationMax, ...
-               'highValue', comp.CalibrationMax);
+            self.defineEvent(['pressed ' comp.name], ...
+               'isActive',    true, ...
+               'component',   comp.ID, ...
+               'lowValue',    comp.CalibrationMax, ...
+               'highValue',   comp.CalibrationMax);
          end
+         
+         % Define dummy events for the x,y components
+         self.defineEvent('x', 'component', self.xID);
+         self.defineEvent('y', 'component', self.yID);
          
          % need to flush the data and reset the start position
          self.flushData();
@@ -139,8 +146,10 @@ classdef dotsReadableHIDMouse < dotsReadableHID
    end
    
    methods (Access = protected)
+      
       % Locate and enqueue all the buttons and axes of the mouse.
       function components = openComponents(self)
+         
          % find mouse buttons
          buttonCookies = mexHID('findMatchingElements', ...
             self.deviceID, self.buttonMatching);
@@ -166,18 +175,14 @@ classdef dotsReadableHIDMouse < dotsReadableHID
          self.buttonIDs = [buttons.ID];
          
          % find x and y axes
-         xCookie = mexHID('findMatchingElements', ...
-            self.deviceID, self.xMatching);
-         xInfo = mexHID('summarizeElements', ...
-            self.deviceID, xCookie);
+         xCookie = mexHID('findMatchingElements', self.deviceID, self.xMatching);
+         xInfo = mexHID('summarizeElements',self.deviceID, xCookie);
          xInfo.name = 'x';
          xInfo.ID = xInfo.ElementCookie;
          self.xID = xInfo.ElementCookie;
          
-         yCookie = mexHID('findMatchingElements', ...
-            self.deviceID, self.yMatching);
-         yInfo = mexHID('summarizeElements', ...
-            self.deviceID, yCookie);
+         yCookie = mexHID('findMatchingElements', self.deviceID, self.yMatching);
+         yInfo = mexHID('summarizeElements', self.deviceID, yCookie);
          yInfo.name = 'y';
          yInfo.ID = yInfo.ElementCookie;
          self.yID = yInfo.ElementCookie;
@@ -194,23 +199,27 @@ classdef dotsReadableHIDMouse < dotsReadableHID
    end
    
    methods (Static)
+      
       % Pass data from the mexHID() internal queue to Matlab.
       % @details
       % Keep running sums of x and y data.
       function mexHIDMouseQueueCallback(self, newData)
          
+         if isempty(newData)
+            self.queueCallbackData = [];
+            return
+         end
+         
          isX = newData(:,1) == self.xID;
          if any(isX)
             newData(isX,2) = self.x + cumsum(newData(isX,2));
-            lastX = find(isX, 1, 'last');
-            self.x = newData(lastX,2);
+            self.x = newData(find(isX, 1, 'last'), 2);
          end
          
          isY = newData(:,1) == self.yID;
          if any(isY)
             newData(isY,2) = self.y + cumsum(newData(isY,2));
-            lastY = find(isY, 1, 'last');
-            self.y = newData(lastY,2);
+            self.y = newData(find(isY, 1, 'last'), 2);
          end
          
          self.queueCallbackData = newData;

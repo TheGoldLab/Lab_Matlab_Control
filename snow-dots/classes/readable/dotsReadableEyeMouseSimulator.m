@@ -93,6 +93,8 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
             self.xID  self.HIDmouse.x/self.mouseScaleFactor time; ...
             self.yID -self.HIDmouse.y/self.mouseScaleFactor time];
          
+         % disp([newData(1,2), newData(2,2)])
+         
          if self.isRecording
             self.index = self.index + 1;
             if size(self.data,1) > self.index

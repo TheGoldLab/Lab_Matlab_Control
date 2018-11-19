@@ -31,7 +31,8 @@ classdef topsStateMachine < topsConcurrent
       transitionFevalable = {};
       
       % any function that returns the current time as a number
-      clockFunction = @topsClock;
+      % jig moved to topsFoundation
+      % clockFunction = @topsClock;
       
       % the time when state traversal began
       startTime = [];

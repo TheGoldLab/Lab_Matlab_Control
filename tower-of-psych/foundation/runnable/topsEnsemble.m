@@ -237,6 +237,7 @@ classdef topsEnsemble < topsCallList
         % By default, sets @a value to all objects in the ensemble.  If @a
         % index is provided, it may specify a subset of ensemble objects.
         function setObjectProperty(self, property, value, index)
+           
             % all or indexed objects?
             if nargin >= 4
                 objs = self.objects(index);

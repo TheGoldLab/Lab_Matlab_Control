@@ -108,6 +108,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % serialized in msg-pack format, and unfortunately there does
          % not exist a working Matlab library for this format.
          py.abs(0);
+         
+         % Turn off default instructions for calibration
+         self.calibration.showMessage = false;
       end
       
       % refreshSocket
@@ -169,7 +172,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          time = self.roundTripTime;
       end
       
-       % readDataFromFile
+      % readDataFromFile
       %
       % Utility for reading data from a pupillabs folder
       %
@@ -323,14 +326,13 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          zmq.core.send(self.reqPort,uint8('C'));
          self.result = zmq.core.recv(self.reqPort);
          
-         % Show instructions between blank screen2
+         % Show instructions
          dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
-            'textEnsemble', 1, [], self.screenEnsemble), ...
-            {'Please look at each object'}, 3, 0.3);
+            'textEnsemble', 1, []), {'Please look at each object'}, 3, 0.3);
          
          % Make a drawing ensemble for the calibration target
          calibrationEnsemble = dotsDrawable.makeEnsemble(...
-            'calibrationEnsemble', {}, self.screenEnsemble);
+            'calibrationEnsemble', {});
 
          % Generate calibration target location and sizes
          xDist = self.PLcalibration.deltaX;
