@@ -21,8 +21,9 @@ classdef topsTaskHelper < topsFoundation
          'timeout',        0.5,  ...   % Timeout to get synchronization time, in sec
          'minRoundTrip',   0.02, ...   % Minimum round trip time, in sec
          'results',        struct( ...
-         'referenceTime',  0, ...
-         'offset',         0, ...
+         'referenceTime',  0, ...      % Time of local trial start
+         'deviceTime',     0, ...      % Device time at synchronize event
+         'offset',         0, ...      % Local - remote
          'roundTrip',      0));
       
       % Below are properties used to bind the helper to a topsTreeNode
@@ -338,7 +339,7 @@ classdef topsTaskHelper < topsFoundation
             while (roundTrip > self.sync.minRoundTrip) && ...
                   ((after-started) < self.sync.timeout);
                before      = feval(self.clockFunction);
-               remoteTime  = feval(self.sync.clockFevalable{:});
+               deviceTime  = feval(self.sync.clockFevalable{:});
                after       = feval(self.clockFunction);
                roundTrip   = after - before;
             end
@@ -347,11 +348,12 @@ classdef topsTaskHelper < topsFoundation
             end
             
             % offset is local - remote, then offset relative to topNode sync time
-            self.sync.results.offset = mean([before after])-remoteTime;
+            self.sync.results.deviceTime = deviceTime;
+            self.sync.results.offset = mean([before after])-deviceTime;            
             self.sync.results.roundTrip = roundTrip;
             
             % Store sync data in data log
-            topsDataLog.logDataInGroup(self.sync.results, ['sync_' self.name]);
+            topsDataLog.logDataInGroup(self.sync.results, ['synchronize ' class(self.theObject)]);
          end
       end
       

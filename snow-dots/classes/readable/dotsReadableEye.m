@@ -281,7 +281,8 @@ classdef dotsReadableEye < dotsReadable
                inds    = self.gazeEvents(ii).ensembleIndices;
                xCenter = self.gazeEvents(ii).ensemble.getObjectProperty('xCenter', inds(1));
                yCenter = self.gazeEvents(ii).ensemble.getObjectProperty('yCenter', inds(1));
-               self.gazeEvents(ii).centerXY = [xCenter(inds(2)), yCenter(inds(2))];
+               xyInd   = min(length(xCenter), inds(2));
+               self.gazeEvents(ii).centerXY = [xCenter(xyInd), yCenter(xyInd)];
             end
          end
          
@@ -528,7 +529,7 @@ classdef dotsReadableEye < dotsReadable
          
          % Save it to the log
          self.gazeCalibration.timestamp = feval(self.clockFunction);
-         topsDataLog.logDataInGroup(self.gazeCalibration, 'dotsReadableEye calibration');
+         topsDataLog.logDataInGroup(self.gazeCalibration, ['calibrate ' class(self)]);
       end
       
       % Overloaded utility to get data and put it in FIRA analog format
@@ -536,63 +537,39 @@ classdef dotsReadableEye < dotsReadable
       % Arguments:
       %  1. dotsReadableEye object
       %  2. filename with path
-      %  3. syncTimes is an nx2 matrix, values are times, columns are:
-      %        1. local start time
-      %        2. ui start time
-      %        3. trial reference time
+      %  3. synchronizationData is array of tagged gazeCalibration structures
+      %     with fields:
+      %        referenceTime
+      %        offset
+      %        roundTrip
       %  4. self.gazeCalibration is tagged calibration data from the
       %  topsDataLog, each item is:
       %      	1. timestamp
       %       	2. xyOffset
       %      	3. xyScale
       %       	4. rotation matrix
-      function analog = readDataFromFile(self, filename, syncTimes, gazeCalibration)
+      function analog = readDataFromFile(self, filename, ...
+            synchronizationData, calibrationData)
          
          % Get the raw data and tags
          %
          [rawData, tags] = self.readRawDataFromFile(filename);
          
          % get data indices
-         eti = find(strcmp(tags, 'time'));
-         exi = find(strcmp(tags, 'gaze_x'));
-         eyi = find(strcmp(tags, 'gaze_y'));
-         eci = find(strcmp(tags, 'confidence'));
-         epi = find(strcmp(tags, 'pupil'));
-         
-         % Conditionally synchronize timing to local timeframe
-         %
-         if nargin >= 3 && ~isempty(syncTimes)
-            
-            % Make the new time matrix
-            newTimes = nans(size(rawData(:,1),1),1);
-            
-            % Make a temporary array to keep track of difference between each value of
-            %  "oldTimes" and the current referent
-            diffTimes = inf.*ones(size(newTimes));
-            
-            % Loop through each synch pair
-            for tt = 1:size(syncTimes,1)
-               
-               % Find all gaze timestamps that are closer to the current sync time
-               % than anyting checked previously, and save them
-               diffs = abs(rawData(:,eti)-syncTimes(tt,2));
-               Lsync = diffs < diffTimes;
-               diffTimes(Lsync) = diffs(Lsync);
-               
-               % Use this sync pair for nearby timestamps
-               newTimes(Lsync) = rawData(Lsync,eti) - syncTimes(tt,2) + syncTimes(tt,1);
-            end
-            
-            rawData(:,eti) = newTimes;
-         end
+         eti  = find(strcmp(tags, 'time'));
+         exi  = find(strcmp(tags, 'gaze_x'));
+         eyi  = find(strcmp(tags, 'gaze_y'));
+         eci  = find(strcmp(tags, 'confidence'));
+         epi0 = find(strcmp(tags, 'pupil_0'));
+         epi1 = find(strcmp(tags, 'pupil_1'));
          
          % Conditionally calibrate the raw eye signals
          %
-         if nargin >= 4 && ~isempty(gazeCalibration)
+         if nargin >= 4 && ~isempty(calibrationData)
             
             % expects time, gx, gy
             rawData(:,[eti exi eyi]) = dotsReadableEye.calibrateGazeSets( ...
-               rawData(:,[eti exi eyi]), gazeCalibration);
+               rawData(:,[eti exi eyi]), calibrationData);
          end
          
          % Collect trial-wise data
@@ -600,9 +577,9 @@ classdef dotsReadableEye < dotsReadable
          % For each trial (row in ecodes), make a cell array of pupil data
          %  timestamp, gaze x, gaze y, confidence, and re-code time wrt to fp onset.
          %  Also put everything in local time, wrt fp onset
-         if nargin >= 3 && ~isempty(syncTimes)
+         if nargin >= 3 && ~isempty(synchronizationData)
             
-            numTrials = size(syncTimes,1);
+            numTrials = length(synchronizationData);
             analog = struct(     ...
                'name',         {tags}, ... % 1xn" cell array of strings
                'acquire_rate', [],   ... % 1xn array of #'s, in Hz
@@ -611,20 +588,23 @@ classdef dotsReadableEye < dotsReadable
                'data',         {cell(numTrials,1)});      % mxn" cell array
             
             % Get list of local start times
-            localTrialStartTimes = [syncTimes(:,1); inf];
+            synchronizationData = [synchronizationData.item];
+            localTrialStartTimes = [synchronizationData.referenceTime];
+            deviceOffsets = [synchronizationData.offset];
+            deviceStartTimes = cat(2, localTrialStartTimes - deviceOffsets, inf);
             
             for tt = 1:numTrials
                
                % Get gaze data
-               Lgaze = rawData(:,eti) >= localTrialStartTimes(tt) & ...
-                  rawData(:,eti) < localTrialStartTimes(tt+1);
+               Lgaze = rawData(:,eti) >= deviceStartTimes(tt) & ...
+                  rawData(:,eti) < deviceStartTimes(tt+1);
                
                % Put eye data in order: time, x, y, confidence, pupil
-               analog.data{tt} = rawData(Lgaze, [eti exi eyi eci epi]);
+               analog.data{tt} = rawData(Lgaze, [eti exi eyi eci epi0 epi1]);
                
                % Calibrate timestamps to local time
-               analog.data{tt}(:,1) = analog.data{tt}(:,1) - syncTimes(tt,1) - ...
-                  syncTimes(tt,3);
+               analog.data{tt}(:,1) = analog.data{tt}(:,1) + ...
+                  deviceOffsets(tt) - localTrialStartTimes(tt);
             end
          end
       end

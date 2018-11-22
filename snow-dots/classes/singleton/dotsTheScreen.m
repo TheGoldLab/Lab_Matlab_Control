@@ -583,7 +583,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          if isempty(screen.ensemble)
             frameInfo = screen.blank(varargin{:});
          else
-            frameInfo = screen.ensemble.callObjectMethod(@blank, varargin{:});
+            frameInfo = screen.ensemble.callObjectMethod(@blank, varargin);
          end
       end      
       
@@ -630,12 +630,14 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Save current screen offset time
+      %
       function setOffsetTime(offsetTime)
          screen = dotsTheScreen.theObject();
          screen.offsetTime = offsetTime;
       end
       
       % Get current screen offset time
+      %
       function offsetTime = getOffsetTime()
          screen = dotsTheScreen.theObject();
          offsetTime = screen.offsetTime;

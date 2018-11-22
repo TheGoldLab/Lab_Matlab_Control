@@ -142,9 +142,8 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
                   'Seed', round(sum(clock*10)));
             else
                % use the given seed
-               disp(round(self.randBase + self.coherence + 100*self.direction(1) + 5000))
                self.thisRandStream = RandStream('mt19937ar', ...
-                  'Seed', abs(round(self.randBase + self.coherence + 100*self.direction(1) + 5000)));
+                  'Seed', abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000)));
             end
                
             % gross accounting for the underlying dot field

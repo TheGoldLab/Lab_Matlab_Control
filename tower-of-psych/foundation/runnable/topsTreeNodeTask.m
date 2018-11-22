@@ -86,6 +86,9 @@ classdef topsTreeNodeTask < topsTreeNode
          end
          self = self@topsTreeNode(name);
          
+         % Default is to iterate children until instructed to stop
+         self.iterations = inf;
+         
          if nargin > 1
             for ii = 2:2:nargin
                
@@ -147,17 +150,17 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % Set up trials
          %
-         % Add trials from independent variables struct
-         if any(strcmp(properties(self), 'independentVariables'))
-            self.makeTrials(self.independentVariables);
-         end
-         
          % If trialDataFields given, use to set up trialData struct
          if any(strcmp(properties(self), 'trialDataFields'))
             for ii = 1:length(self.trialDataFields)
                [self.trialData.(self.trialDataFields{ii})] = deal(nan);
             end
          end
+         
+         % Add trials from independent variables struct
+         if any(strcmp(properties(self), 'independentVariables'))
+            self.makeTrials(self.independentVariables);
+         end         
          
          % Get the first trial
          self.prepareForNextTrial();
@@ -182,7 +185,7 @@ classdef topsTreeNodeTask < topsTreeNode
          % Write data from the log to disk if the topNode defines a
          % filename
          if isa(self.caller, 'topsTreeNodeTopNode') && ...
-               ~isempty(self.caller.dataFiles.filename)
+               ~isempty(self.caller.filename)
             topsDataLog.writeDataFile();
          end
       end

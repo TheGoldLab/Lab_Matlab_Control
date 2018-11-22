@@ -307,8 +307,7 @@ classdef topsEnsemble < topsCallList
         % a cell array of objects as the first argument.  This assumes that
         % @a method is a static class method that operates on multiple
         % objects at once.  @a method could also be a regular function.
-        function result = callObjectMethod( ...
-                self, method, args, index, isCell)
+        function result = callObjectMethod(self, method, args, index, isCell)
             % pass arguments to method?
             if nargin < 3 || isempty(args)
                 args = {};

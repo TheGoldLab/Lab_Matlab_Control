@@ -9,26 +9,20 @@ classdef topsTaskHelperFeedback < topsTaskHelper
    
    properties (SetObservable)
       
-      % Images to show (second argument is height)
-      defaultImages = {'thumbsUp.jpg', 12, 'greatJob.jpg', 12};
-      
-      % Default Sounds
-      defaultSounds = {'correct1.mp3' 'error1.wav'};
-      
       % Default duration for showing (in sec)
       defaultDuration = 1.0;
       
-      % Default spacing for text (deg visual angle)
-      defaultTextSpacing = 4; 
+      % For text spacing
+      defaultTextSpacing = 4;
    end   
    
    properties (SetAccess = private)
       
       % Indices in the ensemble of the text objects
-      textIndices;
+      numText=2;
       
       % Indices in the ensemble of the image objects
-      imageIndices;
+      numImages=0;
 
       % The sound objects
       sounds;         
@@ -42,230 +36,96 @@ classdef topsTaskHelperFeedback < topsTaskHelper
       
       % Constuctor. Arguments are sent to setResources
       %
-      function self = topsTaskHelperFeedback(numTexts, numImages, numSounds, varargin)
+      function self = topsTaskHelperFeedback(images, sounds, varargin)
          
-         if nargin < 1 || isempty(numTexts)
-            numTexts = 2;
-         end
-         if nargin < 1 || isempty(numImages)
-            numImages = 2;
-         end
-         if nargin < 1 || isempty(numSounds)
-            numSounds = 2;
-         end
-         
-         % Create the drawable ensemble with text and image objects
-         args = {};
-         
-         % Add text
-         for ii = 1:numTexts
-            args = cat(2, args, {['text' num2str(ii)], struct( ...
-               'fevalable', @dotsDrawableText, ...
-               'settings', struct('y',(numTexts-ii-(numTexts-1)/2)*4))});
-         end
-         
-         % Add images
-         for ii = 1:numImages
-            args = cat(2, args, {['image' num2str(ii)], struct( ...
-               'fevalable', @dotsDrawableImages)});
-         end
-         
-         % Call the topsTaskHelper constructor
-         self = self@topsTaskHelper('feedback', [], args{:}, varargin{:});
-         
-         % Save the indices
-         self.textIndices  = find(cellfun(@(x) isa(x, 'dotsDrawableText'),   self.theObject.objects));
-         self.imageIndices = find(cellfun(@(x) isa(x, 'dotsDrawableImages'), self.theObject.objects));
-         
-         % Create correct/error sound playables
-         sounds = cell(numSounds,1);
-         for ii = 1:numSounds
-            sounds{ii} = dotsPlayableFile();
-         end
-         self.sounds = cat(2, sounds{:});
-
-         % Set default images and sounds
-         self.setResources( ...
-            'images',   self.defaultImages, ...
-            'sounds',   self.defaultSounds);
-      end
-      
-      % Utility to set images, sounds
-      %
-      % Arguments are property/value pairs:
-      %  'images', <image file or cell array with <optional> height>
-      %  'imageIndex', <scalar index of image to set>
-      %  'sounds', <sound file>
-      %  'soundIndex', <scalar index of sound to set>
-      function setResources(self, varargin)
-         
-         imageIndex = 1;
-         soundIndex = 1;
-         for ii = 1:2:nargin-1
+         % Call the topsTaskHelper constructor with 2 text objects
+         self = self@topsTaskHelper('feedback', [], varargin{:}, ...
+            'text1', struct('fevalable', @dotsDrawableText, 'settings', struct('y',  2)), ...
+            'text2', struct('fevalable', @dotsDrawableText, 'settings', struct('y', -2)));
             
-            property = varargin{ii+1};
-            switch(varargin{ii})
+         % Add images
+         if nargin < 1 || isempty(images)
+            images = {'thumbsUp.jpg', 12; 'greatJob.jpg', 12; 'Oops.jpg', 12};
+         end
+         self.setImages(images);
+         
+         % Add sounds
+         if nargin < 2 || isempty(sounds)
+            sounds = {'correct1.mp3' 'error1.wav'};
+         end
+         self.setSounds(sounds);         
+      end
+      
+      % Set images
+      %
+      % Images is cell array
+      %  columns are:
+      %     1. filename
+      %     2. default height or cell array of property/value pairs
+      function setImages(self, images)
+      
+         % Remove existing images
+         for ii = 1:self.numImages
+            self.theObject.removeObject(self.numText + ii);
+         end
+         
+         % Add new images
+         for ii = 1:size(images,1)
+            
+            % Get the image
+            self.theObject.addObject(dotsDrawableImages());
+            
+            % Set the image
+            self.theObject.setObjectProperty('fileNames', images(ii,1), ...
+               self.numText + ii);
+            
+            % Check for args
+            if size(images,2) == 2
                
-               case 'images'
-                  
-                  % Set fileName, <optional> height properties to given values
-                  if ischar(property)
-                     property = {property};
-                  end
-                  imageIndex = imageIndex - 1;
-                  for jj = 1:length(property)
-                     if ischar(property{jj})
-                        imageIndex = imageIndex + 1;
-                        index = self.imageIndices(imageIndex);
-                        self.theObject.setObjectProperty('fileNames', property(jj), index);
-                     else
-                        self.theObject.setObjectProperty('height', property{jj}, index);
-                     end
-                  end
-                  
-                  % Need to prepare to draw
-                  self.isPreparedToDraw = false;
-                  
-               case 'imageIndex'
-                  
-                  % Which index
-                  imageIndex = property;
-                  
-               case 'sounds'
-                  
-                  % Set file(s) and prepare to play
-                  if ischar(property)
-                     property = {property};
-                  end
-                  for jj = 1:length(property)
-                     self.sounds(soundIndex).fileName = property{jj};
-                     self.sounds(soundIndex).prepareToPlay();
-                     soundIndex = soundIndex + 1;
-                  end
-                  
-               case 'soundIndex'
-                  
-                  % Which index
-                  soundIndex = property;
-            end
-         end
-      end
-      
-      % Standard feedback with text, image, sound
-      %
-      % Optional arguments are property/value pairs used by showMessage:
-      %  showDuration   ... in sec
-      %  blank          ... whether or not to blank screen at the end (default=true)
-      %  task           ... the topsTreeNode task caller
-      %  eventTag       ... string used to store timing information in trial
-      %                       struct. Assumes that the current trialData
-      %                       struct has an entry called time_<eventTag>.
-      function showFeedback(self, textStrings, imageIndex, soundIndex, varargin)
-         
-         % Check args -- if both text and image are given, offset them on
-         % the screen. Otherwise center them.
-         if nargin < 2
-            textStrings = {};
-         end
-         if nargin < 3
-            imageIndex = [];
-         end
-         
-         % Check if we are showing both
-         if ~isempty(textStrings) && ~isempty(imageIndex)
-            imageY = -5;
-            textY  = 5;
-         else
-            imageY = 0;
-            textY  = 0;
-         end
-         
-         % Get text args
-         textArgs = cell(1,2);
-         if ~isempty(textStrings)
-            if ischar(textStrings)
-               textArgs{1} = {'string', textStrings, 'y', textY};
-            elseif length(textStrings) == 1
-               textArgs{1} = {'string', textStrings{1}, 'y', textY};
-            else
-               textArgs{1} = {'string', textStrings{1}, 'y', textY+2};
-               textArgs{2} = {'string', textStrings{2}, 'y', textY-2};
-            end   
-         end
-         
-         imageArgs = {};
-         if ~isempty(imageIndex)
-            imageArgs = cell(1,imageIndex);
-            imageArgs{end} = {'y', imageY};
-         end
-         
-         if nargin < 4
-            soundIndex = [];
-         end
-         
-         self.showMessage('text', textArgs, 'image', imageArgs, ...
-            'sound', soundIndex, varargin{:});
-      end
-      
-      % showText
-      %
-      % Utility to show text using the textEnsemble or command window. If
-      % task and eventTag arguments are given, the synchronized timestamp
-      % is stored in the current trial. Remember that
-      %  syncronization is done by the screenEnsemble helper, which stores 
-      %  the result in the dotsTheScreen singleton object so everyone else
-      %  can access it.
-      %
-      % Arguments:
-      %  textStrings       ... cell array of strings to show
-      %  useDefaultSpacing ... flag
-      %
-      % Optional property/value pairs send to showMessage:
-      %  showDuration      ... in sec
-      %  blank             ... whether or not to blank screen at the end (default=true)
-      %  task              ... the topsTreeNode task caller
-      %  eventTag          ... string used to store timing information in trial
-      %                       struct. Assumes that the current trialData
-      %                       struct has an entry called time_<eventTag>.
-      function showText(self, textStrings, useDefaultSpacing, varargin)
-         
-         % Check args
-         if nargin < 2 || isempty(textStrings)
-            return
-         end
-         
-         if nargin < 3 || isempty(useDefaultSpacing)
-            useDefaultSpacing = true;
-         end
-         
-         % Package the text strings into arguemnts used by showMessge
-         if ischar(textStrings)
-            textStrings = {textStrings};
-         end
-         numStrings = length(textStrings);
-         textArgs   = cell(1, numStrings);
+               if ischar(images{ii,2})
 
-         % Set up spacing
-         if useDefaultSpacing
-            ys = (0:self.defaultTextSpacing:self.defaultTextSpacing*(numStrings-1));
-            ys = mean(ys) - ys;
-         end
-         
-         for ii = 1:numStrings
-            if useDefaultSpacing
-               textArgs{ii} = {'string', textStrings{ii}, 'y', ys(ii)};
-            else
-               textArgs{ii} = {'string', textStrings{ii}};
+                  % height given
+                  self.theObject.setObjectProperty('height', images{ii,2}, ...
+                     self.numText + ii);
+               
+               elseif iscell(images{ii,2})
+                  
+                  % cell array of args
+                  for jj = 1:2:length(images{ii,2})
+                     self.theObject.setObjectProperty(images{ii,2}{jj}, ...
+                        images{ii,2}{jj+1}, self.numText + ii);
+                  end
+               end
             end
          end
-         
-         % Call showMessage to do the work
-         self.showMessage('text', textArgs, varargin{:});
       end
-      
+            
+      % Set sounds
+      %
+      % Images is cell array of sound file names
+      function setSounds(self, sounds)
+         
+         if isempty(sounds)
+            
+            % Blank
+            self.sounds = [];
+
+         else
+            % Set new
+            soundArray = cell(length(sounds),1);
+            for ii = 1:length(sounds)
+               playable = dotsPlayableFile();
+               playable.fileName = sounds{ii};
+               playable.prepareToPlay();
+               soundArray{ii} = playable;
+            end
+            self.sounds = cat(2, soundArray{:});
+         end
+      end
+
       % Set and show multiple messages with text, images, and sounds
       %
-      function showMultipleMessages(self, varargin)
+      function showMultiple(self, varargin)
          
          % parse args
          p = inputParser;
@@ -282,7 +142,7 @@ classdef topsTaskHelperFeedback < topsTaskHelper
          for mm = 1:max([size(p.Results.text,1), size(p.Results.image,1)])
             
             % Call showMessage to do the work with the current text/image args
-            self.showMessage( ...
+            self.show( ...
                'text',  p.Results.text(min(mm, size(p.Results.text,1)),:), ...
                'image', p.Results.image(min(mm, size(p.Results.image,1)),:), ...
                unmatched{:});
@@ -309,63 +169,78 @@ classdef topsTaskHelperFeedback < topsTaskHelper
       %  eventTag       ... string used to store timing information in trial
       %                       struct. Assumes that the current trialData
       %                       struct has an entry called time_<eventTag>.
-      function showMessage(self, varargin)
+      function show(self, varargin)
          
          % parse args
          p = inputParser;
-         p.KeepUnmatched = true;
+         p.addRequired('self');
          p.addParameter('text',          {});
          p.addParameter('image',         {});
          p.addParameter('sound',         {});
          p.addParameter('showDuration',  self.defaultDuration);
+         p.addParameter('clearAll',      true);
          p.addParameter('blank',         true);
          p.addParameter('task',          []);
          p.addParameter('eventTag',      []);
-         p.parse(varargin{:});
-
-         % Set values for text, images
-         % If properties are empty, hide it
-         % If tag 'show' or properties are given, show it
-         argSets = {p.Results.text, self.textIndices; p.Results.image, self.imageIndices};
-         for ii = 1:2
-            
-            args = argSets{ii, 1};
-            inds = argSets{ii, 2};
-            if isempty(args)
-               args = cell(length(inds), 1);
-            else
-               if ~iscell(args{1}) && ~isempty(args{1}) && ~(ischar(args{1}) && strcmp(args{1}, 'show'))
-                  args = {args};
+         p.parse(self, varargin{:});
+         
+         % First hide everything
+         if p.Results.clearAll
+            self.theObject.setObjectProperty('isVisible', false);
+         end
+         
+         % Check for positions
+         if ~isempty(p.Results.text) && ~isempty(p.Results.image)
+            defaultY = 5;
+         else
+            defaultY = 0;
+         end
+         
+         % Text args can be:
+         %  string
+         %  cell array of one or two strings
+         %  cell array of cell property/value lists
+         if ~isempty(p.Results.text)
+            textArgs = p.Results.text;
+            if ischar(textArgs)
+               textArgs = {{'string', textArgs, 'y', defaultY}, {}};
+            elseif iscell(textArgs)
+               if ischar(textArgs{1})
+                  textArgs{1} = ['string', textArgs(1), 'y', defaultY+2];
                end
-               [args{end+1:length(inds)}] = deal({});
+               if length(textArgs) == 2 && ischar(textArgs{2})
+                  textArgs{2} = ['string', textArgs(2), 'y', defaultY-2];
+               end
             end
-            
-            for aa = 1:length(args)
-               if ischar(args{aa})
-                  theseArgs = {'isVisible', true};
-               elseif isempty(args{aa})
-                  theseArgs = {'isVisible', false};
-               else
-                  theseArgs = cat(2, args{aa}, {'isVisible', true});
-                  if ii == 2
-                     % Set flag here, in case args given to images
-                     self.isPreparedToDraw = false;
-                  end
+            for ii = 1:length(textArgs)
+               for jj = 1:2:length(textArgs{ii})-1
+                  self.theObject.setObjectProperty(textArgs{ii}{jj}, textArgs{ii}{jj+1}, ii);
                end
-               for jj = 1:2:length(theseArgs)
-                  self.theObject.setObjectProperty(theseArgs{jj}, theseArgs{jj+1}, inds(aa));
+               if ~isempty(textArgs{ii})
+                  self.theObject.setObjectProperty('isVisible', true, ii);
                end
             end
          end
-
-         % Call prepare to draw, if necessary, and reset
-         if ~self.isPreparedToDraw
+         
+         % Image arg can be index or cell array of:
+         %  {<index>, <property/value pairs>}
+         if ~isempty(p.Results.image)
+            imageArgs = p.Results.image;
+            if isnumeric(imageArgs)
+               imageArgs = {imageArgs, 'y', -defaultY, 'isVisible', true};
+            else
+               imageArgs = [imageArgs, 'isVisible', true];
+            end
+            for ii = 2:2:length(imageArgs)-1
+               self.theObject.setObjectProperty(imageArgs{ii}, ...
+                  imageArgs{ii+1}, self.numText+imageArgs{1});
+            end
             self.theObject.callObjectMethod(@prepareToDrawInWindow);
-         	self.isPreparedToDraw = true;
          end
 
          % Draw 'em, getting back timestamps
-         frameInfo = self.theObject.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         frameInfo = self.theObject.callObjectMethod(...
+            @dotsDrawable.drawFrame, {}, [], true);
          
          % Possibly play sounds
          if ~isempty(p.Results.sound)

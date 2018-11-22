@@ -22,6 +22,11 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % parameters.
       keyMatching;
       
+      % matching preferences read from machine defaults
+      VendorID;
+      ProductID;
+      PrimaryUsage;
+
       % Get rid of annoying rollover event     
    end
    
@@ -35,14 +40,31 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       function self = dotsReadableHIDKeyboard(devicePreference)
          self = self@dotsReadableHID();
          
+         % Read args
          if nargin > 0
+            
+            % Preferences given
             self.devicePreference = devicePreference;
          else
-            self.devicePreference.VendorID     = 1452;
-            self.devicePreference.ProductID    = 632;
-            self.devicePreference.PrimaryUsage = 6;
+            
+            % Read machine defaults
             mc = dotsTheMachineConfiguration.theObject();
             mc.applyClassDefaults(self);
+            
+            % Put preferences into the struct
+            self.devicePreference.VendorID = self.VendorID;
+            self.devicePreference.ProductID = self.ProductID;
+            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            
+            % special case for jig computer without external keyboard
+            if strcmp(getMachineName(), 'GoldLaptop')
+               mexHID('initialize');
+               infoStruct = mexHID('summarizeDevices');
+               if ~any([infoStruct.VendorID] == self.VendorID)
+                  self.devicePreference.VendorID = 1452;
+                  self.devicePreference.ProductID = 632;
+               end
+            end
          end
          
          % choose basic device identification criteria

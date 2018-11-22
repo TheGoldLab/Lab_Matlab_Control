@@ -468,9 +468,14 @@ classdef dotsReadable < handle
          self.eventDefinitions(ID).isRelease  = p.Results.isRelease;
          self.eventDefinitions(ID).waitingForRelease = false;
          
-         % Check to set isActive flags
+         % Make sure "skipped" IDs are not filled with []
          if ID > numEvents
             [self.eventDefinitions(numEvents+1:ID-1).isActive] = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).isInverted] = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).lowValue] = deal(-inf);
+            [self.eventDefinitions(numEvents+1:ID-1).highValue] = deal(inf);
+            [self.eventDefinitions(numEvents+1:ID-1).isRelease] = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).waitingForRelease] = deal(false);
          end
          
          % possibly return the event
@@ -986,7 +991,7 @@ classdef dotsReadable < handle
       end
       function finishTrialDevice(self, varargin)
       end
-      function data = readDataFromFile(self, filename, synchTimes, calibrationData)
+      function data = readDataFromFile(self, filename, syncTimes, calibrationData)
       end
    end
    

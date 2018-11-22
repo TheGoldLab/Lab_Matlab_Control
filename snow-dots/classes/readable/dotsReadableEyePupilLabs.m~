@@ -200,15 +200,15 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          tmpFileName = 'tmpDataFile';
          
          % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
+         tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
          dataMatrix = [];
          
          % Loop through the subdirectories, getting the data
          dirs = dir(fullfile(dataPath, '0*'));
          for dd = 1:length(dirs)
             rawFileWithPath = fullfile(dataPath, dirs(dd).name);
-            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s gaze %s', ...
-               rawFileWithPath, tmpFileName);
+            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s %s', ...
+               rawFileWithPath, 'gaze', tmpFileName);
             system(commandStr);
             
             % collect the data

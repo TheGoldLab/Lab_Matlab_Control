@@ -95,7 +95,7 @@ classdef dotsDrawable < handle
       %
       function ensemble = makeEnsemble(name, objects, automateDraw)
          
-         if nargin < 1 || isempty(name)
+         if isempty(name)
             name = 'drawable';
          end
          
@@ -122,7 +122,7 @@ classdef dotsDrawable < handle
          end
          
          % possibly automate drawing
-         if nargin > 3 && automateDraw
+         if nargin >= 3 && automateDraw
             ensemble.automateObjectMethod('draw', @mayDrawNow);
          end
       end

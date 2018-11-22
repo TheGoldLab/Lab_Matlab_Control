@@ -156,7 +156,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         self.helpers.feedback.show( ...
+         self.helpers.feedback.showText( ...
             'text', self.settings.textStrings, ...
             'showDuration', self.timing.showInstructions);
          pause(self.timing.waitAfterInstructions);
@@ -228,15 +228,14 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          trial = self.getTrial();
          
          if trial.correct == 1
-            feedbackStr = 'Correct';
+            feedbackStr = 'Corret
             feedbackArgs = { ...
-               'text',  [feedbackStr '!'], ...
+               'text',  'Correct!', ...
                'image', self.settings.correctImageIndex, ...
                'sound', self.settings.correctPlayableIndex};
          else
-            feedbackStr = 'No choice';
             feedbackArgs = { ...
-               'text',  [feedbackStr ', try again!'], ...
+               'text', 'No choice, try again!', ...
                'image', self.settings.errorImageIndex, ...
                'sound', self.settings.errorPlayableIndex};
          end
@@ -245,12 +244,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          self.statusStrings{2} = sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, feedbackStr, trial.RT);
+            trial.direction, feedbackArgs{1}, trial.RT);
          self.updateStatus(2); % just update the second one
          
          % ---- Show trial feedback on the screen
          %
-         self.helpers.feedback.show(feedbackArgs{:});
+         self.helpers.feedback.showFeedback(feedbackArgs{:});
       end
    end
    
@@ -311,7 +310,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          blanks = {@dotsTheScreen.blankScreen};
          chkuif = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
          chkuib = {}; % {@getNextEvent, self.helpers.reader, false, {}}; % {'brokeFixation'}
-         chkuic = {@readEvent, self.helpers.reader, {'choseTarget'}, self, 'choiceTime'};                  
+         chkuic = {@readEvent, self.helpers.reader, {'choseTarget'}, self, 'choice'};                  
          setchc = {@setChoice, self};                  
          showfx = {@draw, self.helpers.stimulusEnsemble, {1, [2 3]},  self, 'fixationOn'};
          showt  = {@draw, self.helpers.stimulusEnsemble, {2, []}, self, 'targetOn'};

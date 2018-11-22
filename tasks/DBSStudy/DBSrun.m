@@ -1,4 +1,4 @@
-function topNode = DBSrun(location)
+ ffunction topNode = DBSrun(location)
 %% function [mainTreeNode, datatub] = DBSrun(location)
 %
 % DBSrun = Response-Time Dots
