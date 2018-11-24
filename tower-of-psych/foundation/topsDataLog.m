@@ -335,7 +335,7 @@ classdef (Sealed) topsDataLog < topsGroupedList
          % sorting from scratch may be too slow
          %   may be able to improve since keys
          %   from each group should be already sorted--merge k lists
-         [a, order] = sort([logStruct.mnemonic]);
+         [~, order] = sort([logStruct.mnemonic]);
          logStruct = logStruct(order);
       end
       

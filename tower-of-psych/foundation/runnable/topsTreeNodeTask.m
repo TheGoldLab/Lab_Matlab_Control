@@ -415,7 +415,7 @@ classdef topsTreeNodeTask < topsTreeNode
          self.setTrialData([], 'trialStart', startTime)         
          
          % ---- call the subclass startTrial method
-         %
+         %         
          self.startTrial();
 
          % ---- Prepare the helpers, including reference (trial start) time

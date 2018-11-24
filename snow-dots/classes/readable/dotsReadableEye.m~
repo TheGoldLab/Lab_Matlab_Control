@@ -567,9 +567,12 @@ classdef dotsReadableEye < dotsReadable
          %
          if nargin >= 4 && ~isempty(calibrationData)
             
+            rd = rawData(:,[eti exi eyi]);
+            rd(:,1) = rd(:,1) + 277.0572;
+            
             % expects time, gx, gy
             rawData(:,[eti exi eyi]) = dotsReadableEye.calibrateGazeSets( ...
-               rawData(:,[eti exi eyi]), calibrationData);
+%               rawData(:,[eti exi eyi]), calibrationData);
          end
          
          % Collect trial-wise data

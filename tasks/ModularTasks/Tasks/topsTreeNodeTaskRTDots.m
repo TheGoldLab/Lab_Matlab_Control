@@ -59,12 +59,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Quest properties
       questSettings = struct( ...
-         'stimRange',                 0:100,  	...
-         'thresholdRange',            0:50,     ...
-         'slopeRange',                2:5,      ...
+         'stimRange',                 20*log10((0:100)/100),  	...
+         'thresholdRange',            20*log10((1:99)/100),     ...
+         'slopeRange',                1:5,      ...
          'guessRate',                 0.5,      ...
-         'lapseRange',                0.00:0.01:0.05);
-
+         'lapseRange',                0.00:0.01:0.05, ...
+         'recentGuess',               []);
+      
       % Fields below are optional but if found with the given names
       %  will be used to automatically configure the task
       
@@ -214,16 +215,16 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                self.questSettings.slopeRange, ...
                self.questSettings.guessRate, ...
                self.questSettings.lapseRange}));
-            
+                        
             % Update independent variable struct using initial value
             self.setIndependentVariableByName('coherence', 'values', ...
-               min(100, max(0, qpQuery(self.quest))));
+               self.getQuestGuess());
             
          elseif ~isempty(self.settings.useQuest)
             
-            % Update independent variable struct using Quest value
+            % Update independent variable struct using Quest threshold
             self.setIndependentVariableByName('coherence', 'values', ...
-               self.settings.useQuest.getCoherencesFromQuest( ...
+               self.settings.useQuest.getQuestThreshold( ...
                self.settings.coherencesFromQuest));            
          end
                   
@@ -269,7 +270,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Trial information
          trial = self.getTrial();
-         trialString = sprintf('Trial %d/%d, dir=%d, coh=%d', self.trialCount, ...
+         trialString = sprintf('Trial %d/%d, dir=%d, coh=%.0f', self.trialCount, ...
             numel(self.trialData)*self.trialIterations, trial.direction, trial.coherence);
          
          % Show the information
@@ -295,17 +296,20 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             % ---- Update Quest
             %
             % (expects 1=error, 2=correct)
-            self.quest = qpUpdate(self.quest, trial.coherence, trial.correct+1);
+            self.quest = qpUpdate(self.quest, self.questSettings.recentGuess, ...
+               trial.correct+1);
             
-            % Update next guess, bounded between 0 and 100, if there is a next trial
+            % Update next guess, if there is a next trial
             if self.trialCount < length(self.trialIndices)
                self.trialData(self.trialIndices(self.trialCount+1)).coherence = ...
-                  min(100, max(0, qpQuery(self.quest)));
+                  self.getQuestGuess();
             end
             
-            % ---- Set reference coherence to current threshold and set reference RT
+            % ---- Set reference coherence to current threshold 
+            %        and set reference RT
             %
-            self.settings.coherences  = self.getCoherencesFromQuest(self.settings.coherencesFromQuest);
+            self.settings.coherences  = self.getQuestThreshold( ...
+               self.settings.coherencesFromQuest);
             self.settings.referenceRT = nanmedian([self.trialData.RT]);
          end
       end
@@ -391,13 +395,15 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Set up feedback based on outcome
          if trial.correct == 1
+            feedbackStr = 'Correct';
             feedbackArgs = { ...
-               'text',  ['Correct', RTstr], ...
-               'image', self.settings.correctImageIndex
+               'text',  [feedbackStr RTstr], ...
+               'image', self.settings.correctImageIndex, ...
                'sound', self.settings.correctPlayableIndex};
          elseif trial.correct == 0
+            feedbackStr = 'Error';
             feedbackArgs = { ...
-               'text',  ['Error', RTstr], ...
+               'text',  [feedbackStr RTstr], ...
                'image', self.settings.errorImageIndex, ...
                'sound', self.settings.errorPlayableIndex};
          else
@@ -407,9 +413,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % --- Show trial feedback in GUI/text window
          %
          self.statusStrings{2} = ...
-            sprintf('Trial %d/%d, dir=%d, coh=%d: %s, RT=%.2f', ...
+            sprintf('Trial %d/%d, dir=%d, coh=%.0f: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, feedbackArgs{1}, trial.RT);
+            trial.direction, trial.coherence, feedbackStr, trial.RT);
          self.updateStatus(2); % just update the second one   
          
          % --- Show trial feedback on the screen
@@ -417,20 +423,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          self.helpers.feedback.show(feedbackArgs{:});
       end
                 
-      %% Get Coherences from Quest
+      %% Get Quest threshold value(s)
       %
-      % coherencesFromQuest is list of proportion correct values
+      % pcors is list of proportion correct values
       %  if given, find associated coherences from QUEST Weibull
       %  Parameters are: threshold, slope, guess, lapse
-      %
-      function cohs = getCoherencesFromQuest(self, coherencesFromQuest)
-         
-         if nargin < 2 || isempty(coherencesFromQuest)
-            coherencesFromQuest = [];
-            cohs = nan;
-         else
-            cohs = nans(size(coherencesFromQuest));
-         end
+ 
+      function threshold = getQuestThreshold(self, pcors)
 
          % Find values from PMF
          psiParamsIndex = qpListMaxArg(self.quest.posterior);
@@ -438,25 +437,35 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          if ~isempty(psiParamsQuest)
             
-            if isempty(coherencesFromQuest)
+            if nargin < 2 || isempty(pcors)
                
-               % Just return threshold
-               cohs = psiParamsQuest(1,1);
+               % Just return threshold in units of % coh
+               threshold = psiParamsQuest(1,1);
             else
                
+               % Compute PMF with fixed guess and no lapse
                cax = (0:0.1:100);
-               predictedProportions =100*qpPFWeibull(cax', ...
-                  [psiParamsQuest(1,1) psiParamsQuest(1,2) 0.5 0]);
-               
-               cohs = nans(size(coherencesFromQuest));
-               for ii = 1:length(coherencesFromQuest)
-                  Lp = predictedProportions(:,2)>=coherencesFromQuest(ii);
+               predictedProportions =100*qpPFWeibull(cax', [psiParamsQuest(1,1:3) 0]);               
+               threshold = nans(size(pcors));
+               for ii = 1:length(pcors)
+                  Lp = predictedProportions(:,2)>=pcors(ii);
                   if any(Lp)
-                     cohs(ii) = cax(find(Lp,1));
+                     threshold(ii) = cax(find(Lp,1));
                   end
                end
             end
          end
+         
+         % Convert to % coherence
+         threshold = 10^(threshold./20).*100;
+      end
+      
+      %% Get next coherences guess from Quest
+      %
+      function coh = getQuestGuess(self) 
+      
+         self.questSettings.recentGuess = qpQuery(self.quest);
+         coh = min(100, max(0, 10^(self.questSettings.recentGuess/20)*100));
       end
    end
    
@@ -470,8 +479,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % 
          trial    = self.getTrial();
          ensemble = self.helpers.stimulusEnsemble.theObject;
-         
-         
+                  
          % ----- Get target locations
          %
          %  Determined relative to fp location

@@ -3,7 +3,7 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2018_11_21_16_35.mat';
+testFilename = 'data_2018_11_23_17_36.mat';
 [topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
 
 % task indices
@@ -18,28 +18,31 @@ nts = length(tis);
 lm  = 15;
 td  = 8; % target distance -- probably can/should read this from the topNode
 clf
+
+durs = FIRA.ecodes.data(:,strcmp(FIRA.ecodes.name, 'trialEnd')) - ...
+   FIRA.ecodes.data(:,strcmp(FIRA.ecodes.name, 'trialStart'));
+
 for tt = 1:nts
    
    for ii = find(FIRA.ecodes.data(:,1)==tis(tt))'
       
-      tax   = FIRA.analog.data{ii}(:,1);
-      xs    = FIRA.analog.data{ii}(:,2);
-      ys    = FIRA.analog.data{ii}(:,3);
+      tax   = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,1);
+      xs    = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,2);
+      ys    = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,3);
             
       % get index of saccade soon after RT
       if FIRA.ecodes.data(ii,1) <= 2
-         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fixOff')); % Fix off for VGS/MGS
+         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'fixationOff')); % Fix off for VGS/MGS
       else
-         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_dotsOn')); % Dots on
+         refTime = FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'dotsOn')); % Dots on
       end
       
       % Event times
       fixIndex    = find(tax>=refTime,1);
       sacEndTime  = refTime+FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'RT'))+0.1;
       sacEndIndex = find(tax>=(sacEndTime),1);
-      Lgood       = tax>=(refTime-0.4) & tax<=min(sacEndTime+0.5, ...
-         FIRA.ecodes.data(ii,strcmp(FIRA.ecodes.name, 'time_screen_fdbkOn')));
-   
+      Lgood       = tax>=(refTime-0.4) & tax<=min(sacEndTime+0.5, durs(ii));
+      
       % rezero just before fpoff
       %xs = xs - nanmean(xs(fixIndex-10:fixIndex));
       %ys = ys - nanmean(ys(fixIndex-10:fixIndex));

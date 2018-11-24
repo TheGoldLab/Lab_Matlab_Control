@@ -468,16 +468,6 @@ classdef dotsReadable < handle
          self.eventDefinitions(ID).isRelease  = p.Results.isRelease;
          self.eventDefinitions(ID).waitingForRelease = false;
          
-         % Make sure "skipped" IDs are not filled with []
-         if ID > numEvents
-            [self.eventDefinitions(numEvents+1:ID-1).isActive] = deal(false);
-            [self.eventDefinitions(numEvents+1:ID-1).isInverted] = deal(false);
-            [self.eventDefinitions(numEvents+1:ID-1).lowValue] = deal(-inf);
-            [self.eventDefinitions(numEvents+1:ID-1).highValue] = deal(inf);
-            [self.eventDefinitions(numEvents+1:ID-1).isRelease] = deal(false);
-            [self.eventDefinitions(numEvents+1:ID-1).waitingForRelease] = deal(false);
-         end
-         
          % possibly return the event
          if nargout >= 1
             event = self.eventDefinitions(ID);
@@ -512,15 +502,10 @@ classdef dotsReadable < handle
       %  property/value pairs used by defineEvent
       % The only required field is 'name' (first argument to defineEvent),
       %  all others are optional paired arguments
-      function defineEventsFromStruct(self, eventStruct, dontClear)
+      function defineEventsFromStruct(self, eventStruct)
          
          if nargin < 2 || isempty(eventStruct)
             return
-         end
-         
-         % Clear the old events
-         if nargin < 3 || ~dontClear
-            self.eventDefinitions = [];
          end
          
          % Get list of fieldnames and make the arg array

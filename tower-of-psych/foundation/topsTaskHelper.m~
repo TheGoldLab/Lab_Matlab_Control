@@ -374,6 +374,8 @@ classdef topsTaskHelper < topsFoundation
          end
       end
       
+      doffset - deviceTime - referenceTime
+      
       % Set property
       %
       % Args are:
