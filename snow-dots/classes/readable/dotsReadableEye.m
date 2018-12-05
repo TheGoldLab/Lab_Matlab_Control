@@ -74,6 +74,7 @@ classdef dotsReadableEye < dotsReadable
       % different systems, contexts, subjects, ets.
       calibration = struct( ...
          'showMessage',                true, ... % help message
+         'showOnMonitor',              true, ...
          'query',                      false, ... % Ask for input during calibration
          'queryTimeout',               5,    ... % query wait time during calibration (sec)
          'showEye',                    true, ... % automatically show eye after calibration
@@ -82,13 +83,13 @@ classdef dotsReadableEye < dotsReadable
          'fpX',                        10,   ... % x offset for calibration target grid
          'fpY',                        5,    ... % y offset for calibration target grid
          'fpSize',                     1.5,  ... % Size of calibration target
-         'varTolerance',               5, ...  %0.0001, ... % Tolerance for using calibration values
+         'varTolerance',               5, ...    % 0.0001, ... % Tolerance for using calibration values
          'offsetVarTolerance',         2.0,  ... % Tolerance for using calibration values
          'transformTolerance',         15.0, ... % 4.0,  ... % Tolerance for using calibration values
          'numberTries',                5,    ... % number of times to try calibrating
          'targetEnsemble',             [],   ... % for calibration targets
          'eyeEnsemble',                [],   ... % for showing eye position
-         'uiEvents',    struct( ... % input during calibration
+         'uiEvents',                   struct( ... % input during calibration
          'name',      {'accept', 'calibrate', 'dritfCorrect', 'abort', 'repeat', 'showEye', 'toggle'}, ...
          'component', {'KeyboardSpacebar',  'KeyboardC', 'KeyboardD',  'KeyboardQ', 'KeyboardR',  'KeyboardS', 'KeyboardT'}));
    end
@@ -161,8 +162,8 @@ classdef dotsReadableEye < dotsReadable
       % @details
       % Extends the dotsReadable flushData() method to do also clear x,
       % y, and pupul data
-      function flushData(self)
-         self.flushData@dotsReadable();
+      function flushData(self, varargin)
+         self.flushData@dotsReadable(varargin{:});
          self.x = 0;
          self.y = 0;
          self.pupil = 0;
@@ -297,7 +298,7 @@ classdef dotsReadableEye < dotsReadable
       function setGazeWindows(self, windowSize, windowDuration)
          
          % Check for windows
-         numWindows = length(self.gazeEvents);
+         numWindows = numel(self.gazeEvents);
          if numWindows == 0
             return
          end
@@ -663,11 +664,12 @@ classdef dotsReadableEye < dotsReadable
             mode = 'c';
          end
          
-         % get a keyboard, if not given
+         % get the user-input device used to give responses during calibration
+         %
          if isempty(self.calibrationUI)
             if isa(self, 'dotsReadableEyeMouseSimulator')
                
-               % special case of mouse simulator
+               % special case of mouse simulator -- use mouse click
                self.calibrationUI = self.HIDmouse;
                
                % Deactivate all events
@@ -695,9 +697,8 @@ classdef dotsReadableEye < dotsReadable
          end
          
          % Flush events and make sure no keys are being pressed
-         while ~isempty(self.calibrationUI.getNextEvent())
-         end
-         self.calibrationUI.flushData();
+         %
+         self.calibrationUI.flushData(true);
          
          % Generate Fixation target (cross)
          %
@@ -713,10 +714,10 @@ classdef dotsReadableEye < dotsReadable
                'targetEnsemble', {fixationCue});
             
             % make the eye ensemble
-            eyeCue                      = dotsDrawableTargets();
-            eyeCue.width                = 0.5;
-            eyeCue.height               = 0.5;
-            eyeCue.isColorByVertexGroup = true;
+            eyeCue                       = dotsDrawableTargets();
+            eyeCue.width                 = 0.5;
+            eyeCue.height                = 0.5;
+            eyeCue.isColorByVertexGroup  = true;
             self.calibration.eyeEnsemble = dotsDrawable.makeEnsemble( ...
                'eyeEnsemble', {eyeCue});
          end
@@ -725,6 +726,7 @@ classdef dotsReadableEye < dotsReadable
          status = 0;
          
          % Check for calibration/drift correction mode
+         %
          switch mode
             
             case {'d' 'D'}
@@ -892,39 +894,45 @@ classdef dotsReadableEye < dotsReadable
       % Can be overloaded
       function status = calibrateNow(self)
          
-         % For debugging
-         % fig = figure;
-         % cla reset; hold on;
-         
          % get the ensemble
          targetEnsemble = self.calibration.targetEnsemble;
          
          % Show a help message
-         if self.calibration.showMessage
+         if false %self.calibration.showMessage
             dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
                'textEnsemble', 1, []), {'Please look at each object'}, 3, 0.3);
          end
          
+         % Pause for graphics to initialize
+         pause(1.0);
+         
          % Set up matrices to present cues and collect fixation data
          targetXY = [ ...
-            -self.calibration.fpX  self.calibration.fpY;
-            self.calibration.fpX   self.calibration.fpY;
-            self.calibration.fpX  -self.calibration.fpY;
-            -self.calibration.fpX -self.calibration.fpY];
+            -self.calibration.fpX  0;
+            0   self.calibration.fpY;
+            self.calibration.fpX  0;
+            0 -self.calibration.fpY];
          numFixations = size(targetXY, 1);
+         gazeRawXY = nans(self.calibration.fullN, 2, numFixations);
+         gazeXY    = nans(numFixations, 2);
+                  
+         % Set up monitor graphics objects
+         if self.calibration.showOnMonitor
+            
+            colors = {'r' 'g' 'b' 'c'};
+            htgt = plot(targetXY(:,1), targetXY(:,2), 'k+', 'MarkerSize', 15);
+            
+            hpts = gobjects(numFixations);
+            hmds = gobjects(numFixations);
+            htds = gobjects(numFixations);
+         end
          
-         % show it once; delay sometimes needed for graphics to initialize
-         pause(0.5);
-         targetEnsemble.setObjectProperty('xCenter', targetXY(1, [1 1]));
-         targetEnsemble.setObjectProperty('yCenter', targetXY(1, [2 2]));
-         targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-         pause(0.5);
+         % Keep track of calibrations if we try multiple times
+         savedCalibrations = cell(self.calibration.numberTries, 2);
          
-         % Variables to collect data and check for success
-         gazeXY = nans(numFixations, 2);
+         % Loop until calibrated or max iterations reached
          checkCalibrationCounter = 1;
          isCalibrated = false;
-         
          while ~isCalibrated && ...
                checkCalibrationCounter < self.calibration.numberTries
             
@@ -943,10 +951,8 @@ classdef dotsReadableEye < dotsReadable
                self.flushData();
                
                % Try multiple times to get a good fixation
-               isSampled = false;
                checkFixationCounter = 1;
-               while ~isSampled && ...
-                     checkFixationCounter < ...
+               while checkFixationCounter < ...
                      self.calibration.numberTries*numFixations
                   
                   % Start the device
@@ -954,32 +960,22 @@ classdef dotsReadableEye < dotsReadable
                   pause(0.1);
                   
                   % Collect samples
-                  gazeRawXY = collectXY(self, self.calibration.fullN);
+                  gazeRawXY(:,:,ii) = collectXY(self, self.calibration.fullN);
                   
                   % Finish the device
                   self.finishTrialDevice();
                   
-                  % disp(var(gazeRawXY))
-                  % disp(self.calibration.varTolerance)
-                  
                   % Check tolerance
-                  if all(var(gazeRawXY) < self.calibration.varTolerance)
+                  if all(var(gazeRawXY(:,:,ii)) < self.calibration.varTolerance)
                      
                      % Good! Save median and go on to next sample
-                     gazeXY(ii,:) = nanmedian(gazeRawXY);
-                     isSampled = true;
-                     % plot(gazeRawXY(:,1), gazeRawXY(:,2), 'kx');
+                     gazeXY(ii,:) = nanmedian(gazeRawXY(:,:,ii));
+                     break
                   else
                      
                      % Update the counter
                      checkFixationCounter = checkFixationCounter + 1;
                   end
-               end
-               
-               % Check for failure
-               if ~isSampled
-                  status = 1;
-                  return
                end
                
                % Briefly blank the screen
@@ -1023,30 +1019,64 @@ classdef dotsReadableEye < dotsReadable
             transformedData = ...
                [xyScaleVals(1).*gazeXY(:,1) xyScaleVals(2).*gazeXY(:,2)] * ...
                rotationVals + repmat(xyOffsetVals, size(gazeXY,1), 1);
-            
-            % For debugging
-            %             plot(targetXY(:,1), targetXY(:,2), 'ro');
-            %             plot(gazeXY(:,1), gazeXY(:,2), 'go');
-            %             plot(transformedData(:,1), transformedData(:,2), 'ko');
-            %             disp(sqrt(sum((targetXY-transformedData).^2,2)))
-            %             r = input('next')
-            %             cla reset; hold on;
-            
+                       
             % check for accuracy
-            if all(sqrt(sum((targetXY-transformedData).^2,2)) < ...
-                  self.calibration.transformTolerance)
+            errors = sqrt(sum((targetXY-transformedData).^2,2));
+            if all(errors < self.calibration.transformTolerance)
                
                % Done!
                self.setEyeCalibration(xyOffsetVals, xyScaleVals, rotationVals);
                isCalibrated = true;
+               
             else
                
-               % Trying again
-               disp(sqrt(sum((targetXY-transformedData).^2,2)))
+               % Trying again!
+               
+               % Save the current calibration
+               savedCalibrations{checkCalibrationCounter, 1} = { ...
+                  xyOffsetVals, xyScaleVals, rotationVals};
+               savedCalibrations{checkCalibrationCounter, 2} = errors;
+
+               % Display errors
+               disp('ERRORS OUT OF RANGE: ')
+               disp(errors)
+               disp(' ')
                checkCalibrationCounter = checkCalibrationCounter + 1;
+            end
+            
+            % Show calibration markers on monitor
+            if self.calibration.showOnMonitor
+               for ii = 1:numFixations
+                  hpts(ii) = plot(gazeRawXY(:,1,ii), gazeRawXY(:,2,ii), 'x', ...
+                     'Color', colors{ii});
+                  hmds(ii) = plot(gazeXY(ii,1), gazeXY(ii,2), 'o', ...
+                     'MarkerSize', 10, 'MarkerFaceColor', colors{ii});
+                  htds(ii) = plot(transformedData(ii,1), transformedData(ii,2), ...
+                     's', 'MarkerSize', 10, 'MarkerFaceColor', colors{ii});
+               end
+               axis(max(abs([gazeXY(:);20])).*[-1 1 -1 1])
+               drawnow;
+               pause(4.0);               
+            end           
+            
+            % if we didn't calibrate within tolerance, pick the best one
+            if ~isCalibrated
+               errors = sum([savedCalibrations{:,2}]);
+               bestCalibration = savedCalibrations{find(errors==min(errors),1), 1};
+               self.setEyeCalibration(bestCalibration{1}, ...
+                  bestCalibration{2}, bestCalibration{3});
             end
          end
          
+         % Clear calibration markers on monitor
+         if self.calibration.showOnMonitor
+            delete(htgt);
+            delete(hpts);
+            delete(hmds);
+            delete(htds);
+            axis([-20 20 -20 20]);
+         end
+               
          % Check for faliure
          status = double(~isCalibrated);
       end

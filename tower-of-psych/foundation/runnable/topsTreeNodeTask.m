@@ -43,9 +43,6 @@ classdef topsTreeNodeTask < topsTreeNode
       % Number of times to run through this node's trials
       trialIterations = 1;
       
-      % Index of blocks while running
-      trialIteractionCount = 1;
-      
       % How to run through this node's trials --'sequential' or
       % 'random' order
       trialIterationMethod = 'random';
@@ -119,7 +116,7 @@ classdef topsTreeNodeTask < topsTreeNode
       function start(self)
          
          % ---- Check status flags
-         if self.caller.checkFlags(self) > 0
+         if ~isempty(self.caller) && self.caller.checkFlags(self) > 0
             return
          end
          
@@ -127,7 +124,9 @@ classdef topsTreeNodeTask < topsTreeNode
          self.start@topsRunnable();
          
          % Possibly update the gui using the new task
-         self.caller.updateGUI('_updateTask', self);
+         if ~isempty(self.caller)
+            self.caller.updateGUI('_updateTask', self);
+         end
          
          % Check for abort
          if ~self.isRunning
@@ -157,9 +156,11 @@ classdef topsTreeNodeTask < topsTreeNode
             end
          end
          
-         % Add trials from independent variables struct
+         % Add trials from independent variables struct. This is done
+         % automatically if anything is given... otherwise it can be done
+         % elsewhere using the makeTrials routine (or not)
          if any(strcmp(properties(self), 'independentVariables'))
-            self.makeTrials(self.independentVariables);
+            self.makeTrials(self.independentVariables, self.trialIterations);
          end         
          
          % Get the first trial
@@ -214,41 +215,38 @@ classdef topsTreeNodeTask < topsTreeNode
       %     1. name: string name
       %     2. values: vector of unique values
       %     3. priors: vector of priors (or empty for equal priors)
-      %     4. minTrials: minimum number of trials per condition
       %
-      function makeTrials(self, independentVariables)
+      %  trialIterations is number of repeats of each combination of
+      %     independent variables
+      %
+      function makeTrials(self, independentVariables, trialIterations)
          
+         if nargin < 3 || isempty(trialIterations)
+            trialIterations = 1;
+         end
+            
          % Loop through to set full set of values for each variable
          for ii = 1:length(independentVariables)
             
-            % Get min trials per condition
-            mtr = 1;
-            if isempty(independentVariables(ii).minTrials)
-               if any(strcmp(properties(self), 'settings')) && ...
-                     isfield(self.settings, 'minTrialsPerCondition')
-                  mtr = self.settings.minTrialsPerCondition;
+            % update values based on priors, if they are given in the
+            % format: [proportion_value_1 proportion_value_2 ... etc]
+            if length(independentVariables(ii).priors) == ...
+                  length(independentVariables(ii).values) && ...
+                  sum(independentVariables(ii).priors) > 0
+               
+               % rescale priors by greatest common divisor
+               priors = independentVariables(ii).priors;
+               priors = priors./gcd(sym(priors));
+               
+               % now re-make values array based on priors
+               values = [];
+               for jj = 1:length(priors)
+                  values = cat(1, values, repmat( ...
+                     independentVariables(ii).values(jj), priors(jj), 1));
                end
-            else
-               mtr = independentVariables(ii).minTrials;
-            end
-            
-            % Make array of values based on priors
-            priors = independentVariables(ii).priors;
-            values = independentVariables(ii).values;
-            independentVariables(ii).values = [];
-            if isempty(priors) || length(priors) ~= length(values)
-               priors = repmat(mtr, size(values));
-            end
-            priors = round(priors./min(priors).*mtr);
-            for jj = 1:length(priors)
-               independentVariables(ii).values = cat(1, ...
-                  independentVariables(ii).values, repmat( ...
-                  values(jj), priors(jj), 1));
-            end
-            
-            % Check that we got something
-            if isempty(independentVariables(ii).values)
-               return
+               
+               % re-save the values
+               independentVariables(ii).values = values;
             end
          end
          
@@ -257,14 +255,19 @@ classdef topsTreeNodeTask < topsTreeNode
          grids  = cell(size(values));
          [grids{:}] = ndgrid(values{:});
          
-         % update trialData struct array
-         ntr = numel(grids{1});
+         % update trialData struct array with "trialIterations" copies of
+         % each trial, defined by unique combinations of the independent
+         % variables
+         ntr = numel(grids{1}) * trialIterations;
          self.trialData = repmat(self.trialData(1), ntr, 1);
          [self.trialData.taskID] = deal(self.taskTypeID);
          trlist = num2cell(1:ntr);
          [self.trialData.trialIndex] = deal(trlist{:});
+         
+         % loop through the independent variables and set in each trialData
+         % struct. Make sure to repeat each set trialIterations times.
          for ii = 1:length(independentVariables)
-            values = num2cell(grids{ii}(:));
+            values = num2cell(repmat(grids{ii}(:), trialIterations, 1));
             [self.trialData.(independentVariables(ii).name)] = deal(values{:});
          end
       end
@@ -469,9 +472,10 @@ classdef topsTreeNodeTask < topsTreeNode
             return
          end
          
-         % Check if we need to initalize the trialIndices array
          if ~isempty(self.trialData) && isempty(self.trialIndices)
             
+            % Check if we need to initalize the trialIndices array
+            %
             % Make array of indices
             if strcmp(self.trialIterationMethod, 'random')
                
@@ -485,54 +489,41 @@ classdef topsTreeNodeTask < topsTreeNode
             
             % Start the counter
             self.trialCount = 1;
-         else
+            
+         elseif ~self.completedTrial
             
             % Check for repeat trial
-            if ~self.completedTrial
+            %
+            % If randomizing, reorder the remaining trialIndices array.
+            %     Otherwise do nothing
+            if self.randomizeWhenRepeating && ...
+                  strcmp(self.trialIterationMethod, 'random')
                
-               % If randomizing, reorder the remaining trialIndices array.
-               %     Otherwise do nothing
-               if self.randomizeWhenRepeating && ...
-                     strcmp(self.trialIterationMethod, 'random')
-                  
-                  % Get the number of remaining trials (+1 because including
-                  % the current trial)
-                  numRemainingTrials = length(self.trialIndices) - self.trialCount + 1;
-                  
-                  % permute the remaining indices
-                  inds = self.trialIndices(end-numRemainingTrials+1:end);
-                  self.trialIndices(end-numRemainingTrials+1:end) = ...
-                     inds(randperm(numRemainingTrials));
-               end
+               % Get the number of remaining trials (+1 because including
+               % the current trial)
+               numRemainingTrials = length(self.trialIndices) - self.trialCount + 1;
                
-               % unset flag
-               self.completedTrial = false;
+               % permute the remaining indices
+               inds = self.trialIndices(end-numRemainingTrials+1:end);
+               self.trialIndices(end-numRemainingTrials+1:end) = ...
+                  inds(randperm(numRemainingTrials));
+            end
+            
+            % unset flag
+            self.completedTrial = false;
+            
+         else
+            
+            % Updating the trial!
+            %
+            % Increment the trial counter
+            self.trialCount = self.trialCount + 1;
+            
+            % Check for end of trials
+            if self.trialCount > length(self.trialIndices)
                
-            else
-               
-               % Updating the trial!
-               %
-               % Increment the trial counter
-               self.trialCount = self.trialCount + 1;
-               
-               % Check for end of trials
-               if self.trialCount > length(self.trialIndices)
-                  
-                  % Increment iterations
-                  self.trialIteractionCount = self.trialIteractionCount + 1;
-                  
-                  % Check for end of iterations
-                  if self.trialIteractionCount > self.trialIterations
-                     
-                     % Done!
-                     self.isRunning = false;
-                  else
-                     
-                     % Recompute trialIndices array
-                     self.trialIndices = [];
-                     self.setNextTrial();
-                  end
-               end
+               % Done!
+               self.isRunning = false;
             end
          end
       end

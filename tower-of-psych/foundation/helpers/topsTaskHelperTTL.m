@@ -25,17 +25,14 @@ classdef topsTaskHelperTTL < topsTaskHelper
             'fevalable',   @dotsWritableDOut.getDefault);
       end
       
-      % Overloaded bind method
+      % Overloaded start method
       %
-      %  Overwrites the prepare fevalable to call sendPulses method
+      %  Sets the prepare fevalable to call sendPulses method
       %  based on the current trial
-      function bind(self, treeNode)
+      function start(self, treeNode)
          
          % Only bind to topsTreeNodeTask
          if isa(treeNode, 'topsTreeNodeTask')
-            
-            % Add the prepare call
-            self.prepareCallList.addCall({@sendTTL, self, treeNode}, 'sendTTL');
             
             % Add the trialData field
             for ii = 1:length(self.trialDataFields)
@@ -46,9 +43,9 @@ classdef topsTaskHelperTTL < topsTaskHelper
          end
       end
       
-      %% sendTTL
+      % Overloaded prepare method, which send the TTL pulse(s)
       %
-      function sendTTL(self, treeNode)
+      function prepare(self, treeNode)
                 
          % Num pulses is based on the trial number
          numPulses =  mod(max(0, treeNode.trialCount-1), self.maxPulses)+1;

@@ -87,12 +87,12 @@ classdef dotsReadableHID < dotsReadable
       % @details
       % Extends the dotsReadable flushData() method to do also flush the
       % mexHID() internal data queue.
-      function flushData(self)
+      function flushData(self, varargin)
          if self.isAvailable
             mexHID('flushQueue', self.deviceID);
             mexHID('startQueue', self.deviceID);
          end
-         self.flushData@dotsReadable;
+         self.flushData@dotsReadable(varargin{:});
       end
       
       % Adjust scaling of raw values from HID components.

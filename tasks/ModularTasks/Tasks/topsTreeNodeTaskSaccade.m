@@ -23,7 +23,6 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Trial properties.
       settings = struct( ...
-         'minTrialsPerCondition',      10,   ...
          'targetDistance',             8,    ...
          'textStrings',                '',   ...
          'correctImageIndex',          1,    ...
@@ -53,8 +52,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       independentVariables = struct( ...
          'name',                       {'direction'},       ...
          'values',                     {0:90:270},          ...
-         'priors',                     {[]},                ...
-         'minTrials',                  {[]});
+         'priors',                     {[]});
       
       % dataFieldNames are used to set up the trialData structure
       trialDataFields = {'RT', 'correct', 'fixationOn', 'fixationStart', ...
@@ -364,16 +362,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %  'VGS' for visually guided saccade
       %  'MGS' for memory guided saccade
       %
-      function task = getStandardConfiguration(name, minTrialsPerCondition, varargin)
+      function task = getStandardConfiguration(name, varargin)
          
          % ---- Get the task object, with optional property/value pairs
          task = topsTreeNodeTaskSaccade(name, varargin{:});
-         
-         % ---- Use given trials per direction
-         %
-         if  nargin >= 2 && ~isempty(minTrialsPerCondition)
-            task.settings.minTrialsPerCondition = minTrialsPerCondition;
-         end
          
          % ---- Instruction strings
          %

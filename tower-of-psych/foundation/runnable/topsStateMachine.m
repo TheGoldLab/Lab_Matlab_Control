@@ -425,12 +425,19 @@ classdef topsStateMachine < topsConcurrent
             
             % parse timeout
             if isscalar(currentState.timeout)
+               
+               % SCALAR -- use as timeout
                self.currentTimeoutTime = ...
                   self.currentEntryTime + currentState.timeout;
+               
             elseif isnumeric(currentState.timeout)
+               
+               % VECTOR -- use as arguments to "sampleTime" function
                self.currentTimeoutTime = ...
                   self.currentEntryTime + self.sampleTime(currentState.timeout);
             elseif iscell(currentState.timeout)
+               
+               % FEVALABLE -- evaluate to get timeout
                self.currentTimeoutTime = ...
                   self.currentEntryTime + feval(currentState.timeout{:});
             end

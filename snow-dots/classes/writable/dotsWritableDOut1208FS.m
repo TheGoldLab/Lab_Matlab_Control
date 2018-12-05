@@ -77,7 +77,7 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
    % the realm of 1ms USB frames!
    properties
       
-      % Channel number to use. IN both 4- and 8-challen modes, the D/A outs
+      % Channel number to use. IN both 4- and 8-channel modes, the D/A outs
       %  are:
       %  channel 0 = physical port 13
       %  channel 1 = physical port 14
@@ -281,12 +281,6 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
          if nargin < 4 || isempty(pauseBetweenPulses)
             pauseBetweenPulses = self.defaultPauseBetweenPulses;
          end
-         
-         disp(sprintf('Sending %d pulses!', numPulses))
-         firstTimestamp = mglGetSecs();
-         pause((numPulses-1)*pauseBetweenPulses);
-         lastTimestamp = mglGetSecs();
-         return
          
          % Get time of first pulse
          firstTimestamp = self.sendTTLPulse(channel);

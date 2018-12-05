@@ -138,8 +138,8 @@ classdef dotsReadableHIDMouse < dotsReadableHID
       end
       
       % Flush data and reset the x and y position running sums.
-      function flushData(self)
-         self.flushData@dotsReadableHID();
+      function flushData(self, varargin)
+         self.flushData@dotsReadableHID(varargin{:});
          self.x = 0;
          self.y = 0;
       end

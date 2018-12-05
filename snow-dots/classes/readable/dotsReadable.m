@@ -278,15 +278,23 @@ classdef dotsReadable < handle
       %> @details
       %> flushData() flush data deletes any data previously read.  This
       %> includes the object's state, history, and eventQueue.
-      function flushData(self)
+      function flushData(self, waitForNoEvents)
          
          %> Read once to get any remaining buffered data
          self.read();
          
+         %> Possibly wait until no more incoming events 
+         if nargin > 1 && waitForNoEvents
+            saveIsAutoRead = self.isAutoRead;
+            self.isAutoRead = true;
+            while ~isempty(self.getNextEvent())
+            end
+            self.isAutoRead = saveIsAutoRead;
+         end
+         
          %> make a blank state with room for each component
          IDs = self.getComponentIDs();
-         maxID = max(IDs);
-         self.state = zeros(maxID,3);
+         self.state = zeros(max(IDs),3);
          self.state(IDs) = IDs;
          
          %> remove history of data and queued events
@@ -294,7 +302,9 @@ classdef dotsReadable < handle
          self.resizeEventQueue(self.initialEventQueueSize, true);
          
          % Not waiting for release
-         [self.eventDefinitions.waitingForRelease] = deal(false);
+         if ~isempty(self.eventDefinitions)
+            [self.eventDefinitions.waitingForRelease] = deal(false);
+         end
       end
       
       %> Record current and historical data in topsDataLog.
