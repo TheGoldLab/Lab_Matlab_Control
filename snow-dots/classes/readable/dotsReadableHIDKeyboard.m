@@ -25,7 +25,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % matching preferences read from machine defaults
       VendorID;
       ProductID;
-      PrimaryUsage;
+      PrimaryUsage=6;
 
       % Get rid of annoying rollover event     
    end
@@ -105,7 +105,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          keyNames = cell(1, nKeys);
          keyIDs = cell(1, nKeys);
          isNamed = false(1, nKeys);
-         for ii = 1:nKeys
+         for ii = 1:nKeys             
             keyNames{ii} = mexHIDUsage.nameForUsageNumberOnPage( ...
                keyInfo(ii).Usage, keyInfo(ii).UsagePage);
             isNamed(ii) = ~isempty(keyNames{ii});

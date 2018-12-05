@@ -33,7 +33,7 @@ classdef dotsDrawableText < dotsDrawable
       typefaceName = 'Helvetica';
       
       % point size of the font to render
-      fontSize = 48;
+      fontSize = 64;
       
       % whether or not to render the font in @b bold
       isBold = false;
