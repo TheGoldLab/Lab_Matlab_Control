@@ -851,9 +851,11 @@ classdef dotsReadableEye < dotsReadable
          lastTime = -9999;
          
          % Get frame interval
-         fi = 1/self.helpers.screenEnsemble.getObjectProperty('windowFrameRate', 1);
+         screenEnsemble = dotsTheScreen.getEnsemble();
+         fi = 1/screenEnsemble.getObjectProperty('windowFrameRate', 1);
          
          % Loop until spacebar
+         self.calibrationUI.setEventsActiveFlag('accept');
          while ~strcmp(self.calibrationUI.getNextEvent(), 'accept')
             
             % Get all new events
@@ -881,9 +883,11 @@ classdef dotsReadableEye < dotsReadable
                eyeEnsemble.setObjectProperty('colors',  xyData(Lgood,3:5));
                eyeEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             end
-            
          end
          
+         % Deactivate the accept event
+         self.calibrationUI.setEventsActiveFlag({}, 'accept');
+
          % blank the screen
          dotsTheScreen.blankScreen();
       end
@@ -898,7 +902,7 @@ classdef dotsReadableEye < dotsReadable
          targetEnsemble = self.calibration.targetEnsemble;
          
          % Show a help message
-         if false %self.calibration.showMessage
+         if self.calibration.showMessage
             dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
                'textEnsemble', 1, []), {'Please look at each object'}, 3, 0.3);
          end

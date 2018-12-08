@@ -987,6 +987,7 @@ classdef dotsReadable < handle
       function finishTrialDevice(self, varargin)
       end
       function data = readDataFromFile(self, filename, syncTimes, calibrationData)
+         data = [];
       end
    end
    
