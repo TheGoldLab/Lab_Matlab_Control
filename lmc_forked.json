@@ -5,6 +5,11 @@
 		"url": "https://github.com/aernesto/Lab-Matlab-Control.git"
 	},
 	{
+		"name": "Lab-Matlab-Utilities",
+		"type": "git",
+		"url": "https://github.com/TheGoldLab/Lab-Matlab-Utilities.git"
+	},
+	{
 		"name": "mgl",
 		"type": "git",
 		"url": "https://github.com/justingardner/mgl.git"
