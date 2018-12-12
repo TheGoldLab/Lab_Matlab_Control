@@ -55,6 +55,7 @@ classdef dotsDrawable < handle
    end
    
    methods (Static)
+      
       % draw() several drawable objects and show the next Screen frame.
       % @param drawables cell array of objects to draw()
       % @param doClear whether or not clear the Screen after this frame
@@ -82,22 +83,6 @@ classdef dotsDrawable < handle
          end
       end
       
-      % Convenient routine when using a remote screen
-      %
-      % drawables are unused but are required for using topsEnsemble
-      %  callObjectMethod 
-      function frameInfo = blankScreen(drawables, backgroundColor)
-         
-         % swap OpenGL frame buffers twice
-         theScreen = dotsTheScreen.theObject();
-         
-         if nargin < 2 || isempty(backgroundColor)
-            frameInfo = theScreen.blank();
-         else
-            frameInfo = theScreen.blank(backgroundColor);
-         end
-      end
-      
       % Convenient utility for combining a bunch of drawables into an ensemble
       %
       % Aguments:
@@ -108,17 +93,19 @@ classdef dotsDrawable < handle
       %  automateDraw   ... flag indicating whether or not to add automate draw
       %                       method
       %
-      function ensemble = makeEnsemble(name, objects, screenEnsemble, automateDraw)
+      function ensemble = makeEnsemble(name, objects, automateDraw)
          
-         if nargin < 1 || isempty(name)
+         if isempty(name)
             name = 'drawable';
          end
          
-         % If no screen ensemble given, assume this is local
-         if nargin < 3 || isempty(screenEnsemble) || ...
-               ~isa(screenEnsemble, 'dotsClientEnsemble')
+         % Check dotsTheScreen for the screenEnsemble
+         screenEnsemble = dotsTheScreen.getEnsemble();
+         if isempty(screenEnsemble) || ~isa(screenEnsemble, 'dotsClientEnsemble')
+            % Local
             remoteInfo = {false};
          else
+            % Remote
             remoteInfo = {true, ...
                screenEnsemble.clientIP, ...
                screenEnsemble.clientPort, ...
@@ -135,12 +122,12 @@ classdef dotsDrawable < handle
          end
          
          % possibly automate drawing
-         if nargin > 3 && automateDraw
+         if nargin >= 3 && automateDraw
             ensemble.automateObjectMethod('draw', @mayDrawNow);
          end
       end
       
-       % Convenient utility for drawing an ensemble
+      % Convenient utility for drawing an ensemble
       %
       % Aguments:
       %  ensemble    ... the ensemble
@@ -150,7 +137,7 @@ classdef dotsDrawable < handle
       %  showDuration ... in sec
       %  pauseDuration ... in sec
       %
-      function ret = drawEnsemble(ensemble, args, prepareFlag, showDuration, pauseDuration)
+      function frameInfo = drawEnsemble(ensemble, args, prepareFlag, showDuration, pauseDuration)
          
          % Arguments given?
          if nargin >= 2 && ~isempty(args)
@@ -167,7 +154,7 @@ classdef dotsDrawable < handle
          end
          
          % Call runBriefly to draw it & flip the buffers
-         ret = ensemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         frameInfo = ensemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             
          % Pause while showing?
          if nargin >= 4 && showDuration > 0
@@ -188,7 +175,7 @@ classdef dotsDrawable < handle
                pause(pauseDuration);
             end
          else
-            ret = [];
+            frameInfo = [];
          end
       end
    end

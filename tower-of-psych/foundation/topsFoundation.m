@@ -9,6 +9,9 @@ classdef topsFoundation < handle
     properties
         % a string name to indentify the object
         name = '';
+        
+        % clock function, to standardize
+        clockFunction=@topsClock;
     end
     
     methods

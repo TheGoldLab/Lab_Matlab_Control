@@ -108,6 +108,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % serialized in msg-pack format, and unfortunately there does
          % not exist a working Matlab library for this format.
          py.abs(0);
+         
+         % Turn off default instructions for calibration
+         self.calibration.showMessage = false;
       end
       
       % refreshSocket
@@ -169,7 +172,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          time = self.roundTripTime;
       end
       
-       % readDataFromFile
+      % readDataFromFile
       %
       % Utility for reading data from a pupillabs folder
       %
@@ -197,14 +200,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          tmpFileName = 'tmpDataFile';
          
          % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence'};
+         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
          dataMatrix = [];
          
          % Loop through the subdirectories, getting the data
          dirs = dir(fullfile(dataPath, '0*'));
          for dd = 1:length(dirs)
-            rawFileWithPath = fullfile(dataPath, dirs(dd).name, 'pupil_data');
-            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s %s', ...
+            rawFileWithPath = fullfile(dataPath, dirs(dd).name);
+            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s gaze %s', ...
                rawFileWithPath, tmpFileName);
             system(commandStr);
             
@@ -323,14 +326,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          zmq.core.send(self.reqPort,uint8('C'));
          self.result = zmq.core.recv(self.reqPort);
          
-         % Show instructions between blank screen2
+         % Show instructions
          dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
-            'textEnsemble', 1, [], self.screenEnsemble), ...
-            {'Please look at each object'}, 3, 0.3);
+            'textEnsemble', 1, []), {'Please look at each object'}, 3, 0.3);
          
          % Make a drawing ensemble for the calibration target
-         calibrationEnsemble = dotsDrawable.makeEnsemble(...
-            'calibrationEnsemble', {}, self.screenEnsemble);
+         calibrationEnsemble = dotsDrawable.makeEnsemble('calibrationEnsemble', {});
 
          % Generate calibration target location and sizes
          xDist = self.PLcalibration.deltaX;
@@ -358,7 +359,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          end
          
          % Show the target on a white background
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {[1 1 1]}, [], true);
+         dotsTheScreen.blankScreen(ones(1,3));
          
          % We present the calibration markers in a loop. The loop only
          % progresses when the PupilLab software sends out a message
@@ -398,8 +399,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          % calibration marker but with a flipped color scheme.
          
          % Show it on a black background
-         calibrationEnsemble.callObjectMethod(@dotsDrawable.blankScreen, {[0 0 0]}, [], true);
-         
+         dotsTheScreen.blankScreen(zeros(1,3));
+
          % Put it in the center
          calibrationEnsemble.setObjectProperty('xCenter', 0, inds);
          calibrationEnsemble.setObjectProperty('yCenter', 0, inds);

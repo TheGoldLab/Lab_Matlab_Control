@@ -73,6 +73,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % initialize the device
          self.initialize();
+         
+         % Turn off default instructions for calibration
+         self.calibration.showMessage = false;
       end
       
       % Get the current time value from Eyelink. Units are in seconds.
@@ -216,10 +219,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          if isempty(self.pixelsPerDegree)
             
             % Set screen coordinates
-            windowRect = getObjectProperty(self.screenEnsemble, 'windowRect');
+            windowRect = getObjectProperty(self.helpers.screenEnsemble, 'windowRect');
             Eyelink('Command', 'screen_pixel_coords = %d %d %d %d', ...
                windowRect(1), windowRect(2), windowRect(3)-1, windowRect(4)-1);
-            self.pixelsPerDegree = getObjectProperty(self.screenEnsemble, 'pixelsPerDegree');
+            self.pixelsPerDegree = getObjectProperty(self.helpers.screenEnsemble, 'pixelsPerDegree');
             self.windowCtr = [windowRect(3)/2 windowRect(4)/2];
             disp(self.windowCtr)
          end

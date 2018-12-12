@@ -36,7 +36,8 @@ classdef (Sealed) topsDataLog < topsGroupedList
    
    properties
       % any function that returns the current time as a number
-      clockFunction = @topsClock;
+      % jig moved to topsFoundation
+      % clockFunction = @topsClock;
       
       % true or false, whether to print info as data are logged
       printLogging = false;
@@ -334,7 +335,7 @@ classdef (Sealed) topsDataLog < topsGroupedList
          % sorting from scratch may be too slow
          %   may be able to improve since keys
          %   from each group should be already sorted--merge k lists
-         [a, order] = sort([logStruct.mnemonic]);
+         [~, order] = sort([logStruct.mnemonic]);
          logStruct = logStruct(order);
       end
       
@@ -467,12 +468,15 @@ classdef (Sealed) topsDataLog < topsGroupedList
          if ~isempty(self.fileWithPath)
             % check for old-style of data file
             %   from before topsDataFile and incremental writing
-            vars = who('-file', self.fileWithPath);
-            if any(strcmp(vars, 'logStruct'))
-               dataStruct = self.readOldLogStructFromFile();
-            else
-               dataStruct = self.readIncrementFromFile();
-            end
+            % jig removed 11/21/2018 because matlab crashed with certain
+            % files using who
+            %             vars = who('-file', self.fileWithPath);
+            %             if any(strcmp(vars, 'logStruct'))
+            %                dataStruct = self.readOldLogStructFromFile();
+            %             else
+            %                dataStruct = self.readIncrementFromFile();
+            %             end
+            dataStruct = self.readIncrementFromFile();
          end
       end
       
@@ -548,8 +552,11 @@ classdef (Sealed) topsDataLog < topsGroupedList
       end
       
       % Convenient routine to collect tagged data into a cell array
+      %
+      % group is string name
+      % fileWithPath is optional filename
       function data = getTaggedData(group, fileWithPath)
-
+         
          % get the log struct
          if nargin < 2 || isempty(fileWithPath)
             logStruct = topsDataLog.getSortedDataStruct();
@@ -561,7 +568,8 @@ classdef (Sealed) topsDataLog < topsGroupedList
          if ~isempty(logStruct)
             % jig changed to strncmp, avoid nested tag names
             data = logStruct(strncmp(group, {logStruct.group}, length(group)));
-         else
+         else 
+            % nada
             data = [];
          end
       end

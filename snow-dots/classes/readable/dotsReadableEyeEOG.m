@@ -16,7 +16,7 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         %     channel 1, differential mode, is pins 4 and 5
         deviceParameters = struct( ...
             'channels',          [0 1], ...
-            'gains',             [25 25], ...
+            'gains',             [50 50], ...
             'frequency',         1000, ...   % Hz
             'duration',          20);        % in seconds
     end
@@ -56,7 +56,7 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         % beginTrial
         %
         % Start scan at the beginning of each trial
-        function beginTrial(self)
+        function startTrialDevice(self)
             
             % Get the device ready
             self.aInDevice.prepareToScan();
@@ -71,7 +71,7 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         % endTrial
         %
         % Stop scan at the end of each trial
-        function endTrial(self)
+        function finishTrialDevice(self)
             
             % Stop the scan
             self.aInDevice.stopScan();

@@ -22,17 +22,12 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % parameters.
       keyMatching;
       
-      % Matching properties for machine-specific hardware - Vendor
+      % matching preferences read from machine defaults
       VendorID;
-      
-      % Matching properties for machine-specific hardware - Product
       ProductID;
-      
-      % Matching properties for machine-specific hardware - Usage
       PrimaryUsage=6;
-      
-      % Get rid of annoying rollover event
-     
+
+      % Get rid of annoying rollover event     
    end
    
    methods
@@ -45,19 +40,30 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       function self = dotsReadableHIDKeyboard(devicePreference)
          self = self@dotsReadableHID();
          
+         % Read args
          if nargin > 0
+            
+            % Preferences given
             self.devicePreference = devicePreference;
          else
+            
+            % Read machine defaults
             mc = dotsTheMachineConfiguration.theObject();
             mc.applyClassDefaults(self);
-            if ~isempty(self.VendorID)
-               self.devicePreference.VendorID = self.VendorID;
-            end
-            if ~isempty(self.ProductID)
-               self.devicePreference.ProductID = self.ProductID;
-            end
-            if ~isempty(self.PrimaryUsage)
-               self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            
+            % Put preferences into the struct
+            self.devicePreference.VendorID = self.VendorID;
+            self.devicePreference.ProductID = self.ProductID;
+            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            
+            % special case for jig computer without external keyboard
+            if strcmp(getMachineName(), 'GoldLaptop')
+               mexHID('initialize');
+               infoStruct = mexHID('summarizeDevices');
+               if ~any([infoStruct.VendorID] == self.VendorID)
+                  self.devicePreference.VendorID = 1452;
+                  self.devicePreference.ProductID = 632;
+               end
             end
          end
          
@@ -76,17 +82,10 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          self.initialize();
          
          % define the "pressed" event for each key
-         for ii = 1:numel(self.components)
-            self.defineKeyboardEvent(self.components(ii).name);
-         end
-         
+         self.defineEventsFromComponents();
+   
          % flush
          self.flushData();
-      end
-      
-      % Wrapper for define event
-      function event = defineKeyboardEvent(self, componentName)         
-         event = self.defineEvent([], true, 'component', componentName);
       end
    end
    
@@ -106,7 +105,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          keyNames = cell(1, nKeys);
          keyIDs = cell(1, nKeys);
          isNamed = false(1, nKeys);
-         for ii = 1:nKeys
+         for ii = 1:nKeys             
             keyNames{ii} = mexHIDUsage.nameForUsageNumberOnPage( ...
                keyInfo(ii).Usage, keyInfo(ii).UsagePage);
             isNamed(ii) = ~isempty(keyNames{ii});
@@ -193,7 +192,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            event = kbs(ii).defineKeyboardEvent(keyName);
+            event = kbs(ii).defineEvent(keyName, 'isActive', true);
          end
          
          [isPressed, data, kb] = ...
@@ -231,7 +230,7 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          % get event name
          nKeyboards = numel(kbs);
          for ii = 1:nKeyboards
-            event = kbs(ii).defineKeyboardEvent(keyName);
+            event = kbs(ii).defineEvent(keyName, 'isActive', true);
          end
                   
          [isPressed, waitTime, data, kb] = ...

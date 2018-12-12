@@ -159,8 +159,31 @@ classdef topsCallList < topsConcurrent
                         feval(fevalables{ii}{:});
                     end
                 end
-                self.isRunning = self.isRunning && self.alwaysRunning;
             end
+            self.isRunning = self.isRunning && self.alwaysRunning;
         end
+    end
+    
+    methods (Static)
+       
+       % Utility to make a call list as an fevalable
+       %
+       % Arguments:
+       %    invertOrder    ... flag to run in reverse order
+       %
+       % Returns:
+       %    fevalable      ... cell array that runs the callList
+       %
+       function fevalable = makeFevalable(invertOrder)
+             
+          theCallList = topsCallList();
+          theCallList.alwaysRunning = false;
+          
+          if nargin > 1
+             theCallList.invertOrder = invertOrder;
+          end
+          
+          fevalable = {@run, theCallList};
+       end
     end
 end

@@ -131,7 +131,7 @@ if ~isempty(handles.readableEye)
    for ii = 1:4
       
       % active
-      if ~isempty(task) && ii <= length(task.readables.dotsReadableEye)
+      if ~isempty(task) && ii <= length(handles.readableEye.gazeEvents)
          
          % Check radio button to see if value remains fixed across tasks
          fixedValue = get(handles.(sprintf('gw%dbutton', ii)), 'Value');
@@ -143,9 +143,9 @@ if ~isempty(handles.readableEye)
             val = get(h, 'String');
             if isempty(val) || ~fixedValue
                set(h, 'String', num2str(...
-                  task.readables.dotsReadableEye(ii).(sprintf('window%s', tags{:}))));
+                  handles.readableEye.gazeEvents(ii).(sprintf('window%s', tags{:}))));
             elseif ~isempty(val) && fixedValue
-               task.readables.dotsReadableEye(ii).(sprintf('window%s', tags{:})) = ...
+               handles.readableEye.gazeEvents(ii).(sprintf('window%s', tags{:})) = ...
                   num2str(val);
             end
          end

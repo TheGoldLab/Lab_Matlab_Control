@@ -87,12 +87,12 @@ classdef dotsReadableHID < dotsReadable
       % @details
       % Extends the dotsReadable flushData() method to do also flush the
       % mexHID() internal data queue.
-      function flushData(self)
+      function flushData(self, varargin)
          if self.isAvailable
             mexHID('flushQueue', self.deviceID);
             mexHID('startQueue', self.deviceID);
          end
-         self.flushData@dotsReadable;
+         self.flushData@dotsReadable(varargin{:});
       end
       
       % Adjust scaling of raw values from HID components.
@@ -207,8 +207,6 @@ classdef dotsReadableHID < dotsReadable
       %
       % Arguments:
       %  name       ... (required) string name of the event
-      %  isActive   ... (optional) boolean flag
-      %  isInverted ... (optional) boolean flag
       %
       % Required property/value pairs:
       %  'component' ... string name (standard form; e.g., the "b" key
@@ -222,15 +220,10 @@ classdef dotsReadableHID < dotsReadable
       % Moved 6/5/2018 from dotsReadableHIDKeyboard
       function event = defineEvent(self, name, varargin)
          
-         % Check name
-         if isempty(name)
-            name = ['pressed_'  varargin{find(strcmp('component', varargin))+1}];
-         end
-         
          % Use superclass method to define the event
          event = defineEvent@dotsReadable(self, name, varargin{:});
          
-         % Possibly set component calibration
+         % Possibly set component calibration, if given
          if any(strcmp('lowValue', varargin) | strcmp('highValue', varargin))
             self.setComponentCalibration(event.ID, [], [], ...
                [event.lowValue event.highValue]);
@@ -255,13 +248,9 @@ classdef dotsReadableHID < dotsReadable
             % Try to open the preferred device
             if isstruct(self.devicePreference)
                deviceMerged = self.deviceMatching;
-               prefFields = fieldnames(self.devicePreference);
-               for ii = 1:numel(prefFields)
-                  field = prefFields{ii};
-                  deviceMerged.(field) = ...
-                     self.devicePreference.(field);
-               end
-               
+               for ff = fieldnames(self.devicePreference)'
+                  deviceMerged.(ff{:}) = self.devicePreference.(ff{:});
+               end               
                self.deviceID = mexHID('openMatchingDevice', ...
                   deviceMerged, double(self.isExclusive));
             end
@@ -298,6 +287,7 @@ classdef dotsReadableHID < dotsReadable
       % queueCookies elements were added to it.  The queue will start
       % recording value changes immediately.
       function isOpen = openHIDQueue(self, cookies)
+         
          isOpen = false;
          if ~isempty(cookies) && all(cookies > 0)
             

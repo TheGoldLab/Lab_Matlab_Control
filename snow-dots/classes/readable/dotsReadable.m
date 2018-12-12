@@ -13,15 +13,15 @@ classdef dotsReadable < handle
    %>   - openDevice()
    %>   - closeDevice()
    %>   - calibrateDevice()
-   %>   - beginTrial()
-   %>   - endTrial()
+   %>   - startTrialDevice()
+   %>   - finishTrialDevice()
+   %    - resetDevice()
    %>   - startRecording()
    %    - stopRecording()
-   %    - resetDevice()
    %>   - openComponents()
    %>   - closeComponents()
    %>   - readNewData()
-   %> 
+   %>
    %> These methods are invoked internally.  They encapsulate the details
    %> of how to read from any particular device.  See the documentation for
    %> each of these methods for more information about how subclasses
@@ -85,13 +85,13 @@ classdef dotsReadable < handle
       initialEventQueueSize = 100;
       
       %> any function that returns the current time as a number
-      clockFunction = mglGetSecs();      
+      clockFunction;
       
       %> name of the data file for devices that store their own data
       filename;
       
       %> where the file is
-      filepath = [];
+      filepath;
       
       %> controls whether or not to stop recording during calibration
       recordDuringCalibration = true;
@@ -101,9 +101,9 @@ classdef dotsReadable < handle
       
       % Flag to skip calibration routine
       useExistingCalibration = false;
-
+      
       % Possibly use a keyboard or other UI to help with calibration
-      calibrationUI;      
+      calibrationUI;
    end
    
    properties (SetAccess = protected)
@@ -117,14 +117,14 @@ classdef dotsReadable < handle
       %> queue index of the last event enqueued
       queueLast=0;
       
-      %> possibly keep track of device clock
-      deviceResetTime;
-      
       %> keep track of whether device is currenly writing to a data file
       isRecording=false;
       
       % Keep track of whether calibration occurs
       didCalibrate = true;
+      
+      % Default prefix for event names: <prefix>_<componentName>
+      defaultEventPrefix = 'event';
    end
    
    methods
@@ -149,17 +149,13 @@ classdef dotsReadable < handle
          end
          self.isAvailable = isOpen && ~isempty(self.components);
          
-         %> Make/clear array of event definitions
-         self.clearEvents()         
-         if self.isAvailable
-            for id = self.getComponentIDs()
-               self.undefineEvent(id);
-            end
-         end
+         %> Clear array of event definitions and add dummy event
+         self.eventDefinitions = [];
+         self.defineEvent('');
       end
       
       %> Calibrate the device
-      % 
+      %
       % calibrateDevice is device specific and should return 0 if
       % successful, otherwise an error
       function calibrate(self, varargin)
@@ -174,7 +170,7 @@ classdef dotsReadable < handle
                
                % Use dialog window
                answer = questdlg('Calibration failed. Re-position and Retry?', ...
-                  'Calibration failure', 'Retry', 'Abort', 'Retry');               
+                  'Calibration failure', 'Retry', 'Abort', 'Retry');
             else
                
                % Keyboard
@@ -222,19 +218,22 @@ classdef dotsReadable < handle
       end
       
       % reset device
-      %  
+      %
       %  subclass-specific methods
+      %
       function reset(self, varargin)
          self.resetDevice(varargin{:});
       end
       
       %> Release any resources acquired by initialize().
+      %
       function close(self)
          self.closeComponents();
          self.closeDevice();
       end
       
       %> Automatically close when Matlab is done with this object.
+      %
       function delete(self)
          self.close();
       end
@@ -256,7 +255,7 @@ classdef dotsReadable < handle
          %> use overloaded readNewData method
          newData = self.readNewData();
          if isempty(newData)
-            return;
+            return
          end
          
          %> find events of interest in the new data
@@ -279,15 +278,23 @@ classdef dotsReadable < handle
       %> @details
       %> flushData() flush data deletes any data previously read.  This
       %> includes the object's state, history, and eventQueue.
-      function flushData(self)
+      function flushData(self, waitForNoEvents)
          
          %> Read once to get any remaining buffered data
          self.read();
          
+         %> Possibly wait until no more incoming events 
+         if nargin > 1 && waitForNoEvents
+            saveIsAutoRead = self.isAutoRead;
+            self.isAutoRead = true;
+            while ~isempty(self.getNextEvent())
+            end
+            self.isAutoRead = saveIsAutoRead;
+         end
+         
          %> make a blank state with room for each component
          IDs = self.getComponentIDs();
-         maxID = max(IDs);
-         self.state = zeros(maxID,3);
+         self.state = zeros(max(IDs),3);
          self.state(IDs) = IDs;
          
          %> remove history of data and queued events
@@ -295,8 +302,9 @@ classdef dotsReadable < handle
          self.resizeEventQueue(self.initialEventQueueSize, true);
          
          % Not waiting for release
-         [self.eventDefinitions.waitingForRelease] = deal(false);
-         
+         if ~isempty(self.eventDefinitions)
+            [self.eventDefinitions.waitingForRelease] = deal(false);
+         end
       end
       
       %> Record current and historical data in topsDataLog.
@@ -427,25 +435,39 @@ classdef dotsReadable < handle
          
          % parse inputs
          p = inputParser;
-         addRequired( p, 'self');
-         addRequired( p, 'name');
-         addOptional( p, 'isActive', false);
-         addOptional( p, 'isInverted', false);
-         addOptional( p, 'isRelease', false);
-         addParameter(p, 'component', 1);
-         addParameter(p, 'lowValue', -inf);
-         addParameter(p, 'highValue', inf);
-
-         % call the parser
-         parse(p, self, name, varargin{:});        
-         
-         % component can be string or ID
-         if ischar(p.Results.component)
-            ID = self.getComponentIDbyName(p.Results.component);
-         else 
-            ID = p.Results.component;
-         end
+         p.addRequired( 'self');
+         p.addRequired( 'name');
+         p.addParameter('component',  -1);
+         p.addParameter('isActive',   false);
+         p.addParameter('isInverted', false);
+         p.addParameter('lowValue',  -inf);
+         p.addParameter('highValue',  inf);
+         p.addParameter('isRelease',  false);
+         parse(p, self, name, varargin{:});
                   
+         % Get component ID, can be given as:
+         %   'component',  <string or ID>
+         %  - or -
+         %  parsed from name
+         if p.Results.component==-1
+            if ~isempty(name) && any(strcmp(name, {self.components.name}))
+               ID   = self.getComponentID(name);
+               name = '';
+            else
+               ID   = 1;
+            end
+         else
+            ID = self.getComponentID(p.Results.component);
+         end
+         
+         % Check for auto-name
+         if isempty(name)
+            name = [self.defaultEventPrefix '_' self.getComponentName(ID)];
+         end
+         
+         % Keep track of size of current array
+         numEvents = length(self.eventDefinitions);
+         
          %> fill in this event definition with given values
          self.eventDefinitions(ID).name       = name;
          self.eventDefinitions(ID).ID         = ID;
@@ -462,88 +484,87 @@ classdef dotsReadable < handle
          end
       end
       
-      % defineEvents
+      % defineEventsFromComponents
       %
-      % Takes an array of structs defining events
-      % The only required field is eventName
-      %  all others are optional
-      function defineEvents(self, eventStruct)
+      % Automatically define default events associated with
+      %  all of the components (or from the list of names)
+      %
+      % Arguments:
+      %  names    ... optional cell array of string names of components to
+      %                 use
+      %  varargin ... optional property/value pairs sent to defineEvent
+      function defineEventsFromComponents(self, names, varargin)
          
-         % Get list of fieldnames
+         % Check args
+         if nargin < 2 || isempty(names)
+            names = {self.components.name};
+         end
+         
+         % loop through all the names
+         for nn = reshape(names, 1, [])
+            self.defineEvent(nn{:}, varargin{:});
+         end
+      end
+      
+      % defineEventsFromStruct
+      %
+      % Takes an array of structs with fields corresponding to
+      %  property/value pairs used by defineEvent
+      % The only required field is 'name' (first argument to defineEvent),
+      %  all others are optional paired arguments
+      function defineEventsFromStruct(self, eventStruct)
+         
+         if nargin < 2 || isempty(eventStruct)
+            return
+         end
+         
+         % Get list of fieldnames and make the arg array
+         %  (first is name, rest are property/value pairs)
          fields = fieldnames(eventStruct);
-         
-         % Get optional fields
-         LisActive = strcmp('isActive', fields);
-         if any(LisActive)
-            isActive = [eventStruct.isActive];
-         else
-            isActive = false(size(eventStruct));
-         end
-         
-         LisInverted = strcmp('isInverted', fields);
-         if any(LisInverted)
-            isInverted = [eventStruct.isInverted];
-         else
-            isInverted = false(size(eventStruct));
-         end
-         
-         % get Logical array of indices of optional properties
-         Lopt = ~LisActive & ~LisInverted & ~strcmp('name', fields);
-            
-         % Get optional properties, put in a cell array with slots for
-         % values
-         props = cell(1, sum(Lopt)*2);
-         props(1:2:end) = fields(Lopt);
+         fields(strcmp('name', fields)) = [];
+         args = cell(1, length(fields)*2+1);
+         args(2:2:end-1) = fields;
          
          % Loop through the eventStruct, calling defineEvent
          for ii = 1:numel(eventStruct)
             
-            % parse property/value pairs
-            args = struct2cell(eventStruct(ii));
-            props(2:2:end) = args(Lopt);
-            
-            % send to defineEvent
-            self.defineEvent(eventStruct(ii).name, isActive(ii), ...
-               isInverted(ii), props{:});
+            % Update args with this struct and call defineEvent
+            args(1:2:end) = struct2cell(eventStruct(ii));
+            self.defineEvent(args{:});
          end
+         
+         % Flush the data
+         self.flushData();
       end
       
-      %> Delete the event for one of the input components.
-      %> @param ID one of the integer IDs in components
-      %> @details
-      %> Removes the event definition associated with @a ID.  The
-      %> component with the given @a ID will no longer produce events of
-      %> interest.
+      % Mostly for debugging
       %
-      %> updated by jig 5/5/2018
-      %>    Can give ID as 2nd argument for backwards compatibility
-      function undefineEvent(self, componentNameOrID)
+      function showActiveEvents(self)
          
-         % nameOrID string or numeric ID for the component
-         if ischar(componentNameOrID)
-            index = self.getComponentIDbyName(componentNameOrID);
-         else
-            index = componentNameOrID;
+         if isempty(self.eventDefinitions)
+            return
          end
          
-         % Clear the event definition
-         self.eventDefinitions(index).name       = '';
-         self.eventDefinitions(index).ID         = index;
-         self.eventDefinitions(index).lowValue   = nan;
-         self.eventDefinitions(index).highValue  = nan;
-         self.eventDefinitions(index).isInverted = false;
-         self.eventDefinitions(index).isActive   = false;
-         self.eventDefinitions(index).isRelease  = false;
-         self.eventDefinitions(index).waitingForRelease = false;
+         % list of event names
+         for aa = find([self.eventDefinitions.isActive])'
+            fprintf('%s: ID=%d, isInverted=%d, low=%.2f, high=%.2f, isRelease=%d', ...
+               self.eventDefinitions(aa).name, ...
+               self.eventDefinitions(aa).ID, ...
+               self.eventDefinitions(aa).isInverted, ...
+               self.eventDefinitions(aa).lowValue, ...
+               self.eventDefinitions(aa).highValue, ...
+               self.eventDefinitions(aa).isRelease)
+            disp(' ')
+         end
       end
       
       % Activate all events
       %
       %  To do this separately for each event, call defineEvent and set
       %  isActive flag to true
-      function activateEvents(self)      
+      function activateEvents(self)
          if ~isempty(self.eventDefinitions)
-            [self.eventDefinitions(:).isActive] = deal(true);
+            [self.eventDefinitions.isActive] = deal(true);
          end
       end
       
@@ -553,22 +574,17 @@ classdef dotsReadable < handle
       %  isActive flag to true
       function deactivateEvents(self)
          if ~isempty(self.eventDefinitions)
-            [self.eventDefinitions(:).isActive] = deal(false);
+            [self.eventDefinitions.isActive] = deal(false);
          end
-      end
-      
-      % Clear the event definitions
-      function clearEvents(self)
-         names = {'name', 'ID', 'lowValue', 'highValue', 'isInverted', 'isActive'};
-         padded = cell(1, 2*numel(names));
-         padded(1:2:end) = names;
-         self.eventDefinitions = struct(padded{:});
       end
       
       % Set/unset activeFlag
       %
       % NOTE: if anything changes here, be careful to update activateEvents
       % and deactivateEvents, above, as appropriate
+      %
+      % Input lists are either string name of event, or cell array of
+      % string names of events
       function setEventsActiveFlag(self, activateList, deactivateList)
          
          % Need event definitions
@@ -576,17 +592,22 @@ classdef dotsReadable < handle
             return
          end
          
-         % list of event names 
+         % list of event names
          names = {self.eventDefinitions.name};
          
          % Activate
          if nargin > 1 && ~isempty(activateList)
+            
             if ischar(activateList)
+               
+               % One event
                ind = strcmp(activateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = true;
-               end                  
+               end
             else
+               
+               % Many events
                for ii = 1:length(activateList)
                   ind = strcmp(activateList{ii}, names);
                   if any(ind)
@@ -598,12 +619,17 @@ classdef dotsReadable < handle
          
          % Deactivate
          if nargin > 2 && ~isempty(deactivateList)
+            
             if ischar(deactivateList)
+               
+               % One event
                ind = strcmp(deactivateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = false;
                end
             else
+               
+               % Many events
                for ii = 1:length(deactivateList)
                   ind = strcmp(deactivateList{ii}, names);
                   if any(ind)
@@ -743,32 +769,63 @@ classdef dotsReadable < handle
       function IDs = getComponentIDs(self)
          if isempty(self.components)
             IDs = [];
-         else            
+         else
             IDs = [self.components.ID];
          end
       end
       
-      %> Get ID of component by name
-      function ID = getComponentIDbyName(self, name)
-         Lid = strcmp(name, {self.components.name});
-         if any(Lid)
-            ID = self.components(Lid).ID;
-         else
-            ID = [];
+      %> Get ID of component by name or ID
+      %
+      function ID = getComponentID(self, nameOrID)
+         
+         % default
+         ID = [];
+         
+         % Check args
+         if nargin < 2 || isempty(nameOrID)
+            return
+         end
+         
+         if isnumeric(nameOrID)
+            ID = nameOrID;
+         end
+         
+         % check components
+         if ~isempty(self.components)
+            Lid = strcmp(nameOrID, {self.components.name});
+            if any(Lid)
+               ID = self.components(Lid).ID;
+            end
          end
       end
       
-      %> Get name of component by ID
-      function name = getComponentNameByID(self, ID)
-         Lname = ID==[self.components.ID];
-         if any(Lname)
-            name = self.components(Lname).name;
-         else
-            name = [];
+      %> Get name of component by name or ID
+      %
+      function name = getComponentName(self, nameOrID)
+         
+         % default
+         name = [];
+         
+         % Check args
+         if nargin < 2 || isempty(nameOrID)
+            return
+         end
+         
+         if isnumeric(nameOrID)
+            name = nameOrID;
+         end
+         
+         % Check components
+         if ~isempty(self.components)
+            Lname = nameOrID==[self.components.ID];
+            if any(Lname)
+               name = self.components(Lname).name;
+            end
          end
       end
       
       %> Get array of indices for the given component IDs
+      %
       function indices = getComponentIndicesByID(self, IDs)
          indices = find(ismember([self.components.ID], IDs));
       end
@@ -781,10 +838,6 @@ classdef dotsReadable < handle
       %> Get the current time from clockFunction.
       function time = getDeviceTime(self)
          time = feval(self.clockFunction);
-         
-         if ~isempty(self.deviceResetTime)
-            time = time - self.deviceResetTime;
-         end
       end
       
       %> Set the device time
@@ -794,23 +847,28 @@ classdef dotsReadable < handle
          if nargin < 2 || ~isnumeric(val)
             val = 0.0;
          end
+      end
+      
+      %> startTrial()
+      %
+      %
+      % In case you need to turn on/off recording at the beginning of each
+      % trial (e.g., dotsReadableEyeEOG, using the PMD1208FS device)
+      function startTrial(self, varargin)
          
-         self.deviceResetTime = feval(self.clockFunction) - val;
+         % Call subclass-specific method
+         self.startTrialDevice(varargin{:});
       end
       
-      %> beginTrial()
+      %> finishTrial()
       %
       % In case you need to turn on/off recording at the beginning of each
       % trial (e.g., dotsReadableEyeEOG, using the PMD1208FS device)
-      function beginTrial(self)
+      function finishTrial(self, varargin)
+         
+         % Call subclass-specific method
+         self.finishTrialDevice(varargin{:});
       end
-      
-      %> endTrial()
-      %
-      % In case you need to turn on/off recording at the beginning of each
-      % trial (e.g., dotsReadableEyeEOG, using the PMD1208FS device)
-      function endTrial(self)
-      end      
       
       %> Open a figure with continuously read device data.
       %> @details
@@ -923,8 +981,13 @@ classdef dotsReadable < handle
          end
       end
       
-      % Read from file -- needs to be overloaded in subclasses
-      function data = readDataFromFile(self, filename, synchTimes, calibrationData)
+      % Overloaded methods
+      function startTrialDevice(self, varargin)
+      end
+      function finishTrialDevice(self, varargin)
+      end
+      function data = readDataFromFile(self, filename, syncTimes, calibrationData)
+         data = [];
       end
    end
    
@@ -1054,7 +1117,7 @@ classdef dotsReadable < handle
          lows = [definitions.lowValue];
          highs = [definitions.highValue];
          isInverted = [definitions.isInverted];
-         isActive = [definitions.isActive];         
+         isActive = [definitions.isActive];
          isInRange = (newValues <= highs) & (newValues >= lows);
          isEvent = isActive & xor(isInRange, isInverted);
       end
@@ -1229,7 +1292,7 @@ classdef dotsReadable < handle
             readable.read();
             [name, data] = readable.getNextEvent();
             if ~isempty(name)
-                disp(name)
+               disp(name)
             end
             
             if ~isempty(name) && (strcmp(name, eventName) || ...

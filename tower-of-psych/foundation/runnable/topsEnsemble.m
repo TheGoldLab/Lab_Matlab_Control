@@ -237,6 +237,7 @@ classdef topsEnsemble < topsCallList
         % By default, sets @a value to all objects in the ensemble.  If @a
         % index is provided, it may specify a subset of ensemble objects.
         function setObjectProperty(self, property, value, index)
+           
             % all or indexed objects?
             if nargin >= 4
                 objs = self.objects(index);
@@ -306,8 +307,7 @@ classdef topsEnsemble < topsCallList
         % a cell array of objects as the first argument.  This assumes that
         % @a method is a static class method that operates on multiple
         % objects at once.  @a method could also be a regular function.
-        function result = callObjectMethod( ...
-                self, method, args, index, isCell)
+        function result = callObjectMethod(self, method, args, index, isCell)
             % pass arguments to method?
             if nargin < 3 || isempty(args)
                 args = {};
