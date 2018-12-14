@@ -108,7 +108,43 @@ classdef topsDataFile
       function [fHeader, incrementCell] = read(fHeader, increments)
          incrementCell = {};
          if exist(fHeader.fileWithPath)
-            contents = who('-file', fHeader.fileWithPath);
+	    try
+               contents = who('-file', fHeader.fileWithPath);
+            catch % the following is a dirty hack to bypass the 'who-MEX' bug
+               s = load(fHeader.fileWithPath, 'fHeader');
+               % match most of the metadata from the disk
+               fHeader.incrementPrefix = s.fHeader.incrementPrefix;
+               fHeader.dateTimeFunction = s.fHeader.dateTimeFunction;
+               fHeader.datestrFormat = s.fHeader.datestrFormat;
+               fHeader.writtenIncrements = s.fHeader.writtenIncrements;
+               fHeader.userData = s.fHeader.userData;
+
+               if nargin < 2
+                  % choose increments that were written
+                  %   but not yet read
+                  increments = setdiff( ...
+                     fHeader.writtenIncrements, ...
+                     fHeader.readIncrements);
+
+                  % now all increments will have been read
+                  fHeader.readIncrements = ...
+                     fHeader.writtenIncrements;
+               end
+
+               % actually read increments from the file
+               nIncrements = numel(increments);
+               incrementNames = ...
+                  topsDataFile.incrementNamesFromNumbers( ...
+                  fHeader, increments);
+               incrementCell = cell(1,nIncrements);
+               for ii = 1:nIncrements
+                  name = incrementNames(ii,:);
+                  if any(strcmp(contents, name))
+                     s = load(fHeader.fileWithPath, name);
+                     incrementCell{ii} = s.(name);
+                  end
+               end
+            end
             if any(strcmp(contents, 'fHeader'))
                s = load(fHeader.fileWithPath, 'fHeader');
                % match most of the metadata from the disk
