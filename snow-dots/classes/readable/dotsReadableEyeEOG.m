@@ -16,7 +16,7 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         %     channel 1, differential mode, is pins 4 and 5
         deviceParameters = struct( ...
             'channels',          [0 1], ...
-            'gains',             [50 50], ...
+            'gains',             [100 500], ...
             'frequency',         1000, ...   % Hz
             'duration',          20);        % in seconds
     end
@@ -128,6 +128,10 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             %          % Convert from cell array
             %          dataMatrix = cell2num(dataMatrix);
         end
+        
+        function data = getData(self)
+            data = self.readRawEyeData();
+        end
     end
     
     %% Protected methods
@@ -144,9 +148,9 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             % Set device properties
             self.aInDevice.channels  = self.deviceParameters.channels;
             self.aInDevice.frequency = self.deviceParameters.frequency;
-            self.aInDevice.gains = [1 1];
-            self.aInDevice.nSamples  = ceil(self.deviceParameters.duration * ...
-                self.deviceParameters.frequency);
+            self.aInDevice.gains = [2 5];
+             self.aInDevice.nSamples = ceil(self.deviceParameters.duration * ...
+                 self.deviceParameters.frequency * 2);
             
             % Transfer the sample frequency
             self.sampleFrequency = self.aInDevice.frequency;
@@ -240,6 +244,8 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             newData = cat(1, ...
                 [repmat(self.xID, sum(LeyeH), 1) v(LeyeH)'.*self.deviceParameters.gains(1) t(LeyeH)'], ...
                 [repmat(self.yID, sum(LeyeV), 1) v(LeyeV)'.*self.deviceParameters.gains(2) t(LeyeV)']); 
+            
+%            disp(newData(:,2))
         end
         
         %% Transform the normalized x/y eye data into screen coordinates

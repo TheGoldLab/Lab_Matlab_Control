@@ -3,7 +3,7 @@
 % Shows a bunch of targets (top) or RDK (bottom) of increasing complexity &
 % tests for skipped frames
 
-SCREEN_INDEX = 0;  % 0=small rectangle on main screen; 1=main screen; 2=secondary
+SCREEN_INDEX = 1;  % 0=small rectangle on main screen; 1=main screen; 2=secondary
 
 try
     % open the screen
@@ -50,7 +50,7 @@ try
     %% RDK
     %
     % make dots & store timing data
-    DDS        = 1000:2000:20000;
+    DDS        = 1000:4000:40000;
     numDDs     = length(DDS);
     NUM_FRAMES = 50;
     timeData2  = nans(NUM_FRAMES, numDDs);

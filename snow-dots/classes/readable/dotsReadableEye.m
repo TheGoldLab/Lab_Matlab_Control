@@ -79,7 +79,7 @@ classdef dotsReadableEye < dotsReadable
          'queryTimeout',               5,    ... % query wait time during calibration (sec)
          'showEye',                    true, ... % automatically show eye after calibration
          'offsetN',                    30,   ... % Number of samples to collect for calibration offset
-         'fullN',                      100,  ... % Number of samples to collect for full calibation
+         'fullN',                      500,  ... % Number of samples to collect for full calibation
          'fpX',                        10,   ... % x offset for calibration target grid
          'fpY',                        5,    ... % y offset for calibration target grid
          'fpSize',                     1.5,  ... % Size of calibration target
@@ -961,7 +961,8 @@ classdef dotsReadableEye < dotsReadable
                   
                   % Start the device
                   self.startTrialDevice();
-                  pause(0.1);
+                  pause(0.3);
+                  rawData = self.readRawEyeData();
                   
                   % Collect samples
                   gazeRawXY(:,:,ii) = collectXY(self, self.calibration.fullN);
@@ -1315,20 +1316,23 @@ classdef dotsReadableEye < dotsReadable
       % Collect xy data
       function xy = collectXY(self, N, doTransform)
          
-         xy = nans(N, 2);
-         
+          % Collect the data
+          newData = [];
+          while isempty(newData) || ( ...
+                  sum(newData(:,1)==self.xID) < N && ...
+                  sum(newData(:,1)==self.yID) < N)
+              newData = cat(1, newData, self.readRawEyeData);
+          end
+          
+          % Possibly transform
          if nargin >= 3 && doTransform
-            for ii = 1:N
-               newData = self.transformRawData(self.readRawEyeData());
-               xy(ii,:) = newData([self.xID, self.yID], 2)';
-            end
-         else
-            for ii = 1:N
-               newData = self.readRawEyeData();
-               xy(ii,:) = newData([self.xID, self.yID], 2)';
-            end
+             newData = self.transformRawData(newData);
          end
          
+         % Return data as xy
+         xs = newData(newData(:,1)==self.xID, 2);
+         ys = newData(newData(:,1)==self.yID, 2);
+         xy = cat(2, xs(1:N), ys(1:N));
       end      
    end
    

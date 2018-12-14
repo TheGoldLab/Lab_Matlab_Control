@@ -106,7 +106,7 @@ classdef AInScan1208FS < handle
         gains = [0 7];
         
         % input sample frequency (0-50000Hz), same for each channel
-        frequency = 10000;
+        frequency = 1000;
         
         % number of samples to gather in a scan, total among all channels
         nSamples = inf;
@@ -118,7 +118,7 @@ classdef AInScan1208FS < handle
         externalRetrigger = false;
         
         % sample bytes the OS can hold between transfers to Matlab
-        queueDepth = 1000;
+        queueDepth = 10000;
         
         % seconds to wait for some new data during waitForData()
         waitTimeout = 0.1;

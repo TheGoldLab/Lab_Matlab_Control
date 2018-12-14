@@ -6,16 +6,16 @@ clear classes
 % Get the object
 m = dotsReadableEyeEOG();
 
-% Open the screen
-screen = dotsTheScreen.makeEnsemble(true, 1);
-screen.callObjectMethod('open');
-
 % Open the gaze monitor
 m.openGazeMonitor();
 
-% Calibrate
+% % Open the screen
+screen = dotsTheScreen.makeEnsemble(true, 1);
+screen.callObjectMethod('open');
+% 
+% % Calibrate
 m.calibrate();
-
+% 
 % Define a fixation event
 % m.defineEvent('fpWindow', true, false, ...
 %          'eventName',   'holdFixation', ...
