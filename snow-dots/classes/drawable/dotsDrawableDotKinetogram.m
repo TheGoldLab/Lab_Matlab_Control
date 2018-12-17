@@ -310,9 +310,10 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         end
         
         % Draw the next frame of animated dots in a cirular aperture.
-        function draw(self)
+        function dotsFrameMatrix=draw(self)
             self.computeNextFrame;
             mglStencilSelect(self.stencilNumber);
+            dotsFrameMatrix = self.normalizedXY;
             self.draw@dotsDrawableVertices;
             mglStencilSelect(0);
         end

@@ -33,9 +33,10 @@ classdef dotsDrawable < handle
       end
       
       % Draw() or not, depending on isVisible and possibly other factors.
-      function mayDrawNow(self)
+      function dotsFrameMatrix=mayDrawNow(self)
+          dotsFrameMatrix=[];
          if self.isVisible
-            self.draw;
+            dotsFrameMatrix=self.draw;
          end
       end
       
@@ -71,7 +72,11 @@ classdef dotsDrawable < handle
          
          % draw() each drawable
          for ii = 1:numel(drawables)
-            drawables{ii}.mayDrawNow();
+             if ii==1
+                dotsFrameMatrix=drawables{ii}.mayDrawNow();
+             else
+                 drawables{ii}.mayDrawNow();
+             end
          end
          
          % swap OpenGL frame buffers
@@ -81,6 +86,7 @@ classdef dotsDrawable < handle
          else
             frameInfo = theScreen.nextFrame();
          end
+         frameInfo.dotsFrameMatrix=dotsFrameMatrix;
       end
       
       % Convenient utility for combining a bunch of drawables into an ensemble
