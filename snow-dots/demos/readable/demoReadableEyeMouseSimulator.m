@@ -6,15 +6,18 @@ clear classes
 % Get the object
 m = dotsReadableEyeMouseSimulator();
 
-% Open the gaze monitor
-m.openGazeMonitor();
-
 % Open the screen
 screen = dotsTheScreen.makeEnsemble(false, 0);
 screen.callObjectMethod('open');
 
 % Calibrate
 m.calibrate();
+
+% show eye position
+m.calibrate('s');
+
+% Open the gaze monitor
+m.openGazeMonitor();
 
 % Define a fixation event
 m.defineEvent('fpWindow', ...

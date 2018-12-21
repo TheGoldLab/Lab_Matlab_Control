@@ -103,11 +103,8 @@ classdef AInScan1208FS < handle
    %       7 -> 20x +-1V
    %	high precision, small range
    %
-   % To test, use preview method
-   %
-   
+   % @ingroup dotsUtilities
    properties
-      
       % USB vendor ID for the 1208FS device
       vendorID = 2523;
       
@@ -158,12 +155,6 @@ classdef AInScan1208FS < handle
       
       % number of samples in an input batch transfer
       samplesPerReport = 31;
-      
-      % stored waveforms (channel, volts, time, u?)
-      cvtu = [];
-      
-      % logical array indicating the new data
-      newDataSelector;
    end
    
    
@@ -213,8 +204,7 @@ classdef AInScan1208FS < handle
       % Matlab-side cache of raw HID report data
       baseElementCache;
       
-      % Keep track of each time a particular 8-bit report number happens
-      reportNumbers = zeros(2^8,1);
+      lastTimestamps = [];
    end
    
    methods
@@ -371,9 +361,6 @@ classdef AInScan1208FS < handle
          
          % clear old data
          self.transferredData.remove(self.transferredData.keys);
-         self.cvtu = nans(self.nSamples, 4);
-         self.reportNumbers(:) = 0;
-         self.newDataSelector = false(self.nSamples, 1);
       end
       
       % Initiate a prepared scan.
@@ -477,47 +464,37 @@ classdef AInScan1208FS < handle
       %   - u(ii): the "raw" unsigned integer value of the iith sample
       %   .
       % The arrays are returned in the order [c, v, t, u].
-      %
-      % Arguments:
-      %  waitFlag       ... boolean, whether or not to call waitForData
-      %  getLatestFlag  ... boolean, whether to just return latest data
-      function [c, v, t, u] = getScanWaveform(self, waitFlag, getLatestFlag)
-
-         % Return defaults
-         c = [];
-         v = [];
-         t = [];
-         u = [];
-
-         % Probably not necessary
+      function [c, v, t, u] = getScanWaveform(self)
          if ~self.isAvailable
-            return
-         end
-         
-         % Possibly wait for data
-         if nargin >= 2 && waitFlag && ~self.waitForData()
-            return
+            c = [];
+            v = [];
+            t = [];
+            u = [];
+            return;
          end
          
          % get transferred data into a useable form
-         self.waveformsFromTransfers();
-
-         % Select the values
-         Lgood = isfinite(self.cvtu(:,1));
+         [c, v, t, u] = self.waveformsFromTransfers();
          
-         % update the newData selector
-         self.newDataSelector = Lgood & ~self.newDataSelector;
-
-         % Possibly use the newData selector
-         if nargin >= 3 && getLatestFlag
-            Lgood = self.newDataSelector;
+         % avoid trailing "garbage" samples if possible
+         if isfinite(self.nSamples) && numel(c) > self.nSamples
+            isRequested = 1:self.nSamples;
+            c = c(isRequested);
+            v = v(isRequested);
+            t = t(isRequested);
+            u = u(isRequested);
          end
-                  
-         % Return each
-         c = self.cvtu(Lgood,1);
-         v = self.cvtu(Lgood,2);
-         t = self.cvtu(Lgood,3);
-         u = self.cvtu(Lgood,4);
+         
+         % cut out data that appear to be garbage
+         if numel(c) > 0
+            isGarbage = isnan(c) | isnan(t) | t < t(1);
+            if any(isGarbage)
+               c = c(~isGarbage);
+               v = v(~isGarbage);
+               t = t(~isGarbage);
+               u = u(~isGarbage);
+            end
+         end
       end
       
       % Wait for new data to arrive, or timeout.
@@ -571,8 +548,8 @@ classdef AInScan1208FS < handle
       % nSamples have been transferred to Matlab.  Otherwise, preview()
       % blocks while the plot axes and parent figure remin open, or until
       % the figure records a "q" button press.
-      function preview(self, ax, dur)
-         if nargin < 2 || isempty(ax)
+      function tdat = preview(self, ax, dur)
+         if nargin < 2
             % new figure and axes
             f = figure();
             ax = axes('Parent', f);
@@ -605,14 +582,18 @@ classdef AInScan1208FS < handle
                'LineStyle', 'none', ...
                'Marker', '.', ...
                'Color', chanColor);
-            
-            % add an extra marker to show when frames were skipped
             chanSkip(ii) = line(nan, nan, ...
                'Parent', ax, ...
                'LineStyle', 'none', ...
                'Marker', 'x', ...
                'Color', chanColor);
          end
+         timePoint = line(nan, nan, ...
+               'Parent', ax, ...
+               'LineStyle', 'none', ...
+               'Marker', 'o', ...
+               'MarkerSize', 10, ...
+               'Color', 'r');
          
          % start scanning and plot results as they arrive
          self.prepareToScan();
@@ -620,11 +601,15 @@ classdef AInScan1208FS < handle
          startTime = mglGetSecs();
          doContinue = true;
          sint = length(self.channels)/self.frequency; % sample interval per channel
+         secondCounter=1;
          t0 = [];
          while doContinue
             % wait for some data to plot
             if self.waitForData()
+               tic
                [c, v, t, ~] = self.getScanWaveform();
+               toc
+               
                
                % n = numel(c);
                for ii = 1:length(self.channels)
@@ -638,11 +623,11 @@ classdef AInScan1208FS < handle
                         'XData', ts, ...
                         'YData', v(chanSelector));
                      
-                     Lskip = [-inf; diff(ts)] > sint;
+                     Lskip = [-inf diff(ts)] > sint;
                      if any(Lskip)
                         set(chanSkip(ii), ...
                            'XData', ts(Lskip), ...
-                           'YData', zeros(sum(Lskip), 1));
+                           'YData', zeros(1, sum(Lskip)));
                      end
                   end
                end
@@ -651,8 +636,11 @@ classdef AInScan1208FS < handle
             % plot the latest data
             drawnow();
             thisTime = mglGetSecs;
+            if thisTime > startTime + secondCounter
+               set(timePoint, 'XData', 1:secondCounter, 'YData', 0.1*ones(1, secondCounter));
+               secondCounter = secondCounter + 1;
+            end
             
-            % check for continue
             doContinue = ishandle(ax) ...
                && ishandle(f) ...
                && ~strcmp(get(f, 'CurrentCharacter'), 'q') ...
@@ -663,7 +651,6 @@ classdef AInScan1208FS < handle
    end
    
    methods (Access = protected)
-      
       % Remake the config, start, and stop output reports.
       function buildHIDReports(self)
          self.scanConfigReport = MCCFormatReport(self, 'AInSetup', ...
@@ -712,21 +699,25 @@ classdef AInScan1208FS < handle
          %   and subsequent samples fall in regular succession
          deviceConfig = self.scanStartReport.other;
          scanInterval = deviceConfig.attainedSampleInterval; %*nChans; jig fixed 12/20/18
-         t = self.zeroTime + n*scanInterval;         
+         t = self.zeroTime + n*scanInterval;
+         
+         %disp(n(1))
+
+%          if firstSampleNumber == 0
+%             fprintf('time=%.4f, value=%.4f\n', t(1) - self.pt0, v(1))
+%          end
+         % jig
+%         ts = t - self.zeroTime;
+%          fprintf('adding %d points to %3d, start time %4.2f, end time %4.2f, diff %4.2f, zt = %.2f\n', ...
+%             length(n), reportNumber, ts(1).*1000, ts(end).*1000, (ts(end)-ts(1)).*1000, self.zeroTime)
       end
       
       % Reconstruct all the samples in all the transferred data.
-      function waveformsFromTransfers(self)
+      function [c, v, t, u] = waveformsFromTransfers(self)
          
-         % Check that we should be collecting data
-         if self.nSamples <= 0
-            return
-         end
-         
-         % get all data transfers and use transfer timestamps to "index" 
-         %  the reports, then remove them so they don't get reused
+         % account for all data transfers
+         % use transfer timestamps to "index" report serial numbers
          groupedTransfers = self.transferredData.values;
-         self.transferredData.remove(self.transferredData.keys);
          transfers = cat(1, groupedTransfers{:});
          if isempty(transfers)
             nTimestamps = 0;
@@ -735,41 +726,93 @@ classdef AInScan1208FS < handle
             nTimestamps = numel(timestamps);
          end
          
-         % Loop through the new timestamps
+         % allocate space for waveforms
+         nElements = nTimestamps*self.samplesPerReport;
+         c = nan(1, nElements);
+         v = nan(1, nElements);
+         t = nan(1, nElements);
+         u = nan(1, nElements);
+         
+         if nElements == 0
+            return
+         end
+         
+         if ~isempty(self.lastTimestamps) && ~all(ismember(self.lastTimestamps, timestamps))
+            disp(nTimestamps)
+         end
+         self.lastTimestamps = timestamps;
+
+         
+         % constants for tracking report numbers, below
+         % jig changed 12/20/2018 to fix bug with report number overflow
+         numZeroReports = -1;
+         
+         % OLD STUFF
+         %          startTime = self.zeroTime;
+         %          reportInterval = self.samplesPerReport / self.frequency / 2;
+         %          overflowInterval = 256*reportInterval;
+         %          overflowHalf = overflowInterval/2;
+         
+         % start with the cached values from prepareToScan()
+         %   the cache contains a separate row for each helper device
+         %   update the cache for successive transfers from each helper
+         runningCache = self.baseElementCache;
          for ii = 1:nTimestamps
             
-            % start with the cached values from prepareToScan()
-            %   the cache contains a separate row for each helper device
-            %   update the cache for successive transfers from each helper
             % update the cache for the next transfer
             %   don't assume transfers matrix is sorted
             %   and keep track of which helper device sent the transfer
+
             theseTransfers = transfers(transfers(:,3) == timestamps(ii), [1 2 4]);
             cacheIndexes = theseTransfers(:,3) + (theseTransfers(:,1)-1)*self.nHelpers;
-            self.baseElementCache(cacheIndexes) = theseTransfers(:,2);
+            runningCache(cacheIndexes) = theseTransfers(:,2);
             helper = theseTransfers(1,3);
             
+% SAVE            
+%             isThisTimestamp = transfers(:,3) == timestamps(ii);
+%             cacheCols = transfers(isThisTimestamp,1);
+%             cacheRows = transfers(isThisTimestamp,4);
+%             cacheIndexes = cacheRows + (cacheCols-1)*self.nHelpers;
+%             runningCache(cacheIndexes) = transfers(isThisTimestamp,2);
+%             helper = cacheRows(1);
+            
             % report number may overflow its single-byte data type
-            % estimate a more-significant-byte from the number of times the 
-            %  LSB index has happened
-            numberFixed = self.baseElementCache(helper, self.sampleCountCookies);
-            self.reportNumbers(numberFixed+1) = self.reportNumbers(numberFixed+1)+1;
-            if (self.reportNumbers(numberFixed+1)) > 1
-               numberFixed = numberFixed + 256*(self.reportNumbers(numberFixed+1)-1);
+            % estimate a more-significant-byte from transfer timestamp
+            %   report number and timestamp -> time of 0th report
+            %   so how many 0th reports should have passed by?
+            %   or, to avoid rounding errors, how many 128th reports?
+            %   both numbers correspond to the more-significant-byte
+            numberLSB = runningCache(helper, self.sampleCountCookies);
+            if numberLSB == 0
+               numZeroReports = numZeroReports + 1;
             end
+            numberFixed = numberLSB + 256*numZeroReports;
+            
+            % OLD STUFF
+            %             timeOfZeroth = timestamps(ii) - (numberLSB*reportInterval);
+            %             timeOf128th = timeOfZeroth + overflowHalf;
+            %             numberMSB = floor((timeOf128th-startTime)/overflowInterval);
+            %             numberFixed = numberLSB + 256*numberMSB;
             
             % replace cached report number with the fixed number
-            self.baseElementCache(helper, self.sampleCountCookies) = numberFixed;
+            runningCache(helper, self.sampleCountCookies) = numberFixed;
             
             % reconstruct samples from this updated cache
             [cNext, vNext, tNext, uNext, nNext] = ...
-               self.channelsFromCache(self.baseElementCache(helper,:));
-            
-            % save in the cvtu buffer
-            Lnext = nNext>=0 & nNext<self.nSamples;
-            self.cvtu(nNext(Lnext)+1,:) = [cNext(Lnext)' vNext(Lnext)' tNext(Lnext)' uNext(Lnext)'];
+               self.channelsFromCache(runningCache(helper,:));
+            c(nNext+1) = cNext;
+            v(nNext+1) = vNext;
+            t(nNext+1) = tNext;
+            u(nNext+1) = uNext;
+            %             disp(sprintf('%d + 256*%d = %d', ...
+            %                numberLSB, numberFixed, numberFixed))
+            %
+            %             if ~isempty(nNext)
+            %                fprintf('timestamp %d = %.4f, t1 = %.4f, numFixed=%d\n', ...
+            %                   ii, timestamps(ii)-self.pt0, t(nNext(1)+1)-self.pt0, numberFixed)
+            %             end
          end
-      end      
+      end
    end
    
    methods (Static)
@@ -778,14 +821,15 @@ classdef AInScan1208FS < handle
       %  1: cookie
       %  2: value
       %  3: timestamp
-      %  4: device helper index
+      %  4: ?
       function mexHIDQueueCallback(context, newData)
 
          % Save the device helper index in the fourth row of the data matrix
          newData(:,4) = context.cacheRow;
          
          % save data in the Map object using the latest time as the key
-         context.transferredData(max(newData(:,3))) = newData;         
+         context.transferredData(max(newData(:,3))) = newData;
+         
       end
    end
 end
