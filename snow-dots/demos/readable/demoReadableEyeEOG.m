@@ -10,12 +10,12 @@ m = dotsReadableEyeEOG();
 m.openGazeMonitor();
 
 % % Open the screen
-screen = dotsTheScreen.makeEnsemble(true, 1);
+screen = dotsTheScreen.makeEnsemble(false, 0);
 screen.callObjectMethod('open');
 % 
 % % Calibrate
 m.calibrate();
-% 
+
 % Define a fixation event
 % m.defineEvent('fpWindow', true, false, ...
 %          'eventName',   'holdFixation', ...
@@ -34,4 +34,5 @@ for tt = 1:100
    disp(sprintf('Trial %d', tt))
 end
 
+screen.callObjectMethod('close');
 mexHID('terminate');

@@ -78,8 +78,8 @@ classdef dotsReadableEye < dotsReadable
          'query',                      false, ... % Ask for input during calibration
          'queryTimeout',               5,    ... % query wait time during calibration (sec)
          'showEye',                    true, ... % automatically show eye after calibration
-         'offsetN',                    30,   ... % Number of samples to collect for calibration offset
-         'fullN',                      500,  ... % Number of samples to collect for full calibation
+         'offsetT',                    0.15, ... % Time to collect offset data (sec)
+         'fullT',                      0.5,  ... % Time to collect for full calibation
          'fpX',                        10,   ... % x offset for calibration target grid
          'fpY',                        5,    ... % y offset for calibration target grid
          'fpSize',                     1.5,  ... % Size of calibration target
@@ -812,7 +812,7 @@ classdef dotsReadableEye < dotsReadable
          end
          
          % Collect transformed x,y data
-         gazeXY = self.collectXY(self.calibration.offsetN, true);
+         gazeXY = self.collectXY(self.calibration.offsetT, true);
          
          % Possibly hide target
          if showTarget
@@ -917,7 +917,7 @@ classdef dotsReadableEye < dotsReadable
             self.calibration.fpX  0;
             0 -self.calibration.fpY];
          numFixations = size(targetXY, 1);
-         gazeRawXY = nans(self.calibration.fullN, 2, numFixations);
+         gazeRawXY = cell(numFixations, 1);
          gazeXY    = nans(numFixations, 2);
                   
          % Set up monitor graphics objects
@@ -961,20 +961,18 @@ classdef dotsReadableEye < dotsReadable
                   
                   % Start the device
                   self.startTrialDevice();
-                  pause(0.3);
-                  rawData = self.readRawEyeData();
                   
                   % Collect samples
-                  gazeRawXY(:,:,ii) = collectXY(self, self.calibration.fullN);
+                  gazeRawXY{ii} = collectXY(self, self.calibration.fullT);
                   
                   % Finish the device
                   self.finishTrialDevice();
                   
-                  % Check tolerance
-                  if all(var(gazeRawXY(:,:,ii)) < self.calibration.varTolerance)
+                  % Check x,y tolerance
+                  if all(var(gazeRawXY{ii}) < self.calibration.varTolerance)
                      
                      % Good! Save median and go on to next sample
-                     gazeXY(ii,:) = nanmedian(gazeRawXY(:,:,ii));
+                     gazeXY(ii,:) = nanmedian(gazeRawXY{ii});
                      break
                   else
                      
@@ -987,23 +985,21 @@ classdef dotsReadableEye < dotsReadable
                dotsTheScreen.blankScreen();
                
                % wait a moment
-               pause(0.5);
+               pause(0.7);
             end
             
             % Get vectors connecting each point
             diffTargetXY    = diff([targetXY; targetXY(1,:)]);
-            lenDiffTargetXY = sqrt(sum(diffTargetXY.^2,2));
             diffGazeXY      = diff([gazeXY; gazeXY(1,:)]);
-            lenDiffGazeXY   = sqrt(sum(diffGazeXY.^2,2));
-            
+             
             % Select x,y directions
             Lx = diffTargetXY(:,1)~=0;
             Ly = diffTargetXY(:,2)~=0;
             
             % Calculate average x,y scaling
             xyScaleVals = [ ...
-               mean(lenDiffTargetXY(Lx,:) ./ lenDiffGazeXY(Lx,:)) ...
-               mean(lenDiffTargetXY(Ly,:) ./ lenDiffGazeXY(Ly,:))];
+               mean(diffTargetXY(Lx,1) ./ diffGazeXY(Lx,1)) ...
+               mean(diffTargetXY(Ly,2) ./ diffGazeXY(Ly,2))];
             
             % Calculate average rotation
             angs = nans(numFixations, 1);
@@ -1036,7 +1032,7 @@ classdef dotsReadableEye < dotsReadable
             else
                
                % Trying again!
-               
+               %
                % Save the current calibration
                savedCalibrations{checkCalibrationCounter, 1} = { ...
                   xyOffsetVals, xyScaleVals, rotationVals};
@@ -1052,14 +1048,14 @@ classdef dotsReadableEye < dotsReadable
             % Show calibration markers on monitor
             if self.calibration.showOnMonitor
                for ii = 1:numFixations
-                  hpts(ii) = plot(gazeRawXY(:,1,ii), gazeRawXY(:,2,ii), 'x', ...
+                  hpts(ii) = plot(gazeRawXY{ii}(:,1), gazeRawXY{ii}(:,2), 'x', ...
                      'Color', colors{ii});
                   hmds(ii) = plot(gazeXY(ii,1), gazeXY(ii,2), 'o', ...
                      'MarkerSize', 10, 'MarkerFaceColor', colors{ii});
                   htds(ii) = plot(transformedData(ii,1), transformedData(ii,2), ...
                      's', 'MarkerSize', 10, 'MarkerFaceColor', colors{ii});
                end
-               axis(max(abs([gazeXY(:);20])).*[-1 1 -1 1])
+               %axis(max(abs([gazeXY(:);20])).*[-1 1 -1 1])
                drawnow;
                pause(4.0);               
             end           
@@ -1313,15 +1309,14 @@ classdef dotsReadableEye < dotsReadable
          end
       end
       
-      % Collect xy data
-      function xy = collectXY(self, N, doTransform)
+      % Collect xy data for a fixed amount of time
+      function xy = collectXY(self, duration, doTransform)
          
           % Collect the data
           newData = [];
-          while isempty(newData) || ( ...
-                  sum(newData(:,1)==self.xID) < N && ...
-                  sum(newData(:,1)==self.yID) < N)
-              newData = cat(1, newData, self.readRawEyeData);
+          startTime = feval(self.clockFunction);
+          while feval(self.clockFunction) < startTime + duration
+             newData = cat(1, newData, self.readRawEyeData);
           end
           
           % Possibly transform
@@ -1330,9 +1325,9 @@ classdef dotsReadableEye < dotsReadable
          end
          
          % Return data as xy
-         xs = newData(newData(:,1)==self.xID, 2);
-         ys = newData(newData(:,1)==self.yID, 2);
-         xy = cat(2, xs(1:N), ys(1:N));
+         xy = [ ...
+            newData(newData(:,1)==self.xID, 2), ...
+            newData(newData(:,1)==self.yID, 2)];
       end      
    end
    
