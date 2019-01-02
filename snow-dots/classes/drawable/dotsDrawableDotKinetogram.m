@@ -184,7 +184,7 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         end
         
         % Compute dot positions for the next frame of animation.
-        function computeNextFrame(self)
+        function thisFrame = computeNextFrame(self)
            
             % cache some properties as local variables because it's faster
             nFrames = self.interleaving;
@@ -311,9 +311,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % Draw the next frame of animated dots in a cirular aperture.
         function dotsFrameMatrix=draw(self)
-            self.computeNextFrame;
+            thisFrame = self.computeNextFrame;
             mglStencilSelect(self.stencilNumber);
-            dotsFrameMatrix = self.normalizedXY;
+            dotsFrameMatrix = self.normalizedXY(:,thisFrame);
             self.draw@dotsDrawableVertices;
             mglStencilSelect(0);
         end
