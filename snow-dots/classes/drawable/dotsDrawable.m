@@ -33,10 +33,9 @@ classdef dotsDrawable < handle
       end
       
       % Draw() or not, depending on isVisible and possibly other factors.
-      function dotsFrameMatrix=mayDrawNow(self)
-          dotsFrameMatrix=[];
+      function [dotsFrameMatrix, cohDotsBool]=mayDrawNow(self)
          if self.isVisible
-            dotsFrameMatrix=self.draw;
+            [dotsFrameMatrix, cohDotsBool]=self.draw;
          end
       end
       
