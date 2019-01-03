@@ -73,7 +73,7 @@ classdef dotsDrawable < handle
          % draw() each drawable
          for ii = 1:numel(drawables)
              if ii==1
-                dotsFrameMatrix=drawables{ii}.mayDrawNow();
+                [dotsFrameMatrix, cohDotsBool]=drawables{ii}.mayDrawNow();
              else
                  drawables{ii}.mayDrawNow();
              end
@@ -86,7 +86,9 @@ classdef dotsDrawable < handle
          else
             frameInfo = theScreen.nextFrame();
          end
+         
          frameInfo.dotsFrameMatrix=dotsFrameMatrix;
+         frameInfo.cohDotsBool = cohDotsBool;
       end
       
       % Convenient utility for combining a bunch of drawables into an ensemble

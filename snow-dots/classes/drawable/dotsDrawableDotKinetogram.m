@@ -184,7 +184,7 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         end
         
         % Compute dot positions for the next frame of animation.
-        function thisFrame = computeNextFrame(self)
+        function [thisFrame, cohSelector] = computeNextFrame(self)
            
             % cache some properties as local variables because it's faster
             nFrames = self.interleaving;
@@ -310,8 +310,17 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         end
         
         % Draw the next frame of animated dots in a cirular aperture.
-        function dotsFrameMatrix=draw(self)
-            thisFrame = self.computeNextFrame;
+        function [dotsFrameMatrix,cohDots]=draw(self)
+            [thisFrame,cohSelector] = self.computeNextFrame;
+            
+            % remark %
+            %--------%
+            % cohDots below could be computed by self.computeNextFrame. I
+            % don't know if this would improve the speed...
+            cohDots = thisFrame & cohSelector;
+            cohDots(~thisFrame) = []; % remove entries of non-active dots
+            %--------%
+            
             mglStencilSelect(self.stencilNumber);
             dotsFrameMatrix = self.normalizedXY(:,thisFrame);
             self.draw@dotsDrawableVertices;
