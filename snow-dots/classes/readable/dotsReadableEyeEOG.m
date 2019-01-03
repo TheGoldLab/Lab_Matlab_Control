@@ -22,8 +22,8 @@ classdef dotsReadableEyeEOG < dotsReadableEye
       
       % Gains to apply to the raw inputs, which is useful for
       % visualizing the data on the eye monitor before calibration
-      rawGainH = 50;
-      rawGainV = 50;
+      rawGainH = 100;
+      rawGainV = 100;
    end
    
    properties (SetAccess = protected)
@@ -170,30 +170,58 @@ classdef dotsReadableEyeEOG < dotsReadableEye
          LeyeV = c==self.deviceParameters.channels(2);
          
          % Special case of one more sample in either channel
-         if sum(LeyeH) ~= sum(LeyeV)
-            h1 = find(LeyeH,1);
-            v1 = find(LeyeV,1);
-            if h1 < v1
-               LeyeV = LeyeV & [LeyeH(2:end) false];
-               LeyeH = LeyeH & [LeyeV(2:end) false];
-            else
-               LeyeV = LeyeV & [LeyeH(2:end) false];
-               LeyeH = LeyeH & [LeyeV(2:end) false];
-            end
+         if sum(LeyeH) ~= sum(LeyeV)            
+             badIndices = find(diff(c)==0);
+             if c(1) == c(end) && c(1) ~= c(2)
+                 badIndices = [1; badIndices];
+             end
+             if ~isempty(badIndices)
+                 LeyeH(badIndices) = false;
+                 LeyeV(badIndices) = false;
+             end
+             if sum(LeyeV) ~= sum(LeyeH)
+                 disp('error parsing EOG channels')
+             end
          end
          
-         if sum(LeyeV) ~= sum(LeyeH)
-            disp('error parsing EOG channels')
-         end
          
          % Format data according to the dotsReadable format:
          %  <ID> <value> <timestamp>
          newData = cat(1, ...
             [repmat(self.xID, sum(LeyeH), 1) v(LeyeH).*self.rawGainH t(LeyeH)], ...
-            [repmat(self.yID, sum(LeyeV), 1) v(LeyeV).*self.rawGainH t(LeyeV)]);
+            [repmat(self.yID, sum(LeyeV), 1) v(LeyeV).*self.rawGainV t(LeyeV)]);
          
          % disp(newData(:,2))
       end
+      
+      % Collect xy data for a fixed amount of time
+      function xy = collectXY(self, duration, doTransform)
+          
+          % Wait the given time
+          pause(duration);
+          
+          % Get the data
+          newData = self.readRawEyeData();
+
+          % Take only the data over requsted interval
+          Lgood = newData(:,3) >= (max(newData(:,3)) - duration);
+          newData = newData(Lgood,:);
+          
+          % Possibly transform
+          if nargin >= 3 && doTransform
+              newData = self.transformRawData(newData);
+          end
+          
+          % Return data as xy
+          Lx = newData(:,1)==self.xID;
+          Ly = newData(:,1)==self.yID;
+          if sum(Lx) > sum(Ly)
+              Lx(find(Lx,sum(Ly)-sum(Lx))) = false;
+          elseif sum(Ly) > sum(Lx)
+              Ly(find(Ly,sum(Lx)-sum(Ly))) = false;
+          end
+          xy = [newData(Lx, 2), newData(Ly, 2)];          
+      end      
       
       %% Transform the normalized x/y eye data into screen coordinates
       %  with units of degrees visual angle
