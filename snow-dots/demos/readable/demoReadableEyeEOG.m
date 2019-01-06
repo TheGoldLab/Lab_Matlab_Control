@@ -10,7 +10,7 @@ m = dotsReadableEyeEOG();
 m.openGazeMonitor();
 
 % % Open the screen
-screen = dotsTheScreen.makeEnsemble(true, 1);
+screen = dotsTheScreen.makeEnsemble(false, 0);
 screen.callObjectMethod('open');
 % 
 % % Calibrate
