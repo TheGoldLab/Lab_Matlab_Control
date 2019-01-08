@@ -118,7 +118,7 @@ classdef AInScan1208FS < handle
       channels = [0 1];
       
       % precision-and-range selection for differential channels
-      gains = [7 7];
+      gains = [4 4];
       
       % input sample frequency (0-50000Hz), same for each channel
       frequency = 1000;
@@ -161,6 +161,9 @@ classdef AInScan1208FS < handle
       
       % maximum size of cvtu buffer
       maxBufferSize = 50000;
+      
+      % index of next entry in cvtu buffer
+      cvtuIndex = 1;
       
       % stored waveforms (channel, volts, time, unsigned data)
       cvtu = [];
@@ -380,6 +383,7 @@ classdef AInScan1208FS < handle
          self.transferredData.remove(self.transferredData.keys);
          self.reportNumbers(:) = 0;
          bufferSize = min(self.nSamples, self.maxBufferSize);
+         self.cvtuIndex = 1;
          self.cvtu = nans(bufferSize, 4);
          self.newDataSelector = false(bufferSize, 1);
       end
@@ -561,12 +565,6 @@ classdef AInScan1208FS < handle
          % timestamp from a USB frame.
          startTransferCount = self.transferredData.length();
          startTime = mexHID('check');
-         
-         % jig added 1/6/19 -- no, I don't understand why, but without it
-         % you consistently don't get all the samples
-         mexHID('check');
-         mexHID('check');
-         
          finishTransferCount = self.transferredData.length();
          finishTime = startTime;
          timeoutTime = startTime + self.waitTimeout;
@@ -804,10 +802,14 @@ classdef AInScan1208FS < handle
             % implement circular buffer (with one-based indexing)
             indices = mod(nNext(Lnext)+1, size(self.cvtu,1));
             indices(indices==0) = size(self.cvtu,1);
+            if any(indices~=(nNext(Lnext)+1))
+               disp('here')
+               
             self.cvtu(indices,:) = [cNext(Lnext)' vNext(Lnext)' tNext(Lnext)' uNext(Lnext)'];
+            
             % self.cvtu(nNext(Lnext)+1,:) = [cNext(Lnext)' vNext(Lnext)' tNext(Lnext)' uNext(Lnext)'];            
          end
-      end
+      end      
    end
    
    methods (Static)
@@ -818,12 +820,12 @@ classdef AInScan1208FS < handle
       %  3: timestamp
       %  4: device helper index
       function mexHIDQueueCallback(context, newData)
-         
+
          % Save the device helper index in the fourth row of the data matrix
          newData(:,4) = context.cacheRow;
          
          % save data in the Map object using the latest time as the key
-         context.transferredData(max(newData(:,3))) = newData;   
+         context.transferredData(max(newData(:,3))) = newData;         
       end
    end
 end

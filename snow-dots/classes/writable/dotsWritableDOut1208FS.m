@@ -105,6 +105,9 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
       % width of TTL pulse in seconds
       pulseWidth = .001;
       
+      % pulseMax [0-255]
+      pulseMax = 255;
+      
       % TTL signal containing a single pulse
       pulseSignal = [true false];
       
@@ -287,7 +290,7 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
 
          % get the remaining pulses and save the finish time
          lastTimestamp = firstTimestamp;
-         for pp = 1:numPulses
+         for pp = 1:numPulses-1
             pause(pauseBetweenPulses);
             lastTimestamp = self.sendTTLPulse(channel);
          end
@@ -352,19 +355,22 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
       % </table>
       function [timestamp, ref] = sendTTLSignal( ...
             self, channel, signal, frequency)
+         
+         % Check for device availability
          if ~self.isAvailable
             timestamp = -1;
             ref = nan;
             return
          end
          
+         % Check samples
          nSamples = numel(signal);
          if nSamples > self.signalMaxSamples
             warning('TTL signal is too long: %d > %d max samples', ...
                nSamples, self.signalMaxSamples);
             timestamp = -2;
             ref = nan;
-            return;
+            return
          end
          
          % block while a previous signal is still being output
@@ -532,8 +538,8 @@ classdef dotsWritableDOut1208FS < dotsWritableDOut
          nReports = ceil(numel(signal)/self.signalSamplesPerReport);
          bytes = ...
             zeros(2*self.signalSamplesPerReport, nReports, 'uint8');
-         bytes(find(signal)*2) = 255;
-         bytes(find(signal)*2-1) = 255;
+         bytes(find(signal)*2) = self.pulseMax;
+         bytes(find(signal)*2-1) = self.pulseMax;
          byteCell = num2cell(bytes, 1);
          report = struct( ...
             'type', type, ...
