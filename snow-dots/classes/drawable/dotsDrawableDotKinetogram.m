@@ -97,6 +97,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % the z dimension encodes frames. So, every time computeNextFrame
         % is called, a new z-slice is filled
         dotsPositions = [];
+        
+        % Flag controlling whether to record dots positions or not
+        recordDotsPositions = true;
     end
     
     properties (SetAccess = protected)
@@ -202,7 +205,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             
             % pre-allocate size of first 2 dimensions of dotsPositions
             % the third dimension is unknown (I believe)
-            self.dotsPositions = zeros(4,self.nDots,0);
+            if self.recordDotsPositions
+                self.dotsPositions = zeros(4,self.nDots,0);
+            end
         end
         
         % Compute dot positions for the next frame of animation.
@@ -331,11 +336,13 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             self.y = (XY(2, thisFrame)-0.5)*self.diameter + self.yCenter;
             
             % fill out dotsPositions
-            self.dotsPositions(:,:,end+1) = [...
-                self.normalizedXY;...
-                self.frameSelector;...
-                cohSelector...
-                ];
+            if self.recordDotsPositions
+                self.dotsPositions(:,:,end+1) = [...
+                    self.normalizedXY;...
+                    self.frameSelector;...
+                    cohSelector...
+                    ];
+            end
         end
         
         % Draw the next frame of animated dots in a cirular aperture.
