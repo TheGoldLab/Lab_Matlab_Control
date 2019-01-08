@@ -79,6 +79,24 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         %   and direction (assuming all other properties are constant).
         %   Seed is computed as randBase+coherence+100*direction;
         randBase = sum(clock*10);
+        
+        % dot positions, active and coherence states, all gathered in a 
+        % single x-by-y-by-z 3D-matrix.
+        %
+        % the x dimension must be 4. First two rows are for x and y
+        % normalized positions of each dot, respectively.
+        % 3rd row only contains 0 and 1's and there is a 1 whenever the
+        % dot is 'active', i.e. displayed on the corresponding frame
+        % 4th row only contains 0 and 1's and there is a 1 whenever the dot
+        % is 'coherent' on the corresponding frame.
+        %
+        % the y dimension has length equal to the number of dots, all
+        % interleaving frames confounded. Each entry in the y dimension is
+        % therefore absolutely referring to a dot
+        %        
+        % the z dimension encodes frames. So, every time computeNextFrame
+        % is called, a new z-slice is filled
+        dotsPositions = [];
     end
     
     properties (SetAccess = protected)
@@ -181,11 +199,15 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
                         
             % pick random start positions for all dots
             self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
+            
+            % pre-allocate size of first 2 dimensions of dotsPositions
+            % the third dimension is unknown (I believe)
+            self.dotsPositions = zeros(4,self.nDots,0);
         end
         
         % Compute dot positions for the next frame of animation.
-        function [thisFrame, cohSelector] = computeNextFrame(self)
-           
+        function computeNextFrame(self)
+            
             % cache some properties as local variables because it's faster
             nFrames = self.interleaving;
             frame = self.frameNumber;
@@ -307,22 +329,19 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             self.normalizedXY = XY;
             self.x = (XY(1, thisFrame)-0.5)*self.diameter + self.xCenter;
             self.y = (XY(2, thisFrame)-0.5)*self.diameter + self.yCenter;
+            
+            % fill out dotsPositions
+            self.dotsPositions(:,:,end+1) = [...
+                self.normalizedXY;...
+                self.frameSelector;...
+                cohSelector...
+                ];
         end
         
         % Draw the next frame of animated dots in a cirular aperture.
-        function [dotsFrameMatrix,cohDots]=draw(self)
-            [thisFrame,cohSelector] = self.computeNextFrame;
-            
-            % remark %
-            %--------%
-            % cohDots below could be computed by self.computeNextFrame. I
-            % don't know if this would improve the speed...
-            cohDots = thisFrame & cohSelector;
-            cohDots(~thisFrame) = []; % remove entries of non-active dots
-            %--------%
-            
+        function draw(self)
+            self.computeNextFrame;
             mglStencilSelect(self.stencilNumber);
-            dotsFrameMatrix = self.normalizedXY(:,thisFrame);
             self.draw@dotsDrawableVertices;
             mglStencilSelect(0);
         end
