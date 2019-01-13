@@ -269,7 +269,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Trial information
          trial = self.getTrial();
          trialString = sprintf('Trial %d/%d, dir=%d, coh=%.0f', self.trialCount, ...
-            numel(self.trialData)*self.trialIterations, trial.direction, trial.coherence);
+            numel(self.trialData), trial.direction, trial.coherence);
          
          % Show the information
          self.statusStrings = {taskString, trialString};
@@ -412,7 +412,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          self.statusStrings{2} = ...
             sprintf('Trial %d/%d, dir=%d, coh=%.0f: %s, RT=%.2f', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, ...
+            self.trialCount, numel(self.trialData), ...
             trial.direction, trial.coherence, feedbackStr, trial.RT);
          self.updateStatus(2); % just update the second one   
          

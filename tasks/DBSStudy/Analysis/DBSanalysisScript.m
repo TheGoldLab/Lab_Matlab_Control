@@ -3,7 +3,7 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2018_11_23_17_36.mat';
+testFilename = 'data_2019_01_13_10_03.mat';
 [topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
 
 % task indices
@@ -16,7 +16,7 @@ testFilename = 'data_2018_11_23_17_36.mat';
 tis = [1 2 3 7 10];
 nts = length(tis);
 lm  = 15;
-td  = 8; % target distance -- probably can/should read this from the topNode
+td  = topNode.nodeData{'Settings'}{'targetDistance'}; 
 clf
 
 durs = FIRA.ecodes.data(:,strcmp(FIRA.ecodes.name, 'trialEnd')) - ...

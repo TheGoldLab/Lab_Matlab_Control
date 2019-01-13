@@ -39,9 +39,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       PLcalibration = struct( ...         
          'deltaX',                  10,         ... % How far on the X axis the calibration markers should be placed
          'deltaY',                  6,          ... % How far on the Y axis the calibration markers should be placed
-         'size',                    1,          ... % Size of calibration marker (arbitrary units)
+         'size',                    1.6,        ... % Size of calibration marker (arbitrary units)
          'timeout',                 20);            % Calibration timeout, in sec
-         
+      
       % Whether or not to get each eye data along with overall gaze
       getRawEyeData = false;
    end
@@ -97,7 +97,9 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Constructor method
       function self = dotsReadableEyePupilLabs()
          self = self@dotsReadableEye();
-         self.sampleFrequency=200; % is there a way to query this?
+
+         % Set properties, including calibration parameters
+         self.sampleFrequency = 200; % is there a way to query this?
          self.calibration.query = false; % turn this off by default
 
          % Initialize the object
@@ -327,8 +329,8 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          self.result = zmq.core.recv(self.reqPort);
          
          % Show instructions
-         dotsDrawableText.drawEnsemble(dotsDrawableText.makeEnsemble( ...
-            'textEnsemble', 1, []), {'Please look at each object'}, 3, 0.3);
+         dotsDrawableText.drawEnsemble([], {'Please look at each object and', ...
+            'maintain fixation while it is showing.'}, true, 5, 0.3);
          
          % Make a drawing ensemble for the calibration target
          calibrationEnsemble = dotsDrawable.makeEnsemble('calibrationEnsemble', {});
@@ -551,13 +553,13 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          
          % Collect the data from the parsed struct
          gazePos = cell2num(cell(dataStruct.norm_pos));
-         time    = dataStruct.timestamp;
+         time    = dataStruct.timestamp;        
          
          % Set the data
          newData(self.xID,:) = [self.xID gazePos(1) time];
          newData(self.yID,:) = [self.yID gazePos(2) time];
          newData(self.cID,:) = [self.cID dataStruct.confidence time];
-         
+
          % Conveniently, the gaze data struct contains the raw data
          %  for each individual eye used to determine the gaze. Thus,
          %  we can directly extract the data from there if needed.
