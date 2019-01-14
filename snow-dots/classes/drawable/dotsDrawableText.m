@@ -234,7 +234,8 @@ classdef dotsDrawableText < dotsDrawable
          
          % Check ensemble
          if isempty(textEnsemble)
-            return
+            textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
+               size(textStrings,2), []);
          end
          
          % ---- Turn off "extra" objects

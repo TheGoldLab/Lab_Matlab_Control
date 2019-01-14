@@ -26,8 +26,8 @@ screen.callObjectMethod('open');
 pl.calibrate();
 
 % Run the "show eye" routine ... end by pressing the spacebar
-pl.calibrate('s')
-
+pl.calibrate('s'); 
+ 
 % Show output on the eye monitor
 for tt = 1:100
    for ii = 1:10

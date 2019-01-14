@@ -123,11 +123,6 @@ classdef topsTreeNodeTask < topsTreeNode
          % Do some bookkeeping via superclass
          self.start@topsRunnable();
          
-         % Possibly update the gui using the new task
-         if ~isempty(self.caller)
-            self.caller.updateGUI('_updateTask', self);
-         end
-         
          % Check for abort
          if ~self.isRunning
             return
@@ -165,6 +160,11 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % Get the first trial
          self.prepareForNextTrial();
+         
+         % Possibly update the gui using the new task
+         if ~isempty(self.caller)
+            self.caller.updateGUI('_updateTask', self);
+         end
       end
       
       %% Finish task method

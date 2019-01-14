@@ -80,11 +80,12 @@ readables = topNode.nodeData{'Settings'}{'readables'};
 for ii = 1:length(readables)
    topNode.addHelpers('readable', readables{ii}, topNode);
    
-   % Possibly set default gaze window size, duration
+   % For readableEye objects, set default gaze window size and duration
    if isa(topNode.helpers.(readables{ii}).theObject, 'dotsReadableEye')
-      topNode.helpers.(readables{ii}).theObject.setGazeWindows( ...
-         topNode.nodeData{'Settings'}{'gazeWindowSize'}, ...
-         topNode.nodeData{'Settings'}{'gazeWindowDuration'});
+      topNode.helpers.(readables{ii}).theObject.gazeMonitor.defaultWindowSize = ...
+         topNode.nodeData{'Settings'}{'gazeWindowSize'};
+      topNode.helpers.(readables{ii}).theObject.gazeMonitor.defaultWindowDuration = ...
+         topNode.nodeData{'Settings'}{'gazeWindowDuration'};
    end         
 end
 

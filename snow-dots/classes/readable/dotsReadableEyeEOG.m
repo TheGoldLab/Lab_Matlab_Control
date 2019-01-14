@@ -52,7 +52,12 @@ classdef dotsReadableEyeEOG < dotsReadableEye
       
       % Constructor method
       function self = dotsReadableEyeEOG()
+         
+         % Make the object from the superclass
          self = self@dotsReadableEye();
+         
+         % Set calibration parameters
+         self.calibration.query = false; % turn this off by default
          
          % Initialize the object
          self.initialize();
@@ -194,34 +199,56 @@ classdef dotsReadableEyeEOG < dotsReadableEye
          % disp(newData(:,2))
       end
       
-      % Collect xy data for a fixed amount of time
-      function xy = collectXY(self, duration, doTransform)
-          
-          % Wait the given time
-          pause(duration);
-          
+      %% Get current fixation
+      %
+      function fixXY = getFixation(self, timeout, waitForSaccade, doTransform)
+
+         % Check arg
+         if nargin < 2 || isempty(timeout)
+            timeout = 1.0;
+         end
+         
           % Get the data
           newData = self.readRawEyeData();
 
           % Take only the data over requsted interval
-          Lgood = newData(:,3) >= (max(newData(:,3)) - duration);
+          Lgood = newData(:,3) >= (max(newData(:,3)) - timeout);
           newData = newData(Lgood,:);
           
-          % Possibly transform
-          if nargin >= 3 && doTransform
-              newData = self.transformRawData(newData);
-          end
-          
-          % Return data as xy
+         % Possibly transform
+         if nargin >= 4 && doTransform
+            newData = self.transformRawData(newData);
+         end
+                  
+         % Collect data as xy
           Lx = newData(:,1)==self.xID;
           Ly = newData(:,1)==self.yID;
           if sum(Lx) > sum(Ly)
-              Lx(find(Lx,sum(Ly)-sum(Lx))) = false;
+              Lx(find(Lx,1)) = false;
           elseif sum(Ly) > sum(Lx)
-              Ly(find(Ly,sum(Lx)-sum(Ly))) = false;
+              Ly(find(Ly,1)) = false;
           end
-          xy = [newData(Lx, 2), newData(Ly, 2)];          
-      end      
+          xs = newData(Lx,2);
+          ys = newData(Ly,2);
+         
+         % Check for saccade or not
+         if nargin >= 3 && waitForSaccade
+            
+            % Look for max dist from initial position
+            ind = min(10, floor(length(xs)/4));
+            dist = smooth(sqrt((xs-median(xs(1:ind))).^2 + (ys-median(ys(1:ind))).^2),10);
+            ind = find(dist==max(dist),1);
+            fixXY = [xs(ind) ys(ind)];
+         else
+            fixXY = median([xs ys]);
+         end
+         
+         % For debugging
+         %          plot(xs, 'b-');
+         %          plot(ys, 'r-');
+         %          plot([0 250], fixXY([1 1]), 'b-')
+         %          plot([0 250], fixXY([2 2]), 'r-')
+      end
       
       %% Transform the normalized x/y eye data into screen coordinates
       %  with units of degrees visual angle
