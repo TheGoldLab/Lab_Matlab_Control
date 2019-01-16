@@ -72,6 +72,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       
       % for clock synchronization
       offsetTime=0;
+      referenceTime=0;
       
       % Screen ensemble
       ensemble;
@@ -631,16 +632,18 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       
       % Save current screen offset time
       %
-      function setOffsetTime(offsetTime)
+      function setSyncTimes(offsetTime, referenceTime)
          screen = dotsTheScreen.theObject();
          screen.offsetTime = offsetTime;
+         screen.referenceTime = referenceTime;
       end
       
       % Get current screen offset time
       %
-      function offsetTime = getOffsetTime()
+      function [offsetTime, referenceTime] = getSyncTimes()
          screen = dotsTheScreen.theObject();
          offsetTime = screen.offsetTime;
+         referenceTime = screen.referenceTime;
       end
    end   
 end

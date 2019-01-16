@@ -42,15 +42,16 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
          self.sync.clockFevalable = {@callObjectMethod, self.theObject, @getCurrentTime};
       end
       
-      % Overloaded synchronize function to save offset in dotsTheScreen
+      % Overloaded prepare function to save sync data in dotsTheScreen
       %      
-      function synchronize(self)
+      function prepare(self, varargin)
         
          % Call superclass method
-         self.synchronize@topsTaskHelper();
+         self.prepare@topsTaskHelper(varargin{:});
          
          % Save offset in the screen singleton object
-         dotsTheScreen.setOffsetTime(self.sync.results.offset);
+         dotsTheScreen.setSyncTimes(self.sync.results.offset, ...
+             self.sync.results.referenceTime);
       end
    end
 end

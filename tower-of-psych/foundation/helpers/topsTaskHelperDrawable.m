@@ -92,7 +92,9 @@ classdef topsTaskHelperDrawable < topsTaskHelper
          
          % Store the timing data
          if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
-            task.setTrialData([], eventTag, frameInfo.onsetTime + dotsTheScreen.getOffsetTime())
+             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+            task.setTrialData([], eventTag, frameInfo.onsetTime + ...
+                referenceTime + offsetTime);
          end
       end
    end
