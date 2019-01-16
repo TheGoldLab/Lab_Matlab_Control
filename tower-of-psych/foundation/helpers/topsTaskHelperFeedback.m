@@ -45,13 +45,13 @@ classdef topsTaskHelperFeedback < topsTaskHelper
             
          % Add images
          if nargin < 1 || isempty(images)
-            images = {'thumbsUp.jpg', 12; 'greatJob.jpg', 12; 'Oops.jpg', 12};
+            images = {'thumbsUp.jpg', 12; 'greatJob.jpg', 12; 'Oops.jpg', 12; 'gofast.jpg', 12};
          end
          self.setImages(images);
          
          % Add sounds
          if nargin < 2 || isempty(sounds)
-            sounds = {'correct1.mp3' 'error1.wav'};
+            sounds = {'correct1.mp3' 'error1.wav' 'cash_register.wav' 'buzzer.wav'};
          end
          self.setSounds(sounds);         
       end
@@ -258,8 +258,7 @@ classdef topsTaskHelperFeedback < topsTaskHelper
          % Conditionally store the timing data, with synchronization offset
          if ~isempty(p.Results.task) && ~isempty(p.Results.eventTag)
             p.Results.task.setTrialTime([], p.Results.eventTag, ...
-               frameInfo.onsetTime + dotsTheScreen.getOffsetTime() - ...
-               self.sync.results.referenceTime);
+               frameInfo.onsetTime + dotsTheScreen.getOffsetTime());
          end
          
          % Always store the specs in the data log

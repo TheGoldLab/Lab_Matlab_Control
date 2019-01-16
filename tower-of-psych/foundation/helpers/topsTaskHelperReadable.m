@@ -57,8 +57,7 @@ classdef topsTaskHelperReadable < topsTaskHelper
          
          % Conditionally store the timing data, with synchronization offset
          if ~isempty(eventName) && nargin > 3 && ~isempty(task)
-            task.setTrialData([], eventTag, data(3) + ...
-               self.sync.results.offset - self.sync.results.referenceTime);
+            task.setTrialData([], eventTag, data(3) + self.sync.offset);
          end
       end
    end
