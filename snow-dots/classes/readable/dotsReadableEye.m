@@ -814,7 +814,7 @@ classdef dotsReadableEye < dotsReadable
          lastTime = -9999;
          
          % Get frame interval
-         screenEnsemble = dotsTheScreen.getEnsemble();
+         screenEnsemble = dotsTheScreen.theEnsemble();
          fi = 1/screenEnsemble.getObjectProperty('windowFrameRate', 1);
          
          % Loop until spacebar

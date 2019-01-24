@@ -100,7 +100,7 @@ classdef dotsDrawable < handle
          end
          
          % Check dotsTheScreen for the screenEnsemble
-         screenEnsemble = dotsTheScreen.getEnsemble();
+         screenEnsemble = dotsTheScreen.theEnsemble();
          if isempty(screenEnsemble) || ~isa(screenEnsemble, 'dotsClientEnsemble')
             % Local
             remoteInfo = {false};

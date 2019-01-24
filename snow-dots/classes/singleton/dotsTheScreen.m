@@ -9,7 +9,9 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    % @details
    % dotsTheMachineConfiguration provides hardware-specific default
    % property values to dotsTheScreen.
+   
    properties
+      
       % dispay width (cm)
       width;
       
@@ -61,6 +63,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    end
    
    properties (SetAccess = protected)
+      
       % utility object to account for OpenGL frame timing
       flushGauge;
       
@@ -74,14 +77,16 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       offsetTime=0;
       referenceTime=0;
       
-      % Screen ensemble
-      ensemble;
+      % To check for remote mode
+      isRemote = false;
    end
    
    methods (Access = private)
+      
       % Constructor is private.
       % @details
       % Use dotsTheScreen.theObject to access the current instance.
+      %
       function self = dotsTheScreen(varargin)
          mc = dotsTheMachineConfiguration.theObject();
          mc.applyClassDefaults(self);
@@ -94,6 +99,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    methods
       
       % Return the current instance to a fresh state, closing the window.
+      %
       function initialize(self)
          % may not start out with an open window
          self.close();
@@ -124,6 +130,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Open an OpenGL drawing window.
+      %
       function open(self)
          
          % Check if open
@@ -195,6 +202,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Close the OpenGL drawing window.
+      %
       function close(self)
          mglDisplayCursor(1);
          if self.getDisplayNumber >= 0
@@ -228,6 +236,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       %   adjacent (false if a frame was skipped)
       %   .
       % Assigns the same struct to lastFrameInfo.
+      %
       function frameInfo = nextFrame(self, doClear)
                   
          if nargin < 2
@@ -258,6 +267,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Gets the current time
+      %
       function time = getCurrentTime(self)
          time = self.clockFunction();
       end
@@ -306,6 +316,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Argument:
       %   fileName ... optional. If empty uses default from
       %                   setHostGammaTableFileName.
+      %
       function saveGammaTableToMatFile(self, fileName)
          
          % conditinally use fileName arg
@@ -332,6 +343,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       %                setHostGammaTableFileName. Keywords:
       %                'none' = skip
       %                'make' = call makeGammaTable
+      %
       function readGammaTableFromMatFile(self, fileName)
          
          % Conditionally use fileName arg
@@ -370,9 +382,13 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    end   
    
    methods (Static)
-      % Access the current instance.
+      
+      % Access the current instance of the object
       function obj = theObject(varargin)
+         
+         % Keep as persistent variables local to this method
          persistent self
+         
          if isempty(self) || ~isvalid(self)
             constructor = str2func(mfilename);
             self = feval(constructor, varargin{:});
@@ -380,6 +396,49 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             self.set(varargin{:});
          end
          obj = self;
+      end
+      
+      % Utility for creating or retrieving a screen ensemble, which
+      %  is created either as a (local) topsEnsemble or for remote 
+      %  drawing using dotsClientEnsemble with default network values.
+      %
+      % Aguments (for creating:
+      %  useRemote      ... flag for creating client/server ensembles
+      %  displayIndex   ... 0=debug screen; 1=main screen; 2=2nd screen; etc
+      %
+      function ensemble = theEnsemble(varargin)
+         
+         % Keep as persistent variables local to this method
+         persistent selfEnsemble
+         
+         % If it does not yet exist, make it
+         if isempty(selfEnsemble) || ~isvalid(selfEnsemble)
+            
+            % Check for local/remote graphics
+            if nargin < 1 || isempty(varargin{1})
+               useRemote = false;
+            else
+               useRemote = varargin{1};      
+            end
+            
+            % Check display index
+            if nargin < 2 || isempty(varargin{2})
+               displayIndex = 1; % primary screen
+            else
+               displayIndex = varargin{2};
+            end
+         
+            % Set up the screen object and ensemble
+            screen = dotsTheScreen.theObject(varargin{3:end});
+            screen.displayIndex = displayIndex;
+            screen.isRemote = useRemote;
+            selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', useRemote);
+            selfEnsemble.addObject(screen);
+            selfEnsemble.automateObjectMethod('flip', @nextFrame);
+         end
+         
+         % return the ensemble
+         ensemble = selfEnsemble;
       end
       
       % Restore the current instance to a fresh state.
@@ -580,54 +639,13 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % Get the screen
          screen = dotsTheScreen.theObject();
          
-         % Check for ensemble
-         if isempty(screen.ensemble)
-            frameInfo = screen.blank(varargin{:});
+         % Check for remote ensemble
+         if screen.isRemote
+            ensemble = dotsTheScreen.theEnsemble;
+            frameInfo = ensemble.callObjectMethod(@blank, varargin);
          else
-            frameInfo = screen.ensemble.callObjectMethod(@blank, varargin);
+            frameInfo = screen.blank(varargin{:});
          end
-      end      
-      
-      % function ensemble = makeEnsemble(useRemote, displayIndex)
-      %
-      % Convenient utility for creating a screen ensemble either as a (local)
-      %  topsEnsemble or for remote drawing using dotsClientEnsemble with default
-      %  network values.
-      %
-      % Aguments:
-      %  useRemote      ... flag for creating client/server ensembles
-      %  displayIndex   ... 0=debug screen; 1=main screen; 2=2nd screen; etc
-      %
-      function ensemble = makeEnsemble(useRemote, displayIndex)
-         
-         % First check for local/remote graphics
-         if nargin < 1 || isempty(useRemote)
-            useRemote = false;
-         end
-         
-         % Check display index
-         if nargin < 2 || isempty(displayIndex)
-            displayIndex = 1; % primary screen
-         end
-         
-         % Set up the screen object and ensemble
-         screen = dotsTheScreen.theObject();
-         screen.displayIndex = displayIndex;
-         screen.ensemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', useRemote);
-         screen.ensemble.addObject(screen);
-         screen.ensemble.automateObjectMethod('flip', @nextFrame);
-         
-         % return the ensemble
-         ensemble = screen.ensemble;
-      end
-      
-      % function ensemble = getEnsemble()
-      %
-      % Gets the singleton screen ensemble
-      %
-      function ensemble = getEnsemble()
-         screen = dotsTheScreen.theObject();
-         ensemble = screen.ensemble;
       end
       
       % Save current screen offset time

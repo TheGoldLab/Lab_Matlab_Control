@@ -401,7 +401,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                     'text',  [feedbackStr RTstr], ...
                     'image', imageIndex, ...
                     'sound', self.settings.correctPlayableIndex};
-                feedbackColor = [0 1 0];
+                feedbackColor = [0 0.6 0];
 
             elseif trial.correct == 0
                 feedbackStr = 'Error';
