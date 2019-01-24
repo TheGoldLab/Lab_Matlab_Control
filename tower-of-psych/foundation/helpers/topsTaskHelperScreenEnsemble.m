@@ -29,7 +29,7 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
          
          % Create it
          self = self@topsTaskHelper('screenEnsemble', [], ...
-            'fevalable',  {@dotsTheScreen.makeEnsemble, remoteDrawing, displayIndex}, ...
+            'fevalable',  {@dotsTheScreen.theEnsemble, remoteDrawing, displayIndex}, ...
             varargin{:});
          
          % Bind to the treeNode
@@ -42,15 +42,16 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
          self.sync.clockFevalable = {@callObjectMethod, self.theObject, @getCurrentTime};
       end
       
-      % Overloaded synchronize function to save offset in dotsTheScreen
+      % Overloaded startTrial function to save sync data in dotsTheScreen
       %      
-      function synchronize(self)
+      function startTrial(self, varargin)
         
          % Call superclass method
-         self.synchronize@topsTaskHelper();
+         self.startTrial@topsTaskHelper(varargin{:});
          
          % Save offset in the screen singleton object
-         dotsTheScreen.setOffsetTime(self.sync.results.offset);
+         dotsTheScreen.setSyncTimes(self.sync.results.offset, ...
+             self.sync.results.referenceTime);
       end
    end
 end
