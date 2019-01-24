@@ -264,6 +264,9 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
          frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
          self.lastFrameInfo = frameInfo;
+         
+         % dump frameInfo for debugging
+         topsDataLog(frameInfo, 'frameInfo')
       end
       
       % Gets the current time
