@@ -43,9 +43,9 @@ classdef topsTaskHelperTTL < topsTaskHelper
          end
       end
       
-      % Overloaded prepare method, which send the TTL pulse(s)
+      % Overloaded startTrial method, which sends the TTL pulse(s)
       %
-      function prepare(self, treeNode)
+      function startTrial(self, treeNode)
                 
          % Num pulses is based on the trial number
          numPulses =  mod(max(0, treeNode.trialCount-1), self.maxPulses)+1;

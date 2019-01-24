@@ -12,6 +12,9 @@ classdef topsTaskHelper < topsFoundation
       % Useful flag
       isEnsemble = false;
       
+      % Flag to remove copy from treeNode (see start)
+      removeCopy = true;
+      
       % Indices to find named objects in ensembles
       indices = 1;
 
@@ -308,6 +311,12 @@ classdef topsTaskHelper < topsFoundation
                         self.topsBindings.(ss{:}) = specs.(ss{:});
                      end
                      
+                     % Possibly remove old copy
+                     if self.removeCopy
+                         treeNode.helpers = rmfield(treeNode.helpers, ...
+                             class(theHelper.theObject));
+                     end
+                         
                      % Just need/want one
                      break
                   end
@@ -341,7 +350,7 @@ classdef topsTaskHelper < topsFoundation
       % Function to prepare for use, called before each trial
       %
       %  Just runs through the call list added using "prepare"
-      function prepare(self, treeNode)
+      function startTrial(self, treeNode)
          
          % Call prepare fevalables
          self.callFevalables(self.topsBindings.prepare);
@@ -372,6 +381,12 @@ classdef topsTaskHelper < topsFoundation
             % Store sync data in data log
             topsDataLog.logDataInGroup(self.sync.results, ['synchronize ' self.name]);
          end
+      end
+      
+      % Finish trial method -- should overload in subclass if needed
+      %
+      function finishTrial(self, treeNode)
+          
       end
       
       % Set property
