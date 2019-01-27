@@ -25,8 +25,11 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         rawGainH = 100;
         rawGainV = 100;
         
-        % For smoothing
-        bufferSize = 50;
+        % The world's simplest blink filter (multiplied by rawGainV)
+        blinkThreshold = 0.25;
+        
+        % Smoothing window size (ms)
+        bufferSize = 150;
     end
     
     properties (SetAccess = protected)
@@ -230,6 +233,12 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         %
         function fixXY = getFixation(self, timeout, waitForSaccade, doTransform)
             
+            % For debugging
+            %             persistent f
+            %             if isempty(f)
+            %                 f = figure;
+            %             end
+            
             % Check arg
             if nargin < 2 || isempty(timeout)
                 timeout = 1.0;
@@ -269,13 +278,13 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             if nargin >= 3 && waitForSaccade
                 
                 % check for blink
-                if any(ys>60)
+                if any(ys>self.rawGainV*self.blinkThreshold);                    
                     fixXY = [];
+                    return
                 end
                 
                 % Look for max dist from initial position
                 ind = min(10, floor(length(xs)/4));
-                % dist = smooth(sqrt((xs-median(xs(1:ind))).^2 + (ys-median(ys(1:ind))).^2),10);
                 dist = sqrt((xs-median(xs(1:ind))).^2 + (ys-median(ys(1:ind))).^2);
                 ind = find(dist==max(dist),1);
                 fixXY = [xs(ind) ys(ind)];
@@ -284,18 +293,19 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             end
             
             % For debugging
-            %f=figure;
-            %subplot(2,1,1); hold on;
+            %             oldfig = gcf;
+            %             figure(f);
+            %             subplot(2,1,1); cla reset; hold on;
             %             plot(xs, 'b-');
             %             plot(ys, 'r-');
             %             plot([0 250], fixXY([1 1]), 'b-')
             %             plot([0 250], fixXY([2 2]), 'r-')
-            %             subplot(2,1,2); hold on;
+            %             subplot(2,1,2); cla reset; hold on;
             %             plot(xs,ys,'k.')
             %             plot(fixXY(1), fixXY(2), 'ro');
             %             axis([-20 20 -20 20]);
             %             pause(0.5)
-            %             close(f);
+            %             figure(oldfig);
         end
         
         %% Transform the normalized x/y eye data into screen coordinates

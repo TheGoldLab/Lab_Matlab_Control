@@ -65,7 +65,7 @@ classdef dotsReadableEye < dotsReadable
         % Gaze monitor properties
         gazeMonitor = struct( ...
             'defaultWindowSize',          6.0,  ... % degrees visual angle
-            'defaultWindowDur',           0.15, ... sec
+            'defaultWindowDuration',      0.15, ... sec
             'axisLimits',                 20,   ... % axis limits
             'samplesToShow',              200);    % samples to plot during showEye
         
@@ -79,7 +79,7 @@ classdef dotsReadableEye < dotsReadable
             'queryTimeout',               5,    ... % query wait time during calibration (sec)
             'showEye',                    true, ... % automatically show eye after calibration
             'offsetT',                    0.15, ... % Time to collect offset data (sec)
-            'fullT',                      1.3,  ... % Time to collect for full calibation
+            'fullT',                      0.6,  ... % Time to collect for full calibation
             'fpX',                        10,   ... % x offset for calibration target grid
             'fpY',                        5,    ... % y offset for calibration target grid
             'fpSize',                     1.5,  ... % Size of calibration target
@@ -211,7 +211,7 @@ classdef dotsReadableEye < dotsReadable
                     'ensemble',         [], ...
                     'ensembleIndices',  [], ...
                     'windowSize',       self.gazeMonitor.defaultWindowSize, ...
-                    'windowDur',        self.gazeMonitor.defaultWindowDur, ...
+                    'windowDur',        self.gazeMonitor.defaultWindowDuration, ...
                     'isInverted',       false, ...
                     'isActive',         false, ...
                     'sampleBuffer',     [], ...
@@ -958,7 +958,7 @@ classdef dotsReadableEye < dotsReadable
                     pause(0.2);
                     targetEnsemble.setObjectProperty('colors',  [1 1 1]);
                     targetEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-                    pause(0.8);
+                    pause(1.0);
                 end
                 
                 % Get vectors connecting each point

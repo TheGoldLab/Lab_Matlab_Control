@@ -2,7 +2,7 @@
 <dotsMachineConfig>
    <defaults>
       <clockFunction>@mglGetSecs</clockFunction>
-      <dOutClassName>['dotsDOut1208FS']</dOutClassName>
+      <dOutClassName>['dotsWritableDOut1208FS']</dOutClassName>
       <dataPath>['/Users/jigold/GoldWorks/Local/Data/Projects']</dataPath>
       <imagesPath>[true ]</imagesPath>
       <soundsPath>['~']</soundsPath>
