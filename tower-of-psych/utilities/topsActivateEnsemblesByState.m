@@ -1,5 +1,5 @@
-function activateEnsemblesByState(activeList, state)
-% function activateEnsemblesByState(activeList, state)
+function topsActivateEnsemblesByState(activeList, state)
+% function topsActivateEnsemblesByState(activeList, state)
 %
 % Toggle isActive flags for children of concurrentComposite during
 %  stateMachine traversal. This is used if you don't want all of 
