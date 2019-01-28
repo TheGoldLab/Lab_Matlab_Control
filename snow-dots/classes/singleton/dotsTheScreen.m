@@ -266,7 +266,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          self.lastFrameInfo = frameInfo;
          
          % dump frameInfo for debugging
-         topsDataLog(frameInfo, 'frameInfo')
+         topsDataLog.logDataInGroup(frameInfo, 'frameInfo')
       end
       
       % Gets the current time
