@@ -257,8 +257,9 @@ classdef topsTaskHelperFeedback < topsTaskHelper
          
          % Conditionally store the timing data, with synchronization offset
          if ~isempty(p.Results.task) && ~isempty(p.Results.eventTag)
-            p.Results.task.setTrialTime([], p.Results.eventTag, ...
-               frameInfo.onsetTime + dotsTheScreen.getOffsetTime());
+            [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+            p.Results.setTrialData([], p.Results.eventTag, ...
+               frameInfo.onsetTime - referenceTime + offsetTime);
          end
          
          % Always store the specs in the data log
