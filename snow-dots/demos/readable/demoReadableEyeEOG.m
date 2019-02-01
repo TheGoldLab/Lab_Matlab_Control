@@ -27,7 +27,7 @@ m.calibrate();
 for tt = 1:100
    m.startTrial();
    for ii = 1:100
-      pause(0.01);
+      pause(0.1);
       m.read();
    end
    m.finishTrial();
