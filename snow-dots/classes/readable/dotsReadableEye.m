@@ -84,7 +84,7 @@ classdef dotsReadableEye < dotsReadable
             'fpY',                        5,    ... % y offset for calibration target grid
             'fpSize',                     1.5,  ... % Size of calibration target
             'offsetVarTolerance',         2.0,  ... % Tolerance for using calibration values
-            'transformTolerance',         15.0, ... % 4.0,  ... % Tolerance for using calibration values
+            'transformTolerance',         10.0, ... % 4.0,  ... % Tolerance for using calibration values
             'numberTries',                5,    ... % number of times to try calibrating
             'targetEnsemble',             [],   ... % for calibration targets
             'eyeEnsemble',                [],   ... % for showing eye position

@@ -165,8 +165,8 @@ classdef AInScan1208FS < handle
       % stored waveforms (channel, volts, time, unsigned data)
       cvtu = [];
       
-      % logical array indicating the new data
-      newDataSelector;
+      % logical array indicating the data that has already come in
+      oldDataSelector;
    end
    
    
@@ -381,7 +381,7 @@ classdef AInScan1208FS < handle
          self.reportNumbers(:) = 0;
          bufferSize = min(self.nSamples, self.maxBufferSize);
          self.cvtu = nans(bufferSize, 4);
-         self.newDataSelector = false(bufferSize, 1);
+         self.oldDataSelector = false(bufferSize, 1);
       end
       
       % Initiate a prepared scan.
@@ -526,14 +526,16 @@ classdef AInScan1208FS < handle
          % Select the values
          Lgood = isfinite(self.cvtu(:,1));
          
-         % update the newData selector
-         self.newDataSelector = Lgood & ~self.newDataSelector;
-
          % Possibly use the newData selector
          if nargin >= 3 && getLatestFlag
-            Lgood = self.newDataSelector;
-         end
-                  
+             
+             % Get just the good new data
+             Lgood = Lgood & ~self.oldDataSelector;
+
+             % update the oldData selector
+             self.oldDataSelector = self.oldDataSelector | Lgood;
+         end         
+
          % Return each
          c = self.cvtu(Lgood,1);
          v = self.cvtu(Lgood,2);
