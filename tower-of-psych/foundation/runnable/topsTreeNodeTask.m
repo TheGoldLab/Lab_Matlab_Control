@@ -415,6 +415,10 @@ classdef topsTreeNodeTask < topsTreeNode
             % ---- Save start time
             %
             startTime = feval(self.clockFunction);
+            
+            % call tic function for the tocDotsOn/tocDotsOff later calls
+            tic;
+            
             self.setTrialData([], 'trialStart', startTime)
             
             % ---- call the subclass startTrial method
