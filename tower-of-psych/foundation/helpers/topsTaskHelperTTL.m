@@ -22,7 +22,7 @@ classdef topsTaskHelperTTL < topsTaskHelper
             
          % Create it
          self = self@topsTaskHelper('TTL', [], ...
-            'fevalable',   @dotsWritableDOut.getDefault);
+            'fevalable',   @dotsWritableDOut1208FS);
       end
       
       % Overloaded start method
