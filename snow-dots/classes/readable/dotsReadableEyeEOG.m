@@ -28,8 +28,8 @@ classdef dotsReadableEyeEOG < dotsReadableEye
         % The world's simplest blink filter (multiplied by rawGainV)
         blinkThreshold = 0.25;
         
-        % Smoothing window size (ms)
-        bufferSize = 150;
+        % Smoothing window size (half-width, in samples)
+        bufferHW = 50;
     end
     
     properties (SetAccess = protected)
@@ -145,7 +145,7 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             self.sampleFrequency = self.aInDevice.frequency;
             
             % Set up the buffer
-            self.bufferedVals = nans(self.bufferSize, 2);
+            self.bufferedVals = nans(self.bufferHW*2+1, 2);
             
             % Probably should actually check
             isOpen = true;
@@ -211,14 +211,15 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             vVals = cat(1, self.bufferedVals(:,2), v(LeyeV).*self.rawGainV);
             
             % Save the new (unsmoothed) buffer
-            self.bufferedVals(:,1) = hVals(end-self.bufferSize+1:end);
-            self.bufferedVals(:,2) = vVals(end-self.bufferSize+1:end);
+            bufSz = self.bufferHW*2+1;
+            self.bufferedVals(:,1) = hVals(end-bufSz+1:end);
+            self.bufferedVals(:,2) = vVals(end-bufSz+1:end);
             
             % Smooth it using extra buffered data
-            smoothedH = smooth(hVals, self.bufferSize, 'sgolay');
-            hVals = smoothedH(self.bufferSize+1:end);
-            smoothedV = smooth(vVals, self.bufferSize, 'sgolay');
-            vVals = smoothedV(self.bufferSize+1:end);
+            smoothedH = smooth(hVals, bufSz);% , 'sgolay');
+            hVals = smoothedH(self.bufferHW+1:end-self.bufferHW-1);
+            smoothedV = smooth(vVals, bufSz);% , 'sgolay');
+            vVals = smoothedV(self.bufferHW+1:end-self.bufferHW-1);
             
             % Format data according to the dotsReadable format:
             %  <ID> <value> <timestamp>

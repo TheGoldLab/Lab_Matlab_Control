@@ -16,6 +16,9 @@ screen.callObjectMethod('open');
 % % Calibrate
 m.calibrate();
 
+
+m.calibrate('s')
+
 % Define a fixation event
 % m.defineEvent('fpWindow', true, false, ...
 %          'eventName',   'holdFixation', ...
