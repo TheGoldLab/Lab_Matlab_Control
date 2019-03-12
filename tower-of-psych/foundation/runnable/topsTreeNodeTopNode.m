@@ -155,6 +155,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
                
                % Save a start time
                topsDataLog.logDataInGroup(mglGetSecs(), 'startTime');
+               
+               % Make sure the file directory exists
+               pathstr = fileparts(self.filename);               
+               if ~isempty(pathstr) && ~exist(pathstr, 'dir')
+                  mkdir(pathstr);
+               end
 
                % Write it to "filename" for the first time; later calls
                %  don't need to keep track of filename
