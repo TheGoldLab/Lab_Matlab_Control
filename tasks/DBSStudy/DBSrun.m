@@ -1,10 +1,14 @@
-function topNode = DBSrun(location)
-%% function [mainTreeNode, datatub] = DBSrun(location)
+function topNode = DBSrun(location, varargin)
+%% function [mainTreeNode, datatub] = DBSrun(location, varargin)
 %
 % DBSrun = Response-Time Dots
 %
 % This function configures, initializes, runs, and cleans up a DBS 
 %  experiment (OR or office)
+%
+% Arguments:
+%  location    ... string name, listed below
+%  varargin    ... property/value pairs, as in arglists below
 %
 % 11/17/18   jig wrote it
 
@@ -14,8 +18,6 @@ function topNode = DBSrun(location)
 clear globals
 
 %% ---- Configure experiment based on location
-%
-%   locations are 'office' (default), 'OR', or 'debug'
 %
 % UIs:
 %  'dotsReadableEyeEyelink'
@@ -30,10 +32,18 @@ if nargin < 1 || isempty(location)
    location = 'OR';
 end
 
-% add something different
-
 switch location
    
+   case {'calibrate' 'Calibrate'}
+      arglist = { ...
+         'taskSpecs',            {'VGS' 1}, ...
+         'readables',            {'dotsReadableEyePupilLabs'}, ...
+         'displayIndex',         0, ... % 0=small, 1=main
+         'remoteDrawing',        false, ...
+         'sendTTLs',             false, ...
+         'showEye',              true, ...
+         };
+      
    case {'or' 'OR'}
       arglist = { ...
          'taskSpecs',            {'VGS' 5 'MGS' 5 'Quest' 40 'SN' 40 'AN' 40}, ...
@@ -63,20 +73,13 @@ switch location
          'readables',            {'dotsReadableHIDButtons'}, ... 
          };
    
-   case {'search' 'Search'}
-      arglist = { ...
-         'taskSpecs',            {'VGS' 200 'NN' 200}, ...
-         'sendTTLs',             true, ...
-         'coherences',           100, ...
-         };
-      
    case {'debug' 'Debug'}
       arglist = { ...
-         'taskSpecs',            {'VGS' 1 'Quest' 4 'SN' 1 'AN' 1}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
+         'taskSpecs',            {'VGS' 10 'Quest' 4 'SN' 1 'AN' 1}, ...%{'Quest' 50 'SN' 50 'AN' 50}, ...
          'readables',            {'dotsReadableHIDKeyboard'}, ... 
          'displayIndex',         0, ... % 0=small, 1=main
          'remoteDrawing',        false, ...
-         'sendTTLs',             false, ...
+         'sendTTLs',             true, ...
          };
       
    otherwise % office

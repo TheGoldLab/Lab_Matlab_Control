@@ -113,6 +113,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % In normalized units, from top-left of kinetogram.
         normalizedXY;
         
+        % size of the drawing rectangle in units of degrees visual angle
+        fieldWidth;
+        
         % lookup table to pick random dot direction by directionWeights
         directionCDFInverse;
         
@@ -168,13 +171,13 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             end
                
             % gross accounting for the underlying dot field
-            fieldWidth = self.diameter*self.fieldScale;
-            self.nDots = ceil(self.density * fieldWidth^2 / frameRate);
+            self.fieldWidth = self.diameter*self.fieldScale;
+            self.nDots = ceil(self.density * self.fieldWidth^2 / frameRate);
             self.frameSelector = false(1, self.nDots);
             self.dotLifetimes = zeros(1, self.nDots);
             
             % treat speed as step-per-interleaved-frame
-            self.deltaR = self.speed / self.diameter ...
+            self.deltaR = self.speed / self.fieldWidth ...
                 * (self.interleaving / frameRate);
             
             % draw into an OpenGL stencil to make the circular aperture
@@ -332,8 +335,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             end
             
             self.normalizedXY = XY;
-            self.x = (XY(1, thisFrame)-0.5)*self.diameter + self.xCenter;
-            self.y = (XY(2, thisFrame)-0.5)*self.diameter + self.yCenter;
+
+            self.x = (XY(1, thisFrame)-0.5)*self.fieldWidth + self.xCenter;
+            self.y = (XY(2, thisFrame)-0.5)*self.fieldWidth + self.yCenter;
             
             % fill out dotsPositions
             if self.recordDotsPositions

@@ -1026,6 +1026,7 @@ classdef dotsReadable < handle
       %> Subclasses must redefine calibrateDevice(). It should
       %> be safe to call calibrateDevice() multiple times in a row.
       function status = calibrateDevice(self, varargin)
+         
          % disp('Calibrate!')
          status = 0;
          self.didCalibrate = false;
@@ -1276,6 +1277,14 @@ classdef dotsReadable < handle
                ones(1, size(readables, 2)));
          end
          
+         % Check args
+         if nargin < 2
+            eventName = [];
+         end
+         if nargin < 3
+            maxWait = 1;
+         end
+         
          nReadables = numel(readables);
          clocker = readables{1};
          startTime = clocker.getDeviceTime();
@@ -1291,10 +1300,8 @@ classdef dotsReadable < handle
             %> get a queued event for this readable
             readable.read();
             [name, data] = readable.getNextEvent();
-            if ~isempty(name)
-               disp(name)
-            end
             
+            % Return if the name matches eventName or no eventName given
             if ~isempty(name) && (strcmp(name, eventName) || ...
                   isempty(eventName))
                waitTime = clocker.getDeviceTime() - startTime;
@@ -1310,6 +1317,19 @@ classdef dotsReadable < handle
          waitTime = clocker.getDeviceTime() - startTime;
          data = [];
          readable = [];
+      end
+      
+      % Load data from file
+      %
+      % Arguments:
+      %  filename ... string name
+      %  varargin ... (optional) flag to check for synch/calibration data in dataLog 
+      function data = loadDataFile(filename, varargin)
+         
+         % Find the helper
+         [~,name] = fileparts(filename);
+         suffix = name(find(name=='_',1,'last')+1:end);
+         data = feval(['dotsReadable' suffix '.loadDataFile'], filename, varargin{:});
       end
    end
 end

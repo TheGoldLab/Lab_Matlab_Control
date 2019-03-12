@@ -7,8 +7,11 @@ clear classes
 m = dotsReadableEyeMouseSimulator();
 
 % Open the screen
-screen = dotsTheScreen.makeEnsemble(false, 0);
+screen = dotsTheScreen.theEnsemble(false, 0);
 screen.callObjectMethod('open');
+
+% Open the gaze monitor
+m.openGazeMonitor();
 
 % Calibrate
 m.calibrate();
@@ -16,16 +19,14 @@ m.calibrate();
 % show eye position
 m.calibrate('s');
 
-% Open the gaze monitor
-m.openGazeMonitor();
 
 % Define a fixation event
-m.defineEvent('fpWindow', ...
-         'isActive',    true, ...
-         'name',        'holdFixation', ...
-         'centerXY',    [0 0], ...
-         'channelsXY',  [m.xID m.yID], ...
-         'windowSize',  3);
+% m.defineEvent('fpWindow', ...
+%          'isActive',    true, ...
+%          'name',        'holdFixation', ...
+%          'centerXY',    [0 0], ...
+%          'channelsXY',  [m.xID m.yID], ...
+%          'windowSize',  3);
 
 % Show output
 for tt = 1:100

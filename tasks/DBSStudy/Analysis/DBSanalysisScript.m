@@ -3,8 +3,14 @@
 % Created 6/18/2018 by jig
 
 % Get the data
-testFilename = 'data_2019_01_13_10_03.mat';
-[topNode, FIRA] = topsTreeNodeTopNode.getDataFromFile(testFilename, 'DBSStudy');
+
+studyTag = 'DBSStudy';
+
+% spike2
+filebase = '2019_02_14_11_10';
+% pupil labs
+% filebase = '2019_01_13_10_03';
+[topNode, FIRA] = topsTreeNodeTopNode.loadRawData(studyTag, filebase);
 
 % task indices
 %  1  = VGS
@@ -22,13 +28,15 @@ clf
 durs = FIRA.ecodes.data(:,strcmp(FIRA.ecodes.name, 'trialEnd')) - ...
    FIRA.ecodes.data(:,strcmp(FIRA.ecodes.name, 'trialStart'));
 
+% For each task
 for tt = 1:nts
    
+   % For each trial
    for ii = find(FIRA.ecodes.data(:,1)==tis(tt))'
       
-      tax   = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,1);
-      xs    = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,2);
-      ys    = FIRA.analog.dotsReadableEyePupilLabs.data{ii}(:,3);
+      tax   = FIRA.analog.data{ii}(:,1);
+      xs    = nanrunmean(FIRA.analog.data{ii}(:,2),50);
+      ys    = nanrunmean(FIRA.analog.data{ii}(:,3),50);
             
       % get index of saccade soon after RT
       if FIRA.ecodes.data(ii,1) <= 2
@@ -48,7 +56,8 @@ for tt = 1:nts
       %ys = ys - nanmean(ys(fixIndex-10:fixIndex));
       
       % x vs y
-      subplot(nts, 2, (tt-1)*2+1); hold on;
+     %  subplot(nts, 2, (tt-1)*2+1); hold on;
+     subplot(2,1,1); cla reset; hold on;
       plot([-lm lm], [0 0], 'k:');
       plot([0 0], [-lm lm], 'k:');
       if FIRA.ecodes.data(ii,1) <= 2
@@ -62,12 +71,15 @@ for tt = 1:nts
       axis([-lm lm -lm lm]);
       
       % x,y vs t
-      subplot(nts, 2, (tt-1)*2+2); hold on;
+      %subplot(nts, 2, (tt-1)*2+2); hold on;
+      subplot(2,1,2); cla reset; hold on;
       plot([-1 2], [0 0], 'k:');
       plot([0 0], [-lm lm], 'k:');
       plot([-1 2],  [td td], 'r:');
       plot([-1 2], -[td td], 'r:');
       plot(tax(Lgood)-refTime, xs(Lgood), 'c-');
       plot(tax(Lgood)-refTime, ys(Lgood), 'm-');
+      
+      r = input('next')
    end
 end

@@ -20,7 +20,5 @@ classdef topsTaskHelperEnsemble < topsTaskHelper
          % Create it
          self = self@topsTaskHelper(class(theObject));
       end      
-      
-
    end
 end

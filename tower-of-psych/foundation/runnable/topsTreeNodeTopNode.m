@@ -62,11 +62,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %  Default filename is based on the clock
          %  Can override simply by setting to new value
          %  Set to empty matrix to turn off data storage
-         c = clock;
-         self.filename = fullfile( ...
-            topsTreeNodeTopNode.getFilepath(self.name), ...
-            sprintf('data_%.4d_%02d_%02d_%02d_%02d.mat', ...
-            c(1), c(2), c(3), c(4), c(5)));
+         [path, name] = topsTreeNodeTopNode.getFilepath(self.name);
+         self.filename = fullfile(path, name);
       end
       
       %% Utility: add GUIs
@@ -80,6 +77,50 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
       end
       
+      %% Add readable, with initialization/cleanup
+      %
+      %  Arguments (requred):
+      %     constructor    ... string name of helper constructor
+      %     doRecording    ... flag to start/stop recording automatically
+      %     doCalibration  ... flag to automatically do calibration at start
+      %     doShow         ... flag to show output (usu. eye position)
+      %                             after calibration
+      %     varargin       ... arguments to helper constructor
+      function theHelper = addReadable(self, constructor, ...
+            doRecording, doCalibration, doShow, varargin)
+
+         % add the helper, with optional args
+         theHelper = self.addHelpers(constructor, varargin{:});
+         theObject = theHelper.(varargin{1}).theObject;
+
+         % START CALLS
+         %
+         % Calibrate
+         if doCalibration
+            self.addCall('start', {@calibrate}, 'calibrate',  theObject);
+         end
+            
+         % Show calibration
+         if doShow
+            self.addCall('start', {@calibrate, 's'}, 'show',  theObject);
+         end
+   
+         % Turn on data recordings
+         if doRecording
+            self.addCall('start',  {@record, true}, 'record on',  theObject);
+         end
+            
+         % FINISH CALLS
+         %
+         % Always close the device when finished
+         self.addCall('finish', {@close}, 'close', theObject);
+         
+         % Turn of data recordings
+         if doRecording
+            self.addCall('finish', {@record, false}, 'record off', theObject);
+         end
+      end
+         
       %% Start
       %
       % Overloaded start function, which checks for gui(s) and sets up the
@@ -236,42 +277,29 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %
       % Standard pathname for data 
       %
-      %  studyTag  ... string name identifying the study (required)
-      %  dataType  ... 'topsDataLog' (default) or 'readable'
-      function pathname = getFilepath(studyTag, dataType)
+      %  studyTag   ... string name identifying the study
+      %  sessionTag ... string name identifying the session
+      function [pathname, filename] = getFilepath(studyTag, sessionTag)
          
-         if nargin < 2 || isempty(dataType)
-            dataType = 'topsDataLog';
+         % Default session
+         if nargin < 1 || isempty(studyTag)
+            studyTag = 'test';
          end
          
+         % Default filename is current time (to the second)
+         if nargin < 2 || isempty(sessionTag)
+            c = clock;
+            sessionTag = sprintf('%.4d_%02d_%02d_%02d_%02d', ...
+               c(1), c(2), c(3), c(4), c(5));
+         end
+         
+         % Get the pathname
          pathname = fullfile( ...
             dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-            studyTag, dataType);
-      end
-      
-      %% getReadableFilename
-      %
-      % Get path and file names for a readable given:
-      %  filename    ... name of the associated topsDataLog file
-      %  studyTag  ... string name identifying the study
-      %  readable    ... the readable object
-      function [readerPath, readerFile] = getReadableFilename(filename, studyTag, readable)
+            studyTag, 'raw', sessionTag);
          
-         % path
-         readerPath = fullfile( ...
-            dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-            studyTag, 'dotsReadable');
-         
-         % file has readable class suffix
-         [~, name] = fileparts(filename);
-         if isobject(readable)
-            readable = class(readable);
-         end
-         K = strfind(readable, 'dotsReadable');
-         if ~isempty(K)
-            readable(K:K+length('dotsReadable')-1) = [];
-         end
-         readerFile = [name '_' readable];
+         % Get the filename
+         filename = [sessionTag '_topsDataLog.mat'];
       end
       
       %% getDataFromFile
@@ -283,23 +311,26 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %  to a trial data structure in the topsDataLog.
       % Also calls dotsReadable.readDataFromFile using the given ui
       %
-      % studyTag is the name of the topsTreeNodeTopNode and data dir
-      % refTime is the name of the column used as the reference time
+      % studyTag is string name of the study
+      % fileTag is string base name of the data file(s)
       %
       % Created 5/26/18 by jig
       %
-      function [topNode, FIRA] = getDataFromFile(filename, studyTag)
-         
-         %% Parse filename, studyTag
+      function [topNode, FIRA] = loadRawData(studyTag, fileTag)         
+
+         %% Parse studyTag, fileTag
          %
          % Give defaults for debugging
-         if nargin < 1 || isempty(filename)
-            filename = 'data_2018_11_20_15_20';
-         end
-         
-         if nargin < 2 || isempty(studyTag)
+         if nargin < 1
             studyTag = 'DBSStudy';
          end
+         
+         if nargin < 2 || isempty(fileTag)
+            fileTag = '2019_01_13_10_03'; %'2018_11_20_15_20';
+         end
+         
+         % get pathname of of the datafiles
+         [datapath, filename] = topsTreeNodeTopNode.getFilepath(studyTag, fileTag);
          
          % Clear the data log
          topsDataLog.theDataLog(true);
@@ -308,29 +339,49 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %
          % get the mainTreeNode
          mainTreeNodeStruct = topsDataLog.getTaggedData('mainTreeNode', ...
-            fullfile(topsTreeNodeTopNode.getFilepath(studyTag), filename));
+            fullfile(datapath, filename));
          topNode = mainTreeNodeStruct.item;
          
-         % Now read the ecodes -- note that this works only if the trial struct was
-         % made with SCALAR entries only
+         % Now read the ecodes -- note that this works only if the trial 
+         %  struct was made with SCALAR entries only
          FIRA.ecodes = topsDataLog.parseEcodes('trial');
          
-         %% Get the analog data
+         %% Get the readable-specific data
          %
-         % Use constructor class static method to read the data file.
-         helperNames = fieldnames(topNode.helpers)';
-         for hh = helperNames(strncmp('dotsReadable', helperNames, length('dotsReadable')))
+         D = dir([fullfile(datapath, fileTag) '_*']);
+         for ff = setdiff({D.name}, filename)
             
-            % Get the readables file directory, base name
-            [readerPath, readerFile] = ...
-               topsTreeNodeTopNode.getReadableFilename(filename, studyTag, hh{:});
+            % Save as field named after readable subclass
+            [~,name] = fileparts(ff{:});
+            helperType = name(find(name=='_',1,'last')+1:end);
             
-            % Call the class-specific method with the filename, 
-            % synchronization data, and calibration data
-            FIRA.analog.(hh{:}) = topNode.helpers.(hh{:}).theObject.readDataFromFile( ...
-               fullfile(readerPath, readerFile), ...
-               topsDataLog.getTaggedData(['synchronize ' hh{:}]), ...
-               topsDataLog.getTaggedData(['calibrate ' hh{:}]));
+            % Get helper class
+            helperClass = ['dotsReadable' helperType];
+            
+            % Get the helper
+            if strcmp(helperType, 'Spike2')
+               helper = topNode.helpers.dotsReadableEyeEOG.theObject;
+            else
+               helper = topNode.helpers.(helperType).theObject;
+            end
+            
+            % Call the dotsReadable static loadDateFile method            
+            FIRA.(helperType) = feval([helperClass '.loadRawData'], ...
+               fullfile(datapath, ff{:}), FIRA.ecodes, helper);
+         end
+         
+         % Look for readableEye data
+         helpers = fieldnames(FIRA);
+         eyei = find(strncmp('Eye', helpers, length('Eye')),1);
+         if ~isempty(eyei)            
+            FIRA.analog = FIRA.(helpers{eyei});
+            FIRA = rmfield(FIRA, helpers{eyei});
+         end
+         
+         % Look for spike2 data
+         if any(strcmp('Spike2', helpers))
+            FIRA.analog = FIRA.Spike2.analog;
+            FIRA.spikes = FIRA.Spike2.spikes;
          end
       end
    end

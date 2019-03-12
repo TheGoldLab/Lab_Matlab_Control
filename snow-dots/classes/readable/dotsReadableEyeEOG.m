@@ -99,19 +99,6 @@ classdef dotsReadableEyeEOG < dotsReadableEye
             self.aInDevice.stopScan();
         end
         
-        % readDataFromFile
-        %
-        % Utility for reading data from a pupillabs folder
-        %
-        % dataPath is string pathname to where the pupil-labs folder is
-        %
-        % Returns data matrix, rows are times, columns are:
-        %  1. timestamp
-        %  2. gaze x
-        %  3. gaze y
-        function [dataMatrix, tags] = readRawDataFromFile(self, dataPath)
-        end
-        
         % for debugging
         function preview(self, duration)
             if nargin < 2 || isempty(duration)
@@ -203,23 +190,28 @@ classdef dotsReadableEyeEOG < dotsReadableEye
                 end
             end
             
-            % hVals = v(LeyeH).*self.rawGainH;
-            % vVals = v(LeyeV).*self.rawGainV;
+            % Scale the inputs
+            hVals = v(LeyeH).*self.rawGainH;
+            vVals = v(LeyeV).*self.rawGainV;
             
-            % Get horizontal, vertical samples, with buffer
-            hVals = cat(1, self.bufferedVals(:,1), v(LeyeH).*self.rawGainH);
-            vVals = cat(1, self.bufferedVals(:,2), v(LeyeV).*self.rawGainV);
-            
-            % Save the new (unsmoothed) buffer
-            bufSz = self.bufferHW*2+1;
-            self.bufferedVals(:,1) = hVals(end-bufSz+1:end);
-            self.bufferedVals(:,2) = vVals(end-bufSz+1:end);
-            
-            % Smooth it using extra buffered data
-            smoothedH = smooth(hVals, bufSz);% , 'sgolay');
-            hVals = smoothedH(self.bufferHW+1:end-self.bufferHW-1);
-            smoothedV = smooth(vVals, bufSz);% , 'sgolay');
-            vVals = smoothedV(self.bufferHW+1:end-self.bufferHW-1);
+            % Smooth it
+            if self.bufferHW > 0
+               
+               % Concatenate horizontal, vertical samples with buffers
+               hWithBuffer = cat(1, self.bufferedVals(:,1), hVals);
+               vWithBuffer = cat(1, self.bufferedVals(:,2), vVals);
+               
+               % Save the new (unsmoothed) buffers
+               bufSz = self.bufferHW*2+1;
+               self.bufferedVals(:,1) = hWithBuffer(end-bufSz+1:end);
+               self.bufferedVals(:,2) = vWithBuffer(end-bufSz+1:end);
+               
+               % Smooth each channel using extra buffered data
+               smoothedH = smooth(hWithBuffer, bufSz);% , 'sgolay');
+               hVals = smoothedH(self.bufferHW+1:end-self.bufferHW-1);
+               smoothedV = smooth(vWithBuffer, bufSz);% , 'sgolay');
+               vVals = smoothedV(self.bufferHW+1:end-self.bufferHW-1);
+            end
             
             % Format data according to the dotsReadable format:
             %  <ID> <value> <timestamp>

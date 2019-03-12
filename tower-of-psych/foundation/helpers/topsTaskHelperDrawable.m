@@ -20,7 +20,7 @@ classdef topsTaskHelperDrawable < topsTaskHelper
          end
          
          % Create it
-         self = self@topsTaskHelper(drawableName, varargin{:}, 'isEnsemble', true);
+         self = self@topsTaskHelper(drawableName, [], varargin{:}, 'isEnsemble', true);
       end
             
       %% draw(self, args, task, eventTag)

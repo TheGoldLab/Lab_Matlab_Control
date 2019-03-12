@@ -32,7 +32,7 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       PLcommunication = struct( ...
          'IP',                      '127.0.0.1',... % IP address
          'port',                    '50020',    ... % Port number
-         'socketRefreshInterval',   1,          ... % in sec, may need to refresh socket
+         'socketRefreshInterval',   20,          ... % in sec, may need to refresh socket
          'timeout',                 5000);          % Communiation timeout, in ms
 
       % Calibration of the pupil-labs device
@@ -172,59 +172,6 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
       % Report round-trip time of communication channel
       function time = getRoundTripTime(self)
          time = self.roundTripTime;
-      end
-      
-      % readDataFromFile
-      %
-      % Utility for reading data from a pupillabs folder
-      %
-      % dataPath is string pathname to where the pupil-labs folder is
-      %
-      % Returns data matrix, rows are times, columns are:
-      %  1. timestamp
-      %  2. gaze x
-      %  3. gaze y
-      %  4. confidence
-      function [dataMatrix, tags] = readRawDataFromFile(self, dataPath)
-         
-         % for debugging
-         if nargin < 1 || isempty(dataPath)
-            dataMatrix = [];
-            tags = [];
-            return
-         end
-         
-         if isempty(strfind(dataPath, '_EyePupilLabs'))
-            dataPath = [dataPath '_EyePupilLabs'];
-         end
-         
-         % load into a temporary file... not sure how else to do this (yet)
-         tmpFileName = 'tmpDataFile';
-         
-         % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
-         dataMatrix = [];
-         
-         % Loop through the subdirectories, getting the data
-         dirs = dir(fullfile(dataPath, '0*'));
-         for dd = 1:length(dirs)
-            rawFileWithPath = fullfile(dataPath, dirs(dd).name);
-            commandStr = sprintf('/Users/jigold/anaconda/bin/python3 /Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py %s gaze %s', ...
-               rawFileWithPath, tmpFileName);
-            system(commandStr);
-            
-            % collect the data
-            load(tmpFileName);
-            
-            % concatenate 
-            dataMatrix = cat(1, dataMatrix, eval(tmpFileName));
-         end
-      
-         % clean up the tmp file
-         system(sprintf('rm %s.mat', tmpFileName));
-         
-         % Convert from cell array
-         dataMatrix = cell2num(dataMatrix);
       end
    end
    
@@ -638,6 +585,84 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             % zmq.core.ctx_shutdown(self.zmqContext);
             % zmq.core.ctx_term(self.zmqContext);
          end
+      end
+   end
+   
+   methods (Static)
+   
+      % Load raw data from file
+      %
+      %
+      % filename is string pathname where the pupil-labs folder is located
+      % ecodes is optional ecodes struct
+      %
+      % Returns eye data struct (see dotsReadableEye) with data columns:
+      %  1. timestamp
+      %  2. gaze x
+      %  3. gaze y
+      %  4. confidence
+      %  5. pupil_0
+      %  6. pupil_1
+      function data = loadRawData(dirname, ecodes, helper)
+         
+         % Need filename argument
+         if nargin < 1 || isempty(dirname)
+            data = [];
+            return
+         end
+         
+         % CONSTANTS
+         pythonWithPath = '/Users/jigold/anaconda/bin/python3';
+         pythonCmd      = '/Users/jigold/GoldWorks/Local/LabCode/Lab-Matlab-Control/Tasks/ModularTasks/Utilities/readPupilLabsData.py';
+         tmpFileName    = 'tmpDataFile';
+        
+         % Set up the return values
+         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
+         data = [];
+         
+         % Loop through the subdirectories, getting the data
+         dirs = dir(fullfile(dirname, '0*'));
+         for dd = 1:length(dirs)
+
+            % load into a temporary file... not sure how else to do this (yet)
+            commandStr = sprintf('%s %s %s gaze %s', ...
+               pythonWithPath, pythonCmd, fullfile(dirname, dirs(dd).name), tmpFileName);
+            system(commandStr);
+            
+            % collect the data
+            load(tmpFileName);
+            
+            % concatenate 
+            data = cat(1, data, eval(tmpFileName));
+         end
+      
+         % clean up the tmp file
+         system(sprintf('rm %s.mat', tmpFileName));
+         
+         % Convert from cell array
+         data = cell2num(data);
+
+         % Calibrate and synchronize using data from the current topsDataLog
+         if nargin > 1 && ~isempty(ecodes)
+         
+            % Calibrate
+            %
+            % Get indices of relevant data columns
+            eti  = find(strcmp(tags, 'time'));
+            exi  = find(strcmp(tags, 'gaze_x'));
+            eyi  = find(strcmp(tags, 'gaze_y'));
+
+            % Calibrate from the dataLog calibration data
+            data(:,[eti exi eyi]) = ...
+               dotsReadableEye.calibrateGazeSets( ...
+               data(:,[eti exi eyi]), ...
+               topsDataLog.getTaggedData(['calibrate ' mfilename]));
+
+            % Synchronize
+            %
+            data = dotsReadableEye.parseRawData(data, tags, ...
+               topsTaskHelper.getSynchronizationData(mfilename));
+         end 
       end
    end
 end
