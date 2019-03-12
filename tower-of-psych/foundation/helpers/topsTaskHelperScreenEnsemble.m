@@ -52,8 +52,6 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
          % Save offset in the screen singleton object
          dotsTheScreen.setSyncTimes(self.sync.results.offset, ...
              self.sync.results.referenceTime);
-          
-          disp(self.sync.results.offset)
       end
    end
 end

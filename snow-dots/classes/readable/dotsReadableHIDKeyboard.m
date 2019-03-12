@@ -200,9 +200,15 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       end
       
       % Wait for given key to be pressed, on one or many keyboards.
-      % @param kbs array of dotsReadableHIDKeyboard objects
-      % @param keyName the HID usage name of a keyboard key
-      % @param maxWait maximum time to wait for key press
+      %
+      % Arguments:
+      % 	kbs            ... dotsReadableHIDKeyboard object (or cell array of them)
+      %  keyName        ... the HID usage name (component) of a keyboard key (or blank for
+      %                       any key to wait for any key)
+      % 	maxWait        ... maximum time to wait for key press (sec)
+      %  flush          ... whether or not to flush queue before starting
+      %  waitForRelease ... whether to wait for release after press
+      % 
       % @details
       % Creates a "pressed" event for the given @a keyName, on each of
       % the given @a kbs.  Waits for one of of the given @a kbs to report
@@ -219,22 +225,36 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % value, time].  Returns as a fourth output the object which
       % reported the key press.  If more than one keyboard can report
       % that the key was pressed, only the first one is returned.
-      function [isPressed, waitTime, data, kb] = ...
-            waitForKeyPress(kbs, keyName, maxWait, flush)
+      function [didHappen, waitTime, data, kb, name] = ...
+            waitForKeyPress(kbs, keyName, maxWait, flush, waitForRelease)
+         
+         % Make sure event is active on each keyboard
+         eventName = [];
+         if nargin >= 2 && ~isempty(keyName)
+            for ii = 1:numel(kbs)
+               event = kbs(ii).defineEvent(keyName, 'isActive', true);
+            end
+            eventName = event(1).name;
+         end
+         
+         % set wait time
+         if nargin < 3 
+            maxWait = [];
+         end
          
          % flush event queue
          if nargin >= 4 && flush
             kbs.flushData();
          end
+
+         % Call waitForEvent                  
+         [didHappen, waitTime, data, kb, name] = ...
+            dotsReadable.waitForEvent(kbs, eventName, maxWait);
          
-         % get event name
-         nKeyboards = numel(kbs);
-         for ii = 1:nKeyboards
-            event = kbs(ii).defineEvent(keyName, 'isActive', true);
-         end
-                  
-         [isPressed, waitTime, data, kb] = ...
-            dotsReadable.waitForEvent(kbs, event.name, maxWait);
+         % Possibly wait for release
+         if nargin >= 5 && waitForRelease
+            didHappen = dotsReadable.waitForEvent(kb, [], maxWait);
+         end         
       end
    end
 end

@@ -18,8 +18,8 @@ pl.openGazeMonitor();
 % Calibration requires a SnowDots screen to be open. Open a small debug 
 %  window in local mode
 % For remote mode, primary screen:
-% screen = dotsTheScreen.makeEnsemble(true, 1);
-screen = dotsTheScreen.makeEnsemble(false, 0);
+% screen = dotsTheScreen.theEnsemble(true, 1);
+screen = dotsTheScreen.theEnsemble(false, 0);
 screen.callObjectMethod('open');
 
 % Run the calibration routine

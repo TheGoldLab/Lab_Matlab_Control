@@ -117,8 +117,7 @@ classdef topsDataFile
             
             % Load the variables from the mat file
             s = load(fHeader.fileWithPath);
-            contents = fieldnames(s);
-            
+            contents = fieldnames(s)
             % match most of the metadata from the disk
             fHeader.incrementPrefix = s.fHeader.incrementPrefix;
             fHeader.dateTimeFunction = s.fHeader.dateTimeFunction;
@@ -148,7 +147,7 @@ classdef topsDataFile
             for ii = 1:nIncrements
                name = incrementNames(ii,:);
                if any(strcmp(contents, name))
-                  % s = load(fHeader.fileWithPath, name);
+                  s = load(fHeader.fileWithPath, name);
                   incrementCell{ii} = s.(name);
                end
             end

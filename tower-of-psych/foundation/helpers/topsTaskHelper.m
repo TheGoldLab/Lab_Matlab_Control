@@ -26,7 +26,7 @@ classdef topsTaskHelper < topsFoundation
          'results',        struct( ...
          'referenceTime',  0, ...      % Time of local trial start
          'deviceTime',     0, ...      % Device time at synchronize event
-         'offset',         0, ...      % Local - remote
+         'offset',         0, ...      % Local time - device time
          'roundTrip',      0));
       
       % Below are properties used to bind the helper to a topsTreeNode
@@ -430,6 +430,37 @@ classdef topsTaskHelper < topsFoundation
    
    methods (Static)
       
+      % Get synchroniztion data from the current topsDataLog and make
+      %  a maxtrix with columns:
+      %        referenceTime
+      %        offset
+      %
+      % Arguments:
+      %  helperName ... string name of the helper object being synchronized
+      %  varargin   ... (optional) string name of topsDataFile
+      function synchronizationData = getSynchronizationData(helperName, varargin)
+      
+         % Get the synchronization data from the topsDataLog
+         dataTub = topsDataLog.getTaggedData(['synchronize ' helperName], varargin{:});
+         
+         % Convert the synchronization tubs into structs
+         %
+         % NOTE: copying a helper results in two sets of
+         % synchronization data logs ... clean them up here by always
+         % taking the second one (the copy)
+         tmpData = [dataTub.item];
+         diffs = diff([tmpData.referenceTime]);
+         diffi = find(diffs==0 & (diffs+1)<=size(tmpData,2));
+         if any(diffi)
+            tmpData = tmpData(1,diffi+1);
+         end
+         
+         % Create matrix of referenceTime, deviceTime, offset
+         synchronizationData = cat(2, ...
+            [tmpData.referenceTime]', ...
+            [tmpData.offset]');         
+      end
+      
       % Utility to make helpers
       %
       % Arguments:
@@ -454,7 +485,7 @@ classdef topsTaskHelper < topsFoundation
             for ff = fieldnames(theStruct)'
                structArgs = struct2args(theStruct.(ff{:}));
                helperStruct = topsTaskHelper.makeHelpers(constructor, ...
-                  ff{:}, [], structArgs{:}, varargin{:});
+                  ff{:}, structArgs{:}, varargin{:});
                helpers.(ff{:}) = helperStruct.(ff{:});
             end
             
@@ -469,7 +500,6 @@ classdef topsTaskHelper < topsFoundation
                % generic helper
                constructor = 'topsTaskHelper';
             end
-            
             helper = feval(constructor, varargin{:});
             helpers.(helper.name) = helper;
          end
