@@ -309,7 +309,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          % Default dataTag
          if nargin < 3 || isempty(dataTag)
-            dataTag = '_topsDataLog';
+            dataTag = '_topsDataLog.mat';
          end
                   
          % Get the pathname
