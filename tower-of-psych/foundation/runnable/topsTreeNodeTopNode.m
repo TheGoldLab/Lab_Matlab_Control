@@ -62,7 +62,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %  Default filename is based on the clock
          %  Can override simply by setting to new value
          %  Set to empty matrix to turn off data storage
-         [path, name] = topsTreeNodeTopNode.getFilepath(self.name);
+         [path, name] = topsTreeNodeTopNode.getFileparts(self.name);
          self.filename = fullfile(path, name);
       end
       
@@ -157,23 +157,30 @@ classdef topsTreeNodeTopNode < topsTreeNode
                topsDataLog.logDataInGroup(mglGetSecs(), 'startTime');
                
                % Make sure the file directory exists
-               pathstr = fileparts(self.filename);               
-               if ~isempty(pathstr) && ~exist(pathstr, 'dir')
-                  mkdir(pathstr);
+               filepath = fileparts(self.filename);               
+               if ~isempty(filepath) && ~exist(filepath, 'dir')
+                  mkdir(filepath);
                end
 
                % Write it to "filename" for the first time; later calls
                %  don't need to keep track of filename
                topsDataLog.writeDataFile(self.filename);
                
-               % bind to dotsReadable helpers
+               % bind to dotsReadable helpers. First get the file prefix
+               sessionTag = [fileparts(filepath) '_'];
                for ff = fieldnames(self.helpers)'
+                  
+                  % Check that the helper is a dotsReadable object
                   if isa(self.helpers.(ff{:}).theObject, 'dotsReadable')
-                     [readerPath, readerFile] = ...
-                        topsTreeNodeTopNode.getReadableFilename( ...
-                        self.filename, self.name, self.helpers.(ff{:}).theObject);
-                     self.helpers.(ff{:}).theObject.filepath = readerPath;
-                     self.helpers.(ff{:}).theObject.filename = readerFile;
+                     
+                     % Parse the filename from the readable class
+                     className = class(self.helpers.(ff{:}).theObject);
+                     K = strfind(className, 'dotsReadable');
+                     className(K:K+length('dotsReadable')-1) = [];
+                     
+                     % Set it in the helper object
+                     self.helpers.(ff{:}).theObject.filepath = filepath;
+                     self.helpers.(ff{:}).theObject.filename = [sessionTag className];
                   end
                end
             end
@@ -279,33 +286,39 @@ classdef topsTreeNodeTopNode < topsTreeNode
    
    methods (Static)
       
-      %% getFilepath
+      %% getFileparts
       %
       % Standard pathname for data 
       %
       %  studyTag   ... string name identifying the study
       %  sessionTag ... string name identifying the session
-      function [pathname, filename] = getFilepath(studyTag, sessionTag)
+      %  dataTag    ... string suffix for data file
+      function [pathname, filename] = getFileparts(studyTag, sessionTag, dataTag)
          
          % Default session
          if nargin < 1 || isempty(studyTag)
             studyTag = 'test';
-         end
+         end                 
          
-         % Default filename is current time (to the second)
+         % Default sessionTag is current time (to the second)
          if nargin < 2 || isempty(sessionTag)
             c = clock;
             sessionTag = sprintf('%.4d_%02d_%02d_%02d_%02d', ...
                c(1), c(2), c(3), c(4), c(5));
          end
          
+         % Default dataTag
+         if nargin < 3 || isempty(dataTag)
+            dataTag = '_topsDataLog';
+         end
+                  
          % Get the pathname
          pathname = fullfile( ...
             dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
             studyTag, 'raw', sessionTag);
          
          % Get the filename
-         filename = [sessionTag '_topsDataLog.mat'];
+         filename = [sessionTag dataTag];
       end
       
       %% getDataFromFile
@@ -317,12 +330,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %  to a trial data structure in the topsDataLog.
       % Also calls dotsReadable.readDataFromFile using the given ui
       %
-      % studyTag is string name of the study
-      % fileTag is string base name of the data file(s)
+      % studyTag   ... string name identifying the study
+      % sessionTag ... string name identifying the session
       %
       % Created 5/26/18 by jig
       %
-      function [topNode, FIRA] = loadRawData(studyTag, fileTag)         
+      function [topNode, FIRA] = loadRawData(studyTag, sessionTag)         
 
          %% Parse studyTag, fileTag
          %
@@ -331,12 +344,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
             studyTag = 'DBSStudy';
          end
          
-         if nargin < 2 || isempty(fileTag)
-            fileTag = '2019_01_13_10_03'; %'2018_11_20_15_20';
+         if nargin < 2 || isempty(sessionTag)
+            sessionTag = '2019_01_13_10_03'; %'2018_11_20_15_20';
          end
          
          % get pathname of of the datafiles
-         [datapath, filename] = topsTreeNodeTopNode.getFilepath(studyTag, fileTag);
+         [pathname, filename] = topsTreeNodeTopNode.getFileparts(studyTag, sessionTag);
          
          % Clear the data log
          topsDataLog.theDataLog(true);
@@ -345,7 +358,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          %
          % get the mainTreeNode
          mainTreeNodeStruct = topsDataLog.getTaggedData('mainTreeNode', ...
-            fullfile(datapath, filename));
+            fullfile(pathname, filename));
          topNode = mainTreeNodeStruct.item;
          
          % Now read the ecodes -- note that this works only if the trial 
@@ -354,7 +367,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          
          %% Get the readable-specific data
          %
-         D = dir([fullfile(datapath, fileTag) '_*']);
+         [~, sessionTag] = fileparts(pathname);
+         D = dir([fullfile(pathname, sessionTag) '_*']);
          for ff = setdiff({D.name}, filename)
             
             % Save as field named after readable subclass
@@ -371,7 +385,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                helper = topNode.helpers.(helperType).theObject;
             end
             
-            % Call the dotsReadable static loadDateFile method            
+            % Call the dotsReadable static loadDataFile method            
             FIRA.(helperType) = feval([helperClass '.loadRawData'], ...
                fullfile(datapath, ff{:}), FIRA.ecodes, helper);
          end
