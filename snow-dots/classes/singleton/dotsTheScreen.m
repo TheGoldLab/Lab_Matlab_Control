@@ -9,7 +9,9 @@ classdef dotsTheScreen < dotsAllSingletonObjects
    % @details
    % dotsTheMachineConfiguration provides hardware-specific default
    % property values to dotsTheScreen.
+   
    properties
+      
       % dispay width (cm)
       width;
       
@@ -48,16 +50,20 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       foregroundColor;
       
       % a background color, [L] [LA] [RGB] [RGBA], 0-255
-      backgroundColor;
+      backgroundColor = [0 0 0];
       
       % function that returns the current time as a number
       clockFunction;
       
       % filename with path to .mat file that contains a gamma table
       gammaTableFileName;
+      
+      % newly loaded color calibration
+      newGammaTable;
    end
    
    properties (SetAccess = protected)
+      
       % utility object to account for OpenGL frame timing
       flushGauge;
       
@@ -67,14 +73,20 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % color calibration that was in the video card at startup (nx3)
       systemGammaTable;
       
-      % newly loaded color calibration
-      newGammaTable;
+      % for clock synchronization
+      offsetTime=0;
+      referenceTime=0;
+      
+      % To check for remote mode
+      isRemote = false;
    end
    
    methods (Access = private)
+      
       % Constructor is private.
       % @details
       % Use dotsTheScreen.theObject to access the current instance.
+      %
       function self = dotsTheScreen(varargin)
          mc = dotsTheMachineConfiguration.theObject();
          mc.applyClassDefaults(self);
@@ -84,65 +96,10 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
    end
    
-   methods (Static)
-      % Access the current instance.
-      function obj = theObject(varargin)
-         persistent self
-         if isempty(self) || ~isvalid(self)
-            constructor = str2func(mfilename);
-            self = feval(constructor, varargin{:});
-         else
-            self.set(varargin{:});
-         end
-         obj = self;
-      end
-      
-      % Restore the current instance to a fresh state.
-      function reset(varargin)
-         factory = str2func([mfilename, '.theObject']);
-         self = feval(factory, varargin{:});
-         self.initialize;
-      end
-      
-      % Launch a graphical interface to view dotsTheScreen properties.
-      function g = gui()
-         self = dotsTheScreen.theObject();
-         g = topsGUIUtilities.openBasicGUI(self, mfilename());
-      end
-      
-      % Get a filename suitable for storing a machine-specific gamma
-      % table.
-      function gammaTableFileName = getHostGammaTableFilename
-         
-         [~,h] = unix('hostname -s');
-         gammaTableFileName = sprintf('dots_%s_GammaTable.mat', deblank(h));
-         
-      end
-      
-      % Get the number of the display used for drawing.
-      % @details
-      % If Snow Dots has an open drawing window, returns a non-negative
-      % integer which corresponds to displayIndex.  Otherwise, returns
-      % -1.
-      function displayNumber = getDisplayNumber()
-         displayNumber = mglGetParam('displayNumber');
-      end
-      
-      % Open an OpenGL drawing window.
-      function openWindow()
-         self = dotsTheScreen.theObject();
-         self.open();
-      end
-      
-      % Close the OpenGL drawing window.
-      function closeWindow()
-         self = dotsTheScreen.theObject();
-         self.close();
-      end
-   end
-   
    methods
+      
       % Return the current instance to a fresh state, closing the window.
+      %
       function initialize(self)
          % may not start out with an open window
          self.close();
@@ -154,11 +111,15 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          display = displays(whichElement);
          self.displayPixels = [0 0 display.screenSizePixel];
          
+         % reading from mglDescribeDisplays seems accurate
+         self.width = display.screenSizeMM(1)/10;
+         self.height = display.screenSizeMM(2)/10;
+         
          % approximate visual coordinate conversion factor
          % note that the "actual" conversion occurs below in
          % open(), with mglVisualAngleCoordinates()
-         self.pixelsPerDegree = self.displayPixels(3) ...
-            / (2*(180/pi)*atan2(self.width/2, self.distance));
+         self.pixelsPerDegree = self.displayPixels(3) / ...
+            (2 * rad2deg(atan2(self.width/2, self.distance)));
          
          % utility to manage frame timing
          self.flushGauge = dotsMglFlushGauge();
@@ -169,7 +130,10 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Open an OpenGL drawing window.
+      %
       function open(self)
+         
+         % Check if open
          if self.getDisplayNumber >= 0
             mglClose();
          end
@@ -180,21 +144,20 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          mglSetParam('multisampling', double(self.multisample));
          
          % open window, may use default size and frame rate
-         if isempty(self.windowRect)
-            w = [];
-            h = [];
-         else
+         if isempty(self.windowRect) && isempty(self.bitDepth)
+             mglOpen(self.displayIndex);
+         else             
             w = self.windowRect(3) - self.windowRect(1);
             h = self.windowRect(4) - self.windowRect(2);
+            mglOpen(self.displayIndex,w,h,[],self.bitDepth);
          end
-         frameRate = [];
-         mglOpen(self.displayIndex, w, h, frameRate, self.bitDepth);
          
          % choose full scene antialiasing again
          %   once the context has been created
          %   this may fail silently, also
          dotsMglSmoothness('scene', double(self.multisample));
          
+         % in pixels
          if isempty(self.windowRect)
             w = mglGetParam('screenWidth');
             h = mglGetParam('screenHeight');
@@ -239,6 +202,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       end
       
       % Close the OpenGL drawing window.
+      %
       function close(self)
          mglDisplayCursor(1);
          if self.getDisplayNumber >= 0
@@ -272,22 +236,25 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       %   adjacent (false if a frame was skipped)
       %   .
       % Assigns the same struct to lastFrameInfo.
+      %
       function frameInfo = nextFrame(self, doClear)
-         
+                  
          if nargin < 2
             doClear = true;
          end
          
          if self.getDisplayNumber() >= 0
+            
             % flush, swap buffers
             [frameInfoData{1:4}] = self.flushGauge.flush();
             
             if doClear
+               
                % clear, for the next frame of graphics
-               mglClearScreen();
+               mglClearScreen(self.backgroundColor);
             end
-            
          else
+            
             % placeholder frame data
             frameInfoData = {nan, nan, nan, false};
          end
@@ -297,6 +264,12 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
          frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
          self.lastFrameInfo = frameInfo;
+      end
+      
+      % Gets the current time
+      %
+      function time = getCurrentTime(self)
+         time = self.clockFunction();
       end
       
       % Swap OpenGL frame buffers twice without drawing.
@@ -318,11 +291,15 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       %   adjacent (false if a frame was skipped)
       %   .
       % Assigns the same struct to lastFrameInfo.
-      function frameInfo = blank(self)
+      function frameInfo = blank(self, backgroundColor)
+         
+         if nargin > 1 && ~isempty(backgroundColor)
+            self.backgroundColor = backgroundColor;
+         end
          
          if self.getDisplayNumber() >= 0
             % flush, clear, swap buffers twice
-            [frameInfoData{1:4}] = self.flushGauge.blank();
+            [frameInfoData{1:4}] = self.flushGauge.blank(self.backgroundColor);
             
          else
             % placeholder frame data
@@ -330,8 +307,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          end
          
          % report data for the last frame
-         frameInfoNames = ...
-            {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
+         frameInfoNames = {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
          frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
          self.lastFrameInfo = frameInfo;
       end
@@ -340,6 +316,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Argument:
       %   fileName ... optional. If empty uses default from
       %                   setHostGammaTableFileName.
+      %
       function saveGammaTableToMatFile(self, fileName)
          
          % conditinally use fileName arg
@@ -352,7 +329,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             self.gammaTableFileName = self.getHostGammaTableFilename();
          end
          
-         
          % save it
          if ~isempty(self.gammaTableFileName) && ...
                ~isempty(self.newGammaTable)
@@ -364,16 +340,17 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Load gamma-correction data from a .mat file into newGammaTable.
       % Argument:
       %   fileName ... optional. If empty uses default from
-      %                setHostGammaTableFileName. Keywords:      
+      %                setHostGammaTableFileName. Keywords:
       %                'none' = skip
       %                'make' = call makeGammaTable
+      %
       function readGammaTableFromMatFile(self, fileName)
          
          % Conditionally use fileName arg
          if nargin >= 2
             self.gammaTableFileName = fileName;
          end
-
+         
          % Conditionally get default name
          if isempty(self.gammaTableFileName)
             self.gammaTableFileName = self.getHostGammaTableFilename();
@@ -390,82 +367,189 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             % flag indicating to make it anew
             self.makeGammaTable();
             
-         elseif ~isempty(self.gammaTableFileName) && ...             
+         elseif ~isempty(self.gammaTableFileName) && ...
                exist(self.gammaTableFileName, 'file')
             
             % otherwise check that it exists and load if so
             s = load(self.gammaTableFileName);
             if isfield(s, 'gammaTable')
+               disp(sprintf('loading gamma from <%s>', self.gammaTableFileName))
                self.newGammaTable = s.gammaTable;
             end
             
          end
       end
+   end   
+   
+   methods (Static)
+      
+      % Access the current instance of the object
+      function obj = theObject(varargin)
+         
+         % Keep as persistent variables local to this method
+         persistent self
+         
+         if isempty(self) || ~isvalid(self)
+            constructor = str2func(mfilename);
+            self = feval(constructor, varargin{:});
+         else
+            self.set(varargin{:});
+         end
+         obj = self;
+      end
+      
+      % Utility for creating or retrieving a screen ensemble, which
+      %  is created either as a (local) topsEnsemble or for remote 
+      %  drawing using dotsClientEnsemble with default network values.
+      %
+      % Aguments (for creating:
+      %  useRemote      ... flag for creating client/server ensembles
+      %  displayIndex   ... 0=debug screen; 1=main screen; 2=2nd screen; etc
+      %
+      function ensemble = theEnsemble(varargin)
+         
+         % Keep as persistent variables local to this method
+         persistent selfEnsemble
+         
+         % If it does not yet exist, make it
+         if isempty(selfEnsemble) || ~isvalid(selfEnsemble)
+            
+            % Check for local/remote graphics
+            if nargin < 1 || isempty(varargin{1})
+               useRemote = false;
+            else
+               useRemote = varargin{1};      
+            end
+            
+            % Check display index
+            if nargin < 2 || isempty(varargin{2})
+               displayIndex = 1; % primary screen
+            else
+               displayIndex = varargin{2};
+            end
+         
+            % Set up the screen object and ensemble
+            screen = dotsTheScreen.theObject(varargin{3:end});
+            screen.displayIndex = displayIndex;
+            screen.isRemote = useRemote;
+            selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', useRemote);
+            selfEnsemble.addObject(screen);
+            selfEnsemble.automateObjectMethod('flip', @nextFrame);
+         end
+         
+         % return the ensemble
+         ensemble = selfEnsemble;
+      end
+      
+      % Restore the current instance to a fresh state.
+      function reset(varargin)
+         factory = str2func([mfilename, '.theObject']);
+         self = feval(factory, varargin{:});
+         self.initialize;
+      end
+      
+      % Launch a graphical interface to view dotsTheScreen properties.
+      function g = gui()
+         self = dotsTheScreen.theObject();
+         g = topsGUIUtilities.openBasicGUI(self, mfilename());
+      end
+      
+      % Get a filename suitable for storing a machine-specific gamma
+      % table.
+      function gammaTableFileName = getHostGammaTableFilename
+         gammaTableFileName = sprintf('dots_%s_GammaTable.mat', getMachineName());
+      end
+      
+      % Get the number of the display used for drawing.
+      % @details
+      % If Snow Dots has an open drawing window, returns a non-negative
+      % integer which corresponds to displayIndex.  Otherwise, returns
+      % -1.
+      function displayNumber = getDisplayNumber()
+         displayNumber = mglGetParam('displayNumber');
+      end
+      
+      % Open an OpenGL drawing window.
+      function openWindow()
+         self = dotsTheScreen.theObject();
+         self.open();
+      end
+      
+      % Close the OpenGL drawing window.
+      function closeWindow()
+         self = dotsTheScreen.theObject();
+         self.close();
+      end
       
       % Makes a gamma table using the optiCAL device from Cambridge Research
       % Systems. Easist way to call this is:
-      %  dotsTheScreen.reset('gammaTableFileName', 'make');
       %
-      %  Note that this will put a file in your current working directory
+      %  -> dotsTheScreen.makeGammaTable();
+      %
+      % If you want to check and plot the results, try this:
+      %
+      %  -> [gammaTable, values] = dotsTheScreen.makeGammaTable(true);
+      %  -> cla reset; hold on
+      %  -> plot(values(:,1), values(:,2), 'k.'); % uncorrected
+      %  -> plot(values(:,1), values(:,3), 'r.'); % corrected
+      %
+      %  Note that this routine will put a file in your current working directory
       %  that contains the new gamma table. If you want to keep using this
       %  table by default, just make sure that it lives somewhere on your
       %  Matlab path.
-      % 
+      %
       % This function assumes that:
       %   1. the optiCAL device is connected to the host computer using
-      %           the USB-to-serial device
+      %           the USB-to-serial device. To check that it is recognized,
+      %           type 'ls /dev/tty.*' ... if it is connected using the
+      %           keyspan USB-serial, it should be something like
+      %           /dev/tty.USA*. Use "instrfind" to find open serial
+      %           objects. Returns in units of cd/m^2
+      %
       %   2. the optiCAL argument (or default) points to the device in
       %           the file system
       %   3. the sensor is suctioned onto the middle of the screen
       %
       % Arguments:
-      %   1 ... location of optiCAL device
-      %       --> Needs USB-serial connetor
-      %       --> Use 'ls /dev/tty.*' to find device name
-      %       --> Use "instrfind" to find open serial objects
-      %       --> Returns in units of cd/m^2
-      %   2 ... gammaFileName. Can be
-      %           []          do not save
-      %           'default'   use getHostGammaTableFilename
-      %           <name>      use given filename
-      %   3 ... tableSize (def 256)
-      %   4 ... sampleInterval, interval between luminance measurementes, in sec
-      %   5 ... targetSize, diameter of spot to draw on screen, in deg visual angle
-      function makeGammaTable(self, optiCAL, fileName, tableSize, sampleInterval, targetSize)
+      %  doTest      ... boolean flag to test gamma after correction
+      %   fileName   ... gammaFileName. [] for default.
+      %   tableSize  ... length of the gamma table
+      %   targetSize ... diameter of spot to draw on screen, in deg visual angle
+      %
+      % Returns:
+      %  gammaTable  ... the new gamma table
+      %  values      ... nx3 matrix of [nominal values, measuredValues, correctedValues]
+      %                    (3rd column only if doTest=true)
+      %
+      function [gammaTable, values] = makeGammaTable(doTest, ...
+            fileName, tableSize, targetSize)
+         
+         % Open a window with no gamma table
+         dotsTheScreen.reset('gammaTableFileName', 'none');
+         dotsTheScreen.openWindow();
          
          % check arguments
-         if nargin < 2 || isempty(optiCAL)
-            optiCAL = '/dev/tty.USA19H1461P1.1';
+         if nargin < 1 || isempty(doTest)
+            doTest = false;
          end
          
-         if nargin < 3
+         if nargin < 2
             fileName = []; % use default
          end
          
-         if nargin < 4 || isempty(tableSize)
-            tableSize = 256;
+         if nargin < 3 || isempty(tableSize)
+            table = mglGetGammaTable();
+            tableSize = size(table.redTable,2);
          end
          
-         if nargin < 5 || isempty(sampleInterval)
-            sampleInterval = 0.1;
-         end
-         
-         if nargin < 6 || isempty(targetSize)
+         if nargin < 4 || isempty(targetSize)
             targetSize = 20;
          end
-         
          
          % set up gamma table arrays
          maxV                    = tableSize-1;
          nominalLuminanceValues  = 0:maxV;
          measuredLuminanceValues = nans(tableSize, 1);
-         
-         % start with a nominal gamma table
-         self.gammaTableFileName = 'none';
-         self.newGammaTable      = repmat(nominalLuminanceValues, 3, 1)./maxV;
-         
-         % Open a window
-         self.openWindow();
          
          % make target on the center of the screen
          t         = dotsDrawableTargets();
@@ -475,7 +559,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          t.height  = targetSize;
          
          % set up the optiCAL device to start taking measurements
-         OP = opticalSerial(optiCAL);
+         OP = opticalSerial();
          
          if isempty(OP)
             disp('makeGammaTable: Cannot make opticalSerial object')
@@ -490,17 +574,11 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             dotsDrawable.drawFrame({t});
             
             % get luminance reading
-            OP.getLuminance(1, sampleInterval);
+            OP.getLuminance(1, 0);
             
             % save it
             measuredLuminanceValues(ii) = OP.values(end);
          end
-         
-         % close the optiCAL device
-         OP.close();
-         
-         % close the OpenGL drawing window
-         self.closeWindow();
          
          % make the gamma table
          maxLum     = max(measuredLuminanceValues);
@@ -511,11 +589,79 @@ classdef dotsTheScreen < dotsAllSingletonObjects
                find(measuredLuminanceValues>=scaledLum(ii),1,'first'))./maxV.*[1 1 1]';
          end
          
-         % save the new gamma table
-         self.newGammaTable = gammaTable;
+         % save the new gamma table to a file
+         screen = dotsTheScreen.theObject();
+         screen.newGammaTable = gammaTable;
+         screen.saveGammaTableToMatFile(fileName);
          
-         % save to file
-         self.saveGammaTableToMatFile(fileName)
+         % return the measured values
+         values = cat(2, nominalLuminanceValues', measuredLuminanceValues);
+         
+         % possibly run a test
+         if doTest
+            
+            % set the new gamma table
+            mglSetGammaTable(gammaTable);
+            
+            % collect samples
+            correctedLuminanceValues = nans(tableSize, 1);
+            
+            % loop through the luminances
+            for ii = 1:tableSize
+               
+               % show target
+               t.colors = nominalLuminanceValues(ii)./(maxV).*[1 1 1];
+               dotsDrawable.drawFrame({t});
+               
+               % get luminance reading
+               OP.getLuminance(1, 0);
+               
+               % save it
+               correctedLuminanceValues(ii) = OP.values(end);
+            end
+            
+            % save the new values
+            values = cat(2, values, correctedLuminanceValues);
+         end
+         
+         % close the optiCAL device
+         OP.close();
+         
+         % close the OpenGL drawing window
+         dotsTheScreen.closeWindow();
       end
-   end
+      
+      % Convenient routine to blank the current screen, even if remote
+      %
+      % Argument (optional): backgroundColor
+      function frameInfo = blankScreen(varargin)
+         
+         % Get the screen
+         screen = dotsTheScreen.theObject();
+         
+         % Check for remote ensemble
+         if screen.isRemote
+            ensemble = dotsTheScreen.theEnsemble;
+            frameInfo = ensemble.callObjectMethod(@blank, varargin);
+         else
+            frameInfo = screen.blank(varargin{:});
+         end
+      end
+      
+      % Save current screen offset time
+      %
+      function setSyncTimes(offsetTime, referenceTime)
+         screen = dotsTheScreen.theObject();
+         screen.offsetTime = offsetTime;
+         screen.referenceTime = referenceTime;
+      end
+      
+      % Get current screen offset time
+      %
+      function [offsetTime, referenceTime] = getSyncTimes()
+         screen = dotsTheScreen.theObject();
+         offsetTime = screen.offsetTime;
+         referenceTime = screen.referenceTime;
+      end
+   end   
 end

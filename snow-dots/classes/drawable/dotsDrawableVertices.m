@@ -206,6 +206,7 @@ classdef dotsDrawableVertices < dotsDrawable
         
         % Draw vertices from OpenGL buffer objects.
         function draw(self)
+                      
             % toggle antialiasing
             dotsMglSmoothness( ...
                 self.smoothMap(self.primitive), double(self.isSmooth));

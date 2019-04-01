@@ -8,7 +8,9 @@ if nargin < 1
 end
 
 % get a drawing window
-dotsTheScreen.reset();
+%dotsTheScreen.reset();
+screen = dotsTheScreen.theObject();
+screen.displayIndex = 0;
 dotsTheScreen.openWindow();
 
 % create an arcs object and add it to an arbitrary group

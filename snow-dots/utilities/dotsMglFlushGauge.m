@@ -186,10 +186,10 @@ classdef dotsMglFlushGauge < handle
         
         % Clear both frame buffers, and implicitly update reference frame.
         function [onsetTime, onsetFrame, swapTime, isTight] = ...
-                blank(self)
-            mglClearScreen();
+                blank(self, backgroundColor)
+            mglClearScreen(backgroundColor);
             [onsetTime, onsetFrame, swapTime, isTight] = self.flush();
-            mglClearScreen();
+            mglClearScreen(backgroundColor);
             self.flush();
         end
         

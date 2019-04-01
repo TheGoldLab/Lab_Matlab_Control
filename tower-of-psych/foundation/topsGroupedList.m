@@ -53,7 +53,9 @@ classdef topsGroupedList < topsFoundation
         % @details
         % If @a name is provided, assigns @a name to this object.
         function self = topsGroupedList(varargin)
-            self = self@topsFoundation(varargin{:});
+
+           % Make the topsFoundation object
+           self = self@topsFoundation(varargin{:});
         end
                 
         % Open a GUI to view object details.
@@ -92,22 +94,16 @@ classdef topsGroupedList < topsFoundation
                 self.allGroupsMap = containers.Map(group, groupMap, 'uniformValues', false);
                 self.groups = {group};
                 
-                groupIsNew = true;
-                
             elseif self.containsGroup(group)
                 % routine addition
                 groupMap = self.allGroupsMap(group);
                 groupMap(mnemonic) = item;
-                
-                groupIsNew = false;
                 
             else
                 % new group
                 groupMap = containers.Map(mnemonic, item, 'uniformValues', false);
                 self.allGroupsMap(group) = groupMap;
                 self.groups = self.allGroupsMap.keys;
-                
-                groupIsNew = true;
             end
         end
         
@@ -125,7 +121,7 @@ classdef topsGroupedList < topsFoundation
             groupMap = self.allGroupsMap(group);
             keys = groupMap.keys;
             vals = groupMap.values;
-            isItem = logical(zeros(size(keys)));
+            isItem = false(size(keys));
             for ii = 1:length(keys)
                 isItem(ii) = isequal(vals{ii}, item);
             end
@@ -164,6 +160,16 @@ classdef topsGroupedList < topsFoundation
             for g = self.groups
                 self.removeGroup(g{1});
             end
+        end
+        
+        % Make a group from a cell array list of pairs:
+        % <string mnemonic>, <value>
+        function makeGroupFromList(self, groupName, list)
+        
+           % Save settings
+           for ii = 1:2:length(list)
+              self.addItemToGroupWithMnemonic(list{ii+1}, groupName, list{ii})
+           end
         end
         
         % Combine multiple groups into another group.
@@ -217,7 +223,7 @@ classdef topsGroupedList < topsFoundation
             groupMap = self.allGroupsMap(group);
             item = groupMap(mnemonic);
         end
-        
+ 
         % Get list items with {} syntax.
         % For topsGroupedList l,
         %   - item = l{g}{m} is the same as 
@@ -437,6 +443,16 @@ classdef topsGroupedList < topsFoundation
                     break
                 end
             end
+        end
+        
+        % Convenient utility
+        function groupList = createGroupFromList(groupName, list)
+           
+           % Create the groupList
+           groupList = topsGroupedList();
+           
+           % fill it
+           groupList.makeGroupFromList(groupName, list)
         end
     end
 end

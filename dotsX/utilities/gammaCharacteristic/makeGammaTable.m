@@ -6,6 +6,9 @@
 
 % interpolate a 16-bit, one-channel gamma table
 % pull out an 8-bit, three-channel gamma table with identical rgb
+grays = gammaTable(:,1);
+data = gammaTable(:,2);
+host = 'psychophys1';
 
 % measured lum responses
 Lcharacteristic = mean(data');
@@ -57,6 +60,6 @@ hndot = find(host == '.');
 gammaFile = ['Gamma_', host(1:hndot), 'mat'];
 pth = mfilename('fullpath');
 pi = strfind(pth, '/utilities/');
-save(['/Users/lab/GoldLab/Matlab/mfiles_lab/DotsX/classes/graphics,gammaFile'], ...
+save(['/Users/joshuagold/Users/Alice/GammaCorrection, gammaFile'], ...
     'gamma16bit', 'gamma8bit', 'grays', 'data', 'host');
 

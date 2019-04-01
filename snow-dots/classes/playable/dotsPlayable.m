@@ -5,6 +5,7 @@ classdef dotsPlayable < handle
     % able to use any of the dotsPlayable properties or methods for its
     % managed objects.
     properties
+       
         % true or false, whether this object should play() sonds
         isAudible = true;
         
@@ -32,6 +33,9 @@ classdef dotsPlayable < handle
         %If a sound should only play in the left side or right side. Enter
         %in 'left' or 'right'. Keep empty for both sides.
         side = '';
+        
+        % Should we block until done?
+        playBlocking = false;
     end
     
     properties (SetAccess = protected)
@@ -70,5 +74,20 @@ classdef dotsPlayable < handle
         function mute(self)
             self.isAudible = false;
         end
+    end
+    
+    methods (Static)
+       
+       % Pick a sound!
+       function playSound(playableList, indices)
+          
+          if nargin < 2 || isempty(indices)
+             indices = 1;
+          elseif length(indices) > 1
+             indices = indices(randi(length(indices)));
+          end
+          
+          play(playableList{indices});
+       end
     end
 end

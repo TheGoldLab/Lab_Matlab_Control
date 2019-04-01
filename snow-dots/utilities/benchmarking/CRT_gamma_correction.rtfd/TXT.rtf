@@ -1,0 +1,158 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf390
+\cocoascreenfonts1{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww19560\viewh22220\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs36 \cf0 Gamma Correction: what is it and how do you do it in the Gold Lab?
+\fs24 \
+\
+Document history:\
+7 September 2008		BSH (benjamin.heasly@gmail.com) started it from scratch\
+13 September 2008	BSH finished the first draft\
+\
+
+\b\fs26 What is Gamma Correction?
+\b0 \
+
+\fs24 \
+BACKGROUND \
+Gamma correction is about compensating for the nonlinear luminance response of a display device.  For this document, I assume that the display device is a CRT monitor connected with a VGA cable to a computer running Psychtoolbox.  At the time of this writing, the combination of CRT, VGA, and Psychtoolbox is the best way to get good control of graphical stimuli, and it's the combination used in many primate/human vision labs.\
+\
+The basic problem of gamma correction comes from the transformation of graphics represented in software into graphics that are actually visible on a CRT.  In software, like Psychtoolbox, you can specify colors and shades of gray using the integers 0-255.  The graphics card in your computer converts these digital integers into analog voltages that it outputs to the CRT via the VGA cable.  The CRT circuitry responds to these voltages buy shooting an electron beam of analogous intensity at its phosphor screen.  Finally, the phosphor screen responds to the electron beam by emitting photons at some analogous level of luminance.\
+\
+For stimulus good control, we want the final luminance of the screen to be proportional to the integer we specify in our software.  Because of the physical properties of a given CRT, the final luminance tends to fall short of proportionality, and correcting for this shortfall is called gamma correction.\
+\
+THE GAMMA CHARACTERISTIC\
+A given CRT will have its own unique luminance responses.  We can characterize a CRT by measuring its luminance output in response to various integers that we specify in software.  We call the resulting curve the gamma characteristic of the CRT.\
+\
+Let's look at a real gamma characteristic.  For simplicity, let's ignore color graphics and only consider luminance as a function of each grayscale integer, 0-255.  Below are some sample data for a CRT monitor that I characterized.  The red curve shows measured luminance output of the CRT.  The thin black line intersects the red curve at its endpoints, and represents the ideal case where luminance is proportional to grayscale integer, across the entire output range of the CRT.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Pasted Graphic 2.tiff \width11200 \height8400 \noorient
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 \
+\
+You can see that the red curve has a belly that hangs well below the ideal line.  This is representative of many CRTs.  Thus, CRTs that have not been gamma-corrected appear darker than gamma-corrected CRTs.  The difference in darkness should be visible by eye!   Moreover, the red curve contains all the information we need to correct for the gamma characteristic and achieve proportionality. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 \
+THE GAMMA TABLE\
+The nonlinear behavior of CRT monitors is well know.  In fact, it's so well known that practically all graphics cards have a built-in mechanism for doing gamma correction, called the gamma table.  The gamma table holds many arbitrary intensity values, one for each of the integers 0-255, that the card uses to pick voltage outputs.  Our job is to determine 256 intensity values that will give us proportional luminance responses.\
+\
+All the information we need for determining the correct intensities is contained in the red curve above.  For example, consider the dotted blue line above, indicating the CRT's response to digital grayscale integer #100.  The CRT responded with a luminance of about 9 cd/m\super 2\nosupersub .  Following the blue line upward, we see that the proportional response should have been 42 cd/m\super 2\nosupersub .  Looking to the right, we see that the CRT produced  that much luminance later, in response to grayscale integer #175.\
+\
+So, in order to get a proportional response for grayscale integer #100, we need to pick an intensity of 175/255 =  .6863 (68.63% of maximum intensity).  This is the intensity value we must enter in the gamma table for grayscale integer #100.\
+\
+We can follow the same logic for all grayscale integers and generate a complete gamma table that's tailored for this CRT:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Pasted Graphic 3.tiff \width11200 \height8400 \noorient
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 \
+\
+This green curve shows all 256 intensity values from our gamma table.  It looks just like the red curve above, but the units have been rescaled and it has been transposed.  Now each grayscale integer corresponds to an intensity, rather than a luminance measurement.  Moreover, the intensities exactly counterbalance the belly shape of the raw gamma characteristic.\
+\
+We can load this gamma table into the graphics card, and the card will automatically convert grayscale integers into the corresponding intensities.  This is particularly useful because, as long as the gamma table matches the CRT, you and your programs never need to worry about gamma correction.  You can specify grayscale integers and safely assume that the luminance response of the CRT will be proportional.  That is, grayscale #100 will appear twice as bright as grayscale #50.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\i \cf0 Note 1: although this discussion deals with only grayscale integers, it generalizes easily to colors.  Graphics cards actually have three separate gamma tables, one each primary color (red, green, blue), and we could perform gamma correction separately for each color.  But we don't usually care about things like nonlinear color interactions, so we do gamma correction by adjusting all three colors simultaneously (this produces the grayscale) and use identical gamma tables for all three colors.  \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\i0 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\i \cf0 Note 2: the word "gamma" comes from a common model of the gamma characteristic, where gamma is an exponent that corresponds to the severity of the belly shape.
+\i0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b \cf0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\fs26 \cf0 How to do Gamma Correction in the Gold lab:
+\b0 \
+
+\fs24 \
+CRT BUILT-IN SETTINGS AND DECAY\
+Most, if not all CRTs have built-in controls that determine things like brightness and contrast.  As I understand them, these controls behave like an offset and a gain on the inputs to the CRT.  So increasing brightness should add a baseline luminance to everything the CRT displays, while increasing contrast should increase the luminance range of the CRT.\
+\
+You probably want to use zero brightness.  This should allow the CRT to remain totally dark when it is on and showing a black screen.  So when your software specifies 0 luminance (grayscale integer #0), you should get 0 cd/m\super 2\nosupersub .  This is the first step toward proportional responses.\
+\
+Old CRTs may show some baseline luminance, even when brightness is set to zero.  This is because the phosphor screen degrades with time and use.  As I understand it, this is inevitable and irreversible.\
+\
+At zero brightness, the contrast control will let you pick the maximum luminance of the CRT.  If you set the contrast to it's highest level, a white patch on the screen should emit almost the maximum luminance of the CRT, which might be in the hundreds of cd/m\super 2\nosupersub .  You probably don't need to show stimuli that are hundreds of cd/m\super 2\nosupersub  bright, so you might want to turn down the contrast until a white patch gives off 100-150 cd/m\super 2\nosupersub .\
+\
+Using a moderate contrast may allow you to extend the useful lifetime of your CRT.  Just as the baseline luminance may creep upward with time, the maximum luminance may creep down.  When this happens, you may be able to compensate by turning the contrast up.\
+\
+Some monitors have a built-in gamma function.  This is totally separate from the gamma table in the graphics card, and separate from this discussion.  If your CRT has a gamma setting, I recommend choosing the value that seems most neutral.  Every manufacturer does this differently, so I can't make a specific recommendation.  But, for example, if the range of "gamma" goes from -50 to 50, you might chose 0.  If it goes from 0-100, you might pick 50.  And so on.\
+\
+The most important point is this: 
+\i\b once you start doing gamma correction, don't change the brightness, contrast, or other things like built-in gamma
+\i0\b0 .  Changing these is like getting a new CRT, and you'll need to start over.\
+\
+TEKTRONIX J17 PHOTOMETER WITH J1805 PROBE\
+The primary tool for doing gamma correction is a photometer, and there are many kinds.  The one that I've used was made by Tektronix.  It has a handset called the J17 that contains all the electronics, buttons and am LCD screen.  There's also a probe, called the J1805, which plugs into the J17 and has a suction cup that you can stick directly onto the screen of your CRT.\
+\
+We borrowed the J17 and J1805 from Larry Palmer's lab.\
+\
+The J17 and J1805 will let you measure the luminance in field of view of the J1805.  So at a minimum you could display various graphics on the CRT and read off enough luminance values from the LCD screen to obtain a gamma characteristic.\
+\
+But it is preferable to automate the process, and fortunately the J17 also has a serial port output.  I soldered up an adaptor cord that plugs into the mini socket on the J17 (this looks like a headphone jack) and has a standard DE-9 serial port connector on the other end.  I assume you'll plug this end into a USB serial port adaptor on one of the Macs in the lab.\
+\
+If you're still using an ASL eyetracker in the psychophysics room, then the serial port for the Mac in in that rig should already be configured and you should easily be able to swap in the J17. \
+\
+A MATLAB SCRIPT\
+I wrote a MATLAB script to automate the process of doing gamma correction.  It's based on a script that I used successfully for doing gamma correction for a CRT in the psychophysics rig.  I hope this will make it easy for you to do gamma correction in the future.\
+\
+But I must add a caveat: you might have do to significant troubleshooting, debugging, or rewriting to get this to work smoothly.  I can't really pretend to offer a canned solution to gamma correction.\
+\
+The script is called J17GammaCorrection.m.  It should reside in DotsX/utilities/.  See the comments at the top and throughout the code to figure out how to use it.  Good Luck!\
+\
+TAKE HOME MESSAGE: FORMATTING\
+There are many other ways you could do gamma correction.  For example, you could read just a few values by eye from a photometer and then interpolate a full table of intensities resembling the green curve above.  As long as you understand what gamma correction is and how to compute the gamma table you want, the method you use to generate the table is unimportant.\
+\
+But how you format the table and where you save it are important, especially if you want DotsX to load the table automatically when you call rInit and start an experiment.\
+\
+Table formats and variable names:\
+For most purposes, the gamma table should be a MATLAB array of type double (the default type) and size 256X3--256 rows and 3 columns.  The three columns may be identical.  This is the kind of table that can be loaded onto the graphics card for automatic gamma correction.  As a DotsX convention, this kind of table should be located in a variable called "gamma8bit".\
+\
+If you are using the Bits++ graphics processor in the high-resolution grayscale mode called Mono++, then you should create another gamma table.  This table should also be a MATLAB array of type double.  It should have size 65536X1--65536 rows and 1 column.  65536 is the number 2\super 16\nosupersub , representing many, many more shades of gray than a normal gamma table can represent.  This table is never loaded onto the graphics card, but it is used by the function rGraphicsCorrectGamma.  By convention, this kind of table should be located in a variable called "gamma16bit". \
+\
+Filenames and location:\
+When you or your script starts DotsX with the rInit command, DotsX will automatically look for a gamma table to load.  It will try to find a file on the MATLAB path looks something like this: "Gamma_foo.mat".  This file should contain a variable called "gamma8bit", "gamma16bit", or both.\
+\
+The file name should begin with the prefix "Gamma_".  This is just a convention for DotsX.  Then the file should contain the host name of the machine that will display your graphics.  Finally, the file should use the MATLAB ".mat" extension, just like other MATLAB data files.\
+\
+You can find the host name of your computer by executing the following in MATLAB:\
+\pard\pardeftab720
+
+\f1 \cf0 [status, hostname] = unix('hostname')\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0 \cf0 \
+If your OS X Computer Name is "foo", then you will probably get something like\
+status = 0\
+hostname = foo.local\
+\
+The ".local" part is uninteresting, so we should just use the part of hostname that comes before the ".".\
+\
+Finally, once you have a file like Gamma_foo.mat, you need to place it on the MATLAB path.  A good place would be in the folder DotsX/classes/graphics, on the computer that will show the graphics.
+\f1 \
+
+\f0 \
+If DotsX fails to find a file with the correct name for a given computer, or if either of the variables gamma8bit or gamma16bit is missing from that file, DotsX will create a default table which is simply a set of linearly spaced intensities.  Such a table would be useful when you're first measuring the gamma characteristic of a CRT.\
+\
+For more details about filenames and loading files onto the graphics card, see dXscreen.m and dXscreen/set.m.\
+\
+
+\b\fs26 See Also:
+\b0 \
+
+\fs24 DotsX/utilities/gammaCharacteristic/J17Read.m\
+DotsX/utilities/gammaCharacteristic/J17GammaCorrection.m\
+\
+DotsX/classes/graphics/@dXscreen/dXscreen.m\
+DotsX/classes/graphics/@dXscreen/set.m\
+\
+http://en.wikipedia.org/wiki/Gamma_correction}

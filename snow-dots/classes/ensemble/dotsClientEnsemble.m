@@ -104,8 +104,7 @@ classdef dotsClientEnsemble < topsEnsemble
             end
             self.openSocket();
         end
-        
-        
+                
         % Start invoking the Matlab profiler during transactions.
         % @param varargin optional configuraiton arguments to pass to
         % profile()
@@ -372,7 +371,7 @@ classdef dotsClientEnsemble < topsEnsemble
             self.txnData = txn;
             
             self.setObjectProperty@topsEnsemble(varargin{:});
-        end
+         end
         
         % Get a property value for one or more objects.
         % @param property string name of an ensemble object property

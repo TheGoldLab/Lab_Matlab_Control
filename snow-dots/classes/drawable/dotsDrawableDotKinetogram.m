@@ -1,6 +1,10 @@
 classdef dotsDrawableDotKinetogram < dotsDrawableVertices
     % @class dotsDrawableDotKinetogram
     % Animate random dots that carry a motion signal.
+    %
+    % 07/03/2018 jig updated random-number generating syntax to use
+    % recommended rng instead of rand
+    
     properties
         % the x-coordinate of the center of the dot field (degrees visual
         % angle, centered)
@@ -12,6 +16,12 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % percentage of dots that carry the intended motion signal
         coherence = 50;
+        
+        % to randomize coherence
+        coherenceSTD = 0;
+        
+        % if flip when random coherence < 0
+        flipDir = false;
         
         % density of dots in the kinetogram (dots per degree-visual-angle^2
         % per second)
@@ -63,9 +73,16 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % OpenGL stencil to use for the circular aperture
         stencilNumber = 2;
+        
+        % If not nan, this value specifies a "NO-VAR" condition that 
+        %   produces the exact sequence of dots for a given coherence 
+        %   and direction (assuming all other properties are constant).
+        %   Seed is computed as randBase+coherence+100*direction;
+        randBase = sum(clock*10);
     end
     
     properties (SetAccess = protected)
+       
         % number of dots in the kinetogram, includes all interleaving
         % frames.
         nDots;
@@ -74,6 +91,9 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % @details
         % In normalized units, from top-left of kinetogram.
         normalizedXY;
+        
+        % size of the drawing rectangle in units of degrees visual angle
+        fieldWidth;
         
         % lookup table to pick random dot direction by directionWeights
         directionCDFInverse;
@@ -94,6 +114,10 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % radial step pixelSize for dots moving by local increments (normalized
         % units)
         deltaR;
+        
+        % The random number stream used by this object, to be able
+        %   to reproduce specific dots patterns later
+        thisRandStream;        
     end
     
     methods
@@ -107,19 +131,33 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         
         % Compute some parameters and create a circular aperture texture.
         function prepareToDrawInWindow(self)
-            % access info about the drawing window
+           
+            % Get the frame rate -- rounding to nearest 10 to avoid
+            %  problems with keeping track of random positions when there
+            %  are slight differences in frame rate
             screen = dotsTheScreen.theObject();
+            frameRate = 10*round(screen.windowFrameRate/10);
             
+            % Check for random number seed
+            if isnan(self.randBase)
+               % no seed given, use the clock
+               self.thisRandStream = RandStream('mt19937ar', ...
+                  'Seed', round(sum(clock*10)));
+            else
+               % use the given seed
+               self.thisRandStream = RandStream('mt19937ar', ...
+                  'Seed', abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000)));
+            end
+               
             % gross accounting for the underlying dot field
-            fieldWidth = self.diameter*self.fieldScale;
-            self.nDots = ceil(self.density * fieldWidth^2 ...
-                / screen.windowFrameRate);
+            self.fieldWidth = self.diameter*self.fieldScale;
+            self.nDots = ceil(self.density * self.fieldWidth^2 / frameRate);
             self.frameSelector = false(1, self.nDots);
             self.dotLifetimes = zeros(1, self.nDots);
             
             % treat speed as step-per-interleaved-frame
-            self.deltaR = self.speed / self.diameter ...
-                * (self.interleaving / screen.windowFrameRate);
+            self.deltaR = self.speed / self.fieldWidth ...
+                * (self.interleaving / frameRate);
             
             % draw into an OpenGL stencil to make the circular aperture
             mglStencilCreateBegin(self.stencilNumber);
@@ -143,13 +181,14 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
                 nearest = find(directionCDF >= probs(ii), 1, 'first');
                 self.directionCDFInverse(ii) = self.direction(nearest);
             end
-            
+                        
             % pick random start positions for all dots
-            self.normalizedXY = rand(2, self.nDots);
+            self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
         end
         
         % Compute dot positions for the next frame of animation.
         function computeNextFrame(self)
+           
             % cache some properties as local variables because it's faster
             nFrames = self.interleaving;
             frame = self.frameNumber;
@@ -163,16 +202,29 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             self.frameSelector = thisFrame;
             nFrameDots = sum(thisFrame);
             
-            % pick coherent dots
+            % pick coherent dots... need to check if we flip direction
+            % based on random coherence pick
+            degreeOffset = 0;
             cohSelector = false(1, numel(thisFrame));
-            cohCoinToss = 100*rand(1, nFrameDots) < self.coherence;
+            if self.coherenceSTD==0
+               cohCoinToss = 100*self.thisRandStream.rand(1, nFrameDots) < self.coherence;
+            else
+               coh = normrnd(self.coherence, self.coherenceSTD);
+               if coh < 0
+                  if self.flipDir
+                     degreeOffset = 180;
+                  end
+                  coh = abs(coh);
+               end
+               cohCoinToss = 100*self.thisRandStream.rand(1, nFrameDots) < coh;
+            end               
             nCoherentDots = sum(cohCoinToss);
             nNonCoherentDots = nFrameDots - nCoherentDots;
             lifetimes = self.dotLifetimes;
             if self.isLimitedLifetime
                 % would prefer not to call sort
                 %   should be able to do accounting as we go
-                [frameSorted, frameOrder] = sort(lifetimes(thisFrame));
+                [~, frameOrder] = sort(lifetimes(thisFrame));
                 isDueForCoh = false(1, nFrameDots);
                 isDueForCoh(frameOrder(1:nCoherentDots)) = true;
                 cohSelector(thisFrame) = isDueForCoh;
@@ -204,20 +256,20 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             else
                 % pick from the direction distribution
                 CDFIndexes = 1 + ...
-                    floor(rand(1, nDirections)*(self.directionCDFSize));
+                    floor(self.thisRandStream.rand(1, nDirections)*(self.directionCDFSize));
                 degrees = self.directionCDFInverse(CDFIndexes);
             end
             
             if self.drunkenWalk > 0
                 % jitter the direction from a uniform distribution
                 degrees = degrees + ...
-                    self.drunkenWalk * (rand(1, nDirections) - .5);
+                    self.drunkenWalk * (self.thisRandStream.rand(1, nDirections) - 0.5);
             end
             
             % move the coherent dots
             XY = self.normalizedXY;
             R = self.deltaR;
-            radians = pi*degrees/180;
+            radians = pi*(degrees+degreeOffset)/180;
             deltaX = R*cos(radians);
             deltaY = R*sin(radians);
             XY(1,cohSelector) = XY(1,cohSelector) + deltaX;
@@ -225,10 +277,10 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             
             % move the non-coherent dots
             if self.isFlickering
-                XY(:,nonCohSelector) = rand(2, nNonCoherentDots);
+                XY(:,nonCohSelector) = self.thisRandStream.rand(2, nNonCoherentDots);
                 
             else
-                radians = 2*pi*rand(1, nNonCoherentDots);
+                radians = 2*pi*self.thisRandStream.rand(1, nNonCoherentDots);
                 deltaX = R*cos(radians);
                 deltaY = R*sin(radians);
                 XY(1,nonCohSelector) = XY(1,nonCohSelector) + deltaX;
@@ -246,18 +298,18 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
                 XY(tooSmall) = XY(tooSmall) + 1;
                 
                 % randomize the other component
-                wrapRands = rand(1, sum(componentOverrun(1:end)));
+                wrapRands = self.thisRandStream.rand(1, sum(componentOverrun(1:end)));
                 XY(componentOverrun([2,1],:)) = wrapRands;
                 
             else
                 % randomize both components when either overruns
                 overrun = any(componentOverrun, 1);
-                XY([1,2],overrun) = rand(2, sum(overrun));
+                XY([1,2],overrun) = self.thisRandStream.rand(2, sum(overrun));
             end
             
             self.normalizedXY = XY;
-            self.x = (XY(1, thisFrame)-0.5)*self.diameter + self.xCenter;
-            self.y = (XY(2, thisFrame)-0.5)*self.diameter + self.yCenter;
+            self.x = (XY(1, thisFrame)-0.5)*self.fieldWidth + self.xCenter;
+            self.y = (XY(2, thisFrame)-0.5)*self.fieldWidth + self.yCenter;
         end
         
         % Draw the next frame of animated dots in a cirular aperture.
