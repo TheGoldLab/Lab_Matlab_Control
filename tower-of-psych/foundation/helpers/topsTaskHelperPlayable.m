@@ -60,7 +60,7 @@ classdef topsTaskHelperPlayable < topsTaskHelper
       function finishPlaying(self, task, eventTag)
          
          % Play the sound
-         play(self.theObject);
+         stopSound(self.theObject);
          
          % Store the timing data
          if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
