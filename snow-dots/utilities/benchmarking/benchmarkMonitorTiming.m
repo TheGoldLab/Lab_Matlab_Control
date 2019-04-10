@@ -27,7 +27,7 @@
 
 
 %% DEFINE TEST PARAMETERS
-SCREEN_INDEX            = 0;  % 0=small rectangle on main screen; 1=main screen; 2=secondary
+SCREEN_INDEX            = 2;  % 0=small rectangle on main screen; 1=main screen; 2=secondary
 NUM_LUMINANCE_STEPS     = 5;
 NUM_REPS_PER_LUMINANCE  = 10;
 FLASH_DURATION          = 0.2;   % in ms
@@ -107,8 +107,8 @@ for ll = 1:NUM_LUMINANCE_STEPS
 
       % save with zero'ed timebase
       analogData(1:length(chans),:,ff,ll) = [ ...
-         times'-times(1), ...
-         volts'];      
+         times-times(1), ...
+         volts];      
    end
 end
 
