@@ -5,6 +5,7 @@ classdef dotsPlayableFile < dotsPlayable
       % string file name of a .wav or .mp3 file to play
       fileName = '';
       
+      
       % whether to play synchonously (true) or asynchronously
       % @details
       % Be warned that using isBlocking = false can lead to errors
@@ -91,21 +92,30 @@ classdef dotsPlayableFile < dotsPlayable
             self.sampleFrequency, self.bitsPerSample);
       end
       
+      function soundsPath= getSoundsPath(self)
+          soundsPath=self.soundsPath;
+      end
+      
+      function setSoundName(self,name)
+          self.fileName=name;
+      end
+      
       % Play from the sound file.
       function play(self)
          if isobject(self.player)
             if self.isBlocking
-               self.player.playblocking();
-            else
+               %self.player.playblocking();
+            
+          % else
                % asynchronous playing doesn't work well
-               self.player.play();
+               play(self.player);
             end
          end
       end
       
       function stopSound(self)
           if isobject(self.player)
-              self.player.stop();
+              stop(self.player);
           end
       end
    end

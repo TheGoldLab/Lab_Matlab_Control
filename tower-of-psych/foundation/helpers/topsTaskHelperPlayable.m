@@ -34,10 +34,15 @@ classdef topsTaskHelperPlayable < topsTaskHelper
       %                    struct has an entry called time_<eventTag>.
       %
       % Created 5/10/18 by jig
-      function startPlaying(self, task, eventTag)
+      function startPlaying(self, args, task, eventTag)
          
          % Play the sound
-         play(self.theObject);
+            if ~isempty(args)
+           self.theObject.callObjectMethod(@play, [], args);
+            else
+          play(self.theObject);
+            end
+         onsetTime=mglGetSecs;
          
          % Store the timing data
          if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
@@ -57,10 +62,17 @@ classdef topsTaskHelperPlayable < topsTaskHelper
       %                    struct has an entry called time_<eventTag>.
       %
       % Created 5/10/18 by jig
-      function finishPlaying(self, task, eventTag)
+      function finishPlaying(self, args, task, eventTag)
          
          % Play the sound
-         stopSound(self.theObject);
+         if ~isempty(args)
+             self.theObject.callObjectMethod(@stopSound, [], args);
+         
+
+         else
+                 stopSound(self.theObject);
+         end
+          onsetTime=mglGetSecs;
          
          % Store the timing data
          if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
