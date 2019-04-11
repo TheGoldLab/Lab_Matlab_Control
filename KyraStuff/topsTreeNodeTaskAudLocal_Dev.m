@@ -75,7 +75,7 @@ classdef topsTreeNodeTaskAudLocal_Dev < topsTreeNodeTask
         % Array of structures of independent variables, used by makeTrials
         independentVariables = struct( ...
             'name',        {'direction', 'location'}, ...
-            'values',      {[0 180], [.5 1 2 3 4 5]}, ...
+            'values',      {[0 180], [.25,.5,1,3,5]}, ...
             'priors',      {[], []});
         
         % dataFieldNames are used to set up the trialData structure
@@ -290,7 +290,7 @@ classdef topsTreeNodeTaskAudLocal_Dev < topsTreeNodeTask
             % Trial information
             trial = self.getTrial();
             trialString = sprintf('Trial %d/%d, dir=%d, coh=%.0f', self.trialCount, ...
-                numel(self.trialData), trial.direction, trial.location*2);
+                numel(self.trialData), trial.direction, trial.location*4);
             
             % Show the information
             self.statusStrings = {taskString, trialString};
@@ -575,11 +575,11 @@ classdef topsTreeNodeTaskAudLocal_Dev < topsTreeNodeTask
             % ---- Save the sound direction properties
             %
             if trial.direction==0
-                modif='R_';
-            else
                 modif='L_';
+            else
+                modif='R_';
             end
-            fileName = [ensemble.getObjectProperty('soundsPath',1), '/', modif, num2str(trial.location*2), '.wav']
+            fileName = [ensemble.getObjectProperty('soundsPath',1), '/', modif, num2str(trial.location*4), '.wav'];
            % fileName = [ensemble.getObjectProperty('soundsPath', 1), '/Whiteshort.wav'];
             ensemble.setObjectProperty('fileName', fileName, 1);
 
