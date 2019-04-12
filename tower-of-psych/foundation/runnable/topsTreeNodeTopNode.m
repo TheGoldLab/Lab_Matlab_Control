@@ -387,7 +387,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             
             % Call the dotsReadable static loadDataFile method            
             FIRA.(helperType) = feval([helperClass '.loadRawData'], ...
-               fullfile(datapath, ff{:}), FIRA.ecodes, helper);
+               fullfile(pathname, ff{:}), FIRA.ecodes, helper);
          end
          
          % Look for readableEye data
