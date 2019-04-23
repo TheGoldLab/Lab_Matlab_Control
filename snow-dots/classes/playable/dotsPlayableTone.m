@@ -5,6 +5,9 @@ classdef dotsPlayableTone < dotsPlayable
     properties
         % frequency of the sinusoid (Hz)
         frequency;
+        
+        % 1D waveform (a row vector)
+        one_d_waveform;
     end
     
     properties (SetAccess = protected)
@@ -23,11 +26,14 @@ classdef dotsPlayableTone < dotsPlayable
             nCycles = self.frequency * self.duration;
             nSamples = self.sampleFrequency * self.duration;
             rads = linspace(0, nCycles*2*pi, nSamples);
-            self.waveform = sin(rads)*self.intensity;
+            self.one_d_waveform = sin(rads)*self.intensity;
+            null_waveform = zeros(size(self.one_d_waveform));
             if strcmp(self.side,'left')
-               self.waveform = [self.waveform; zeros(size(self.waveform))];
+               self.waveform = [self.one_d_waveform; null_waveform];
             elseif strcmp(self.side,'right')
-               self.waveform = [zeros(size(self.waveform)); self.waveform];
+               self.waveform = [null_waveform; self.one_d_waveform];
+            elseif strcmp(self.side, '')
+                self.waveform = [self.one_d_waveform; self.one_d_waveform];
             end
             self.player = audioplayer(self.waveform, ...
                self.sampleFrequency, self.bitsPerSample);
