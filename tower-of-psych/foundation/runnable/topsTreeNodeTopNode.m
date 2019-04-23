@@ -314,11 +314,12 @@ classdef topsTreeNodeTopNode < topsTreeNode
                   
          % Get the pathname
          pathname = fullfile( ...
-            dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-            studyTag, 'raw', sessionTag);
+            dotsTheMachineConfiguration.getDefaultValue('dataPath') ...
+           , studyTag, 'raw', sessionTag );
          
          % Get the filename
-         filename = [sessionTag dataTag];
+         filename = [sessionTag dataTag]
+        
       end
       
       %% getDataFromFile
