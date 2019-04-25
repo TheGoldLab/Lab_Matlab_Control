@@ -71,7 +71,7 @@ classdef dotsDrawable < handle
          
          % draw() each drawable
          for ii = 1:numel(drawables)
-             drawables{ii}.mayDrawNow();
+            drawables{ii}.mayDrawNow();
          end
          
          % swap OpenGL frame buffers

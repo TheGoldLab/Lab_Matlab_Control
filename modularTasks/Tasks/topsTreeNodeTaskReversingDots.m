@@ -24,7 +24,6 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       % Trial properties. 
       %  NOTE that coherence can be given a different 
       %     topsTreeNodeTask object and get its coherence property
-      
       settings = struct( ...
          'minTrialsPerCondition',         10,      ...
          'useQuest',                      [],      ...
@@ -39,10 +38,10 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       
       % Array of structures of independent variables, used by makeTrials
       indVars = struct( ...
-         'name',        {'direction', 'coherence', 'TrialTimes', 'CPP'}, ... 
-         'values',      {[0 180], [20 30 40 50 60 70 80], [0.1 0.2 0.3 0.4 0.5], [0.5]}, ...
-         'priors',      {[], [], [], []}, ...
-         'minTrials',   {1, [], 1, 1});
+         'name',        {'direction', 'coherence', 'hazard'}, ...
+         'values',      {[0 180], [40 80], [1 3]}, ...
+         'priors',      {[], [], []}, ...
+         'minTrials',   {1, [], 1});
       
       % Timing properties
       timing = struct( ...
@@ -53,7 +52,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'showFeedback_sfb',              1.0, ...
          'interTrialInterval_iti',        1.0, ...
          'showTargetForeperiod_stf',      [0.2 0.5 1.0], ...
-         'dotsDuration_ddr',              [1],   ...
+         'dotsDuration_ddr',              [1.0 2.0 5.0],   ...
          'choiceTimeout_cto',             3.0);
       
       % Drawables settings
@@ -80,10 +79,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'name',                          'targets', ...
          'type',                          'dotsDrawableTargets', ...
          'settings',                      struct( ...
-         'nSides',                        100,           ...
-         'width',                         1.5.*[1 1 1 1],...
-         'height',                        1.5.*[1 1 1 1],...
-         'isVisible',                     true)),           ...
+         'nSides',                        100,              ...
+         'width',                         1.5.*[1 1 1 1],       ...
+         'height',                        1.5.*[1 1 1 1])),      ...
          ...
          ...   % Dots drawable settings
          struct( ...
@@ -92,22 +90,12 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          'settings',                      struct( ...
          'xCenter',                       0,                ...
          'yCenter',                       0,                ...
-         'coherenceSTD',                  10,               ...
+         'coherenceSTD',                  20,               ...
          'stencilNumber',                 1,                ...
          'pixelSize',                     6,                ...
-         'diameter',                      10,                ...
-         'density',                       180,              ...
-         'speed',                         2)),              ...
-         ...
-         ...   %Yes No text, currently just dots
-         struct( ...
-         'name',                          'YesNo', ...
-         'type',                          'dotsDrawableTargets', ...
-         'settings',                      struct( ...
-         'nSides',                        100,           ...
-         'width',                         1.5.*[1 1 1 1],...
-         'height',                        1.5.*[1 1 1 1],...
-         'isVisible',                     true))));        
+         'diameter',                      8,                ...
+         'density',                       150,              ...
+         'speed',                         3))));
 
       % Readable settings
       readables = struct( ...
@@ -117,17 +105,17 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          ...
          ...   % The gaze windows
          'dotsReadableEye', struct( ...
-         'name',              {'holdFixation', 'breakFixation', 'choseLL', 'choseLR', 'choseUP','choseDown'}, ...
+         'name',              {'holdFixation', 'breakFixation', 'choseLL', 'choseLR', 'choseHL', 'choseHR'}, ...
          'isInverted',        {false, true, false, false, false, false}, ...
          'windowSize',        {[], [], [], [], [], []}, ...
          'windowDur',         {[], [], [], [], [], []}, ...
          'ensemble',          {[], [], [], [], [], []}, ... % ensemble object to bind to
-         'ensembleIndices',   {[1 1], [1 1], [2 1], [2 2], [2 3], [2,4]}), ... % object/item indices
+         'ensembleIndices',   {[1 1], [1 1], [2 1], [2 2], [2 3], [2 4]}), ... % object/item indices
          ...
          ...   % The keyboard events .. 'uiType' is used to conditinally use these depending on the userInput type
          'dotsReadableHIDKeyboard', struct( ...
-         'name',              {'holdFixation', 'choseLL', 'choseLR', 'choseUP','choseDown' 'calibrate'}, ...
-         'component',         {'KeyboardSpacebar', 'KeyboardV', 'KeyboardN', 'KeyboardY','KeyboardH', 'KeyboardC'}));      
+         'name',              {'holdFixation', 'choseLL', 'choseLR', 'choseHL', 'choseHR', 'calibrate'}, ...
+         'component',         {'KeyboardSpacebar', 'KeyboardV', 'KeyboardN', 'KeyboardF', 'KeyboardJ', 'KeyboardC'}));      
    end
    
    properties (SetAccess = protected)
@@ -206,9 +194,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             sum([self.trialData.correct]==0), ...
             nanmean([self.trialData.RT])), ...
             ... % Trial info
-            sprintf('Trial %d/%d, dir=%d, coh=%d, TrialTimes=%d, CPP=%d', ...
+            sprintf('Trial %d/%d, dir=%d, coh=%d, haz=%d', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, trial.TrialTimes, trial.CPP)};
+            trial.direction, trial.coherence, trial.hazard)};
          self.updateStatus();
       end
             
@@ -240,7 +228,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          self.completedTrial = true;
          
          % Jump to next state when done
-         nextState = 'waitforChoiceCPP';
+         nextState = 'blank';
          
          % Get current task/trial
          trial = self.getTrial();
@@ -254,32 +242,35 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          %  0.1 = correct hazard, wrong direction
          %  0.2 = wrong hazard, correct direction
          %  1 = both correct
-%          dirs    = self.indVars(strcmp('direction', {self.indVars.name})).values;
-%          CPP = self.indVars(strcmp('CPP', {self.indVars.name})).values;
+         dirs    = self.indVars(strcmp('direction', {self.indVars.name})).values;
+         hazards = self.indVars(strcmp('hazard', {self.indVars.name})).values;
          
          % Find direction choice
-         if trial.choice==1
-            choiceDir = 180; % LEFT
-         elseif trial.choice == 2
-            choiceDir = 0; % RIGHT
+         if trial.choice==1 || trial.choice==3
+            choiceDir = dirs(cosd(dirs)<0); % LEFT
          else
-             disp('wrong key')
-             choiceDir = -3
+            choiceDir = dirs(cosd(dirs)>0); % RIGHT
          end
          
          % Find hazard choice
-%          if trial.choice <= 2
-%             choiceCPP = min(CPP);
-%          else
-%             choiceCPP = max(CPP);
-%          end
+         if trial.choice <= 2
+            choiceHaz = min(hazards);
+         else
+            choiceHaz = max(hazards);
+         end
          
-         if choiceDir == trial.direction 
-            trial.correct = .6;
+         if choiceDir == trial.direction && choiceHaz == trial.hazard
+            trial.correct = 1;
+            self.feedbackString = 'Both correct';
+         elseif choiceDir == trial.direction && choiceHaz ~= trial.hazard
+            trial.correct = 0.2;
             self.feedbackString = 'Direction correct';
-         elseif choiceDir ~= trial.direction
+         elseif choiceDir ~= trial.direction && choiceHaz == trial.hazard
+            trial.correct = 0.1;
+            self.feedbackString = 'Hazard correct';
+         else
             trial.correct = 0;
-            self.feedbackString = 'Direction incorrect';
+            self.feedbackString = 'Error';
          end
                  
          % Compute/save RT wrt dots off
@@ -291,107 +282,8 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Re-save the trial
          %
-         disp('hello')
-         self.setTrial(trial);
-%          self.readables.userInput.deactivateEvents();
-%          self.readables.userInput.flushData();
-      end   
-      
-      function nextState = checkForChoiceCPP(self, events, eventTag)
-         
-         % ---- Check for event
-         %
-                 
-         eventName = self.getEventWithTimestamp(self.readables.userInput, ...
-            events, eventTag);
-
-        % Nothing... keep checking
-         if isempty(eventName)
-            nextState = '';
-            return
-         end
-         
-         
-         % Get current task/trial
-         trial = self.getTrial(); 
-         % ---- Good choice!
-         %
-         % Override completedTrial flag
-         self.completedTrial = true;
-         
-         % Jump to next state when done
-         nextState = 'blanks';
-         
-
-         
-         % Save the direction/choice
-         trial.direction = self.directions(1);
-         trial.choiceCPP = find(strcmp(eventName, {self.readables.dotsReadableEye(3:6).name}));
-         
-         % Mark as correct/error
-         %  0   = both wrong
-         %  0.1 = correct hazard, wrong direction
-         %  0.2 = wrong hazard, correct direction
-         %  1 = both correct
-%          dirs    = self.indVars(strcmp('direction', {self.indVars.name})).values;
-        choiceDir = 1
-        CPPgo = trial.CPPflag;
-         
-         % Find direction choice
-         if trial.choiceCPP==3
-            choiceDir = 1; % Yes
-         elseif trial.choiceCPP == 4 
-            choiceDir = -1; % No
-         end
-         
-         if choiceDir == 1 && CPPgo == 1
-             trial.correct = trial.correct + 0.4;
-             self.feedbackString = strcat(self.feedbackString,'Correct, there was a direction reversal');
-         elseif choiceDir == -1 && CPPgo == 1
-             self.feedbackString = strcat(self.feedbackString,'Incorrect, there was a direction reversal');
-         elseif choiceDir == -1 && CPPgo == -1
-             trial.correct = trial.correct + 0.4;
-             self.feedbackString = strcat(self.feedbackString, 'Correct, there was no direction reversal');
-         elseif choiceDir == 1 && CPPgo == -1
-             self.feedbackString = strcat(self.feedbackString,'Incorrect, there was no direction reversal');
-         end
-         
-         
-%          % Find hazard choice
-%          if trial.choice <= 2
-%             choiceCPP = min(CPP);
-%          else
-%             choiceCPP = max(CPP);
-%          end
-% %          
-%          if choiceDir == trial.direction && choiceCPP == trial.CPP
-%             trial.correct = 1;
-%             self.feedbackString = 'Both correct';
-%          elseif choiceDir == trial.direction && choiceCPP ~= trial.CPP
-%             trial.correct = 0.2;
-%             self.feedbackString = 'Direction correct';
-%          elseif choiceDir ~= trial.direction && choiceCPP == trial.CPP
-%             trial.correct = 0.1;
-%             self.feedbackString = 'CPP correct';
-%          else
-%             trial.correct = 0;
-%             self.feedbackString = 'Error';
-%          end
-                 
-         % Compute/save RT wrt dots off
-         %  Remember that dotsOn time might be from the remote computer, whereas
-         %  sacOn is from the local computer, so we need to account for clock
-         %  differences
-         
-         %Create second RT !!!!!!
-         trial.RT = (trial.time_ui_choice - trial.time_ui_trialStart) - ...
-            (trial.time_screen_dotsOff - trial.time_screen_trialStart);
-         
-         % ---- Re-save the trial
-         %
-         disp('goodbye')
          self.setTrial(trial);                  
-      end  
+      end   
       
       %% Show feedback
       %
@@ -403,9 +295,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % --- Show trial feedback in GUI/text window
          %
          self.statusStrings{2} = ...
-            sprintf('Trial %d/%d, dir=%d, coh=%d, CPP=%d: %s, RT=%.2f, CPPflag=%d', ...
+            sprintf('Trial %d/%d, dir=%d, coh=%d, haz=%d: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData)*self.trialIterations, ...
-            trial.direction, trial.coherence, trial.CPP, self.feedbackString, trial.RT,trial.CPPflag);
+            trial.direction, trial.coherence, trial.hazard, self.feedbackString, trial.RT);
          self.updateStatus(2); % just update the second one   
          
          % --- Show trial feedback on the screen
@@ -425,21 +317,15 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          trial = self.getTrial();
 
          % Set up first reversal time wrt dots onset
-         if isempty(self.nextDotReversalTime)
-             if CoinFlip(1,trial.CPP)
+         if isempty(self.nextDotReversalTime)            
+          
             % Set it
             self.nextDotReversalTime = trial.time_local_trialStart + ...
                (trial.time_screen_dotsOn - trial.time_screen_trialStart) + ...
-               0.2;
+               exprnd(1/trial.hazard);
             
-               disp(sprintf('Change Point is %.2f, next flip in %.2f sec', ...
-               trial.CPP, self.nextDotReversalTime - mglGetSecs))
-               trial.CPPflag = 1;
-             else
-                 self.nextDotReversalTime = 100;
-                 trial.CPPflag = -1;
-             end
-                       
+            %             disp(sprintf('Hazard is %.2f, next flip in %.2f sec', ...
+            %                trial.hazard, self.nextDotReversalTime - mglGetSecs))
          end
             
          % Check for reversal time
@@ -455,12 +341,11 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             % Explicitly flip here so we can get the timestamp
             ret = self.drawables.stimulusEnsemble.callObjectMethod( ...
                @dotsDrawable.drawFrame, {}, [], true);
-           
 
             % Set next reversal time
             self.nextDotReversalTime = trial.time_local_trialStart + ...
                (ret.onsetTime - trial.time_screen_trialStart) + ...
-               200;
+               exprnd(1/trial.hazard);
 
 %             disp(sprintf('FLIPPED from %d to %d, next flip in %.2f sec', ...
 %                self.directions(2), self.directions(1), ...
@@ -469,7 +354,6 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             % Save the flip time
             self.dotReversalTimes(end+1) = ret.onsetTime;
          end
-         self.setTrial(trial);
       end
    end
    
@@ -498,11 +382,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             ty  = td*sind(self.settings.targetSeparationAngle);
             
             %  Now set the target x,y. In order: 
-            %     'choseLL', 'choseLR'
-            ensemble.setObjectProperty('xCenter', [fpX-tx fpX+tx], 2);
-            ensemble.setObjectProperty('yCenter', [fpY fpY], 2);
-            ensemble.setObjectProperty('xCenter', [fpX fpX],4);
-            ensemble.setObjectProperty('yCenter', [fpY+ty fpY-ty],4);
+            %     'choseLL', 'choseLR', 'choseHL', 'choseHR'
+            ensemble.setObjectProperty('xCenter', [fpX-tx fpX+tx fpX-tx fpX+tx], 2);
+            ensemble.setObjectProperty('yCenter', [fpY-ty fpX-ty fpX+ty fpX+ty], 2);
             
             % Utility for updating drawables with standard property format
             self.updateDrawables();
@@ -537,8 +419,6 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       %% Prepare stateMachine for this trial
       %
       function prepareStateMachine(self)
-          trial = self.getTrial();
-          self.stateMachine.editStateByName('showDots','timeout', trial.TrialTimes)
       end    
       
       %% Initialize TrialData
@@ -570,18 +450,14 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          chkuif  = {@getNextEvent, self.readables.userInput, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.userInput, false, {}}; % {'brokeFixation'}
          chkuic  = {@checkForChoice, self, {self.readables.dotsReadableEye(3:6).name}, 'choice'};
-         chkuicCPP  = {@checkForChoiceCPP, self, {self.readables.dotsReadableEye(3:6).name}, 'choice'};
          chkflp  = {@checkForFlip, self};
          showfx  = {@setAndDrawWithTimestamp, self, self.drawables.stimulusEnsemble, ...
-            {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:4}}, 'fixOn'};
+            {{'colors', [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, 2:3}}, 'fixOn'};
          showt   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 2, [], 'targsOn'};
-         showy   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 4, [], 'YesNoOn'};
          showfb  = {@showFeedback, self};
          showd   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, 3, [], 'dotsOn'};
-         hided   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], [1 3 4], 'dotsOff'};
-         hidet   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], 2, 'targsOff'};
+         hided   = {@drawWithTimestamp, self, self.drawables.stimulusEnsemble, [], [1 3], 'dotsOff'};
          pse     = {@pause 0.005};
-         
 
          % drift correction
          hfdc  = {@reset, self.readables.userInput, true};
@@ -590,7 +466,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          dce   = @setEventsActiveFlag;
          gwfxw = {dce, self.readables.userInput, 'holdFixation'};
          gwfxh = {}; 
-         gwts  = {dce, self.readables.userInput, {self.readables.dotsReadableEye(3:6).name}, 'choice'};
+         gwts  = {dce, self.readables.userInput, {self.readables.dotsReadableEye(3:6).name}, 'holdFixation'};
          % gwfxh = {}; % {dce, self.readables.userInput, 'brokeFixation', 'holdFixation'};
          % gwts  = {dce, self.readables.userInput, {'choseLeft', 'choseRight'}, 'brokeFixation'};
          
@@ -607,11 +483,10 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             'showFixation'      showfx   {}       0          {}      'waitForFixation' ; ...
             'waitForFixation'   gwfxw    chkuif   to('fxt')  {}      'blankNoFeedback' ; ...
             'holdFixation'      gwfxh    chkuib   to('hfx')  hfdc    'showTargets'     ; ...
-            'showTargets'       {}    chkuib   to('stf')     gwts    'preDots'         ; ...
+            'showTargets'       showt    chkuib   to('stf')  gwts    'preDots'         ; ...
             'preDots'           {}       {}       0          {}      'showDots'        ; ...
             'showDots'          showd    chkflp   to('ddr')  hided   'waitForChoice'   ; ...
-            'waitForChoice'     showt    chkuic   to('cto')  hidet   'waitforChoiceCPP'; ...
-            'waitforChoiceCPP'  showy    chkuicCPP to('cto') blanks  'blank'
+            'waitForChoice'     {}       chkuic   to('cto')  {}      'blank'           ; ...
             'blank'             {}       {}       0.2        blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       to('sfb')  blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0          blanks  'done'            ; ...
@@ -671,8 +546,8 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % ---- Default trialData
          %
          task.setTrialData( ...
-            {'direction', 'coherence', 'randSeedBase', 'choice', 'RT', 'correct' 'CPPflag' 'choiceCPP'}, ...
-            {'screenEnsemble', {'fixOn', 'targsOn', 'dotsOn', 'targsOff', 'fixOff', 'dotsOff', 'fdbkOn', 'YesNoOn'}, ...
+            {'direction', 'coherence', 'randSeedBase', 'choice', 'RT', 'correct'}, ...
+            {'screenEnsemble', {'fixOn', 'targsOn', 'dotsOn', 'targsOff', 'fixOff', 'dotsOff', 'fdbkOn'}, ...
             'readableList', {'choice'}});
 
          % ---- Default gaze windows

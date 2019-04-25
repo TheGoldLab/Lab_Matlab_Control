@@ -1,4 +1,4 @@
-classdef dotsAllSingletonObjects < handle 
+classdef dotsAllSingletonObjects < handle & matlab.mixin.SetGet
    % @class dotsAllSingletonObjects
    % Abstract superclass defining interface for singleton classes.
    % @details
