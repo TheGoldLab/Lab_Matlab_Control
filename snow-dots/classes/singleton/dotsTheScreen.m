@@ -238,9 +238,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       % Assigns the same struct to lastFrameInfo.
       %
       function frameInfo = nextFrame(self, doClear)
-          global toLogTrialIndex
-%          global toLogNumDots
-          global toLogNumFrames
                   
          if nargin < 2
             doClear = true;
@@ -267,16 +264,6 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             {'onsetTime', 'onsetFrame', 'swapTime', 'isTight'};
          frameInfo = cell2struct(frameInfoData, frameInfoNames, 2);
          self.lastFrameInfo = frameInfo;
-         
-         % add two specific fields for precise debugging
-         frameInfo.trialIndex = toLogTrialIndex;
-%         frameInfo.numDots = toLogNumDots;
-         
-         % dump frameInfo for debugging
-         topsDataLog.logDataInGroup(frameInfo, 'frameInfo')
-         
-         % update global toLogNumFrames variable
-         toLogNumFrames = toLogNumFrames + 1;
       end
       
       % Gets the current time
