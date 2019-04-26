@@ -99,7 +99,8 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         dotsPositions = [];
         
         % Flag controlling whether to record dots positions or not
-        recordDotsPositions = true;
+	% Note, this doesn't record any time stamp. 
+        recordDotsPositions = false;
     end
     
     properties (SetAccess = protected)
