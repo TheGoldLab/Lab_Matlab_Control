@@ -114,8 +114,8 @@ classdef dotsPlayableFile < dotsPlayable
       end
       
       function stopSound(self)
-          if isobject(self.player)
-              stop(self.player);
+          if isobject(self.player) 
+                stop(self.player);
           end
       end
    end

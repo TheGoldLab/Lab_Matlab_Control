@@ -45,10 +45,12 @@ classdef topsTaskHelperPlayable < topsTaskHelper
          onsetTime=mglGetSecs;
          
          % Store the timing data
-         if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
-            % GET PLAYABLE TIME TO DO!!!!!
-            task.setTrialData([], eventTag, onsetTime);
+          if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
+             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+            task.setTrialData([], eventTag, onsetTime - ...
+                referenceTime + offsetTime);
          end
+         
       end
       
       %% play(self, args, task, eventTag)
@@ -63,7 +65,7 @@ classdef topsTaskHelperPlayable < topsTaskHelper
       %
       % Created 5/10/18 by jig
       function finishPlaying(self, args, task, eventTag)
-         
+         onsetTime=mglGetSecs;
          % Play the sound
          if ~isempty(args)
              self.theObject.callObjectMethod(@stopSound, [], args);
@@ -72,12 +74,13 @@ classdef topsTaskHelperPlayable < topsTaskHelper
          else
                  stopSound(self.theObject);
          end
-          onsetTime=mglGetSecs;
+          
          
          % Store the timing data
-         if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
-            % GET PLAYABLE TIME TO DO!!!!!
-            task.setTrialData([], eventTag, onsetTime);
+         if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
+             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+            task.setTrialData([], eventTag, onsetTime - ...
+                referenceTime + offsetTime);
          end
       end
    end
