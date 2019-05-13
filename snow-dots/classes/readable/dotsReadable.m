@@ -1106,6 +1106,14 @@ classdef dotsReadable < handle
          if isempty(data)
             isEvent = false;
             return
+         else
+            Ldat = data(:,1)<=length(self.eventDefinitions);
+            if ~any(Ldat)
+               isEvent = false;
+               return
+            elseif ~all(Ldat)
+               data = data(Ldat,:);
+            end
          end
          
          %> Get the event definition for each incoming ID
