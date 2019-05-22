@@ -30,8 +30,8 @@ classdef dotsPlayable < handle
         % n is the number of sound samples (i.e. the length of the sound).
         waveform;
         
-        %If a sound should only play in the left side or right side. Enter
-        %in 'left' or 'right'. Keep empty for both sides.
+        % If a sound should only play in the left side or right side. Enter
+        % in 'left' or 'right'. Keep empty for both sides.
         side = '';
         
         % Should we block until done?
@@ -63,6 +63,10 @@ classdef dotsPlayable < handle
         
         % Subclass must redefine play() to play a sound.
         function play(self)
+        end
+        
+        % Subclass must redefine stopPlaying() to stop playing a sound.
+        function stopPlaying(self, waitForEndOfPlayback)
         end
         
         % Shorthand to set isAudible=true.

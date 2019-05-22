@@ -164,38 +164,37 @@ classdef dotsDrawableText < dotsDrawable
    
    methods (Static)
       
-      % function ensemble = makeEnsemble(name, num, yOffset, screenEnsemble)
+      % function ensemble = makeEnsemble(name, num, yOffset)
       %
       % Convenient utility for combining a bunch of dotsDrawableText objects that
       %  will show vertically positioned strings into an ensemble
       %
       % Aguments:
-      %  name           ... optional <string> name of the ensemble/composite
-      %  num            ... number of objects to make
-      %  yOffset        ... vertical separation beween text strings on the screen
-      %  screenEnsemble ... ensemble containing the screen object, which we use
-      %                       to determine client/server behavior
-      %
-      function ensemble = makeEnsemble(name, num, yOffset)
+      %  name     ... optional <string> name of the ensemble/composite
+      %  numTexts ... number of text objects to make
+      %  spacing  ... vertical separation beween text strings on the screen
+      function ensemble = makeEnsemble(name, numTexts, spacing)
          
          if nargin < 1 || isempty(name)
             name = 'textEnsemble';
          end
          
-         if nargin < 2 || isempty(num)
-            num = 2;
+         if nargin < 2 || isempty(numTexts)
+            numTexts = 2;
          end
          
-         if nargin < 3 || isempty(yOffset)
-            yOffset = 3;
+         if nargin < 3 || isempty(spacing)
+            spacing = 2;
          end
          
          % Check dotsTheScreen for the screenEnsemble
          screenEnsemble = dotsTheScreen.theEnsemble();
          if isempty(screenEnsemble) || ~isa(screenEnsemble, 'dotsClientEnsemble')
+
             % Local
             remoteInfo = {false};
          else
+            
             % Remote
             remoteInfo = {true, ...
                screenEnsemble.clientIP, ...
@@ -207,12 +206,14 @@ classdef dotsDrawableText < dotsDrawable
          % create the ensemble
          ensemble = dotsEnsembleUtilities.makeEnsemble([name 'Ensemble'], remoteInfo{:});
          
-         offsets = (0:num-1).*yOffset;
-         offsets = -(offsets - (offsets(end)-offsets(1))/2);
+         % Make y offsets
+         ys = (0:numTexts-1).*spacing;
+         ys = -(ys - mean(ys));
+         
          % make and add the objects
-         for ii = 1:num
+         for ii = 1:numTexts
             text = dotsDrawableText();
-            text.y = offsets(ii);
+            text.y = ys(ii);
             ensemble.addObject(text);
          end
       end
@@ -225,14 +226,14 @@ classdef dotsDrawableText < dotsDrawable
       %                     rows are done in separate screens
       %                     columns should correspond to the # of text objects in
       %                     the ensemble to show at once
-      %  useDefaultSpacing ... space along y axis
+      %  defaultSpacing ... space along y axis
       %  showDuration  ... Time (in sec) to show the text
       %  pauseDuration ... Time (in sec) to pause after showing the text
       %
       function ret = drawEnsemble(textEnsemble, textStrings, ...
-            useDefaultSpacing, showDuration, pauseDuration)
+            spacing, showDuration, pauseDuration)
          
-         % Check ensemble
+         % Make ensemble if not given
          if isempty(textEnsemble)
             textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
                size(textStrings,2), []);
@@ -240,18 +241,19 @@ classdef dotsDrawableText < dotsDrawable
          
          % ---- Turn off "extra" objects
          %
-         extraObjectIndices = (size(textStrings,2)+1):length(textEnsemble.objects);
+         numTexts = size(textStrings,2);
+         extraObjectIndices = (numTexts+1):length(textEnsemble.objects);
          if length(extraObjectIndices) > 1
             textEnsemble.setObjectProperty('isVisible', false, extraObjectIndices);
          end
          
-         % ---- Possibly set up default spacing
+         % ---- Set up spacing
          %
-         if nargin >= 3 && useDefaultSpacing
+         if nargin >= 3 && ~isempty(spacing) && spacing > 0
             
-            ys = (0:4:4*(size(textStrings,2)-1));
+            ys = (0:numTexts-1).*spacing;
             ys = -(ys - mean(ys));
-            for ii = 1:size(textStrings, 2)
+            for ii = 1:numTexts
                textEnsemble.setObjectProperty('y', ys(ii), ii);
             end
          end
@@ -261,7 +263,7 @@ classdef dotsDrawableText < dotsDrawable
          for ii = 1:size(textStrings, 1)
             
             % Set text strings in the given set
-            for jj = 1:size(textStrings, 2) % many possible text objects
+            for jj = 1:numTexts % many possible text objects
                if isempty(textStrings{ii,jj})
                   textEnsemble.setObjectProperty('isVisible', false, jj);
                else

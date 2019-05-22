@@ -14,6 +14,8 @@ classdef topsTaskHelperFeedback < topsTaskHelper
       
       % For text spacing
       defaultTextSpacing = 4;
+      
+      % 
    end   
    
    properties (SetAccess = private)
@@ -45,13 +47,13 @@ classdef topsTaskHelperFeedback < topsTaskHelper
             
          % Add images
          if nargin < 1 || isempty(images)
-            images = {'thumbsUp.jpg', 12; 'greatJob.jpg', 12; 'Oops.jpg', 12; 'gofast.jpg', 12};
+            images = {'thumbsUp.jpg', 12; 'greatJob.jpg', 12; 'Oops.jpg', 12; 'goFast.jpg', 12};
          end
          self.setImages(images);
          
          % Add sounds
          if nargin < 2 || isempty(sounds)
-            sounds = {'correct1.mp3' 'error1.wav' 'cash_register.wav' 'buzzer.wav'};
+            sounds = {'correct1.mp3' 'error1.wav' 'cashRegister.wav' 'buzzer.wav'};
          end
          self.setSounds(sounds);         
       end
@@ -164,6 +166,7 @@ classdef topsTaskHelperFeedback < topsTaskHelper
       %
       % Other optional arguments are property/value pairs used by showMessage:
       %  showDuration   ... in sec
+      %  hideAll        ... hide all graphics objects
       %  blank          ... whether or not to blank screen at the end (default=true)
       %  task           ... the topsTreeNode task caller
       %  eventTag       ... string used to store timing information in trial
@@ -174,19 +177,25 @@ classdef topsTaskHelperFeedback < topsTaskHelper
          % parse args
          p = inputParser;
          p.addRequired('self');
-         p.addParameter('text',          {});
-         p.addParameter('image',         {});
-         p.addParameter('sound',         {});
-         p.addParameter('showDuration',  self.defaultDuration);
-         p.addParameter('clearAll',      true);
-         p.addParameter('blank',         true);
-         p.addParameter('task',          []);
-         p.addParameter('eventTag',      []);
+         p.addParameter('text',       {});
+         p.addParameter('image',      {});
+         p.addParameter('sound',      {});
+         p.addParameter('duration',   self.defaultDuration);
+         p.addParameter('hideAll',    true);
+         p.addParameter('bgStart',    []);
+         p.addParameter('bgEnd',      []);
+         p.addParameter('task',       []);
+         p.addParameter('eventTag',   []);
          p.parse(self, varargin{:});
          
          % First hide everything
-         if p.Results.clearAll
+         if p.Results.hideAll
             self.theObject.setObjectProperty('isVisible', false);
+         end
+
+         % Set background
+         if ~isempty(p.Results.backgroundStartColor)
+            dotsTheScreen.blankScreen(p.Results.backgroundStartColor);
          end
          
          % Check for positions
@@ -248,13 +257,13 @@ classdef topsTaskHelperFeedback < topsTaskHelper
          end
          
          % Wait
-         pause(p.Results.showDuration);
+         pause(p.Results.duration);
          
-         % Blank the screen
-         if p.Results.blank
-            dotsTheScreen.blankScreen();
+         % Set background
+         if ~isempty(p.Results.backgroundEndColor)
+            dotsTheScreen.blankScreen(p.Results.backgroundEndColor);
          end
-         
+
          % Conditionally store the timing data, with synchronization offset
          if ~isempty(p.Results.task) && ~isempty(p.Results.eventTag)
             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();

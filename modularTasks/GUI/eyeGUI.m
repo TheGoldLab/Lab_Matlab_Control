@@ -168,14 +168,15 @@ guidata(hObject, handles);
 
 % ---- Call when updating the gui within a task
 %
-function eyeGUI_updateTaskStatus(hObject, eventdata, handles, task, indices)
+function eyeGUI_updateStatusStrings(hObject, eventdata, handles, task, ...
+   taskStatusString, trialStatusString)
 
 % Set the status strings
-if any(indices==1)
-   set(handles.status2text, 'String', task.statusStrings{1});
+if ~isempty(taskStatusString)
+   set(handles.status2text, 'String', taskStatusString);
 end
-if any(indices==2)
-   set(handles.status3text, 'String', task.statusStrings{2});
+if ~isempty(trialStatusString)
+   set(handles.status3text, 'String', trialStatusString);
 end
 drawnow;
 

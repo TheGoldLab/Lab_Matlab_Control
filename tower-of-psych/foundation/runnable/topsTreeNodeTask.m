@@ -40,6 +40,9 @@ classdef topsTreeNodeTask < topsTreeNode
         % Index of current trial (in trialIndices array)
         trialCount = 0;
         
+        % Whether or not to automatically go to the next trial
+        autoIncrementTrial = true;
+        
         % Number of times to run through this node's trials
         trialIterations = 1;
         
@@ -51,11 +54,7 @@ classdef topsTreeNodeTask < topsTreeNode
         randomizeWhenRepeating = true;
         
         % Array of trial indices, in order of calling
-        trialIndices = [];
-        
-        % Status strings to give feedback. We put them here in case a gui
-        % needs them
-        statusStrings = {};
+        trialIndices = [];        
     end
     
     properties (SetAccess = protected)
@@ -139,7 +138,13 @@ classdef topsTreeNodeTask < topsTreeNode
                 % self.helpers.(hh{:}).bind(self);
             end
             
-            % Call sub-class startTask method
+            % By default, set the taskID to the taskTypeID if it isn't
+            % already set to something else
+            if self.taskID == -1 && self.taskTypeID ~= -1
+               self.taskID = self.taskTypeID;
+            end
+            
+            % Call child's startTask method
             self.startTask();
             
             % Set up trials
@@ -260,7 +265,7 @@ classdef topsTreeNodeTask < topsTreeNode
             % variables
             ntr = numel(grids{1}) * trialIterations;
             self.trialData = repmat(self.trialData(1), ntr, 1);
-            [self.trialData.taskID] = deal(self.taskTypeID);
+            [self.trialData.taskID] = deal(self.taskID);
             trlist = num2cell(1:ntr);
             [self.trialData.trialIndex] = deal(trlist{:});
             
@@ -307,7 +312,7 @@ classdef topsTreeNodeTask < topsTreeNode
         %% Utility to save timing data in the trialData struct
         %     using a standard format
         %
-        function setTrialData(self, trialIndex, tag, value)
+        function setTrialData(self, trialIndex, varargin)
             
             if isempty(trialIndex)
                 trialIndex = self.trialIndices(self.trialCount);
@@ -315,8 +320,10 @@ classdef topsTreeNodeTask < topsTreeNode
                 trialIndex = self.trialIndices(trialIndex);
             end
             
-            % save with 'time_' prefix
-            self.trialData(trialIndex).(tag) = value;
+            % Varargin is property/value pairs
+            for ii = 1:2:nargin-2
+               self.trialData(trialIndex).(varargin{ii}) = varargin{ii+1};
+            end
         end
         
         %% setIndependentVariableByName
@@ -523,37 +530,40 @@ classdef topsTreeNodeTask < topsTreeNode
                 % Updating the trial!
                 %
                 % Increment the trial counter
-                self.trialCount = self.trialCount + 1;
+                if self.autoIncrementTrial
+                   self.trialCount = self.trialCount + 1;
+                end
                 
                 % Check for end of trials
                 if self.trialCount > length(self.trialIndices)
-                    
-                    % Done!
-                    self.isRunning = false;
+                   
+                   % Done!
+                   self.isRunning = false;
                 end
             end
         end
         
         %% show status
         %
-        function updateStatus(self, indices)
+        function updateStatus(self, taskStatusString, trialStatusString)
             
-            % Check arg
-            if nargin < 2 || isempty(indices)
-                indices = 1:length(self.statusStrings);
-            end
-            
-            % Always print in command window
-            % Loop through the indices
-            for ii = indices
-                if ii == 1
-                    disp(' ')
-                end
-                disp(self.statusStrings{ii})
-            end
-            
-            % Possibly update the gui using the new task
-            self.caller.updateGUI('_updateTaskStatus', self, indices);
+           % Check for taskStatusString
+           if nargin < 2
+              taskStatusString = '';
+           elseif ~isempty(taskStatusString)
+              disp(' ')
+              disp(taskStatusString)
+           end
+           
+           % Check for trialStatusString
+           if nargin < 3
+              trialStatusString = '';
+           elseif ~isempty(trialStatusString)
+              disp(trialStatusString)
+           end
+           
+           % Update GUI
+            self.caller.updateGUI('_updateStatusStrings', self, taskStatusString, trialStatusString);
         end
         
         %% setNextState
