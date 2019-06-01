@@ -88,12 +88,8 @@ classdef dotsDrawable < handle
       % Aguments:
       %  name           ... optional <string> name of the ensemble/composite
       %  objects        ... cell array of drawable objects
-      %  screenEnsemble ... ensemble containing the screen object, which we use
-      %                       to determine client/server behavior
-      %  automateDraw   ... flag indicating whether or not to add automate draw
-      %                       method
       %
-      function ensemble = makeEnsemble(name, objects, automateDraw)
+      function ensemble = makeEnsemble(name, objects)
          
          if isempty(name)
             name = 'drawable';
@@ -121,10 +117,8 @@ classdef dotsDrawable < handle
             ensemble.addObject(objects{ii});
          end
          
-         % possibly automate drawing
-         if nargin >= 3 && automateDraw
-            ensemble.automateObjectMethod('draw', @mayDrawNow);
-         end
+         % Automate drawing
+         ensemble.automateObjectMethod('draw', @mayDrawNow);
       end
       
       % Convenient utility for drawing an ensemble

@@ -168,6 +168,36 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'holdFixation'}, ...
          'component',                  {'auto_1'})}}))));
+      
+      % Feedback messages
+      message = struct( ...
+         ...
+         'groups',                     struct( ...
+         ...
+         ...   Instructions
+         'Instructions',               struct( ...
+         'text',                       2, ...
+         'duration',                   1, ...
+         'bgEnd',                      [0 0 0]), ...
+         ...
+         ...   Correct
+         'Correct',                    struct(  ...
+         'text',                       {{'Correct', 'y', 6}}, ...
+         'images',                     {{'thumbsUp.jpg', 'y', -6}}, ...
+         'playable',                   'cashRegister.wav', ...
+         'bgStart',                    [0 0.6 0], ...
+         'bgEnd',                      [0 0 0]), ...
+         ...
+         ...   Error
+         'Error',                      struct(  ...
+         'text',                       'Error', ...
+         'playable',                   'buzzer.wav', ...
+         'bgStart',                    [0.6 0 0], ...
+         'bgEnd',                      [0 0 0]), ...
+         ...
+         ...   No choice
+         'No_choice',                  struct(  ...
+         'text',                       'No choice - please try again!')));
    end
    
    properties (SetAccess = protected)
@@ -233,8 +263,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Show task-specific instructions
          %
-         self.helpers.feedback.show('text', self.settings.textStrings, ...
-            'showDuration', self.timing.showInstructions);
+         self.helpers.message.show('Instructions');
          pause(self.timing.waitAfterInstructions);
       end
       
@@ -368,9 +397,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Get current task/trial
          trial = self.getTrial();
          
+         % Get feedback message group
+         if trial.correct == 1
+            messageGroup = 'Correct';
+            self.helpers.message.setText('Good choice!');
+         elseif trial.correct == 0
+            messageGroup = 'Error';
+            self.helpers.message.setText('Bad choice!');
+         else
+            messageGroup = 'No_choice';
+         end
+         
          %  Check for RT feedback
-         RTstr = '';
-         imageIndex = self.settings.correctImageIndex;
          if self.name(1) == 'S'
             
             % Check current RT relative to the reference value
@@ -382,35 +420,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             
             if isfinite(RTRefValue)
                if trial.RT <= RTRefValue
-                  RTstr = ', in time';
+                  messageGroup = 'Correct';
+                  self.helpers.message.setText('In time!');
                else
-                  RTstr = ', try to decide faster';
-                  imageIndex = self.settings.errorTooSlowImageIndex;
+                  messageGroup = 'Error';
+                  self.helpers.message.setText('Try to decide faster!');
                end
             end
-         end
-         
-         % Set up feedback based on outcome
-         if trial.correct == 1
-            feedbackStr = 'Correct';
-            feedbackArgs = { ...
-               'backgroundStartColor', [0 0.6 0], ...
-               'backgroundEndColor',   [0 0 0], ...
-               'text',  [feedbackStr RTstr], ...
-               'image', imageIndex, ...
-               'sound', self.settings.correctPlayableIndex};
-            
-         elseif trial.correct == 0
-            feedbackStr = 'Error';
-            feedbackArgs = { ...
-               'backgroundStartColor', [0.6 0 0], ...
-               'backgroundEndColor',   [0 0 0], ...
-               'text',  [feedbackStr RTstr], ...
-               'image', self.settings.errorImageIndex, ...
-               'sound', self.settings.errorPlayableIndex};
-         else
-            feedbackStr = 'No choice';
-            feedbackArgs = {'text', 'No choice, please try again.'};
          end
          
          % --- Show trial feedback in GUI/text window
@@ -418,12 +434,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          trialString = ...
             sprintf('Trial %d/%d, dir=%d, coh=%.0f: %s, RT=%.2f', ...
             self.trialCount, numel(self.trialData), ...
-            trial.direction, trial.coherence, feedbackStr, trial.RT);
+            trial.direction, trial.coherence, messageGroup, trial.RT);
          self.updateStatus([], trialString); % just update the second one
          
-         % --- Show trial feedback on the screen
+         % ---- Show trial feedback on the screen
          %
-         self.helpers.feedback.show(feedbackArgs{:});
+         self.helpers.message.show(messageGroup);
       end
       
       %% Get Quest threshold value(s)
@@ -663,7 +679,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          Lsat  = strcmp(name(1), SATsettings(:,1));
          Lbias = strcmp(name(2), BIASsettings(:,1));
-         task.settings.textStrings = {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
+         task.message.groups.Instructions.text = ...
+            {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
          task.settings.referenceRT = SATsettings{Lsat, 3};
          task.setIndependentVariableByName('direction', 'priors', BIASsettings{Lbias, 3});
       end

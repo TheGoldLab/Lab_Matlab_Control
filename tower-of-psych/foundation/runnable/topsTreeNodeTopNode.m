@@ -79,34 +79,45 @@ classdef topsTreeNodeTopNode < topsTreeNode
       
       %% Add readable, with initialization/cleanup
       %
-      %  Arguments (requred):
+      %  Arguments (required):
       %     constructor    ... string name of helper constructor
+      %  Parameters (optional):
       %     doRecording    ... flag to start/stop recording automatically
       %     doCalibration  ... flag to automatically do calibration at start
       %     doShow         ... flag to show output (usu. eye position)
       %                             after calibration
       %     varargin       ... arguments to helper constructor
-      function theHelper = addReadable(self, constructor, ...
-            doRecording, doCalibration, doShow, varargin)
+      function theHelper = addReadable(self, readableName, varargin)
 
+         p = inputParser;
+         p.StructExpand = false;
+         p.KeepUnmatched = true;
+         p.addRequired( 'self');
+         p.addRequired( 'readableName');
+         p.addParameter('doRecording',      false);
+         p.addParameter('doCalibration',    false);
+         p.addParameter('doShow',           false);
+         p.parse(self, readableName, varargin{:});
+                  
          % add the helper, with optional args
-         theHelper = self.addHelpers(constructor, varargin{:});
-         theObject = theHelper.(varargin{1}).theObject;
+         args = orderParams(p.Unmatched, varargin, true);
+         theHelper = self.addHelpers('readable', readableName, 'fevalable', readableName, args{:});
+         theObject = theHelper.(readableName).theObject;
 
          % START CALLS
          %
          % Calibrate
-         if doCalibration
+         if p.Results.doCalibration
             self.addCall('start', {@calibrate}, 'calibrate',  theObject);
          end
             
          % Show calibration
-         if doShow
+         if p.Results.doShow
             self.addCall('start', {@calibrate, 's'}, 'show',  theObject);
          end
    
          % Turn on data recordings
-         if doRecording
+         if p.Results.doRecording
             self.addCall('start',  {@record, true}, 'record on',  theObject);
          end
             
@@ -116,7 +127,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          self.addCall('finish', {@close}, 'close', theObject);
          
          % Turn of data recordings
-         if doRecording
+         if p.Results.doRecording
             self.addCall('finish', {@record, false}, 'record off', theObject);
          end
       end
@@ -209,8 +220,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
          if self.isStarted
             
             % Show the final message
-            if ~isempty(self.closingMessage) && isfield(self.helpers, 'feedback');
-               self.helpers.feedback.show('text', self.closingMessage);
+            if ~isempty(self.closingMessage)
+               dotsDrawableText.showText(self.closingMessage, 'showDuration', 3);
             end
             
             % Stop the runnable

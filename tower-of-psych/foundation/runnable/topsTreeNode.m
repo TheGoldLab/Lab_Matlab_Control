@@ -60,7 +60,7 @@ classdef topsTreeNode < topsRunnableComposite
       inheritHelpers = 'all';
       
       % List of helper types
-      helperTypes = {'drawable', 'playable', 'readable', 'writable', 'general'};
+      helperTypes = {'drawable', 'playable', 'readable', 'writable', 'message', 'general'};
    end
      
    methods

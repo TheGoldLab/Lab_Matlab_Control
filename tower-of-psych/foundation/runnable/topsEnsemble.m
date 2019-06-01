@@ -426,4 +426,33 @@ classdef topsEnsemble < topsCallList
             self.setActiveByName(isActive, name);
         end
     end
+    
+    methods (Static)
+       
+       % Convenient utility for combining a bunch of objects into an ensemble
+       %
+       % Aguments:
+       %  name           ... optional <string> name of the ensemble/composite
+       %  objects        ... cell array of objects
+       %
+       function ensemble = makeEnsemble(name, objects)
+          
+          if nargin < 1 || isempty(name)
+             name = 'ensemble';
+          end
+          
+          % Check for drawable objects, in which case we want to make a
+          % drawable ensemble
+          if nargin >= 2 && any(cellfun(@(x) isa(x, 'dotsDrawable'), objects))
+             ensemble = dotsDrawable.makeEnsemble(name, objects);
+          else
+             ensemble = topsEnsemble(name);
+             if nargin >= 2 && ~isempty(objects)
+                for ii = 1:length(objects)
+                   theObject.addObject(objects{ii});
+                end
+             end
+          end
+       end
+    end
 end

@@ -11,31 +11,33 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
       
       % Constuct the helper
       %
-      % Arguments:
+      % Optional parameters:
       %  displayIndex         ... used by dotsTheScreen
       %  remoteDrawing        ... flag
       %  topsTreeNode         ... typically the top node, to bind
-      function self = topsTaskHelperScreenEnsemble(displayIndex, ...
-            remoteDrawing, topsTreeNode, varargin)
+      function self = topsTaskHelperScreenEnsemble(varargin)
          
-         % Check args
-         if nargin < 1 || isempty(displayIndex)
-            displayIndex = 0;
-         end
-         
-         if nargin < 2 || isempty(remoteDrawing)
-            remoteDrawing = false;
-         end
+         % Parse the arguments
+         p = inputParser;
+         p.StructExpand = false;
+         p.KeepUnmatched = true;
+         p.addParameter('displayIndex',     0);
+         p.addParameter('remoteDrawing',    false);
+         p.addParameter('topNode',          []);
+         p.parse(varargin{:});
+
+         % add the helper, with optional args
+         args = orderParams(p.Unmatched, varargin, true);
          
          % Create it
          self = self@topsTaskHelper('screenEnsemble', [], ...
-            'fevalable',  {@dotsTheScreen.theEnsemble, remoteDrawing, displayIndex}, ...
-            varargin{:});
+            'fevalable',  {@dotsTheScreen.theEnsemble, ...
+            p.Results.remoteDrawing, p.Results.displayIndex}, args{:});
          
          % Bind to the treeNode
-         if nargin >= 3 && ~isempty(topsTreeNode)
-            topsTreeNode.addCall('start',  {@callObjectMethod, @open},  'start',  self.theObject);
-            topsTreeNode.addCall('finish', {@callObjectMethod, @close}, 'finish', self.theObject);
+         if ~isempty(p.Results.topNode)
+            p.Results.topNode.addCall('start',  {@callObjectMethod, @open},  'start',  self.theObject);
+            p.Results.topNode.addCall('finish', {@callObjectMethod, @close}, 'finish', self.theObject);
          end
          
          % Add synchronization

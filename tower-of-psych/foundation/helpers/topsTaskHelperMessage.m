@@ -14,49 +14,72 @@ classdef topsTaskHelperMessage < topsTaskHelper
       defaultDuration = 1.0;
       
       % For drawable object vertical spacing
-      defaultSpacing = 2;
+      defaultSpacing = 3;
    end
    
    properties (SetAccess = private)
       
       % Message groups
       messageGroups=[];
-      
-      % Flag, whether or not "prepareToDraw" needs to be called.. may
-      % revisit this later
-      isPreparedToDraw = false;
    end
    
    methods
       
       % Constuctor. Arguments are sent to setResources
       %
-      function self = topsTaskHelperMessage(groupArgs, varargin)
+      function self = topsTaskHelperMessage(name, varargin)
+         
+         if nargin < 1
+            name = 'message';
+         end
+         
+         % Check if name is "groups", then parse as such
+         if strcmp(name, 'groups')
+            name     = 'message';
+            groups   = varargin;
+            varargin = {};
+         else
+            groups = [];
+         end
          
          % Call the topsTaskHelper constructor
-         self = self@topsTaskHelper('message', [], varargin{:});
+         self = self@topsTaskHelper(name, [], varargin{:});
+
+         % Add the groups
+         if ~isempty(groups)
+            self.addGroups(groups{:});
+         end
+      end
+      
+      % addGroups
+      %
+      % message.addGroups('name', <struct>, ...)      
+      function addGroups(self, varargin)
          
-         % If group args given, add the group
-         self.addGroup(groupArgs{:});
+         for ii = 1:2:nargin-1
+            args = struct2args(varargin{ii+1});
+            self.addGroup(varargin{ii}, args{:});
+         end
       end
       
       % addGroup
       %  message.addGroup(<groupName>, ...
-      %  	'texts',  {'<string1>', {args1}, '<string2>'}, ...
-      %     'images', {'<filename2>', {args1}, '<filename2>, {args2}}, ...
+      %  	'text',  {'<string1>', {args1}, '<string2>'}, ...
       %     'drawables',   ...
-      %        {{<function handle>, {args}}, ...
+      %        {{<function handle>, args}, {...}}, ...
       %     'playable', '<filename>', ...
-      %     <other args>
+      %     <optional parameter/value pairs>
       %
-      % Other optional arguments are property/value pairs used by showMessage:
+      % Other optional arguments are property/value pairs used 
+      %  by show method:
+      %  text       ... add text object(s). Syntax is detailed in parseDrawable.
+      %  images     ... add image object(s). Syntax is detailed in parseDrawable.
+      %  drawables  ... cell array of drawable specs, each is {<function
+      %                    handle>, 'arg1', val1', ...}
+      %  playable   ... filename for auditory object
       %  duration   ... in sec
-      %  hideAll    ... hide all graphics objects
-      %  blank      ... whether or not to blank screen at the end (default=true)
-      %  task       ... the topsTreeNode task caller
-      %  eventTag   ... string used to store timing information in trial
-      %                       struct. Assumes that the current trialData
-      %                       struct has an entry called time_<eventTag>.
+      %  bgStart    ... background color [r g b] to use at start
+      %  bgEnd      ... background color [r g b] to use at end
       function addGroup(self, groupName, varargin)
          
          % parse args
@@ -64,97 +87,85 @@ classdef topsTaskHelperMessage < topsTaskHelper
          p.addRequired('self');
          p.addRequired('groupName');
          p.addParameter('useExisting', true);
-         p.addParameter('texts',       {});
+         p.addParameter('text',        {});
          p.addParameter('images',      {});
          p.addParameter('drawables',   {});
          p.addParameter('playable',    {});
          p.addParameter('duration',    self.defaultDuration);
-         p.addParameter('hideAll',     true);
+         p.addParameter('pauseAfterDuration', 0);
          p.addParameter('bgStart',     []);
          p.addParameter('bgEnd',       []);
-         p.parse(varargin{:});
+         p.parse(self, groupName, varargin{:});
 
          % Check for existing
-         if p.Results.useExisting && isfield(self.messageGroups, name)
+         if p.Results.useExisting && isfield(self.messageGroups, groupName)
             return
          end
          
          % Make the group
          theGroup = struct( ...
-            'ensemble',       dotsDrawable.makeEnsemble(groupName, [], true), ...
-            'textIndices',    [],                  ...
-            'imageIndices',   [],                  ...
-            'sound',          [],                  ...
-            'duration',       p.Results.duration,  ...
-            'hideAll',        p.Results.hideAll,   ...
-            'bgStart',        p.Results.bgStart,   ...
-            'bgEnd',          p.Results.bgEnd);
+            'drawableEnsemble',     [],                           ...
+            'textIndices',          [],                           ...
+            'playable',             [],                           ...
+            'isPrepared',           false,                        ...
+            'duration',             p.Results.duration,           ...
+            'pauseAfterDuration',   p.Results.pauseAfterDuration, ...
+            'bgStart',              p.Results.bgStart,            ...
+            'bgEnd',                p.Results.bgEnd);
          
-         % Collect fevalables, which are handle/argument cell pairs
-         fevalables = p.Results.drawables;
+         % Collect drawable specs, are cell arrays
+         drawable = p.Results.drawables;
          
-         % Check for text/image to add to fevalables: 
-         % First argument is string (text string or file name)
-         % Second (optional) argument is cell array of property/value pairs
-         specs = { ...
-            'texts',  'string',    'textIndices', @dotsDrawableText; ...
-            'images', 'fileNames', 'imageIndices', @dotsDrawableImage};         
-         for ss = 1:size(specs, 2)
-            
-            % Check for arguments
-            if ~isempty(p.Results.(specs{ss,1}))
+         % Add texts
+         if ~isempty(p.Results.text)
+            drawable = cat(2, drawable, ...
+               self.parseDrawable(p.Results.text, @dotsDrawableText, 'string'));
+         end
 
-               % Get the cell array of arguments
-               argCell = p.Results.(specs{ss,1});
-               if ischar(argCell)
-                  argCell = {argCell};
-               end
-               theGroup.(specs{ss,3}) = find(cellfun('ischar', argCell));
-               numObjects = length(theGroup.(specs{ss,3}));
-               
-               % Make y offsets
-               ys = (0:numObjects-1).*self.defaultSpacing;
-               ys = -(ys - mean(ys));
-            
-               % Make fevalables
-               for ii = 1:numObjects
-                  ind  = theGroup.(specs{ss,3})(ii);
-                  args = {specs{ss,2}, argCell{ind}, 'isVisible', true};
-                  if length(argCell) > ind && ~ischar(argCell{ind+1})
-                     args = cat(2, args, argCell{ind+1});
-                  end
-               end
-               
-               % Add to the running list
-               fevalables = cat(1, fevalables, {specs{ss,4}, args});
-            end
+         % Add images
+         if ~isempty(p.Results.images)
+            drawable = cat(2, drawable, ...
+               self.parseDrawable(p.Results.images, @dotsDrawableImages, 'fileNames'));
          end
          
-         % Loop through to make/add/set the drawables ensemble
-         for ii = 1:length(fevalables);
-            
-            % Make the  object
-            object = feval(fevalables{ii}{1});
-            
-            % Add to the ensemble
-            index = theGroup.ensemble.addObject(object);
-            
-            % Set the properties
-            if length(fevalables{ii}) > 1
-               for jj = 1:2:length(fevalables{ii}{2})
-                  theGroup.ensemble.setObjectProperty( ...
-                     fevalables{ii}{2}(jj), fevalables{ii}{2}(jj+1), index);
-               end
-            end
+         % Convert drawable specs to a struct to send to makeHelpers
+         for ii = 1:length(drawable)
+            specs.drawable.(['object_' int2str(ii)]) = struct( ...
+               'fevalable', drawable{ii}{1}, ...
+               'settings',  {drawable{ii}(2:end)});
          end
          
-         % Prepare to draw
-         theGroup.ensemble.callObjectMethod(@prepareToDrawInWindow);
+         % Make a drawable helper from the "drawables" specifications
+         theDrawableHelper = topsTaskHelper.makeHelpers('drawable', specs);
+                  
+         % Get the object and save it in the group's drawable Ensemble
+         theGroup.drawableEnsemble = theDrawableHelper.drawable.theObject;
+         
+         % Get text indices
+         theGroup.textIndices = cellfun(@(x) isa(x, 'dotsDrawableText'), ...
+            theGroup.drawableEnsemble.objects);
          
          % Add the playable
-         if p.Results.playable
+         if ~isempty(p.Results.playable)
+            
+            % Make the playableFile object
             theGroup.playable = dotsPlayableFile();
-            theGroup.playable.fileName = p.Results.playable;
+            
+            % Set properties
+            if ischar(p.Results.playable)
+               
+               % Only filename given
+               theGroup.playable.fileName = p.Results.playable;
+               
+            elseif iscell(p.Results.playable)
+               
+               % Filename plus property/value pairs given
+               theGroup.playable.fileName = p.Results.playable{1};
+               for ii = 2:2:length(p.Results.playable)
+                  theGroup.playable.(p.Results.playable{ii}) = ...
+                     p.Results.playable{ii+1};
+               end
+            end
             theGroup.playable.prepareToPlay();
          end
          
@@ -165,82 +176,59 @@ classdef topsTaskHelperMessage < topsTaskHelper
       % Remove group
       %
       function removeGroup(self, groupName)
-         self.messageGroups = rmfield(self.messageGroups groupName);
+         self.messageGroups = rmfield(self.messageGroups, groupName);
       end
       
-      % Set and show multiple messages with text, images, and sounds
+      % showMultiple
       %
-      % strings and images are cell arrays
-      %  rows are shown on separate screens
-      %  columns are set to indexed values
-      function showMultiple(self, groupName, varargin)
+      %  Set and show multiple messages with text, images, and sounds
+      %
+      %  text is a cell array of strings
+      %  	columns are set to indexed values
+      %     rows are shown sequentially
+      function showMultiple(self, groupName, text, pauseDuration)
          
-         % parse args
-         p = inputParser;
-         p.addRequired('self');
-         p.addRequired('groupName');
-         p.addParameter('strings',       {});
-         p.addParameter('images',        {});
-         p.addParameter('sounds',        {});
-         p.addParameter('pauseDuration', 0);
-         p.parse(varargin{:});
-         
-         % Get group & ensemble
-         theGroup = self.messageGroups.(groupName);
-         ensemble = theGroup.ensemble;
-         
-         % Count multiples
-         numRepeats = max([size(p.Results.strings, 1) ...
-            size(p.Results.images, 1) size(p.Results.sounds, 1)]);
+         % Loop through each text set
+         for ii = 1:size(text, 1)
 
-         for ii = 1:numRepeats
+            % Set the strings
+            self.setText(groupName, text(ii,:));
             
-            % Flag indicating whether drawables were updated
-            prepareFlag = false;
-            
-            % Texts
-            if (size(p.Results.strings, 1) == 1 && ii == 1) || ...
-                  (size(p.Results.strings, 1) == numRepeats)
-               
-               for jj = 1:size(p.Results.strings, 2)
-                  ensemble.setObjectProperty('string', ...
-                     p.Results.strings{ii,jj}, theGroup.textIndices(jj));
-                  prepareFlag = true;
-               end
-            end
-            
-            % Images
-            if (size(p.Results.images, 1) == 1 && ii == 1) || ...
-                  (size(p.Results.images, 1) == numRepeats)
-               
-               for jj = 1:size(p.Results.images, 2)
-                  ensemble.setObjectProperty('fileNames', ...
-                     p.Results.images{ii,jj}, theGroup.imageIndices(jj));
-                  prepareFlag = true;
-               end
-            end
-            
-            % Prepare to draw
-            if prepareFlag
-               theGroup.ensemble.callObjectMethod(@prepareToDrawInWindow);
-            end
-            
-            % Sounds
-            if (size(p.Results.sounds, 1) == 1 && ii == 1) || ...
-                  (size(p.Results.sounds, 1) == numRepeats)
-               
-               theGroup.playable.fileName = p.Results.sounds{ii};
-               theGroup.playable.prepareToPlay();
-            end
-
-            % Play
+            % Show
             self.show(groupName);
             
             % Pause
-            if p.Results.pauseDuration > 0
-               pause(p.Results.pauseDuration);
+            if nargin>=4 && pauseDuration > 0
+               pause(pauseDuration);
             end
          end
+      end
+            
+      % setText
+      %
+      % Set text and prepare flag
+      %
+      function setText(self, groupName, text)
+
+         if nargin >= 3 && ~isempty(text)
+            
+            % Set all the strings
+            for ii = 1:length(text)
+               self.messageGroups.(groupName).drawables.setObjectProperty( ...
+                  'string', text{ii}, ...
+                  self.messageGroups.(groupName).textIndices(ii));
+            end
+            
+            % Need to prepare to draw
+            self.messageGroups.(groupName).isPrepared = false;
+         end
+      end
+      
+      % showText
+      %
+      function showText(self, groupName, text, varargin)  
+         self.setText(groupName, text);
+         self.show(groupName, varargin{:});
       end
       
       % Set and show messages with text, images, and sounds
@@ -261,88 +249,125 @@ classdef topsTaskHelperMessage < topsTaskHelper
             dotsTheScreen.blankScreen(theGroup.bgStart);
          end
          
-         % Show the drawables
-         if ~isempty(theGroup.ensemble)
-                     
-         frameInfo = self.theObject.callObjectMethod(...
-            @dotsDrawable.drawFrame, {}, [], true);
-
+         % Draw the drawable(s)
+         if ~isempty(theGroup.drawableEnsemble)
             
+            % Possibly prepare to draw
+            if ~self.messageGroups.(groupName).isPrepared
+               theGroup.drawableEnsemble.setObjectProperty('isVisible', true);
+               theGroup.drawableEnsemble.callObjectMethod(@prepareToDrawInWindow);
+               self.messageGroups.(groupName).isPrepared = true;
+            end
             
-            theGroup.ensemble.
-         
-         % Check for positions
-         if ~isempty(p.Results.text) && ~isempty(p.Results.image)
-            defaultY = 5;
-         else
-            defaultY = 0;
+            % Draw 
+            frameInfo = theGroup.drawableEnsemble.callObjectMethod(...
+               @dotsDrawable.drawFrame, {}, [], true);
          end
          
-         % Text args can be:
-         %  string
-         %  cell array of one or two strings
-         %  cell array of cell property/value lists
-         if ~isempty(p.Results.text)
-            textArgs = p.Results.text;
-            if ischar(textArgs)
-               textArgs = {{'string', textArgs, 'y', defaultY}, {}};
-            elseif iscell(textArgs)
-               if ischar(textArgs{1})
-                  textArgs{1} = ['string', textArgs(1), 'y', defaultY+2];
-               end
-               if length(textArgs) == 2 && ischar(textArgs{2})
-                  textArgs{2} = ['string', textArgs(2), 'y', defaultY-2];
-               end
-            end
-            for ii = 1:length(textArgs)
-               for jj = 1:2:length(textArgs{ii})-1
-                  self.theObject.setObjectProperty(textArgs{ii}{jj}, textArgs{ii}{jj+1}, ii);
-               end
-               if ~isempty(textArgs{ii})
-                  self.theObject.setObjectProperty('isVisible', true, ii);
-               end
-            end
-         end
-         
-         % Image arg can be index or cell array of:
-         %  {<index>, <property/value pairs>}
-         if ~isempty(p.Results.image)
-            imageArgs = p.Results.image;
-            if isnumeric(imageArgs)
-               imageArgs = {imageArgs, 'y', -defaultY, 'isVisible', true};
-            else
-               imageArgs = [imageArgs, 'isVisible', true];
-            end
-            for ii = 2:2:length(imageArgs)-1
-               self.theObject.setObjectProperty(imageArgs{ii}, ...
-                  imageArgs{ii+1}, self.numText+imageArgs{1});
-            end
-            self.theObject.callObjectMethod(@prepareToDrawInWindow);
-         end
-         
-         
-         % Possibly play sounds
-         if ~isempty(p.Results.sound)
-            self.sounds(p.Results.sound).play();
+         % Play the playable
+         if ~isempty(theGroup.playable)
+            theGroup.playable.play();
          end
          
          % Wait
-         pause(p.Results.duration);
+         pause(theGroup.duration);
          
-         % Set background
-         if ~isempty(p.Results.backgroundEndColor)
-            dotsTheScreen.blankScreen(p.Results.backgroundEndColor);
-         end
+         % Clear screen and possibly re-set background
+         dotsTheScreen.blankScreen(theGroup.bgEnd);
          
          % Conditionally store the timing data, with synchronization offset
-         if ~isempty(p.Results.task) && ~isempty(p.Results.eventTag)
+         if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-            p.Results.setTrialData([], p.Results.eventTag, ...
+            task.setTrialData([], eventTag, ...
                frameInfo.onsetTime - referenceTime + offsetTime);
          end
          
+         % Possibly wait again
+         pause(theGroup.pauseAfterDuration);
+         
          % Always store the specs in the data log
-         topsDataLog.logDataInGroup(varargin, 'feedbackMessage');
+         topsDataLog.logDataInGroup(groupName, 'showMessage');
       end
    end
+   
+   methods (Access = protected)
+
+      % Utility to add text, images to the drawables
+      %  using simplified syntax; e.g.,
+      %    'text',    {'Great!', 'y', 3}
+      %    'images',  {'thumbsUp.jpg', 'y', -3}
+      function drawables_ = parseDrawable(self, specs, fun, property)
+         
+         % Parse specs
+         if ~iscell(specs)
+            
+            % Just a string is given, which is the value of the property arg
+            % Ex. 'text', 'hello, World!"
+            drawables_ = {{fun, property, specs}};
+            return
+         end
+            
+         if ~iscellstr(specs) && ischar(specs{1})
+            
+            % Given as {<value>, 'arg', val, ...}
+            % Ex. 'text', {'hello, World!, 'x', 3}
+            drawables_ = {[{fun, property}, specs]};
+            return
+         end
+         
+         % Parse cell array
+         if iscellstr(specs)
+            
+            % Given as a cell array of strings, treat as list of values
+            %  for the property arg
+            % Ex. 'text', {'hello, World!, 'Hello again, World!'}
+            commonSpecs = {};
+            
+         elseif iscellstr(specs{1})
+            
+            % Format: {{<values>}, 'arg', val, ...}
+            commonSpecs = specs(2:end);
+            specs       = specs{1};
+            
+         elseif isnumeric(specs{1})
+            
+            % Format: {<num_objects>, 'arg', val, ...}
+            commonSpecs = specs(2:end);
+            specs       = cell(specs{1}, 1);
+            
+         else
+            
+            % Format:
+            %     {{'string1', 'arg1_1', val1_1, ...}, ...
+            %      {'string2', 'arg2_1', val2_1, ...}}
+            Lcells = cellfun(@iscell, specs);
+            commonSpecs = specs(~Lcells);
+            specs       = specs(Lcells);            
+         end
+          
+         % Count number of objects
+         numObjects  = numel(specs);
+         
+         % compute default y spacing
+         ys = (0:numObjects-1)*self.defaultSpacing;
+         ys = -(ys - mean(ys));
+
+         % Make the fevalables
+         drawables_ = cell(1, numObjects);
+         
+         if iscellstr(specs)
+            % specs is just list of strings
+            for ii = 1:numObjects
+               drawables_{ii} = [{fun, property}, specs{ii}, 'y', ys(ii), commonSpecs];
+            end
+            
+         else
+            % specs string plus property/value pairs
+            for ii = 1:numObjects
+               drawables_{ii} = [{fun, property}, specs{ii}(1), 'y', ys(ii), specs{ii}(2:end), commonSpecs];
+            end
+         end
+      end
+   end   
 end
+           

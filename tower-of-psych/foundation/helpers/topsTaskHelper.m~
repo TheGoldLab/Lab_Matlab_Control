@@ -9,6 +9,9 @@ classdef topsTaskHelper < topsFoundation
       % The helper object
       theObject;
       
+      % Useful flag
+      isEnsemble = false;
+      
       % Flag to remove copy from treeNode (see start)
       removeCopy = true;
       
@@ -89,10 +92,13 @@ classdef topsTaskHelper < topsFoundation
          % Create the helper
          self = self@topsFoundation(name);
          
-         % create & save the object. Send unmatched params in given order.
+         % Put the unmatched fields in the order they were given, to
+         % facilitate indexing of ensemble objects
+         unmatched = orderParams(p.Unmatched, varargin);
+         
+         % create & save the object
          self.theObject = self.parse(name, theObject, p.Results.fevalable, ...
-            p.Results.settings, p.Results.commonSettings, ...
-            orderParams(p.Unmatched, varargin));
+            p.Results.settings, p.Results.commonSettings, unmatched);
          
          % Set up synchronization in the prepare call list
          if ~isempty(p.Results.synchronize)
@@ -138,12 +144,17 @@ classdef topsTaskHelper < topsFoundation
             % Create from given fevalable
             theObject = feval(fevalable{:});
             
-         elseif (ischar(theObject) && exist(theObject, 'file')==2) || ...
+         elseif (ischar(theObject) && exist(theObject, 'file')) || ...
                isa(theObject, 'function_handle')
             
             % Create from function name/handle given as theObject
             theObject = feval(theObject);
-        
+
+         elseif ischar(name) && exist(name, 'file')
+            
+            % Create from function name/handle given as theObject
+            theObject = feval(theObject);
+            
          elseif ~isempty(unmatched)
             
             % Make objects from "unmatched" specs
@@ -317,7 +328,8 @@ classdef topsTaskHelper < topsFoundation
       
       % Finish trial method -- should overload in subclass if needed
       %
-      function finishTrial(self, treeNode)          
+      function finishTrial(self, treeNode)
+          
       end
       
       % Set property
@@ -337,6 +349,8 @@ classdef topsTaskHelper < topsFoundation
             self.theObject.(varargin{1}) = varargin{2};
          end
       end
+      
+      
    end
    
    methods (Access = protected)

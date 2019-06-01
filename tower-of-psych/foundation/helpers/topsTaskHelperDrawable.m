@@ -20,7 +20,7 @@ classdef topsTaskHelperDrawable < topsTaskHelper
          end
          
          % Create it
-         self = self@topsTaskHelper(drawableName, [], varargin{:}, 'isEnsemble', true);
+         self = self@topsTaskHelper(drawableName, [], varargin{:});
       end
             
       %% draw(self, args, task, eventTag)
@@ -41,7 +41,7 @@ classdef topsTaskHelperDrawable < topsTaskHelper
       %  task         ... the calling topsTreeNodeTask
       %  eventTag     ... string used to store timing information in trial
       %                    struct. Assumes that the current trialData
-      %                    struct has an entry called time_<eventTag>.
+      %                    struct has an entry called <eventTag>.
       %
       % Created 5/10/18 by jig
       function draw(self, args, task, eventTag)

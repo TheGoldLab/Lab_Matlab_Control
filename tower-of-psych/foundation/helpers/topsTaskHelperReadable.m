@@ -16,7 +16,7 @@ classdef topsTaskHelperReadable < topsTaskHelper
          end
                  
          % Create it
-         self = self@topsTaskHelper(readableName, readableName, varargin{:});
+         self = self@topsTaskHelper(readableName, [], varargin{:});
          
          % Add synchronization
          self.sync.clockFevalable = {@getDeviceTime, self.theObject};
@@ -69,6 +69,22 @@ classdef topsTaskHelperReadable < topsTaskHelper
             task.setTrialData([], eventTag, data(3) - ...
                self.sync.results.referenceTime + ...
                self.sync.results.offset);
+         end
+      end
+      
+      %% Set gaze parameters
+      %
+      % Utility for dotsReadableEye objects:
+      %     set default gaze window size and duration
+      function setGazeParameters(self, windowSize, windowDuration)
+         
+         if isa(self.theObject, 'dotsReadableEye')
+            if nargin >= 2 && ~isempty(windowSize)
+               self.theObject.gazeMonitor.defaultWindowSize = windowSize;
+            end
+            if nargin >= 2 && ~isempty(windowSize)
+               self.theObject.gazeMonitor.defaultWindowDuration = windowDuration;
+            end
          end
       end
    end

@@ -43,6 +43,7 @@ classdef dotsPlayableFile < dotsPlayable
                   fileWithPath, self.fileName);
                ID = sprintf('%s:fileNotFound', mfilename());
                warning(ID, message);
+               return
             end
          end
          

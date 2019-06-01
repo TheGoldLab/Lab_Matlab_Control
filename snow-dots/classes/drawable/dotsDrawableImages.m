@@ -64,11 +64,16 @@ classdef dotsDrawableImages < dotsDrawableTextures
       
       % Read each image file and create a texture for each.
       function textureInfo = imageTextureMakerFunction(self)
+         
+         if ~iscell(self.fileNames)
+            self.fileNames = {self.fileNames};
+         end
+         
          nImages = numel(self.fileNames);
          textureList = cell(1, nImages);
          self.pixelHeights = zeros(1, nImages);
-         self.pixelWidths = zeros(1, nImages);
-         self.pixelColors = zeros(1, nImages);
+         self.pixelWidths  = zeros(1, nImages);
+         self.pixelColors  = zeros(1, nImages);
          if nImages > 0
             for ii = 1:numel(self.fileNames)
                try

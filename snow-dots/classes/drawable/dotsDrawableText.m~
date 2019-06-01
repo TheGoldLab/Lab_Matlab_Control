@@ -230,7 +230,7 @@ classdef dotsDrawableText < dotsDrawable
       %  showDuration  ... Time (in sec) to show the text
       %  pauseDuration ... Time (in sec) to pause after showing the text
       %
-      function frameInfo = drawEnsemble(textEnsemble, textStrings, ...
+      function ret = drawEnsemble(textEnsemble, textStrings, ...
             spacing, showDuration, pauseDuration)
          
          % Make ensemble if not given
@@ -275,7 +275,7 @@ classdef dotsDrawableText < dotsDrawable
             % ---- Draw, wait, blank
             %
             % Call runBriefly for the instruction ensemble
-            frameInfo = textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+            ret = textEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             
             % If more args given, wait..
             if nargin >= 4 && ~isempty(showDuration)
@@ -303,27 +303,17 @@ classdef dotsDrawableText < dotsDrawable
          
          % parse inputs
          p = inputParser;
+         p.addRequired( 'name');
          p.addRequired( 'text');
          p.addParameter('spacing',       4);
          p.addParameter('showDuration',  1);
          p.addParameter('pauseDuration', 0);
-         p.addParameter('task',          []);
-         p.addParameter('eventTag',      []);
-         p.parse(text, varargin{:});
-
-         % text is cell array, columns are strings shown on a single screen
-         % (stacked vertically), rows are shwon on separate screens
-         if isempty(text)
-            return
-         end         
-         if ischar(text)
-            text = {text};
-         end
-         numTexts = size(text, 2);
-         
+         p.parse(name, text, varargin{:});
+                  
+         % 
          % Make the text ensemble
          textEnsemble = dotsDrawableText.makeEnsemble('textEnsemble', ...
-            numTexts, []);
+            size(text, 2), []);
          
          % Set the spacing
          ys = (0:numTexts-1).*p.Results.spacing;
@@ -331,20 +321,13 @@ classdef dotsDrawableText < dotsDrawable
          for ii = 1:numTexts
             textEnsemble.setObjectProperty('y', ys(ii), ii);
          end
+
          
-         % Show each screen
          for ii = 1:size(text, 1)
-            
-            % Show it
-            frameInfo = dotsDrawableText.drawEnsemble(textEnsemble, text(ii,1), ...
-               p.Results.spacing, p.Results.showDuration, p.Results.pauseDuration);
-            
-            % Store the timing data
-            if ~isempty(p.Results.task) && ~isempty(p.Results.eventTag)
-               [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-               task.setTrialData([], p.Results.eventTag, frameInfo.onsetTime - ...
-                  referenceTime + offsetTime);
-            end
+
+               ret = drawEnsemble(textEnsemble, text(ii,1), ...
+                  p.Results.spacing, p.Results.showDuration, p.Results.pauseDuration);
+               
          end
       end
    end
