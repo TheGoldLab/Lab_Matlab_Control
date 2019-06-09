@@ -43,9 +43,8 @@ classdef topsTreeNodeTask < topsTreeNode
         % How to increment trials in prepareForNextTrial
         % 'auto'     ... automatically increment after each good trial
         % 'hazard'   ... probabilistically increment wrt fixed hazard
-        incrementTrialMethod = 'auto';
-        
-        
+        % incrementTrialMethod = 'auto';
+                
         % Whether or not to automatically go to the next trial
         autoIncrementTrial = true;
         
