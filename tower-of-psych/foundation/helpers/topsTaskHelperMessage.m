@@ -86,15 +86,15 @@ classdef topsTaskHelperMessage < topsTaskHelper
          p = inputParser;
          p.addRequired('self');
          p.addRequired('groupName');
-         p.addParameter('useExisting', true);
-         p.addParameter('text',        {});
-         p.addParameter('images',      {});
-         p.addParameter('drawables',   {});
-         p.addParameter('playable',    {});
-         p.addParameter('duration',    self.defaultDuration);
-         p.addParameter('pauseAfterDuration', 0);
-         p.addParameter('bgStart',     []);
-         p.addParameter('bgEnd',       []);
+         p.addParameter('useExisting',    true);
+         p.addParameter('text',           {});
+         p.addParameter('images',         {});
+         p.addParameter('drawables',      {});
+         p.addParameter('playable',       {});
+         p.addParameter('duration',       self.defaultDuration);
+         p.addParameter('pauseDuration',  0);
+         p.addParameter('bgStart',        []);
+         p.addParameter('bgEnd',          []);
          p.parse(self, groupName, varargin{:});
 
          % Check for existing
@@ -104,14 +104,14 @@ classdef topsTaskHelperMessage < topsTaskHelper
          
          % Make the group
          theGroup = struct( ...
-            'drawableEnsemble',     [],                           ...
-            'textIndices',          [],                           ...
-            'playable',             [],                           ...
-            'isPrepared',           false,                        ...
-            'duration',             p.Results.duration,           ...
-            'pauseAfterDuration',   p.Results.pauseAfterDuration, ...
-            'bgStart',              p.Results.bgStart,            ...
-            'bgEnd',                p.Results.bgEnd);
+            'drawableEnsemble',  [],                      ...
+            'textIndices',       [],                      ...
+            'playable',          [],                      ...
+            'isPrepared',        false,                   ...
+            'duration',          p.Results.duration,      ...
+            'pauseDuration',     p.Results.pauseDuration, ...
+            'bgStart',           p.Results.bgStart,       ...
+            'bgEnd',             p.Results.bgEnd);
          
          % Collect drawable specs, are cell arrays
          drawable = p.Results.drawables;
@@ -142,8 +142,8 @@ classdef topsTaskHelperMessage < topsTaskHelper
          theGroup.drawableEnsemble = theDrawableHelper.drawable.theObject;
          
          % Get text indices
-         theGroup.textIndices = cellfun(@(x) isa(x, 'dotsDrawableText'), ...
-            theGroup.drawableEnsemble.objects);
+         theGroup.textIndices = find(cellfun(@(x) isa(x, 'dotsDrawableText'), ...
+            theGroup.drawableEnsemble.objects));
          
          % Add the playable
          if ~isempty(p.Results.playable)
@@ -214,7 +214,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
             
             % Set all the strings
             for ii = 1:length(text)
-               self.messageGroups.(groupName).drawables.setObjectProperty( ...
+               self.messageGroups.(groupName).drawableEnsemble.setObjectProperty( ...
                   'string', text{ii}, ...
                   self.messageGroups.(groupName).textIndices(ii));
             end
@@ -253,7 +253,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          if ~isempty(theGroup.drawableEnsemble)
             
             % Possibly prepare to draw
-            if ~self.messageGroups.(groupName).isPrepared
+            if ~theGroup.isPrepared
                theGroup.drawableEnsemble.setObjectProperty('isVisible', true);
                theGroup.drawableEnsemble.callObjectMethod(@prepareToDrawInWindow);
                self.messageGroups.(groupName).isPrepared = true;
@@ -283,7 +283,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
          
          % Possibly wait again
-         pause(theGroup.pauseAfterDuration);
+         pause(theGroup.pauseDuration);
          
          % Always store the specs in the data log
          topsDataLog.logDataInGroup(groupName, 'showMessage');

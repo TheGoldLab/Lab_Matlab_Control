@@ -23,14 +23,13 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       
       % Trial properties, put in a struct for convenience
       settings = struct( ...
-         'changeInterval',             2, ... %[10 14], ... % min/max
+         'changeInterval',             [10 14], ... % min/max
          'targetDistance',             8);
       
       % Task timing parameters, all in sec
       timing = struct( ...
-         'showInstructions',           10.0, ...
-         'waitAfterInstructions',      0.5, ...
          'choiceTimeout',              5.0, ...
+         'pauseAfterChoice',           0.2, ...
          'showFeedback',               1.0, ...
          'interTrialInterval',         1.5);
       
@@ -38,13 +37,28 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %  will be used to automatically configure the task
       
       % independentVariables used by topsTreeNodeTask.makeTrials. Can
-      % modify using setIndependentVariableByName and setIndependentVariablesByName
+      % modify using setIndependentVariableByName and
+      % setIndependentVariablesByName.
+      %
+      % Creates the array of trialData structures, using:
+      %  name     ... list of independent variables
+      %  values   ... array of values associated with each independent
+      %                    variable
+      %  priors   ... empty, or relative frequencies of each value for each
+      %                    independent variable (automatically normalizes
+      %                    to sum to 1).
+      %
+      %  Also uses:
+      %     trialIterations property to determine the number
+      %              of copies of each trial type to use
+      %     trialIterationMethod property to determine the 
+      %              ordering of the trials (in trialIndices)
       independentVariables = struct( ...
          'name',                       {'probabilityLeft'},       ...
-         'values',                     {[0.10 0.35 0.65 0.90]},          ...
+         'values',                     {[0.10 0.35 0.65 0.90]},   ...
          'priors',                     {[]});
       
-      % dataFieldNames are used to set up the trialData structure
+      % dataFieldNames is a cell array of string names used as trialData fields
       trialDataFields = {'choice', 'rewarded', 'RT', 'stimOn', 'choiceTime', ...
          'feedbackOn', 'totalCorrect', 'totalChoices', 'trialsAfterSwitch', };
       
@@ -72,10 +86,11 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       playable = struct( ...
          ...
          ... % Args are frequency (Hz), time (sec), scale factor
-         ... % Note that calling makeTone calls prepareToPlay automatically, 
+         ... % Note that calling makeTone calls prepareToPlay automatically,
          ... %    otherwise that should be called explicitly before each trial
          'fixOffTone',                 struct( ...
-         'fevalable',                  {{@dotsPlayableFastTone.makeTone, [1000 0.05 1]}}));
+         'fevalable',                  {{@dotsPlayableTone.makeTone, [1000 0.05 1]}}));
+      %         'fevalable',                  {{@dotsPlayableFastTone.makeTone, [1000 0.05 1]}}));
       
       % Readable settings
       readable = struct( ...
@@ -117,13 +132,13 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          ...   Instructions
          'Instructions',               struct( ...
          'text',                       {'Choose the currently rewarded card'}, ...
-         'duration',                   1, ...
+         'duration',                   1.0, ...
+         'pauseDuration',              0.5, ...
          'bgEnd',                      [0 0 0]), ...
          ...
          ...   Correct
          'Correct',                    struct(  ...
-         'text',                       {{'Good choice', 'y', 6}}, ...
-         'images',                     {{'thumbsUp.jpg', 'y', -6}}, ...
+         'text',                       'Good choice', ...
          'playable',                   'cashRegister.wav', ...
          'bgStart',                    [0 0.6 0], ...
          'bgEnd',                      [0 0 0]), ...
@@ -160,14 +175,9 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          %
          self.initializeStateMachine();
          
-         % --- Don't autoincrement trials (see startTrial method)
-         %
-         self.autoIncrementTrial = false;
-         
          % ---- Show task-specific instructions
          %
          self.helpers.message.show('Instructions');
-         pause(self.timing.waitAfterInstructions);
       end
       
       %% Overloaded finish task method
@@ -175,6 +185,9 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       end
       
       %% Overloaded start trial method
+      %
+      % Put stuff here that you want to do at the beginning of each
+      %  trial
       function startTrial(self)
          
          % ---- Prepare components
@@ -185,50 +198,42 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % ---- Get the trial
          %
          trial = self.getTrial();
-                 
+         
+         %---- Set up trial struct
+         %
+         % Initialize
+         if ~isfinite(trial.trialsAfterSwitch)
+            
+            % We iterate through each "trial" several times, so at the
+            % beginning we need to reset these counters
+            trial.trialsAfterSwitch = 0;
+            trial.totalCorrect = 0;
+            trial.totalChoices = 0;
+            
+            % Here we can also check/modify the trial order.
+            % Make sure very first condition is easy
+            if self.trialCount==1
+               vals = [self.trialData(self.trialIndices).probabilityLeft];
+               if randi(2) == 1
+                  mi = find(vals==max(vals), 1);
+               else
+                  mi = find(vals==min(vals), 1);
+               end
+               if mi ~= 1
+                  tmpi = self.trialIndices(mi);
+                  self.trialIndices(mi) = self.trialIndices(1);
+                  self.trialIndices(1)  = tmpi;
+               end
+            end
+         end
+         
          % Clear the fields that get saved per trial
          for ii = 1:length(self.trialDataFields)-3
             trial.(self.trialDataFields{ii}) = nan;
          end
-
-         % ---- Check to switch reward blocks
-         %
-         %  1. Only one value is given for "changeInterval", which is
-         %     then interpreted as the exact trial interval to use
-         %  2. Two values are given and intrepreted as min & max
-         %     defining a uniform distribution
-         if isfinite(trial.trialsAfterSwitch) && ...
-               (length(self.settings.changeInterval) == 1 && ...
-               trial.trialsAfterSwitch >= self.settings.changeInterval(1)) || ...
-               (length(self.settings.changeInterval) == 2 && ...
-               (trial.trialsAfterSwitch >= self.settings.changeInterval(2) || ...
-               rand() <= 1/(1+diff(self.settings.changeInterval))))
-            
-               disp('SWITCH!')
-
-               % Re-set current count to 0
-               trial.trialsAfterSwitch = 0;
-               
-               % Re-save the trial
-               self.setTrial(trial);
-
-               % Get new trial type
-               self.trialCount = self.trialCount + 1;
-               
-         else            
-            if ~isfinite(trial.trialsAfterSwitch)
-                              
-               disp('NEW BLOCK!')
-               
-               % New block
-               trial.trialsAfterSwitch = 0;
-               trial.totalCorrect = 0;
-               trial.totalChoices = 0;
-            end
-            
-            % Re-save the trial
-            self.setTrial(trial);
-         end
+         
+         % Re-save the trial
+         self.setTrial(trial);
          
          % ---- Show information about the trial
          %
@@ -237,8 +242,8 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
             self.taskID, length(self.caller.children));
          
          % Trial information
-         trialString = sprintf('Trial %d/%d (%d after switch), Rews=[%.0f %.0f], totalCorrect=%d/%d', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, trial.trialsAfterSwitch, ...
+         trialString = sprintf('Trial %d(%d)/%d: Rews=[%.0f %.0f], Correct=%d/%d', ...
+            self.trialCount, trial.trialsAfterSwitch+1, numel(self.trialData), ...
             trial.probabilityLeft*100.0, (1-trial.probabilityLeft)*100.0, ...
             trial.totalCorrect, trial.totalChoices);
          
@@ -250,6 +255,32 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %
       % Could add stuff here
       function finishTrial(self)
+         
+         % ---- Get the trial
+         %
+         trial = self.getTrial();
+         
+         % ---- Check to switch reward blocks
+         %
+         %  1. Only one value is given for "changeInterval", which is
+         %     then interpreted as the exact trial interval to use
+         %  2. Two values are given and intrepreted as min & max
+         %     defining a uniform distribution
+         if trial.trialsAfterSwitch >= self.settings.changeInterval(1) && ...
+               (length(self.settings.changeInterval) == 1 || ...
+               trial.trialsAfterSwitch >= self.settings.changeInterval(2) || ...
+               rand() <= 1/(1+diff(self.settings.changeInterval)))
+            
+            % Increment trial (use this flag instead of actually
+            % incrementing the trialCount because this way it doesn't get
+            % incremented until all of the bookkeeping is done before the
+            % end of the trial
+            self.autoIncrementTrial = true;
+         else
+            
+            % Don't increment trial
+            self.autoIncrementTrial = false;
+         end
       end
       
       %% Check for choice
@@ -291,7 +322,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          else
             trial.rewarded = false;
          end
-            
+         
          % Mark as correct/error (with respect to largest reward side)
          trial.totalChoices = trial.totalChoices + 1;
          trial.totalCorrect = trial.totalCorrect + double( ...
@@ -302,7 +333,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          trial.RT = trial.choiceTime - trial.stimOn;
          
          % Re-save the trial
-         self.setTrial(trial);         
+         self.setTrial(trial);
       end
       
       %% Show feedback
@@ -324,9 +355,8 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % --- Show trial feedback in gui
          %
-         trialString = sprintf('Trial %d/%d (%d after switch), Rews=[%.0f %.0f], choice=%d: %s', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, trial.trialsAfterSwitch, ...
-            trial.probabilityLeft*100, (1-trial.probabilityLeft)*100, ...
+         trialString = sprintf('Trial %d(%d)/%d: choice=%d (%s)', ...
+            self.trialCount, trial.trialsAfterSwitch, numel(self.trialData), ...
             trial.choice, messageGroup);
          self.updateStatus([], trialString); % just update the second one
          
@@ -381,7 +411,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          states = {...
             'name'         'entry'  'input'  'timeout'             'exit'  'next'            ; ...
             'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'blank'           ; ...
-            'blank'        {}       {}       0.2                   blanks  'showFeedback'    ; ...
+            'blank'        {}       {}       t.pauseAfterChoice    blanks  'showFeedback'    ; ...
             'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
             'done'         dnow     {}       t.interTrialInterval  {}      ''                ; ...
             };
@@ -398,7 +428,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       function task = getStandardConfiguration(varargin)
          
          % ---- Get the task object, with optional property/value pairs
-         task = topsTreeNodeTaskSimpleBandit(varargin{:});         
+         task = topsTreeNodeTaskSimpleBandit(varargin{:});
       end
    end
 end

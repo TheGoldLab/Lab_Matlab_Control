@@ -185,7 +185,6 @@ classdef topsTreeNodeTask < topsTreeNode
             % Call each helper's finish method
             for hh = fieldnames(self.helpers)'
                 self.helpers.(hh{:}).finish(self);
-                % self.helpers.(hh{:}).bind(self);
             end
             
             % Write data from the log to disk if the topNode defines a
@@ -481,7 +480,7 @@ classdef topsTreeNodeTask < topsTreeNode
         function prepareForNextTrial(self)
             
             % ---- Check status flags
-            if self.caller.checkFlags(self) > 0
+            if ~isempty(self.caller) && self.caller.checkFlags(self) > 0
                 return
             end
             
@@ -563,7 +562,9 @@ classdef topsTreeNodeTask < topsTreeNode
            end
            
            % Update GUI
-            self.caller.updateGUI('_updateStatusStrings', self, taskStatusString, trialStatusString);
+           if ~isempty(self.caller)
+              self.caller.updateGUI('_updateStatusStrings', self, taskStatusString, trialStatusString);
+           end
         end
         
         %% setNextState
