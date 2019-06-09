@@ -8,7 +8,7 @@ classdef dotsPlayableTone < dotsPlayable
       frequency;
       
       % Test to use PTB PsychPortAudio
-      usePTB = true;
+      usePTB = false;
       
       % Flag to block until sound has actually started playing (if usePTB)
       waitForStart = 1;
