@@ -1,7 +1,8 @@
 classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
    % @class topsTreeNodeTaskSimpleBandit
    %
-   % Simple two-armed bandit task with reversals
+   % Simple two-armed bandit task with block-wise changes in reward
+   %  probabilities.
    %
    % For standard configurations, call:
    %  topsTreeNodeTaskSimpleBandit.getStandardConfiguration
