@@ -1,5 +1,14 @@
 % Script to run a topsTreeeNodeTaskSimpleBandit task
 %
+% Puts a data file in:
+%  <default data path>/simpleBandit/raw/<YEAR_MONTH_DAY_MINUTES_SEC>
+% 
+% Where
+%  <default data path> is defined in dotsTheMachineConfiguration, which
+%  reads a config file and looks for the line:
+%      <dataPath>['THE PATH']</dataPath>
+%
+%
 % 6/8/19 created by jig
 
 %% SET UP THE TOPS TREE NODE OBJECT
@@ -22,8 +31,8 @@ settings = { ...
    'runGUIname',           'eyeGUI',   ... % use standard run gui
    'databaseGUIname',      [],         ... % no database gui (for now)
    'instructionDuration',  3.0,        ...
-   'remoteDrawing',        true, ...
-   'displayIndex',         1}; % 0=small, 1=main
+   'remoteDrawing',        false, ...
+   'displayIndex',         0}; % 0=small, 1=main
 topNode.nodeData = topsGroupedList.createGroupFromList('Settings', settings);
 
 % ---- Add GUIS
@@ -47,7 +56,7 @@ topNode.addHelpers('screenEnsemble',  ...
 % ---- Add a readable helper object. 
 %
 % See topsTreeNodeTopNode.addReadable for other optional parameters
-topNode.addReadable(topNode.nodeData{'Settings'}{'readables'});
+topNode.addReadable(topNode.nodeData{'Settings'}{'readable'});
 
 %% MAKE AND ADD THE TASK
 
@@ -76,14 +85,14 @@ task.trialIterations = topNode.nodeData{'Settings'}{'trialIterations'};
 helper = topsTaskHelper.makeHelpers('message', 'welcomeMessage');
 
 % Add a message. See topsTaskHelperMessage.addGroup for details
-helper.addGroup('Welcome', ...
+helper.welcomeMessage.addGroup('Welcome', ...
    'text',             {'About to start', 'y', 6'}, ...
    'images',           {'thumbsUp.jpg', 'y', -6}, ...
    'duration',         2.0, ...
    'pauseDuration',    0.5);
 
 % Add it as an fevalable to the task start call list
-task.addCall('start', {@show, helper, 'Welcome'});
+task.addCall('start', {@show, helper.welcomeMessage, 'Welcome'});
 
 % ---- Add as child to the topsTreeNode.
 %

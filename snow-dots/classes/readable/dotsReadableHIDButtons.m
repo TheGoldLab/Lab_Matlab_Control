@@ -11,7 +11,7 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
       buttonRight = 'KeyboardRightShift';
       
       % Dummy component corresponding to either button being pressed
-      buttonEither = 'KeyboardSpacebar'; 
+      buttonEither = 'KeyboardSpacebar';
    end
    
    properties (SetAccess = protected)
@@ -73,7 +73,7 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
                if (strcmp(name, self.eventDefinitions(self.buttonLeftID).name) && ...
                      ~leftEvent.isActive) || ...
                      (strcmp(name, self.eventDefinitions(self.buttonRightID).name) && ...
-                     ~rightEvent.isActive)                 
+                     ~rightEvent.isActive)
                   name = eitherEvent;
                end
                

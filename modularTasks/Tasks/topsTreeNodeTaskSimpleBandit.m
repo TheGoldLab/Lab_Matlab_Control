@@ -24,7 +24,9 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       
       % Trial properties, put in a struct for convenience
       settings = struct( ...
-         'changeInterval',             [10 14], ... % min/max
+         'blockChangeHazard',          0.2, ... %
+         'blockChangeMin',             4,  ... % min trials before switch
+         'blockChangeMax',             8,  ... % max trials before switch
          'targetDistance',             8);
       
       % Task timing parameters, all in sec
@@ -52,7 +54,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %  Also uses:
       %     trialIterations property to determine the number
       %              of copies of each trial type to use
-      %     trialIterationMethod property to determine the 
+      %     trialIterationMethod property to determine the
       %              ordering of the trials (in trialIndices)
       independentVariables = struct( ...
          'name',                       {'probabilityLeft'},       ...
@@ -61,7 +63,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       
       % dataFieldNames is a cell array of string names used as trialData fields
       trialDataFields = {'choice', 'rewarded', 'RT', 'stimOn', 'choiceTime', ...
-         'feedbackOn', 'totalCorrect', 'totalChoices', 'trialsAfterSwitch', };
+         'feedbackOn', 'totalCorrect', 'totalChoices'};
       
       % Drawables settings
       drawable = struct( ...
@@ -176,6 +178,13 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          %
          self.initializeStateMachine();
          
+         % ---- Set up block switches
+         %
+         self.incrementTrialMethod            = 'hazard';
+         self.incrementTrial.hazard.rate      = self.settings.blockChangeHazard;
+         self.incrementTrial.hazard.minTrials = self.settings.blockChangeMin;
+         self.incrementTrial.hazard.maxTrials = self.settings.blockChangeMax;
+         
          % ---- Show task-specific instructions
          %
          self.helpers.message.show('Instructions');
@@ -191,23 +200,17 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %  trial
       function startTrial(self)
          
-         % ---- Prepare components
-         %
-         self.prepareDrawables();
-         self.prepareReadables();
-         
          % ---- Get the trial
          %
          trial = self.getTrial();
          
          %---- Set up trial struct
          %
-         % Initialize
-         if ~isfinite(trial.trialsAfterSwitch)
+         % Initialize just the first time we use this trial
+         if ~isfinite(trial.totalCorrect)
             
             % We iterate through each "trial" several times, so at the
             % beginning we need to reset these counters
-            trial.trialsAfterSwitch = 0;
             trial.totalCorrect = 0;
             trial.totalChoices = 0;
             
@@ -215,26 +218,39 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
             % Make sure very first condition is easy
             if self.trialCount==1
                vals = [self.trialData(self.trialIndices).probabilityLeft];
+               
+               % Find the index of the first easy trial
                if randi(2) == 1
                   mi = find(vals==max(vals), 1);
                else
                   mi = find(vals==min(vals), 1);
                end
+               
                if mi ~= 1
+                  
+                  % Swap the easy trial to the beginning
                   tmpi = self.trialIndices(mi);
                   self.trialIndices(mi) = self.trialIndices(1);
                   self.trialIndices(1)  = tmpi;
+                  
+                  % Get the updated trial
+                  trial = self.getTrial();
                end
             end
          end
          
          % Clear the fields that get saved per trial
-         for ii = 1:length(self.trialDataFields)-3
+         for ii = 1:length(self.trialDataFields)-2
             trial.(self.trialDataFields{ii}) = nan;
          end
          
          % Re-save the trial
          self.setTrial(trial);
+         
+         % ---- Prepare components
+         %
+         self.prepareDrawables();
+         self.prepareReadables();
          
          % ---- Show information about the trial
          %
@@ -244,7 +260,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % Trial information
          trialString = sprintf('Trial %d(%d)/%d: Rews=[%.0f %.0f], Correct=%d/%d', ...
-            self.trialCount, trial.trialsAfterSwitch+1, numel(self.trialData), ...
+            self.trialCount, self.incrementTrial.counter, numel(self.trialData), ...
             trial.probabilityLeft*100.0, (1-trial.probabilityLeft)*100.0, ...
             trial.totalCorrect, trial.totalChoices);
          
@@ -256,32 +272,6 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %
       % Could add stuff here
       function finishTrial(self)
-         
-         % ---- Get the trial
-         %
-         trial = self.getTrial();
-         
-         % ---- Check to switch reward blocks
-         %
-         %  1. Only one value is given for "changeInterval", which is
-         %     then interpreted as the exact trial interval to use
-         %  2. Two values are given and intrepreted as min & max
-         %     defining a uniform distribution
-         if trial.trialsAfterSwitch >= self.settings.changeInterval(1) && ...
-               (length(self.settings.changeInterval) == 1 || ...
-               trial.trialsAfterSwitch >= self.settings.changeInterval(2) || ...
-               rand() <= 1/(1+diff(self.settings.changeInterval)))
-            
-            % Increment trial (use this flag instead of actually
-            % incrementing the trialCount because this way it doesn't get
-            % incremented until all of the bookkeeping is done before the
-            % end of the trial
-            self.autoIncrementTrial = true;
-         else
-            
-            % Don't increment trial
-            self.autoIncrementTrial = false;
-         end
       end
       
       %% Check for choice
@@ -309,9 +299,6 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % Get current task/trial
          trial = self.getTrial();
-         
-         % Update count of trials since switch
-         trial.trialsAfterSwitch = trial.trialsAfterSwitch + 1;
          
          % Save the choice, correct/error, RT
          trial.choice = double(strcmp(eventName, 'choseRight'));
@@ -357,7 +344,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % --- Show trial feedback in gui
          %
          trialString = sprintf('Trial %d(%d)/%d: choice=%d (%s)', ...
-            self.trialCount, trial.trialsAfterSwitch, numel(self.trialData), ...
+            self.trialCount, self.incrementTrial.counter, numel(self.trialData), ...
             trial.choice, messageGroup);
          self.updateStatus([], trialString); % just update the second one
          
