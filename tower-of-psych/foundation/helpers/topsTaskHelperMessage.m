@@ -130,7 +130,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          
          % Convert drawable specs to a struct to send to makeHelpers
          for ii = 1:length(drawable)
-            specs.drawable.(['object_' int2str(ii)]) = struct( ...
+            specs.(groupName).(['object_' int2str(ii)]) = struct( ...
                'fevalable', drawable{ii}{1}, ...
                'settings',  {drawable{ii}(2:end)});
          end
@@ -139,7 +139,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          theDrawableHelper = topsTaskHelper.makeHelpers('drawable', specs);
                   
          % Get the object and save it in the group's drawable Ensemble
-         theGroup.drawableEnsemble = theDrawableHelper.drawable.theObject;
+         theGroup.drawableEnsemble = theDrawableHelper.(groupName).theObject;
          
          % Get text indices
          theGroup.textIndices = find(cellfun(@(x) isa(x, 'dotsDrawableText'), ...
