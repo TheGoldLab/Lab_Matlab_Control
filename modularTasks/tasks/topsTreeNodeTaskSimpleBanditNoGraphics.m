@@ -1,33 +1,19 @@
-classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
-   % @class topsTreeNodeTaskSimpleBandit
+classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
+   % @class topsTreeNodeTaskSimpleBanditNoGraphics
    %
    % Simple two-armed bandit task with block-wise changes in reward
-   %  probabilities.
+   %  probabilities, DOES NOT USE SNOW-DOTS GRAPHICS. This task is intended
+   %  to be a learning tool.
    %
-   % For standard configurations, call:
-   %  topsTreeNodeTaskSimpleBandit.getStandardConfiguration
-   %
-   % Otherwise:
-   %  1. Create an instance directly:
-   %        task = topsTreeNodeTaskSimpleBandit();
-   %
-   %  2. Set properties. These are required:
-   %        task.drawables.screenEnsemble
-   %        task.helpers.readers.theObject
-   %     Others can use defaults
-   %
-   %  3. Add this as a child to another topsTreeNode
-   %
-   % 5/18/19 created by jig
+   % 6/10/19 created by jig
    
    properties % (SetObservable) % uncomment if adding listeners
       
       % Trial properties, put in a struct for convenience
       settings = struct( ...
          'blockChangeHazard',          0.2, ... %
-         'blockChangeMin',             4,  ... % min trials before switch
-         'blockChangeMax',             8,  ... % max trials before switch
-         'targetDistance',             8);
+         'blockChangeMin',             4,  ...  % min trials before switch
+         'blockChangeMax',             8);
       
       % Task timing parameters, all in sec
       timing = struct( ...
@@ -66,89 +52,21 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          'feedbackOn', 'totalCorrect', 'totalChoices'};
       
       % Drawables settings
-      drawable = struct( ...
-         ...
-         ...   % The main stimulus ensemble
-         'stimulusEnsemble',           struct(  ...
-         ...
-         ...   % Left card
-         'leftCard',                   struct(  ...
-         'fevalable',                  @dotsDrawableImages, ...
-         'settings',                   struct( ...
-         'fileNames',                  {{'cardBlue.jpg'}}, ...
-         'height',                     15)), ...
-         ...
-         ...   % Right card
-         'rightCard',                  struct(  ...
-         'fevalable',                  @dotsDrawableImages, ...
-         'settings',                   struct( ...
-         'fileNames',                  {{'cardRed.jpg'}}, ...
-         'height',                     15))));
+      drawable = [];
       
       % Playable settings
       playable = [];
       
       % Readable settings
       readable = struct( ...
-         ...
-         ...   % The readable object
          'reader',                     struct( ...
-         ...
-         'copySpecs',                  struct( ...
-         ...
-         ...   % Keyboard events
-         'dotsReadableHIDKeyboard',    struct( ...
+         'fevalable',                  @dotsReadableHIDKeyboard, ...
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'KeyboardF', 'KeyboardJ'})}}), ...
-         ...
-         ...   % Gamepad
-         'dotsReadableHIDGamepad',   	struct( ...
-         'start',                      {{@defineEventsFromStruct, struct( ...
-         'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'Trigger1', 'trigger2'})}}), ...
-         ...
-         ...    % Ashwin's magic buttons
-         'dotsReadableHIDButtons',     struct( ...
-         'start',                      {{@defineEventsFromStruct, struct( ...
-         'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'KeyboardLeftShift', 'KeyboardRightShift'})}}), ...
-         ...
-         ...   % Dummy to run in demo mode
-         'dotsReadableDummy',          struct( ...
-         'start',                      {{@defineEventsFromStruct, struct( ...
-         'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'auto_1', 'auto_2'})}}))));
+         'component',                  {'KeyboardF', 'KeyboardJ'})}}));
       
       % Feedback messages
-      message = struct( ...
-         ...
-         'groups',                     struct( ...
-         ...
-         ...   Instructions
-         'Instructions',               struct( ...
-         'text',                       {'Choose the currently rewarded card'}, ...
-         'duration',                   1.0, ...
-         'pauseDuration',              0.5, ...
-         'bgEnd',                      [0 0 0]), ...
-         ...
-         ...   Correct
-         'Correct',                    struct(  ...
-         'text',                       'Good choice', ...
-         'playable',                   'cashRegister.wav', ...
-         'bgStart',                    [0 0.6 0], ...
-         'bgEnd',                      [0 0 0]), ...
-         ...
-         ...   Error
-         'Error',                      struct(  ...
-         'text',                       'Bad choice', ...
-         'playable',                   'buzzer.wav', ...
-         'bgStart',                    [0.6 0 0], ...
-         'bgEnd',                      [0 0 0]), ...
-         ...
-         ...   No choice
-         'No_choice',                  struct(  ...
-         'text',                       'No choice - please try again!')));
+      message = [];
    end
    
    methods
@@ -157,7 +75,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       % @param name optional name for this object
       % @details
       % If @a name is provided, assigns @a name to this object.
-      function self = topsTreeNodeTaskSimpleBandit(varargin)
+      function self = topsTreeNodeTaskSimpleBanditNoGraphics(varargin)
          
          % ---- Make it from the superclass
          %
@@ -169,7 +87,25 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % ---- Initialize the state machine
          %
-         self.initializeStateMachine();
+         % Define fevalables for state list
+         chkuic = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime'};
+         showfb = {@showFeedback, self};
+         shows  = {@disp, 'Choose LEFT or RIGHT'};
+         
+         % Timing variables, read directly from the timing property struct
+         t = self.timing;
+         
+         % Make the state machine
+         states = {...
+            'name'         'entry'  'input'  'timeout'             'exit'  'next'            ; ...
+            'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'blank'           ; ...
+            'blank'        {}       {}       t.pauseAfterChoice    {}      'showFeedback'    ; ...
+            'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
+            'done'         {}       {}       t.interTrialInterval  {}      ''                ; ...
+            };
+         
+         % Add the state machine to the task
+         self.addStateMachine(states);         
          
          % ---- Set up block switches
          %
@@ -178,13 +114,17 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          self.incrementTrial.hazard.minTrials = self.settings.blockChangeMin;
          self.incrementTrial.hazard.maxTrials = self.settings.blockChangeMax;
          
-         % ---- Show task-specific instructions
+         % ---- Show start message
          %
-         self.helpers.message.show('Instructions');
+         disp('Starting task')
       end
       
       %% Overloaded finish task method
       function finishTask(self)
+         
+         % ---- Show finish message
+         %
+         disp('Finished task')
       end
       
       %% Overloaded start trial method
@@ -240,10 +180,10 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % Re-save the trial
          self.setTrial(trial);
          
-         % ---- Prepare components
+         % ---- Prepare readable
          %
-         self.prepareDrawables();
-         self.prepareReadables();
+         % Activate chose* events
+         self.helpers.reader.theObject.setEventsActiveFlag({'choseLeft', 'choseRight'});
          
          % ---- Show information about the trial
          %
@@ -334,82 +274,12 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
             messageGroup = 'Error';
          end
          
-         % --- Show trial feedback in gui
+         % --- Show trial feedback
          %
          trialString = sprintf('Trial %d(%d)/%d: choice=%d (%s)', ...
             self.trialCount, self.incrementTrial.counter, numel(self.trialData), ...
             trial.choice, messageGroup);
          self.updateStatus([], trialString); % just update the second one
-         
-         % ---- Show trial feedback on the screen
-         %
-         self.helpers.message.show(messageGroup);
-      end
-   end
-   
-   methods (Access = protected)
-      
-      %% Prepare drawables for this trial
-      %
-      function prepareDrawables(self)
-         
-         % ---- Get the stimulus ensemble and set horizontal position using
-         %        settings.targetDistance
-         %
-         stimulusEnsemble = self.helpers.stimulusEnsemble.theObject;
-         stimulusEnsemble.setObjectProperty('x', -self.settings.targetDistance, 1);
-         stimulusEnsemble.setObjectProperty('x',  self.settings.targetDistance, 2);
-      end
-      
-      %% Prepare readables for this trial
-      %
-      function prepareReadables(self)
-         
-         % Activate chose* events
-         self.helpers.reader.theObject.setEventsActiveFlag({'choseLeft', 'choseRight'});
-      end
-      
-      %% configureStateMachine method
-      %
-      function initializeStateMachine(self)
-         
-         % ---- Fevalables for state list
-         %
-         dnow   = {@drawnow};
-         blanks = {@dotsTheScreen.blankScreen};
-         chkuic = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime'};
-         showfb = {@showFeedback, self};
-         shows  = {@draw, self.helpers.stimulusEnsemble, {[1 2], []}, self, 'stimOn'};
-         
-         % ---- Timing variables, read directly from the timing property struct
-         %
-         t = self.timing;
-         
-         % ---- Make the state machine
-         %
-         % Note that the startTrial routine sets the target location and the 'next'
-         % state after holdFixation, based on VGS vs MGS task
-         states = {...
-            'name'         'entry'  'input'  'timeout'             'exit'  'next'            ; ...
-            'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'blank'           ; ...
-            'blank'        {}       {}       t.pauseAfterChoice    blanks  'showFeedback'    ; ...
-            'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
-            'done'         dnow     {}       t.interTrialInterval  {}      ''                ; ...
-            };
-         
-         % make the state machine
-         self.addStateMachine(states);
-      end
-   end
-   
-   methods (Static)
-      
-      %% ---- Utility for defining standard configurations
-      %
-      function task = getStandardConfiguration(varargin)
-         
-         % ---- Get the task object, with optional property/value pairs
-         task = topsTreeNodeTaskSimpleBandit(varargin{:});
       end
    end
 end

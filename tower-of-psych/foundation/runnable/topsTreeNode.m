@@ -210,7 +210,8 @@ classdef topsTreeNode < topsRunnableComposite
             
             % Loop though node-specific specs, making helpers
             for hh = self.helperTypes
-               if any(strcmpi(properties(self), hh{:}))
+               if any(strcmpi(properties(self), hh{:})) && ...
+                     ~isempty(self.(hh{:}))
                   self.addHelpers(hh{:}, self.(hh{:}));
                end
             end
