@@ -17,7 +17,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
       
       % Task timing parameters, all in sec
       timing = struct( ...
-         'choiceTimeout',              5.0, ...
+         'choiceTimeout',              0.4, ...
          'pauseAfterChoice',           0.2, ...
          'showFeedback',               1.0, ...
          'interTrialInterval',         1.5);
@@ -91,6 +91,9 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          chkuic = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime'};
          showfb = {@showFeedback, self};
          shows  = {@disp, 'Choose LEFT or RIGHT'};
+         shown  = {@disp, 'In state noChoice'};
+         showl  = {@disp, 'In state choseLeft'};
+         showr  = {@disp, 'In state choseRight'};
          
          % Timing variables, read directly from the timing property struct
          t = self.timing;
@@ -98,7 +101,10 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          % Make the state machine
          states = {...
             'name'         'entry'  'input'  'timeout'             'exit'  'next'            ; ...
-            'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'blank'           ; ...
+            'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'noChoice'        ; ...
+            'noChoice'     shown    {}       []                    {}      'blank'           ; ...
+            'choseLeft'    showl    {}       []                    {}      'blank'           ; ...
+            'choseRight'   showr    {}       []                    {}      'blank'           ; ...
             'blank'        {}       {}       t.pauseAfterChoice    {}      'showFeedback'    ; ...
             'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
             'done'         {}       {}       t.interTrialInterval  {}      ''                ; ...
@@ -188,8 +194,12 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          % ---- Show information about the trial
          %
          % Task information
-         taskString = sprintf('%s (task %d/%d)', self.name, ...
-            self.taskID, length(self.caller.children));
+         if ~isempty(self.caller)
+            taskString = sprintf('%s (task %d/%d)', self.name, ...
+               self.taskID, length(self.caller.children));
+         else
+            taskString = sprintf('%s (%d)', self.name, self.taskID);
+         end
          
          % Trial information
          trialString = sprintf('Trial %d(%d)/%d: Rews=[%.0f %.0f], Correct=%d/%d', ...
@@ -214,10 +224,10 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          
          % ---- Check for event
          %
-         eventName = self.helpers.reader.readEvent(events, self, eventTag);
+         nextState = self.helpers.reader.readEvent(events, self, eventTag);
          
          % Nothing... keep checking
-         if isempty(eventName)
+         if isempty(nextState)
             nextState = [];
             return
          end
@@ -226,17 +236,12 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          %
          % Override completedTrial flag
          self.completedTrial = true;
-         
-         disp(eventName)
-         
-         % Jump to next state when done
-         nextState = 'blank';
-         
+
          % Get current task/trial
          trial = self.getTrial();
          
          % Save the choice, correct/error, RT
-         trial.choice = double(strcmp(eventName, 'choseRight'));
+         trial.choice = double(strcmp(nextState, 'choseRight'));
          trial.totalChoices = trial.totalChoices + 1;
          
          % Check to give reward
