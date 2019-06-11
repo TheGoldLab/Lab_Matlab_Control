@@ -202,11 +202,6 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % Initialize just the first time we use this trial
          if ~isfinite(trial.totalCorrect)
             
-            % We iterate through each "trial" several times, so at the
-            % beginning we need to reset these counters
-            trial.totalCorrect = 0;
-            trial.totalChoices = 0;
-            
             % Here we can also check/modify the trial order.
             % Make sure very first condition is easy
             if self.trialCount==1
@@ -230,6 +225,11 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
                   trial = self.getTrial();
                end
             end
+            
+            % We iterate through each "trial" several times, so at the
+            % beginning we need to reset these counters
+            trial.totalCorrect = 0;
+            trial.totalChoices = 0;
          end
          
          % Clear the fields that get saved per trial

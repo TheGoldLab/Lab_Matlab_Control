@@ -1,18 +1,23 @@
 classdef dotsReadableDummy < dotsReadable
    % dotsReadableDummy
    %
-   % To run in demo mode
+   % A 'dummy' readable that will automatically generate inputs, usually
+   % used for demo modes.
+   %
+   % Components are named auto_1 ... auto_n, where n is numComponents
    %
    % 9/13/18 written by jig
    
    properties
       
       % dummy components
-      numComponents = 10;
+      numComponents = 5;
+      
+      % values to return: 'random', 'all'
+      returnValues = 'random';
       
       % pause before returning data, for pacing
-      pauseBeforeReturningData = 0.6;
-      
+      pauseBeforeReturningData = 0.1;      
    end
    
    properties (SetAccess = private)
@@ -50,14 +55,28 @@ classdef dotsReadableDummy < dotsReadable
          end
       end
       
+      % Returns data matrix, rows are events, columns are:
+      %  component ID
+      %  value
+      %  timestamp
       function newData = readNewData(self)
          
          pause(self.pauseBeforeReturningData);
          
-         % always return auto events
-         newData = ones(self.numComponents, 3);
-         newData(:,1) = 1:self.numComponents;
-         newData(:,3) = feval(self.clockFunction);
+         switch self.returnValues
+            
+            case 'all'
+               
+               % Always return all events
+               newData = ones(self.numComponents, 3);
+               newData(:,1) = 1:self.numComponents;
+               newData(:,3) = feval(self.clockFunction);
+               
+            case 'random'
+               
+               % Return one randomly selected event
+               newData = [randi(self.numComponents), 1, feval(self.clockFunction)];
+         end
       end
    end
 end

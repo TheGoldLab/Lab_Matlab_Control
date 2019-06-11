@@ -66,7 +66,27 @@ classdef dotsWritableDOut < dotsWritable
       end
       
       % Send multiple TTL pulses
-      function timestamps = sendTTLPulses(self, channel, numPulses, pauseBetweenPulses)
+      % Timestamps are estimates of onset times of first and last pulses.
+      function [firstTimestamp, lastTimestamp] = sendTTLPulses(self, ...
+            numPulses, pauseBetweenPulses)
+            
+         if nargin < 2 || isempty(numPulses)
+            numPulses = 1;
+         end
+         
+         if nargin < 3 || isempty(pauseBetweenPulses)
+            pauseBetweenPulses = self.defaultPauseBetweenPulses;
+         end
+         
+         % Get time of first pulse
+         firstTimestamp = self.sendTTLPulse();
+
+         % get the remaining pulses and save the finish time
+         lastTimestamp = firstTimestamp;
+         for pp = 1:numPulses-1
+            pause(pauseBetweenPulses);
+            lastTimestamp = self.sendTTLPulse();
+         end
       end
       
       % Send a TTL signal or waveform.

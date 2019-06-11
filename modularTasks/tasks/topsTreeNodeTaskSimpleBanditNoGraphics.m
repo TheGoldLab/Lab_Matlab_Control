@@ -60,10 +60,10 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
       % Readable settings
       readable = struct( ...
          'reader',                     struct( ...
-         'fevalable',                  @dotsReadableHIDKeyboard, ...
+         'fevalable',                  @dotsReadableDummy, ...
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'KeyboardF', 'KeyboardJ'})}}));
+         'component',                  {'auto_1', 'auto_2'})}}));
       
       % Feedback messages
       message = [];
@@ -142,11 +142,6 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          % Initialize just the first time we use this trial
          if ~isfinite(trial.totalCorrect)
             
-            % We iterate through each "trial" several times, so at the
-            % beginning we need to reset these counters
-            trial.totalCorrect = 0;
-            trial.totalChoices = 0;
-            
             % Here we can also check/modify the trial order.
             % Make sure very first condition is easy
             if self.trialCount==1
@@ -170,6 +165,11 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
                   trial = self.getTrial();
                end
             end
+            
+            % We iterate through each "trial" several times, so at the
+            % beginning we need to reset these counters
+            trial.totalCorrect = 0;
+            trial.totalChoices = 0;
          end
          
          % Clear the fields that get saved per trial
@@ -227,6 +227,8 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          % Override completedTrial flag
          self.completedTrial = true;
          
+         disp(eventName)
+         
          % Jump to next state when done
          nextState = 'blank';
          
@@ -235,17 +237,13 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          
          % Save the choice, correct/error, RT
          trial.choice = double(strcmp(eventName, 'choseRight'));
+         trial.totalChoices = trial.totalChoices + 1;
          
          % Check to give reward
-         if (trial.choice == 0 && rand() <= trial.probabilityLeft) || ...
-               (trial.choice == 1 && rand() > trial.probabilityLeft)
-            trial.rewarded = true;
-         else
-            trial.rewarded = false;
-         end
+         rv = rand() <= trial.probabilityLeft;
+         trial.rewarded = (trial.choice == 0 && rv) || (trial.choice == 1 && ~rv);
          
          % Mark as correct/error (with respect to largest reward side)
-         trial.totalChoices = trial.totalChoices + 1;
          trial.totalCorrect = trial.totalCorrect + double( ...
             (trial.choice==0 && trial.probabilityLeft>=0.5) || ...
             (trial.choice==1 && trial.probabilityLeft< 0.5));
@@ -267,18 +265,18 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          
          % Check for outcome
          if ~self.completedTrial
-            messageGroup = 'No_choice';
+            feedback = 'No choice -- try again';
          elseif trial.rewarded
-            messageGroup = 'Correct';
+            feedback = 'Rewarded!';
          else
-            messageGroup = 'Error';
+            feedback = 'Not rewarded!';
          end
          
          % --- Show trial feedback
          %
          trialString = sprintf('Trial %d(%d)/%d: choice=%d (%s)', ...
             self.trialCount, self.incrementTrial.counter, numel(self.trialData), ...
-            trial.choice, messageGroup);
+            trial.choice, feedback);
          self.updateStatus([], trialString); % just update the second one
       end
    end

@@ -1,4 +1,4 @@
-% Script to run a topsTreeeNodeTaskSimpleBanditNoGraphics task
+% Script to run a topsTreeNodeTaskSimpleBanditNoGraphics task
 %
 % Puts a data file in:
 %  <default data path>/simpleBandit/raw/<YEAR_MONTH_DAY_MINUTES_SEC>
