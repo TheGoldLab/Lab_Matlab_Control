@@ -466,7 +466,7 @@ classdef dotsReadable < handle
          end
          
          % Keep track of size of current array
-         numEvents = length(self.eventDefinitions);
+         % numEvents = length(self.eventDefinitions);
          
          %> fill in this event definition with given values
          self.eventDefinitions(ID).name       = name;
