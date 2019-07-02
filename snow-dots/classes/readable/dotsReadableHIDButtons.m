@@ -66,10 +66,12 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
             end
          end
       end
+      function nullfunc(self)
+          % this function does nothing on purpose
+      end
    end
    
    methods (Static)
-      
       % For testing
       function [didHappen, waitTime] = waitForButton(buttonNumber, maxWait)
          
