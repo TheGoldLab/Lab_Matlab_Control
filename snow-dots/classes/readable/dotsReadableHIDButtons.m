@@ -48,7 +48,7 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
          else % NEED CHECK HERE strcmp(self.deviceInfo.Product, 'BBTK Response Box')
             
             % Found Custom Button Box, use it to map component names
-            buttons = {'KeyboardShiftLeft' 'KeyboardShiftRight'};
+            buttons = {'KeyboardLeftShift' 'KeyboardRightShift'};
          end
          
          % Get the list of component names

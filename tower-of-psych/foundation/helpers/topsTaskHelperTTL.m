@@ -17,12 +17,16 @@ classdef topsTaskHelperTTL < topsTaskHelper
       % Constuct the helper
       %
       % Arguments:
-      %  readableName ... string name of readable
-      function self = topsTaskHelperTTL()
+      %  writableFcn ... function handle of writable class
+      function self = topsTaskHelperTTL(writableFcn)
             
+         if nargin < 1 || isempty(writableFcn)
+            writableFcn = @dotsWritableDOut1208FS;
+         end
+         
          % Create it
          self = self@topsTaskHelper('TTL', [], ...
-            'fevalable',   @dotsWritableDOut1208FS);
+            'fevalable', writableFcn);
       end
       
       % Overloaded start method

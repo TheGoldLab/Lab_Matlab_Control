@@ -20,17 +20,17 @@ classdef dotsWritableDOutLabJack < dotsWritableDOut
    properties (SetAccess = protected)
       
       % The labJack object
-      daqinfo;      
+      daq;      
    end
    
    methods
       
       % Arguments are ultimately passed to openDevice
-      function self = dotsWritableDOut1208FS(varargin)
+      function self = dotsWritableDOutLabJack(varargin)
          self = self@dotsWritableDOut();
          
          % Initialize the labJack
-         self.daqinfo = labJack(); 
+         self.daq = labJack(); 
          
          % 'verbose',true will include labjack.m text output
          if self.verboseMode
@@ -47,15 +47,15 @@ classdef dotsWritableDOutLabJack < dotsWritableDOut
       function timestamp = sendTTLPulse(self, pulsePort)
          
          % Check arg
-         if nargin < 2 || isempty(pulsePort)
+         if nargin >= 2 && ~isempty(pulsePort)
             self.pulsePort = pulsePort;
          end
          
          % Getting timestamp for pulse onset.
-         timestamp = GetSecs; 
+         timestamp = mglGetSecs; 
         
          % Send the pulse
-         daq.timedTTL(self.pulsePort, self.pulsewidth);
+         self.daq.timedTTL(self.pulsePort, self.pulsewidth);
       end
    end
 end
