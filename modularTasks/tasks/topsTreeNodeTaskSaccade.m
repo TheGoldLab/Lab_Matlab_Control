@@ -23,15 +23,13 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       
       % Trial properties, put in a struct for convenience
       settings = struct( ...
-         'targetDistance',             8,    ...
-         'SpeakDirection',             true, ...
-         'playSoundAtFixOff',          true);
+         'targetDistance',             8);
       
       % Task timing parameters, all in sec
       timing = struct( ...
          'fixationTimeout',            5.0, ...
          'holdFixation',               0.75, ...
-         'showSmileyFace',             0,   ...
+         'smileyDuration',             0,   ...
          'holdTarget',                 0.75, ...
          'showFeedback',               1.0, ...
          'interTrialInterval',         1.5, ...
@@ -60,23 +58,6 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          ...   % The main stimulus ensemble
          'stimulusEnsemble',           struct(  ...
          ...
-         ...   % Fixation drawable settings
-         'fixation',                   struct( ...
-         'fevalable',                  @dotsDrawableTargets,   ...
-         'settings',                   struct( ...
-         'nSides',                     4,                ...
-         'width',                      3.0.*[1.0 0.1],   ...
-         'height',                     3.0.*[0.1 1.0],   ...
-         'colors',                     [1 1 1])),        ...
-         ...
-         ...   % Targets drawable settings
-         'targets',                    struct(  ...
-         'fevalable',                  @dotsDrawableTargets,   ...
-         'settings',                   struct(   ...
-         'nSides',                     100,      ...
-         'width',                      4,      ...
-         'height',                     4)), ...
-         ...
          ...   % Smiley face for feedback
          'smiley',                     struct(  ...
          'fevalable',                  @dotsDrawableImages, ...
@@ -84,15 +65,38 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'fileNames',                  {{'smiley.jpg'}}, ...
          'height',                     2))));
       
-      % Playable settings
-      playable = struct( ...
+      % Targets settings
+      targets = struct( ...
          ...
-         ... % Args are frequency (Hz), time (sec), scale factor
-         ... % Note that calling makeTone calls prepareToPlay automatically, 
-         ... %    otherwise that should be called explicitly before each trial
-         'fixOffTone',                 struct( ...
-         'fevalable',                  {{@dotsPlayableTone.makeTone, [1000 0.05 1]}}));
- %         'fevalable',                  {{@dotsPlayableFastTone.makeTone, [1000 0.05 1]}}));
+         ...   % The target helper
+         'targets',                    struct( ...
+         ...
+         ...   % Target helper properties
+         'showDrawables',              true, ...
+         'showLEDs',                   true, ...
+         'onPlayables',                struct( ...
+         'target',                     'location'), ...
+         'offPlayables',               struct( ...
+         'fixation',                   [1000 0.05 1]), ...
+         ...
+         ...   % Fixation drawable settings
+         'fixation',                   struct( ...
+         'fevalable',                  @dotsDrawableTargets,   ...
+         'settings',                   struct( ...
+         'nSides',                     4,                ...
+         'width',                      3.0.*[1.0 0.1],   ...
+         'height',                     3.0.*[0.1 1.0],   ...
+         'colors',                     [1 0 0])),        ...
+         ...
+         ...   % Targets drawable settings
+         'target',                     struct(   ...
+         'fevalable',                  @dotsDrawableTargets,   ...
+         'settings',                   struct(   ...
+         'nSides',                     100,      ...
+         'width',                      4,        ...
+         'height',                     4,        ...
+         'xCenter',                    10,       ...
+         'colors',                     [0 1 0]))));
       
       % Readable settings
       readable = struct( ...
@@ -147,6 +151,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          ...   Instructions
          'Instructions',               struct( ...         
          'text',                       2, ...
+         'speakText',                  true, ...
          'duration',                   1, ...
          'pauseDuration',              0.5, ...
          'bgEnd',                      [0 0 0]), ...
@@ -169,7 +174,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    
    methods
       
-      %% Constuct with name optional.
+      %% Construct with name optional.
       % @param name optional name for this object
       % @details
       % If @a name is provided, assigns @a name to this object.
@@ -199,12 +204,35 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %% Overloaded start trial method
       function startTrial(self)
          
-         % ---- Prepare components
+         % ---- Get the current trial
          %
-         self.prepareDrawables();
-         self.prepareReadables();
-         self.prepareStateMachine();
+         trial = self.getTrial();
+
+         % ---- Set target location
+         %
+         self.helpers.targets.set('target', ...
+            'anchor',   'fixation', ...
+            'r',        self.settings.targetDistance, ...
+            'theta',    trial.direction);
          
+         % ---- Possibly update feedback
+         %
+         if self.timing.smileyDuration > 0
+            
+            % Set x, y
+            stimulusEnsemble.setObjectProperty('x', ...
+               self.helpers.targets.theObject.getObjectProperty('xCenter', 2), 1);
+            stimulusEnsemble.setObjectProperty('y', ...
+               self.helpers.targets.theObject.getObjectProperty('yCenter', 2), 1);
+            
+            % Prepare the smiley object
+            stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow, [], 1);
+         end         
+      
+         % ---- Update stateMachine to jump to VGS-/MGS- specific states
+         %
+         self.stateMachine.editStateByName('holdFixation', 'next', [self.name 'showTarget']);
+               
          % ---- Show information about the task/trial
          %
          % Task information
@@ -212,7 +240,6 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             self.taskID, length(self.caller.children), nanmean([self.trialData.RT]));
          
          % Trial information
-         trial = self.getTrial();
          trialString = sprintf('Trial %d/%d, dir=%d', self.trialCount, ...
             numel(self.trialData)*self.trialIterations, trial.direction);
          
@@ -240,8 +267,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          self.setTrialData([], 'RT', trial.choiceTime - trial.fixationOff);
          
          % ---- Possibly show smiley face
-         if self.timing.showSmileyFace > 0
-            self.helpers.stimulusEnsemble.draw({3, [1 2]});
+         if self.timing.smileyDuration > 0
+            self.helpers.stimulusEnsemble.draw({1, []});
          end
       end
       
@@ -272,110 +299,24 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    end
    
    methods (Access = protected)
-      
-      %% Prepare drawables for this trial
-      %
-      function prepareDrawables(self)
-         
-         % ---- Get the current trial
-         %
-         trial = self.getTrial();
-         
-         % ---- Get the stimulus ensemble
-         %
-         stimulusEnsemble = self.helpers.stimulusEnsemble.theObject;
-         
-         % ---- Set target location
-         %
-         % Get x,y location of center of target
-         newX = stimulusEnsemble.getObjectProperty('xCenter', 1) + ...
-            self.settings.targetDistance * cosd(trial.direction);
-         newY = stimulusEnsemble.getObjectProperty('yCenter', 1) + ...
-            self.settings.targetDistance * sind(trial.direction);
-         stimulusEnsemble.setObjectProperty('xCenter', newX, 2);
-         stimulusEnsemble.setObjectProperty('yCenter', newY, 2);
-         
-         % ---- Possibly update feedback
-         %
-         if self.timing.showSmileyFace > 0
-            
-            % Set x, y
-            stimulusEnsemble.setObjectProperty('x', newX, 3);
-            stimulusEnsemble.setObjectProperty('y', newY, 3);
-            
-            % Prepare the smiley object
-            stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow, [], 3);
-         end         
-      end
-      
-      %% Prepare readables for this trial
-      %
-      function prepareReadables(self)
-         
-         % ---- Inactivate all of the readable events
-         %
-         self.helpers.reader.theObject.deactivateEvents();
-      end      
-      
-      %% Prepare stateMachine for this trial
-      %
-      function prepareStateMachine(self)
-         
-         % ---- Update stateMachine to jump to VGS-/MGS- specific states
-         %
-         self.stateMachine.editStateByName('holdFixation', 'next', ...
-            [self.name 'showTarget']);
-      end
-      
-      %% Show target method (and possibly speak direction)
-      %
-      function showTarget(self)
-         
-         % ---- Show the target
-         %
-         draw(self.helpers.stimulusEnsemble, {2, []}, self, 'targetOn');
 
-         % ---- Possibly speak direction
-         %
-         if self.settings.SpeakDirection
-            
-            % Get the current trial
-            trial = self.getTrial();
-            
-            % Parse and speak direction
-            switch trial.direction
-               case 0
-                  system('say right');
-               case 90
-                  system('say up');
-               case 180
-                  system('say left');
-               case 270
-                  system('say down');
-            end
-         end
-      end
-      
       %% configureStateMachine method
       %
       function initializeStateMachine(self)
          
          % ---- Fevalables for state list
          %
-         dnow   = {@drawnow};
-         blanks = {@dotsTheScreen.blankScreen, [0 0 0]};
+         blanks = {@blank, self.helpers.targets};
          chkuif = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
          chkuib = {}; % {@getNextEvent, self.helpers.reader, false, {}}; % {'brokeFixation'}
          chkuic = {@readEvent, self.helpers.reader, {'choseTarget'}, self, 'choiceTime'};
+         dnow   = {@drawnow};
+         hidefx = {@show, self.helpers.targets, {[], 1}, self, 'fixationOff'};
+         hidet  = {@show, self.helpers.targets, {[], 2}, self, 'targetOff'};
          setchc = {@setChoice, self};
-         showt  = {@showTarget, self};
-         showfx = {@draw, self.helpers.stimulusEnsemble, {1, [2 3]},  self, 'fixationOn'};
-         hidet  = {@draw, self.helpers.stimulusEnsemble, {[], 2}, self, 'targetOff'};
+         showfx = {@show, self.helpers.targets, {1,  2}, self, 'fixationOn'};
+         showt  = {@show, self.helpers.targets, {2, []}, self, 'targetOn'};
          showfb = {@showFeedback, self};
-         hidefx = {@draw, self.helpers.stimulusEnsemble, {[], 1}, self, 'fixationOff'};
-         if self.settings.playSoundAtFixOff
-            hidefx = {@fevalMany, {{@startPlaying, self.helpers.fixOffTone}, hidefx}};
-         end
          
          % drift correction
          hfdc  = {@reset, self.helpers.reader.theObject, true};
@@ -402,7 +343,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             'MGSshowTarget'     showt    chkuib   t.MGSTargetDuration   {}      'MGSdelay'        ; ... % MGS
             'MGSdelay'          hidet    chkuib   t.MGSDelayDuration    gwt     'hideFix'         ; ...
             'hideFix'           hidefx   chkuic   t.saccadeTimeout      {}      'blank'           ; ...
-            'choseTarget',      setchc   {}       t.showSmileyFace      {}      'blank'           ; ...
+            'choseTarget',      setchc   {}       t.smileyDuration      {}      'blank'           ; ...
             'blank'             {}       {}       t.holdTarget          blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
@@ -432,12 +373,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          switch name
             case 'VGS'
                task.message.groups.Instructions.text = { ...
-                  'Look at the white cross. When it disappears,', ...
-                  'look at the visual target.'};
+                  'Look at the white cross until it disappears.', ...
+                  'Then look at the visual target.'};
             otherwise
                task.message.groups.Instructions.text = { ...
-                  'Look at the white cross. When it disappears,', ...
-                  'look at the remembered location of the visual target.'};
+                  'Look at the white cross until it disappears.', ...
+                  'Then look at the remembered location of the visual target.'};
          end
       end
    end

@@ -12,6 +12,12 @@ classdef topsTaskHelper < topsFoundation
       % Flag to remove copy from treeNode (see start)
       removeCopy = true;
       
+      % Keep track of the names of the objects in the ensemble
+      ensembleObjectNames;
+      
+      % Keep track of the classes of objects in the ensemble
+      ensembleObjectClasses;
+      
       % For time synchronization
       sync = struct( ...
          'clockFevalable', {{}}, ...   % Function to get time from helper object
@@ -154,7 +160,7 @@ classdef topsTaskHelper < topsFoundation
             end
             specs = struct( ...
                'object',      cell(numObjects, 1), ...
-               'fevalable',   names, ...
+               'names',       names, ...
                'settings',    []);
             
             % Loop through the objects
@@ -183,6 +189,11 @@ classdef topsTaskHelper < topsFoundation
                
                % Making ensemble!               
                theObject = topsEnsemble.makeEnsemble(name, {specs.object});
+               
+               % Save the names, classes
+               self.ensembleObjectNames = names;
+               self.ensembleObjectClasses = cellfun(@(x) class(x), ...
+                  {specs.object}, 'UniformOutput', false);               
                
                % Apply settings               
                for nn = 1:numObjects

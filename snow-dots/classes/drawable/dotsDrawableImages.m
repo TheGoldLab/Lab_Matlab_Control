@@ -27,6 +27,9 @@ classdef dotsDrawableImages < dotsDrawableTextures
       
       % number of colors per pixel for each image
       pixelColors;
+      
+      % kludge for topTaskHelperTarget
+      colors;
    end
    
    methods

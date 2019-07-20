@@ -24,8 +24,12 @@ classdef topsEnsemble < topsCallList
     % call arbitrary functions, topsEnsemble can also call arbitrary
     % methods on its aggrigated objects.
     properties (SetAccess = protected)
+       
         % array of objects in the ensemble
         objects = {};
+        
+        % optional array of object names, for convenience
+        objectNames = {};
     end
     
     methods

@@ -78,7 +78,10 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       referenceTime=0;
       
       % To check for remote mode
-      isRemote = false;
+      isRemoteFlag = false;
+      
+      % Screen is open 
+      isOpenFlag = false;
    end
    
    methods (Access = private)
@@ -199,15 +202,23 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             % load a stimulus-appropriate gamma table
             mglSetGammaTable(self.newGammaTable);
          end
+         
+         % Set flag
+         self.isOpenFlag = true;
       end
       
       % Close the OpenGL drawing window.
       %
       function close(self)
+         
+         % Clean up
          mglDisplayCursor(1);
          if self.getDisplayNumber >= 0
             mglClose();
          end
+         
+         % Set flag
+         self.isOpenFlag = false;
       end
       
       % Flush OpenGL drawing commands and swap OpenGL frame buffers.
@@ -398,6 +409,12 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          obj = self;
       end
       
+      % Check if screen is open
+      function isOpenFlag = isOpen()
+         self = dotsTheScreen.theObject();
+         isOpenFlag = self.isOpenFlag;
+      end
+      
       % Utility for creating or retrieving a screen ensemble, which
       %  is created either as a (local) topsEnsemble or for remote 
       %  drawing using dotsClientEnsemble with default network values.
@@ -431,7 +448,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
             % Set up the screen object and ensemble
             screen = dotsTheScreen.theObject(varargin{3:end});
             screen.displayIndex = displayIndex;
-            screen.isRemote = useRemote;
+            screen.isRemoteFlag = useRemote;
             selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', useRemote);
             selfEnsemble.addObject(screen);
             selfEnsemble.automateObjectMethod('flip', @nextFrame);
@@ -640,7 +657,7 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          screen = dotsTheScreen.theObject();
          
          % Check for remote ensemble
-         if screen.isRemote
+         if screen.isRemoteFlag
             ensemble = dotsTheScreen.theEnsemble;
             frameInfo = ensemble.callObjectMethod(@blank, varargin);
          else

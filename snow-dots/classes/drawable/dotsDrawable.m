@@ -17,6 +17,7 @@ classdef dotsDrawable < handle
    % This should do any one-time or infrequent set up to enable
    % or optimize the behavior of draw().
    properties
+
       % true or false, whether to draw() this object
       isVisible = true;
    end
@@ -69,7 +70,13 @@ classdef dotsDrawable < handle
       % nextFrame().
       function frameInfo = drawFrame(drawables, doClear)
          
-         % draw() each drawable
+         % Check that screen is open
+         if ~dotsTheScreen.isOpen
+             frameInfo = [];
+            return
+         end
+         
+         % draw each drawable
          for ii = 1:numel(drawables)
             drawables{ii}.mayDrawNow();
          end
@@ -121,7 +128,8 @@ classdef dotsDrawable < handle
          ensemble.automateObjectMethod('draw', @mayDrawNow);
       end
       
-      % Convenient utility for drawing an ensemble
+      % Convenient utility for drawing an ensemble either locally or
+      % remotely
       %
       % Aguments:
       %  ensemble    ... the ensemble
@@ -133,11 +141,34 @@ classdef dotsDrawable < handle
       %
       function frameInfo = drawEnsemble(ensemble, args, prepareFlag, showDuration, pauseDuration)
          
-         % Arguments given?
+         % Check for args to setObjectProperty
          if nargin >= 2 && ~isempty(args)
-            for ii = 1:length(args)
-               for pp = 1:2:length(args{ii})
-                  ensemble.setObjectProperty(args{ii}{pp}, args{ii}{pp+1}, ii);
+            
+            if isnumeric(args{1})
+               
+               % Given as: [on indices] [off indices]
+               if ~isempty(args{1})
+                  
+                  % Show objects
+                  ensemble.setObjectProperty('isVisible', true, args{1});
+               end
+               
+               if length(args) > 1 && ~isempty(args{2})
+                  
+                  % hide objects
+                  ensemble.setObjectProperty('isVisible', false, args{2});
+               end
+               
+            elseif ischar(args{1})
+               
+               % Given as: <propertyName>, <value(s)>, <indices>
+               ensemble.setObjectProperty(args{:});
+               
+            else
+               
+               % Given as cell array of args
+               for ii = 1:length(args)
+                  ensemble.setObjectProperty(args{ii}{:});
                end
             end
          end
@@ -145,14 +176,23 @@ classdef dotsDrawable < handle
          % Prepare?
          if nargin >= 3 && prepareFlag
             ensemble.callObjectMethod(@prepareToDrawInWindow);
-         end
+         end         
          
-         % Call runBriefly to draw it & flip the buffers
+         % Draw the next frame & flip buffers. This returns a struct with args:
+         %   - onsetTime: estimated onset time for this frame, which
+         %        might be a time in the future
+         %   - onsetFrame: number of frames elapsed between open() and
+         %        this frame
+         %   - swapTime: estimated time of the last video hardware
+         %        refresh (e.g. "vertical blank"), which is alwasy a
+         %        time in the past
+         %   - isTight: whether this frame and the previous frame were
+         %        adjacent (false if a frame was skipped)
          frameInfo = ensemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
-            
+         
          % Pause while showing?
          if nargin >= 4 && showDuration > 0
-         
+            
             % Wait while showing
             pause(showDuration);
             
@@ -168,8 +208,6 @@ classdef dotsDrawable < handle
                % Wait again
                pause(pauseDuration);
             end
-         else
-            frameInfo = [];
          end
       end
    end

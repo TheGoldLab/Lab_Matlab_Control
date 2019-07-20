@@ -2,11 +2,14 @@ classdef topsTaskHelperMessage < topsTaskHelper
    % Class topsTaskHelperMessage
    %
    % Add topsTaskHelperMessage, a subclass of topsTaskHelper
-   % includes text, image, and sound objects. Should supercede
+   % includes text, image, and sound objects. Supercedes
    % topsTaskHelperFeedback.
    %
    % The text and image objects are held in an ensemble
    % The sound obects are private properties
+   %
+   % 7/16/19 jig revised to account for the possibility that no screen is
+   % used. In this case, text drawables can be spoken.
    
    properties (SetObservable)
       
@@ -95,6 +98,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          p.addParameter('pauseDuration',  0);
          p.addParameter('bgStart',        []);
          p.addParameter('bgEnd',          []);
+         p.addParameter('speakText',      false);
          p.parse(self, groupName, varargin{:});
 
          % Check for existing
@@ -108,6 +112,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
             'textIndices',       [],                      ...
             'playable',          [],                      ...
             'isPrepared',        false,                   ...
+            'speakText',         p.Results.speakText,     ...
             'duration',          p.Results.duration,      ...
             'pauseDuration',     p.Results.pauseDuration, ...
             'bgStart',           p.Results.bgStart,       ...
@@ -136,10 +141,10 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
          
          % Make a drawable helper from the "drawables" specifications
-         theDrawableHelper = topsTaskHelper.makeHelpers('drawable', specs);
+         theDrawableHelpers = topsTaskHelper.makeHelpers('drawable', specs);
                   
-         % Get the object and save it in the group's drawable Ensemble
-         theGroup.drawableEnsemble = theDrawableHelper.(groupName).theObject;
+         % Get the helper and save it in the group's drawable Ensemble
+         theGroup.drawableEnsemble = theDrawableHelpers.(groupName).theObject;
          
          % Get text indices
          theGroup.textIndices = find(cellfun(@(x) isa(x, 'dotsDrawableText'), ...
@@ -244,13 +249,13 @@ classdef topsTaskHelperMessage < topsTaskHelper
          % Get the message group
          theGroup = self.messageGroups.(groupName);
          
-         % Set background
-         if ~isempty(theGroup.bgStart)
-            dotsTheScreen.blankScreen(theGroup.bgStart);
-         end
-         
          % Draw the drawable(s)
          if ~isempty(theGroup.drawableEnsemble)
+            
+            % Set background
+            if ~isempty(theGroup.bgStart)
+               dotsTheScreen.blankScreen(theGroup.bgStart);
+            end
             
             % Possibly prepare to draw
             if ~theGroup.isPrepared
@@ -259,21 +264,35 @@ classdef topsTaskHelperMessage < topsTaskHelper
                self.messageGroups.(groupName).isPrepared = true;
             end
             
-            % Draw 
+            % Draw
             frameInfo = theGroup.drawableEnsemble.callObjectMethod(...
                @dotsDrawable.drawFrame, {}, [], true);
+         end
+         
+         % Possibly speak the text
+         if theGroup.speakText
+            for ii = theGroup.textIndices               
+               text = theGroup.drawableEnsemble.getObjectProperty('string', ii);
+               if ~isempty(text) && ~all(isspace(text))            
+                  system(['say ' text]);
+               end
+            end
          end
          
          % Play the playable
          if ~isempty(theGroup.playable)
             theGroup.playable.play();
          end
+
+         % End drawing
+         if ~isempty(theGroup.drawableEnsemble)
+
+            % Wait
+            pause(theGroup.duration);
          
-         % Wait
-         pause(theGroup.duration);
-         
-         % Clear screen and possibly re-set background
-         dotsTheScreen.blankScreen(theGroup.bgEnd);
+            % Clear screen and possibly re-set background
+            dotsTheScreen.blankScreen(theGroup.bgEnd);
+         end
          
          % Conditionally store the timing data, with synchronization offset
          if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)

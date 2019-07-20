@@ -104,6 +104,9 @@ classdef dotsReadable < handle
       
       % Possibly use a keyboard or other UI to help with calibration
       calibrationUI;
+      
+      % Flag to deactivate all events at the beginning of each trial
+      dactivateEventsAtStartTrial=true;
    end
    
    properties (SetAccess = protected)
@@ -858,6 +861,12 @@ classdef dotsReadable < handle
          
          % Call subclass-specific method
          self.startTrialDevice(varargin{:});
+         
+         % Possibly deactivate all events (default=true), so that the trial
+         %  can activate them when needed
+         if self.dactivateEventsAtStartTrial
+            self.deactivateEvents();
+         end
       end
       
       %> finishTrial()

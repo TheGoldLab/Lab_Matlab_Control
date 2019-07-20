@@ -124,6 +124,8 @@ classdef dotsDrawableText < dotsDrawable
       
       % Prepare the text texture to be drawn.
       function prepareToDrawInWindow(self)
+         
+         % Check for existing texture
          if isstruct(self.textureInfo)
             mglDeleteTexture(self.textureInfo);
          end

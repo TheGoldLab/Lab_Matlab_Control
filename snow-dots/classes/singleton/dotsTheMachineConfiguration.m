@@ -234,7 +234,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
                 [0 0 0], group, 'backgroundColor');
             self.settings.addItemToGroupWithMnemonic( ...
                 [1 1 1], group, 'foregroundColor');
-            
+                         
             group = 'dotsTheMessenger';
             self.settings.addItemToGroupWithMnemonic( ...
                 'dotsSocketPnet', group, 'socketClassName');

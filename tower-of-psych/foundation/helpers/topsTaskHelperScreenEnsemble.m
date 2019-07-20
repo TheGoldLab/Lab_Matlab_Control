@@ -26,7 +26,7 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
          p.addParameter('topNode',          []);
          p.parse(varargin{:});
 
-         % add the helper, with optional args
+         % Get the remaining optional args
          args = orderParams(p.Unmatched, varargin, true);
          
          % Create it

@@ -46,55 +46,27 @@ classdef topsTaskHelperDrawable < topsTaskHelper
       % Created 5/10/18 by jig
       function draw(self, args, task, eventTag)
          
-         % Check for args to setObjectProperty
-         if nargin >= 2 && ~isempty(args)            
-                        
-            if isnumeric(args{1})
-               
-               % Given as: [on indices] [off indices]
-               if ~isempty(args{1})
-                  
-                  % Show objects
-                  self.theObject.setObjectProperty('isVisible', true, args{1});
-               end
-               
-               if length(args) > 1 && ~isempty(args{2})
-                  
-                  % hide objects
-                  self.theObject.setObjectProperty('isVisible', false, args{2});
-               end
-               
-            elseif ischar(args{1})
- 
-               % Given as: <propertyName>, <value(s)>, <indices>
-               self.theObject.setObjectProperty(args{:});
-               
-            else
-               
-               % Given as cell array of args 
-               for ii = 1:length(args)
-                  self.theObject.setObjectProperty(args{ii}{:});
+         % Check args
+         if nargin < 2
+            args = [];
+            if nargin < 3
+               task = [];
+               if nargin < 4
+                  eventTag = [];
                end
             end
          end
          
-         % Draw the next frame. This returns a struct with args:
-         %   - onsetTime: estimated onset time for this frame, which
-         %        might be a time in the future
-         %   - onsetFrame: number of frames elapsed between open() and
-         %        this frame
-         %   - swapTime: estimated time of the last video hardware
-         %        refresh (e.g. "vertical blank"), which is alwasy a
-         %        time in the past
-         %   - isTight: whether this frame and the previous frame were
-         %        adjacent (false if a frame was skipped)
-         frameInfo = self.theObject.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+         % Use dotsDrawable.drawEnsemble to do the work. For now we do not
+         % have the capacity to send a "prepareToDrawFlag" but could change
+         % that if needed (third argument)
+         frameInfo = dotsDrawable.drawEnsemble(self.theObject, args, false, task, eventTag);
          
          % Store the timing data
-         if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
-             [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+         if ~isempty(task) && ~isempty(eventTag)
+            [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
             task.setTrialData([], eventTag, frameInfo.onsetTime - ...
-                referenceTime + offsetTime);
+               referenceTime + offsetTime);
          end
       end
    end
