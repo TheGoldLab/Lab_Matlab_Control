@@ -156,6 +156,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             
             % Call the gui constructor
             self.GUIs.run.handle = feval(self.GUIs.run.name, self, readableEye);
+            
          else
             
             % Start data logging
@@ -230,7 +231,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             % Save self and always write data log to file
             if ~isempty(self.filename)
                
-               % save self, without the gui handles
+               % save self, without the gui handlesfeval(self.clockFunction);
                warning('OFF', 'MATLAB:structOnObject');
                self.GUIs = [];
                topsDataLog.logDataInGroup(struct(self), 'mainTreeNode');

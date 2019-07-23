@@ -12,7 +12,10 @@ classdef topsTaskHelperMessage < topsTaskHelper
    % used. In this case, text drawables can be spoken.
    
    properties (SetObservable)
-      
+            
+      % Flag to show drawables
+      showDrawables;
+
       % Default duration for showing (in sec)
       defaultDuration = 1.0;
       
@@ -47,6 +50,11 @@ classdef topsTaskHelperMessage < topsTaskHelper
          
          % Call the topsTaskHelper constructor
          self = self@topsTaskHelper(name, [], varargin{:});
+         
+         % Check screen
+         if ~dotsTheScreen.isOpen
+            self.showDrawables = false;
+         end
 
          % Add the groups
          if ~isempty(groups)
@@ -250,7 +258,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          theGroup = self.messageGroups.(groupName);
          
          % Draw the drawable(s)
-         if ~isempty(theGroup.drawableEnsemble)
+         if self.showDrawables && ~isempty(theGroup.drawableEnsemble)
             
             % Set background
             if ~isempty(theGroup.bgStart)
@@ -285,20 +293,27 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
 
          % End drawing
-         if ~isempty(theGroup.drawableEnsemble)
+         if self.showDrawables && ~isempty(theGroup.drawableEnsemble)
 
             % Wait
             pause(theGroup.duration);
          
             % Clear screen and possibly re-set background
             dotsTheScreen.blankScreen(theGroup.bgEnd);
-         end
          
-         % Conditionally store the timing data, with synchronization offset
-         if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
-            [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-            task.setTrialData([], eventTag, ...
-               frameInfo.onsetTime - referenceTime + offsetTime);
+            % Conditionally store the timing data, with synchronization offset
+            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+               [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+               task.setTrialData([], eventTag, ...
+                  frameInfo.onsetTime - referenceTime + offsetTime);
+            end
+            
+         else
+            
+            % Conditionally store the timing data, with synchronization offset
+            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+               task.setTrialData([], eventTag, feval(self.clockFunction));
+            end
          end
          
          % Possibly wait again
