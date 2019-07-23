@@ -2,7 +2,7 @@ classdef dotsWritableDOutArduinoLEDs < dotsWritableDOutArduino
    % @class dotsWritableDOutArduinoLEDs
    %
    % Show LEDs using Liana's arduino masterpiece.
-   %  pins [0, 1, 2] ... are [r, g, b]
+   %  pins [0, 1, 2, 3, ...] are [r1, g1, b1, r2, ...]
    %
    % Created by jig from Liana Keesing's prototype
    %  July 13, 2019

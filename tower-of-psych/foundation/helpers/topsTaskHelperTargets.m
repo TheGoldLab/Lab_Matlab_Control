@@ -67,6 +67,7 @@ classdef topsTaskHelperTargets < topsTaskHelper
          % Set up LED object
          if self.showLEDs
             self.LEDObject = dotsWritableLEDsArduino();
+            self.sync.clockFevalable = {self.LEDObject.clockFunction};
          end
          
          % Check screen
@@ -285,7 +286,8 @@ classdef topsTaskHelperTargets < topsTaskHelper
             % NOTE THAT THIS WILL OVERWRITE DRAWABLE TIMING - change if you
             % don't want this behavior
             if nargin >=4 && ~isempty(task) && ~isempty(eventTag)
-               task.setTrialData([], eventTag, timestamp);
+               task.setTrialData([], eventTag, timestamp - ...
+                   self.sync.results.referenceTime + self.sync.results.offset);
             end
          end
          

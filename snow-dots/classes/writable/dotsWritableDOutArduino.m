@@ -24,9 +24,15 @@ classdef dotsWritableDOutArduino < dotsWritableDOut
          
          self = self@dotsWritableDOut();
          
+         persistent theArduino
+         
+         if isempty(theArduino)
+             theArduino = arduino();
+         end
+         
          % Initialize the Arduino object -- certainly can add arguments
          % to find it if we want to get trickier
-         self.arduino = arduino();
+         self.arduino = theArduino;
       end
       
       % Write to a single digital output channel
@@ -35,7 +41,7 @@ classdef dotsWritableDOutArduino < dotsWritableDOut
       % value is scalar
       function timestamp = writeDigitalPin(self, pin, value)
          
-         % disp(sprintf('Writing value = <%.2f> to pin <%d>', value, pin))
+         % disp(sprintf('Writing value = <%.2f> to pin <%s>', value, pin))
          self.arduino.writeDigitalPin(pin, value);
          timestamp = feval(self.clockFunction);
       end
