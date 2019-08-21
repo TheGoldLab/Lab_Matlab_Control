@@ -22,9 +22,10 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % parameters.
       keyMatching;
       
-      % matching preferences read from machine defaults
-      VendorID;
-      ProductID;
+      % matching preferences read from machine defaults ... including
+      % secondary values if/when second keyboard is added
+      VendorIDs;
+      ProductIDs;
       PrimaryUsage=6;
 
       % Get rid of annoying rollover event     
@@ -37,11 +38,15 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
       % @a devicePreference is an optional struct of HID parameters for
       % choosing among suitable devices, assigned to the
       % devicePreference property.
+      %
+      % jig added useSecondary flag to be able to get a second keyboar
       function self = dotsReadableHIDKeyboard(devicePreference)
+         
+         % Call superclass constructor
          self = self@dotsReadableHID();
          
          % Read args
-         if nargin > 0
+         if nargin > 0 && isstruct(devicePreference)
             
             % Preferences given
             self.devicePreference = devicePreference;
@@ -50,21 +55,42 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
             % Read machine defaults
             mc = dotsTheMachineConfiguration.theObject();
             mc.applyClassDefaults(self);
+
+            % Check matching preferences -- could be more than one
+            VendorIDs = self.VendorIDs;            
+            ProductIDs = self.ProductIDs;
+            if length(VendorIDs) < length(ProductIDs)
+               VendorIDs = repmat(VendorIDs(1), 1, length(ProductIDs));
+            elseif length(ProductIDs) < length(VendorIDs)
+               ProductIDs = repmat(ProductIDs(1), 1, length(VendorIDs));
+            end
             
-            % Put preferences into the struct
-            self.devicePreference.VendorID = self.VendorID;
-            self.devicePreference.ProductID = self.ProductID;
-            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            % Check order -- possibly given in devicePreference           
+            order = 1:length(VendorIDs);
+            if nargin > 0 && ~isempty(devicePreference)
+               order = [devicePreference order(order~=devicePreference)];
+            end
             
-            % special case for jig computer without external keyboard
-            if strcmp(getMachineName(), 'GoldLaptop')
+            % Get all keyboards and find the first one that exists
+            if ~mexHID('isInitialized')
                mexHID('initialize');
-               infoStruct = mexHID('summarizeDevices');
-               if ~any([infoStruct.VendorID] == self.VendorID)
-                  self.devicePreference.VendorID = 1452;
-                  self.devicePreference.ProductID = 632;
+            end
+            infoStruct = mexHID('summarizeDevices');
+            
+            % Loop through and try to get it
+            for ii = 1:length(order)
+               
+               if any([infoStruct.VendorID] == VendorIDs(order(ii)) & ...
+                     [infoStruct.ProductID] == ProductIDs(order(ii)))
+                  
+                  self.devicePreference.VendorID = VendorIDs(order(ii));
+                  self.devicePreference.ProductID = ProductIDs(order(ii));                  
+                  break
                end
             end
+                  
+            % Same primary usage
+            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
          end
          
          % choose basic device identification criteria
@@ -108,7 +134,13 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
          for ii = 1:nKeys             
             keyNames{ii} = mexHIDUsage.nameForUsageNumberOnPage( ...
                keyInfo(ii).Usage, keyInfo(ii).UsagePage);
-            isNamed(ii) = ~isempty(keyNames{ii});
+            
+            % jig added check for redundant components
+            if ~isempty(keyNames{ii}) && ii>1 && ...
+                  ~any(strcmp(keyNames{ii}, keyNames(1:ii-1)))
+               isNamed(ii) = true;
+            end
+            % isNamed(ii) = ~isempty(keyNames{ii});
             keyIDs{ii} = keyInfo(ii).ElementCookie;
          end
          

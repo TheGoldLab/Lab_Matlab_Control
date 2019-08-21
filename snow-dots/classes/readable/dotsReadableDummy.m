@@ -11,13 +11,13 @@ classdef dotsReadableDummy < dotsReadable
    properties
       
       % dummy components
-      numComponents = 5;
+      numComponents = 50;
       
       % values to return: 'random', 'all'
       returnValues = 'random';
       
       % pause before returning data, for pacing
-      pauseBeforeReturningData = 0.1;      
+      pauseBeforeReturningData = 0;      
    end
    
    properties (SetAccess = private)
@@ -51,7 +51,7 @@ classdef dotsReadableDummy < dotsReadable
          % Make the components
          components = struct('ID', num2cell(1:self.numComponents), 'name', []);         
          for ii = 1:self.numComponents
-            components(ii).name = sprintf('auto_%d', ii);
+            components(ii).name = sprintf('Dummy%d', ii);
          end
       end
       
@@ -61,21 +61,32 @@ classdef dotsReadableDummy < dotsReadable
       %  timestamp
       function newData = readNewData(self)
          
+         % Wait
          pause(self.pauseBeforeReturningData);
          
+         % Pick from active events
+         activeFlags = self.getActiveFlags;
+         if ~any(activeFlags)
+            newData = [];
+            return
+         end
+         
+         % Return active event(s)
          switch self.returnValues
             
             case 'all'
                
                % Always return all events
-               newData = ones(self.numComponents, 3);
-               newData(:,1) = 1:self.numComponents;
+               newData      = ones(sum(activeFlags, 3));               
+               newData(:,1) = [self.eventDefinitions(activeFlags).ID]';
                newData(:,3) = feval(self.clockFunction);
                
             case 'random'
                
                % Return one randomly selected event
-               newData = [randi(self.numComponents), 1, feval(self.clockFunction)];
+               newData = [ ...
+                  self.eventDefinitions(randsample(find(activeFlags),1)).ID, ...
+                  1, feval(self.clockFunction)];
          end
       end
    end

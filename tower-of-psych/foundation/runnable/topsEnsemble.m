@@ -453,7 +453,7 @@ classdef topsEnsemble < topsCallList
              ensemble = topsEnsemble(name);
              if nargin >= 2 && ~isempty(objects)
                 for ii = 1:length(objects)
-                   theObject.addObject(objects{ii});
+                   ensemble.addObject(objects{ii});
                 end
              end
           end

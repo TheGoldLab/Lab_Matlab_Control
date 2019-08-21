@@ -18,26 +18,20 @@ classdef topsTaskHelperScreenEnsemble < topsTaskHelper
       function self = topsTaskHelperScreenEnsemble(varargin)
          
          % Parse the arguments
-         p = inputParser;
-         p.StructExpand = false;
-         p.KeepUnmatched = true;
-         p.addParameter('displayIndex',     0);
-         p.addParameter('remoteDrawing',    false);
-         p.addParameter('topNode',          []);
-         p.parse(varargin{:});
-
-         % Get the remaining optional args
-         args = orderParams(p.Unmatched, varargin, true);
+         [parsedArgs, passedArgs] = parseHelperArgs('screenEnsemble', varargin, ...
+            'displayIndex',     0,     ...
+            'remoteDrawing',    false, ...
+            'topNode',          []);
          
          % Create it
-         self = self@topsTaskHelper('screenEnsemble', [], ...
+         self = self@topsTaskHelper(passedArgs{:}, ...
             'fevalable',  {@dotsTheScreen.theEnsemble, ...
-            p.Results.remoteDrawing, p.Results.displayIndex}, args{:});
+            parsedArgs.remoteDrawing, parsedArgs.displayIndex});
          
          % Bind to the treeNode
-         if ~isempty(p.Results.topNode)
-            p.Results.topNode.addCall('start',  {@callObjectMethod, @open},  'start',  self.theObject);
-            p.Results.topNode.addCall('finish', {@callObjectMethod, @close}, 'finish', self.theObject);
+         if ~isempty(parsedArgs.topNode)
+            parsedArgs.topNode.addCall('start',  {@callObjectMethod, @open},  'start',  self.theObject);
+            parsedArgs.topNode.addCall('finish', {@callObjectMethod, @close}, 'finish', self.theObject);
          end
          
          % Add synchronization

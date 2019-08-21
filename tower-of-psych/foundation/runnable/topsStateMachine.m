@@ -7,6 +7,7 @@ classdef topsStateMachine < topsConcurrent
    % states with specified timing.  State traversal may be deterministic,
    % or may be conditional and branching based on classifications or input
    % functions.
+   %
    
    properties
       % struct array of data for each state
@@ -61,6 +62,10 @@ classdef topsStateMachine < topsConcurrent
       sharedExit = struct( ...
          'name', {}, ...
          'fevalable', {});
+      
+      % Debug flag -- for now just prints out current state name as it is
+      % entered
+      debugFlag = false;
    end
    
    properties (SetAccess = protected)
@@ -422,6 +427,11 @@ classdef topsStateMachine < topsConcurrent
             self.currentClassification = currentState.classification;
             self.currentInput = currentState.input;
             self.currentEntryTime = feval(self.clockFunction);
+            
+            % FOR DEBUGGING
+            if self.debugFlag
+               disp(sprintf('topsStateMachine: in state <%s>', currentState.name))
+            end
             
             % parse timeout
             if isscalar(currentState.timeout)

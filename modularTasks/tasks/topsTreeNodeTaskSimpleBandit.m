@@ -32,6 +32,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       % Task timing parameters, all in sec
       timing = struct( ...
          'choiceTimeout',              5.0, ...
+         'minimumRT',                  0, ...
          'pauseAfterChoice',           0.2, ...
          'showFeedback',               1.0, ...
          'interTrialInterval',         1.5);
@@ -57,9 +58,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %     trialIterationMethod property to determine the
       %              ordering of the trials (in trialIndices)
       independentVariables = struct( ...
-         'name',                       {'probabilityLeft'},       ...
-         'values',                     {[0.10 0.35 0.65 0.90]},   ...
-         'priors',                     {[]});
+         'probabilityLeft',   struct('values', [0.10 0.35 0.65 0.90], 'priors', []));
       
       % dataFieldNames is a cell array of string names used as trialData fields
       trialDataFields = {'choice', 'rewarded', 'RT', 'stimOn', 'choiceTime', ...
@@ -126,16 +125,17 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          'dotsReadableDummy',          struct( ...
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'auto_1', 'auto_2'})}}))));
+         'component',                  {'Dummy1', 'Dummy2'})}}))));
       
       % Feedback messages
       message = struct( ...
          ...
-         'groups',                     struct( ...
+         'message',                     struct( ...
          ...
          ...   Instructions
          'Instructions',               struct( ...
-         'text',                       {'Choose the currently rewarded card.'}, ...
+         'text',                       {'Choose the currently rewarded card. It is not always rewarded, and it can switch occasionally.'}, ...
+         'speakText',                  true, ...
          'duration',                   1.0, ...
          'pauseDuration',              0.5, ...
          'bgEnd',                      [0 0 0]), ...
@@ -248,11 +248,16 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % Re-save the trial
          self.setTrial(trial);
          
-         % ---- Prepare components
+         % ---- Get the stimulus ensemble and set horizontal position using
+         %        settings.targetDistance
          %
-         self.prepareDrawables();
-         self.prepareReadables();
+         self.helpers.targets.set('leftCard',  'x', -self.settings.targetDistance);
+         self.helpers.targets.set('rightCard', 'x',  self.settings.targetDistance);
          
+         % ---- Use the task ITI
+         %
+         self.interTrialInterval = self.timing.interTrialInterval;
+
          % ---- Show information about the trial
          %
          % Task information
@@ -278,15 +283,26 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %% Check for choice
       %
       % Save choice/RT information and set up feedback for the dots task
-      function nextState = checkForChoice(self, events, eventTag)
+      function nextState = checkForChoice(self, events, eventTag, nextStateAfterChoice)
          
          % ---- Check for event
          %
          eventName = self.helpers.reader.readEvent(events, self, eventTag);
          
+         % Default return
+         nextState = [];
+
          % Nothing... keep checking
          if isempty(eventName)
-            nextState = [];
+            return
+         end
+         
+         % ---- Check for min RT
+         % 
+         % Get current task/trial
+         trial = self.getTrial();
+         RT = trial.choiceTime - trial.stimOn;
+         if RT < self.timing.minimumRT
             return
          end
          
@@ -296,10 +312,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          self.completedTrial = true;
          
          % Jump to next state when done
-         nextState = 'blank';
-         
-         % Get current task/trial
-         trial = self.getTrial();
+         nextState = nextStateAfterChoice;
          
          % Save the choice, correct/error, RT
          trial.choice = double(strcmp(eventName, 'choseRight'));
@@ -319,7 +332,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
             (trial.choice==1 && trial.probabilityLeft< 0.5));
          
          % Compute/save RT
-         trial.RT = trial.choiceTime - trial.stimOn;
+         trial.RT = RT;
          
          % Re-save the trial
          self.setTrial(trial);
@@ -357,35 +370,14 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
    
    methods (Access = protected)
       
-      %% Prepare drawables for this trial
-      %
-      function prepareDrawables(self)
-         
-         % ---- Get the stimulus ensemble and set horizontal position using
-         %        settings.targetDistance
-         %
-         self.helpers.targets.set('leftCard',  'x', -self.settings.targetDistance);
-         self.helpers.targets.set('rightCard', 'x',  self.settings.targetDistance);
-      end
-      
-      %% Prepare readables for this trial
-      %
-      function prepareReadables(self)
-         
-         % Activate chose* events
-         self.helpers.reader.theObject.dactivateEventsAtStartTrial = false;         
-         self.helpers.reader.theObject.setEventsActiveFlag({'choseLeft', 'choseRight'});
-      end
-      
       %% configureStateMachine method
       %
       function initializeStateMachine(self)
          
          % ---- Fevalables for state list
          %
-         dnow   = {@drawnow};
          blanks = {@blank, self.helpers.targets};
-         chkuic = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime'};
+         chkuic = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'blank'};
          showfb = {@showFeedback, self};
          shows  = {@show, self.helpers.targets, {[1 2], []}, self, 'stimOn'};
  
@@ -402,7 +394,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
             'showStimuli'  shows    chkuic   t.choiceTimeout       {}      'blank'           ; ...
             'blank'        {}       {}       t.pauseAfterChoice    blanks  'showFeedback'    ; ...
             'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
-            'done'         dnow     {}       t.interTrialInterval  {}      ''                ; ...
+            'done'         {}       {}       0                     {}      ''                ; ...
             };
          
          % make the state machine
@@ -418,6 +410,18 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % ---- Get the task object, with optional property/value pairs
          task = topsTreeNodeTaskSimpleBandit(varargin{:});
+      end
+      
+      %% ---- Utility for getting test configuration
+      %
+      function task = getTestConfiguration()
+         task = topsTreeNodeTaskSimpleBandit();
+         task.timing.minimumRT = 0.3;
+         task.settings.blockChangeMin = 2;
+         task.settings.blockChangeMax = 2;
+         task.targets.targets.showLEDs = false;
+         task.independentVariables.probabilityLeft.values = 0.5;
+         task.message.message.Instructions.text = {'Testing', 'topsTreeNodeTaskSimpleBandit'};
       end
    end
 end

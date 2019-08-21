@@ -15,6 +15,7 @@ classdef dotsReadableHID < dotsReadable
    % dotsReadableHID readData() method passes any queued data into Matlab
    % via each object's appendData() method.
    properties
+      
       % struct of info about the HID device
       deviceInfo;
       
@@ -52,9 +53,13 @@ classdef dotsReadableHID < dotsReadable
       
       % whether or not to get exclusive access to device data
       isExclusive = false;
+      
+      % whether or not to allow multiple objects to access the same device
+      allowMultipleConnections = false; 
    end
    
    properties (SetAccess = protected)
+      
       % device identifier from mexHID('openMatchingDevice')
       % @details
       % openDevice() should fill in deviceID.
@@ -235,6 +240,7 @@ classdef dotsReadableHID < dotsReadable
       
       % Find the best available HID device with mexHID().
       function isOpen = openDevice(self)
+         
          isOpen = false;
          if exist('mexHID', 'file')
             
@@ -242,10 +248,14 @@ classdef dotsReadableHID < dotsReadable
                mexHID('initialize');
             end
             
-            self.closeDevice();
-            self.deviceID = -1;
+            % Make sure it's closed
+            % self.closeDevice();
+            
+            % Check for currently opened devices
+            % openedDeviceIDs = mexHID('getOpenedDevices');
             
             % Try to open the preferred device
+            self.deviceID = -1;
             if isstruct(self.devicePreference)
                deviceMerged = self.deviceMatching;
                for ff = fieldnames(self.devicePreference)'
@@ -261,12 +271,11 @@ classdef dotsReadableHID < dotsReadable
                   self.deviceMatching, double(self.isExclusive));
             end
             
-            isOpen = self.deviceID > 0;
-         end
-         
-         if isOpen
-            self.deviceInfo = ...
-               mexHID('getDeviceProperties', self.deviceID);
+            % Check that it's open and doesn't already exist
+            if self.deviceID > 0 % && ~any(self.deviceID == openedDeviceIDs)
+               self.deviceInfo = mexHID('getDeviceProperties', self.deviceID);
+               isOpen = true;
+            end
          end
       end
       
@@ -324,8 +333,13 @@ classdef dotsReadableHID < dotsReadable
    methods (Static)
       
       % Pass data from the mexHID() internal queue to Matlab.
+      % For newData, 
+      %  Rows are inputs
+      %  Columns are
       function mexHIDQueueCallback(self, newData)
          self.queueCallbackData = newData;
+         
+         % disp(newData(:,1))
       end
       
       % Get the current time from the system USB/HID implementation.

@@ -44,11 +44,8 @@ classdef topsTaskHelper < topsFoundation
       % Construct the helper with standard specs
       %
       %
-      % Arguments:
-      %
-      % helperName            ... string name
-      % theObject             ... the helper object, or specs for parse
-      % varargin is list of optional property/value pairs:
+      % Varargin is list of optional property/value pairs:
+      %     'name'            ... string name
       %     'fevalable'       ... Fevalable ({<fcn> <args>}) used to
       %                                   create the helper
       %     'settings'        ... Struct of property values to set to
@@ -62,20 +59,18 @@ classdef topsTaskHelper < topsFoundation
       %                                   Automatically adds the helper as
       %                                   the first arg to each fevalable.
       %     'finish'          ... like start, but for the finish call list
-      %     'type'            ... 'ensemble', 'copy', or 'default'
       %     'bindingNames'    ... Cell array of names of struct fields
       %                                   to find helpers to share with the
       %                                   given helper object via its
       %                                   "bindHelpers" method
       %     OTHERWISE         ... other name/spec pairs
-      function self = topsTaskHelper(name, theObject, varargin)
+      function self = topsTaskHelper(varargin)
          
          % parse inputs
          p = inputParser;
          p.StructExpand = false;
          p.KeepUnmatched = true;
-         p.addRequired( 'name');
-         p.addRequired( 'theObject');
+         p.addParameter('name',             'helper');
          p.addParameter('fevalable',        {});
          p.addParameter('settings',         struct());
          p.addParameter('commonSettings',   struct());
@@ -85,20 +80,15 @@ classdef topsTaskHelper < topsFoundation
          p.addParameter('finish',           {});
          p.addParameter('bindingNames',     {});
          p.addParameter('copySpecs',        struct());
-         p.parse(name, theObject, varargin{:});
-         
-         % check name
-         if isempty(p.Results.name) && isobject(p.Results.theObject)
-            name = class(p.Results.theObject);
-         end
+         p.parse(varargin{:});
          
          % Create the helper
-         self = self@topsFoundation(name);
+         self = self@topsFoundation(p.Results.name);
          
          % create & save the object. Send unmatched params in given order.
-         self.theObject = self.parse(name, theObject, p.Results.fevalable, ...
+         self.theObject = self.parse(p.Results.name, p.Results.fevalable, ...
             p.Results.settings, p.Results.commonSettings, ...
-            orderParams(p.Unmatched, varargin));
+            orderParams(p.Unmatched, varargin, true));
          
          % Set up synchronization in the prepare call list
          if ~isempty(p.Results.synchronize)
@@ -122,7 +112,6 @@ classdef topsTaskHelper < topsFoundation
       %
       % Arguments:
       %  name           ... string name of the helper object
-      %  theObject      ... the actual object, or spects to build (see below)
       %  fevalable      ... optional fevalable to make the object
       %  settings       ... struct of property/value pairs
       %  commonSettings ... struct of property/value pairs common to all objects
@@ -130,9 +119,12 @@ classdef topsTaskHelper < topsFoundation
       %
       % Returns:
       %  theObject   ... a helper object
-      function theObject = parse(self, name, theObject, fevalable, ...
+      function theObject = parse(self, name, fevalable, ...
             settings, commonSettings, unmatched)
          
+         % Default 
+         theObject = [];
+
          % Make the object
          if ischar(fevalable) || isa(fevalable, 'function_handle')
             
@@ -144,11 +136,10 @@ classdef topsTaskHelper < topsFoundation
             % Create from given fevalable
             theObject = feval(fevalable{:});
             
-         elseif (ischar(theObject) && exist(theObject, 'file')==2) || ...
-               isa(theObject, 'function_handle')
+         elseif strncmp(name, 'dots', 4) && exist(name, 'file')==2
             
-            % Create from function name/handle given as theObject
-            theObject = feval(theObject);
+            % Create from function name
+            theObject = feval(name);
         
          elseif ~isempty(unmatched)
             
@@ -161,6 +152,7 @@ classdef topsTaskHelper < topsFoundation
             specs = struct( ...
                'object',      cell(numObjects, 1), ...
                'names',       names, ...
+               'fevalable',   [], ...
                'settings',    []);
             
             % Loop through the objects
@@ -175,7 +167,7 @@ classdef topsTaskHelper < topsFoundation
                end
                               
                % Recursively parse
-               specs(nn).object = self.parse(names{nn}, [], ...
+               specs(nn).object = self.parse(names{nn}, ...
                   specs(nn).fevalable, specs(nn).settings, commonSettings, []);               
             end
             
@@ -210,8 +202,6 @@ classdef topsTaskHelper < topsFoundation
          if isobject(theObject)
             topsSetObjectProperties(theObject, [], commonSettings)
             topsSetObjectProperties(theObject, [], settings)
-         else
-            theObject = [];
          end
       end
       
@@ -227,29 +217,56 @@ classdef topsTaskHelper < topsFoundation
          if isempty(self.theObject) && ~isempty(self.topsBindings.copySpecs)
             
             % Try to copy from a matching helper
-            helpers = struct2cell(treeNode.helpers);
+            helperNames = fieldnames(treeNode.helpers);
+            helpers     = struct2cell(treeNode.helpers);
+            
+            % Don't use a control helper
+            Lcontrol = strncmp('control', helperNames, length('control'));
+            if any(Lcontrol)
+               helperNames = helperNames(~Lcontrol);
+               helpers     = helpers(~Lcontrol);
+            end
+            
+            % Check that there is something to match
+            if isempty(helperNames)
+               disp('topsTaskHelper start: nothing to match')
+               return
+            end
             
             % Check all given specs
             for ff = fieldnames(self.topsBindings.copySpecs)'
                if ~isempty(self.topsBindings.copySpecs.(ff{:}))
                   
-                  % Check whether any of the objects are of the class indicated
-                  %  by the name of the unmatched spec
-                  Lmatch = cellfun(@(x) isa(x.theObject, ff{:}), helpers);
+                  % Check whether any of the existing helpers a match
+                  % First check match by helper name
+                  Lmatch = strcmp(ff{:}, helperNames);
+                  
+                  % Second check match by helper type
+                  if ~any(Lmatch)
+                     Lmatch = cellfun(@(x) isa(x.theObject, ff{:}), helpers);
+                  end
+                  
+                  % Did we find one?
                   if any(Lmatch)
                      
                      % Got it!
                      theHelper = helpers{find(Lmatch,1)};
                      
-                     % Get the copy specs
-                     specs = self.topsBindings.copySpecs.(ff{:});
+                     % Check that the other helper has an object
+                     if isempty(theHelper.theObject) && ...
+                           ~isempty(theHelper.topsBindings.copySpecs)
+                        start(theHelper, treeNode);
+                     end
                      
-                     % Copy everything
+                     % Save the specs from this object
+                     specs = self.topsBindings.copySpecs.(ff{:});
+
+                     % Copy all properties of the matched object
                      for pp = properties(theHelper)'
                         self.(pp{:}) = theHelper.(pp{:});
                      end
                      
-                     % Copy new bindings from specs
+                     % Re-save the specs
                      for ss = fieldnames(specs)'
                         self.topsBindings.(ss{:}) = specs.(ss{:});
                      end
@@ -260,7 +277,7 @@ classdef topsTaskHelper < topsFoundation
                              class(theHelper.theObject));
                      end
                          
-                     % Just need/want one
+                     % Sometimes you just need one
                      break
                   end
                end
@@ -348,6 +365,43 @@ classdef topsTaskHelper < topsFoundation
             self.theObject.(varargin{1}) = varargin{2};
          end
       end
+      
+      %% getSyncronizedTime
+      %
+      % Utility for getting an appropriately synchronized time
+      %
+      %  unSynchronizedTime ... the raw time value
+      %  useScreen          ... flag, whether or not to use the dotsTheScreen
+      %                             reference time (i.e., for screen drawing)
+      function synchronizedTime = getSynchronizedTime(self, unSynchronizedTime, useScreen)
+         
+         if nargin < 3 || isempty(useScreen) || ~useScreen
+            offsetTime    = self.sync.results.offset;
+            referenceTime = self.sync.results.referenceTime;
+         else
+            [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
+         end
+         
+         synchronizedTime = unSynchronizedTime - referenceTime + offsetTime;
+      end         
+      
+      %% saveSyncronizedTime
+      %
+      % Utility for getting an appropriately synchronized time
+      %
+      %  unSynchronizedTime ... the raw time value
+      %  useScreen          ... flag, whether or not to use the dotsTheScreen
+      %                             reference time (i.e., for screen drawing)
+      %  task               ... the calling topsTreeNodeTask
+      %  eventTag           ... string used to store timing information in trial
+      %                          struct. Assumes that the current trialData
+      %                          struct has an entry called <eventTag>.
+      function saveSynchronizedTime(self, unSynchronizedTime, useScreen, ...
+            task, eventTag)
+         
+         task.setTrialData([], eventTag, ...
+            self.getSynchronizedTime(unSynchronizedTime, useScreen));
+      end
    end
    
    methods (Access = protected)
@@ -407,7 +461,10 @@ classdef topsTaskHelper < topsFoundation
       %
       % Arguments:
       %  constructor ... string name that might be a topsTaskHelper<name>
-      %  varargin    ... args sent to topsTaskHelper constructor
+      %  varargin    ... args sent to topsTaskHelper constructor. The first
+      %                    argument is an optional struct to unpack (each 
+      %                    field is recursively sent back), plus additional
+      %                    property/value pairs
       %
       % Returns:
       %  struct with fields named for the created helpers
@@ -426,19 +483,31 @@ classdef topsTaskHelper < topsFoundation
             %  a struct that is unpacked as arguments to the constructor
             theStruct = varargin{1};
             varargin(1) = [];
+            
+            % Loop through each top-level field
             for ff = fieldnames(theStruct)'
                
                % Get constructor args
                if isstruct(theStruct.(ff{:}))
-                  % args are also a struct
-                  structArgs = struct2args(theStruct.(ff{:}));
-               else
-                  % args are a cell
-                  structArgs = theStruct.(ff{:});
-               end
                   
-               helperStruct = topsTaskHelper.makeHelpers(constructor, ...
-                  ff{:}, structArgs{:}, varargin{:});
+                  % args are also a struct
+                  args = cat(2, struct2args(theStruct.(ff{:})), varargin);
+               else
+                  
+                  % args are a cell
+                  args = cat(theStruct.(ff{:}), varargin);
+               end
+               
+               % Check for name
+               nameIndex = find(strcmp('name', args),1);
+               if isempty(nameIndex)
+                  args = cat(2, ['name', ff], args);
+               end 
+               
+               % Recurse!
+               helperStruct = topsTaskHelper.makeHelpers(constructor, args{:});
+               
+               % Add each of the new helpers to the return help
                for nn = fieldnames(helperStruct)'
                   helpers.(nn{:}) = helperStruct.(nn{:});
                end
@@ -451,13 +520,19 @@ classdef topsTaskHelper < topsFoundation
             % Just make the helper from the constructor with the args
             if nargin >= 1 && ischar(constructor) && length(constructor)>1 && ...
                   exist(['topsTaskHelper' upper(constructor(1)) constructor(2:end)], 'file')
-               % named helper, check case
+               
+               % Use named helper, make sure the first character is upper case
                constructor = ['topsTaskHelper' upper(constructor(1)) constructor(2:end)];
             else
+               
                % generic helper
                constructor = 'topsTaskHelper';
             end
+            
+            % Run the helper constructor
             helper = feval(constructor, varargin{:});
+            
+            % Save the helper struct
             helpers.(helper.name) = helper;
          end
       end

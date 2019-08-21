@@ -13,63 +13,59 @@ classdef topsTaskHelperMessage < topsTaskHelper
    
    properties (SetObservable)
             
-      % Flag to show drawables
-      showDrawables;
-
       % Default duration for showing (in sec)
-      defaultDuration = 1.0;
+      defaultDuration;
       
       % For drawable object vertical spacing
-      defaultSpacing = 3;
+      defaultSpacing;
    end
    
    properties (SetAccess = private)
       
+      % Flag to show drawables, based on whether there is an open screen
+      showDrawables;
+
       % Message groups
       messageGroups=[];
    end
    
    methods
       
-      % Constuctor. Arguments are sent to setResources
+      % Constuctor. Arguments are property/value pairs:
+      %  'name'            ... string name for this helper
+      %  'defaultDuration' ... sets object property
+      %  'defaultSpacing'  ... sets object property
+      %  <group name>      ... struct of group specs sent to addGroup
       %
-      function self = topsTaskHelperMessage(name, varargin)
+      function self = topsTaskHelperMessage(varargin)
          
-         if nargin < 1
-            name = 'message';
-         end
-         
-         % Check if name is "groups", then parse as such
-         if strcmp(name, 'groups')
-            name     = 'message';
-            groups   = varargin;
-            varargin = {};
-         else
-            groups = [];
-         end
+         % Parse the arguments
+         p = inputParser;
+         p.StructExpand = false;
+         p.KeepUnmatched = true;
+         p.addParameter('name',              'message');
+         p.addParameter('defaultDuration',   1.0);
+         p.addParameter('defaultSpacing',    3.0);
+         p.addParameter('groups',            struct());
+         p.parse(varargin{:});
          
          % Call the topsTaskHelper constructor
-         self = self@topsTaskHelper(name, [], varargin{:});
+         self = self@topsTaskHelper('name', p.Results.name);
          
          % Check screen
-         if ~dotsTheScreen.isOpen
+         if dotsTheScreen.isOpen
+            self.showDrawables = true;
+         else
             self.showDrawables = false;
          end
-
-         % Add the groups
-         if ~isempty(groups)
-            self.addGroups(groups{:});
-         end
-      end
-      
-      % addGroups
-      %
-      % message.addGroups('name', <struct>, ...)      
-      function addGroups(self, varargin)
          
-         for ii = 1:2:nargin-1
-            args = struct2args(varargin{ii+1});
-            self.addGroup(varargin{ii}, args{:});
+         % Set properties
+         self.defaultDuration = p.Results.defaultDuration;
+         self.defaultSpacing  = p.Results.defaultSpacing;
+      
+         % Add the groups
+         for ff = fieldnames(p.Unmatched)'
+            self.addGroup(ff{:}, p.Unmatched.(ff{:}));
          end
       end
       
@@ -142,21 +138,24 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
          
          % Convert drawable specs to a struct to send to makeHelpers
-         for ii = 1:length(drawable)
-            specs.(groupName).(['object_' int2str(ii)]) = struct( ...
-               'fevalable', drawable{ii}{1}, ...
-               'settings',  {drawable{ii}(2:end)});
+         if ~isempty(drawable)
+            
+            for ii = 1:length(drawable)
+               specs.(groupName).(['object_' int2str(ii)]) = struct( ...
+                  'fevalable', drawable{ii}{1}, ...
+                  'settings',  {drawable{ii}(2:end)});
+            end
+            
+            % Make a drawable helper from the "drawables" specifications
+            theDrawableHelpers = topsTaskHelper.makeHelpers('drawable', specs);
+            
+            % Get the helper and save it in the group's drawable Ensemble
+            theGroup.drawableEnsemble = theDrawableHelpers.(groupName).theObject;
+            
+            % Get text indices
+            theGroup.textIndices = find(cellfun(@(x) isa(x, 'dotsDrawableText'), ...
+               theGroup.drawableEnsemble.objects));
          end
-         
-         % Make a drawable helper from the "drawables" specifications
-         theDrawableHelpers = topsTaskHelper.makeHelpers('drawable', specs);
-                  
-         % Get the helper and save it in the group's drawable Ensemble
-         theGroup.drawableEnsemble = theDrawableHelpers.(groupName).theObject;
-         
-         % Get text indices
-         theGroup.textIndices = find(cellfun(@(x) isa(x, 'dotsDrawableText'), ...
-            theGroup.drawableEnsemble.objects));
          
          % Add the playable
          if ~isempty(p.Results.playable)
@@ -277,11 +276,22 @@ classdef topsTaskHelperMessage < topsTaskHelper
                @dotsDrawable.drawFrame, {}, [], true);
          end
          
-         % Possibly speak the text
-         if theGroup.speakText
-            for ii = theGroup.textIndices               
-               text = theGroup.drawableEnsemble.getObjectProperty('string', ii);
-               if ~isempty(text) && ~all(isspace(text))            
+         % Possibly show/speak the text
+         for ii = theGroup.textIndices
+            
+            % Get the text
+            text = theGroup.drawableEnsemble.getObjectProperty('string', ii);
+
+            if ~isempty(text) && ~all(isspace(text))
+
+               % Possibly show the text in the command window if it was not
+               % shown on the screen
+               if ~self.showDrawables
+                  disp(text)
+               end
+            
+               % Possibly speak the text
+               if theGroup.speakText
                   system(['say ' text]);
                end
             end
@@ -293,7 +303,8 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
 
          % End drawing
-         if self.showDrawables && ~isempty(theGroup.drawableEnsemble)
+         if self.showDrawables && ~isempty(theGroup.drawableEnsemble) && ...
+               isfinite(theGroup.duration) && theGroup.duration > 0
 
             % Wait
             pause(theGroup.duration);
@@ -301,16 +312,14 @@ classdef topsTaskHelperMessage < topsTaskHelper
             % Clear screen and possibly re-set background
             dotsTheScreen.blankScreen(theGroup.bgEnd);
          
-            % Conditionally store the timing data, with synchronization offset
+            % Conditionally store the synchronized timing data
             if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
-               [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-               task.setTrialData([], eventTag, ...
-                  frameInfo.onsetTime - referenceTime + offsetTime);
+               self.saveSyncronizedTime(frameInfo.onsetTime, true, task, eventTag)
             end
             
          else
             
-            % Conditionally store the timing data, with synchronization offset
+            % Conditionally store the timing data
             if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
                task.setTrialData([], eventTag, feval(self.clockFunction));
             end
@@ -402,6 +411,23 @@ classdef topsTaskHelperMessage < topsTaskHelper
             end
          end
       end
-   end   
+   end
+   
+   methods (Static)
+
+      % Show a text message
+      %
+      % Optional arguments are sent to addGroup (see above)
+      function showTextMessage(textToShow, varargin)
+         
+         % Make the helper
+         helper = topsTaskHelperMessage();
+         
+         % Add the text
+         helper.addGroup('text', 'text', textToShow, varargin{:});
+         
+         % Show it
+         helper.show('text');
+      end
+   end
 end
-           

@@ -62,7 +62,7 @@ classdef topsTreeNode < topsRunnableComposite
       % List of helper types
       helperTypes = {'drawable', 'targets', 'playable', 'readable', 'writable', 'message', 'general'};
    end
-     
+   
    methods
       
       % Constuct with name optional.
@@ -74,7 +74,6 @@ classdef topsTreeNode < topsRunnableComposite
          % ---- Construct with defaults
          %
          self = self@topsRunnableComposite(varargin{:});
-         self.iterations = 1; % Go once through the set of tasks
 
          % ---- Use default snow-dots clock
          %
@@ -141,7 +140,7 @@ classdef topsTreeNode < topsRunnableComposite
             end
          end
       end
-      
+
       % Add fevalable to the start/finish fevalable call list. It's a
       % little bit complicated because you can optionally send in an object
       % to use as the first argument of the fevalabe. This is useful for
@@ -241,6 +240,18 @@ classdef topsTreeNode < topsRunnableComposite
             end
          end
          helper = [];
+      end
+      
+      % Get the control helper (see topsTreeNodeTopNode)
+      %
+      function helper = getControlHelper(self)
+                     
+         Lctl = strncmp('control', fieldnames(self.helpers), length('control'));
+         if any(Lctl)
+            helper = self.helpers(Lctl);
+         else
+            helper = [];
+         end
       end
       
       % Recursively run(), starting with this node.

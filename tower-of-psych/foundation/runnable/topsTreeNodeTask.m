@@ -45,7 +45,8 @@ classdef topsTreeNodeTask < topsTreeNode
       % 'hazard'   ... probabilistically increment wrt fixed hazard
       incrementTrialMethod = 'auto';
       
-      % For controlling 'hazard' incrementTrialMethod
+      % For controlling incrementTrialMethod (should have a struct of args
+      % for each method)
       incrementTrial = struct( ...
          'counter',      0, ...
          'hazard',       struct( ...
@@ -63,8 +64,15 @@ classdef topsTreeNodeTask < topsTreeNode
       % Flag indicating whether or not to randomize order of repeated trial
       randomizeWhenRepeating = true;
       
+      % Inter-trial interval, in seconds
+      interTrialInterval = 1.0;
+      
       % Array of trial indices, in order of calling
       trialIndices = [];
+      
+      % Time to pause before task starts. Negative means wait for 't'
+      % keypress if control helper is set up
+      pauseBeforeTask = 0;
    end
    
    properties (SetAccess = protected)
@@ -74,6 +82,9 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % flag if successefully finished trial (or need to repeat)
       completedTrial = false;
+      
+      % Control keyboard active flags, so we can reset them
+      controlActiveFlags;
    end
    
    methods
@@ -145,7 +156,6 @@ classdef topsTreeNodeTask < topsTreeNode
          % Call each helper's start method
          for hh = fieldnames(self.helpers)'
             self.helpers.(hh{:}).start(self);
-            % self.helpers.(hh{:}).bind(self);
          end
          
          % By default, set the taskID to the taskTypeID if it isn't
@@ -179,6 +189,55 @@ classdef topsTreeNodeTask < topsTreeNode
          % Possibly update the gui using the new task
          if ~isempty(self.caller)
             self.caller.updateGUI('_updateTask', self);
+         end
+         
+         % Possibly pause
+         if self.pauseBeforeTask~=0
+            
+            % Check if the control helper is set up ... if so, use it
+            kb = self.activateControlKeyboard(true);
+            if ~isempty(kb)
+               
+               % Make a message showing all of the commands
+               message = {{'Using the control keyboard:', 'fontSize', 40}};
+               for ff = fieldnames(self.caller.controlFlags)'
+                  message = cat(2, message, {{['For ' ff{:} ' press ' ...
+                     lower(self.caller.controlFlags.(ff{:}).key(end))], ...
+                     'fontSize', 30}});
+               end
+               
+               % Show message, possibly with check 
+               if self.pauseBeforeTask < 0
+                  
+                  % Add continue message
+                  message = cat(2, message, {{'PRESS T TO START TASK', 'fontSize', 30}});
+                  topsTaskHelperMessage.showTextMessage(message, 'duration', 0);
+                  
+                  % Wait for keypress
+                  ret = kb.waitForEvents({'taskStart', 'quit'}, inf);
+                  
+                  % Check for quit
+                  if strcmp(ret, 'quit')
+                     self.caller.abort();
+                  end
+               
+               else
+                  
+                  % Just pause
+                  topsTaskHelperMessage.showTextMessage(message);
+                  pause(self.pauseBeforeTask);
+               end
+               
+               % Blank the screen if necessary
+               if dotsTheScreen.isOpen
+                  dotsTheScreen.blankScreen();
+               end
+               
+            elseif self.pauseBeforeTask > 0
+               
+               % Just pause
+               pause(self.pauseBeforeTask);
+            end
          end
       end
       
@@ -223,12 +282,11 @@ classdef topsTreeNodeTask < topsTreeNode
       
       %% makeTrials
       %
-      %  Utility to make trialData array using array of structs (independentVariables),
-      %     which must be a property of the given task with fields:
-      %
-      %     1. name: string name
-      %     2. values: vector of unique values
-      %     3. priors: vector of priors (or empty for equal priors)
+      %  Utility to make trialData array using array of structs, which
+      %     is by convention stored as task.independentVariables. This
+      %     struct is assumed to be organized as:
+      %        struct.(propertyName).values
+      %        struct.(propertyName).priors
       %
       %  trialIterations is number of repeats of each combination of
       %     independent variables
@@ -239,35 +297,44 @@ classdef topsTreeNodeTask < topsTreeNode
             trialIterations = 1;
          end
          
-         % Loop through to set full set of values for each variable
-         for ii = 1:length(independentVariables)
+         % Loop through to set full set of values for each variable, and
+         % collect them
+         names = fieldnames(independentVariables);
+         numVariables = length(names);
+         allValues = cell(1, length(names));
+         for ii = 1:numVariables
             
             % update values based on priors, if they are given in the
             % format: [proportion_value_1 proportion_value_2 ... etc]
-            if length(independentVariables(ii).priors) == ...
-                  length(independentVariables(ii).values) && ...
-                  sum(independentVariables(ii).priors) > 0
+            if length(independentVariables.(names{ii}).priors) == ...
+                  length(independentVariables.(names{ii}).values) && ...
+                  sum(independentVariables.(names{ii}).priors) > 0
                
                % rescale priors by greatest common divisor
-               priors = independentVariables(ii).priors;
+               priors = independentVariables.(names{ii}).priors;
                priors = priors./gcd(sym(priors));
                
                % now re-make values array based on priors
                values = [];
                for jj = 1:length(priors)
                   values = cat(1, values, repmat( ...
-                     independentVariables(ii).values(jj), priors(jj), 1));
+                     independentVariables.(names{ii}).values(jj), priors(jj), 1));
                end
                
                % re-save the values
-               independentVariables(ii).values = values;
+               independentVariables.(names{ii}).values = values;
+            end
+            
+            % Save value(s), replacing [] with nan
+            allValues{ii} = independentVariables.(names{ii}).values;
+            if isempty(allValues{ii})
+               allValues{ii} = nan;
             end
          end
          
          % get values as cell array and make ndgrid
-         values = {independentVariables.values};
-         grids  = cell(size(values));
-         [grids{:}] = ndgrid(values{:});
+         grids  = cell(size(allValues));
+         [grids{:}] = ndgrid(allValues{:});
          
          % update trialData struct array with "trialIterations" copies of
          % each trial, defined by unique combinations of the independent
@@ -280,9 +347,9 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % loop through the independent variables and set in each trialData
          % struct. Make sure to repeat each set trialIterations times.
-         for ii = 1:length(independentVariables)
+         for ii = 1:numVariables
             values = num2cell(repmat(grids{ii}(:), trialIterations, 1));
-            [self.trialData.(independentVariables(ii).name)] = deal(values{:});
+            [self.trialData.(names{ii})] = deal(values{:});
          end
       end
       
@@ -333,35 +400,36 @@ classdef topsTreeNodeTask < topsTreeNode
          for ii = 1:2:nargin-2
             self.trialData(trialIndex).(varargin{ii}) = varargin{ii+1};
          end
-      end
-      
-      %% setIndependentVariableByName
-      %
-      % Utility... varargin is property/value pairs corresponding to the
-      %  independentVariables struct array
-      %
-      function setIndependentVariableByName(self, name, varargin)
-         
-         Lind = strcmp({self.independentVariables.name}, name);
-         for ii = 1:2:nargin-2
-            self.independentVariables(Lind).(varargin{ii}) = varargin{ii+1};
-         end
-      end
-      
-      %% setIndependentVariablesByName
-      %
-      % independentVariableList is {'<nameA>' {<propertyA1>, <valueA1>, ...}
-      %
-      function setIndependentVariablesByName(self, independentVariableList)
-         
-         for ii = 1:2:length(independentVariableList)
-            self.setIndependentVariableByName(independentVariableList{ii}, ...
-               independentVariableList{ii+1}{:});
-         end
-      end
+      end      
    end
    
    methods (Access = protected)
+      
+      %% Utility to add a state machine that sets up drawing
+      %
+      % Varargin is in pairs:
+      %  1. name of ensemble to be found in self.helpers.(name).theObject
+      %  2. list of state names in which the ensemble should be
+      %        drawn and the screen flipped automatically (e.g., for dots)
+      function addStateMachineWithDrawing(self, states, varargin)
+         
+         numEnsembles = length(varargin)/2;
+         activeList = cell(numEnsembles, 2);
+         compositeChildren = cell(numEnsembles+1, 1);
+         for ii = 1:numEnsembles
+            ensemble = self.helpers.(varargin{(ii-1)*2+1}).theObject;
+            activeList{ii,1} = {ensemble, 'draw'; ...
+               self.helpers.screenEnsemble.theObject, 'flip'};
+            activeList{ii,2} = varargin{(ii-1)*2+2};
+            compositeChildren{ii} = ensemble;
+         end
+         
+         % add the screen
+         compositeChildren{end} = self.helpers.screenEnsemble.theObject;
+         
+         % call addStateMachine to do the work
+         self.addStateMachine(states, activeList, compositeChildren);
+      end
       
       %% Utility to add a state machine
       %
@@ -466,13 +534,72 @@ classdef topsTreeNodeTask < topsTreeNode
          
          % ---- Set finish time
          %
-         self.setTrialData([], 'trialEnd', feval(self.clockFunction))
+         currentTime = feval(self.clockFunction);
+         self.setTrialData([], 'trialEnd', currentTime);
          
          % ---- Save the current trial in the DataLog
          %
          %  We do this even if no choice was made, in case later we want
          %     to re-parse the UI data
          topsDataLog.logDataInGroup(self.getTrial(), ['trial_' self.name]);
+         
+         % ---- Wait during the ITI and possibly check control keyboard
+         %
+         % Only bother if interTrialInterval is >0
+         if self.interTrialInterval > 0
+            
+            % Get the control keyboard
+            kb = self.activateControlKeyboard();
+            
+            % Check keyboard while waiting
+            originalCurrentTime = currentTime;
+            while feval(self.clockFunction) < currentTime + self.interTrialInterval
+               
+               if ~isempty(kb)
+                  
+                  % Check for keyboard event
+                  event = kb.getNextEvent();
+                  
+                  % Got something, restricted to active events (from controlFlags)
+                  if ~isempty(event)
+                     
+                     % Check event
+                     if strcmp(event, 'pause')
+                        
+                        % Pause
+                        if isfinite(currentTime) 
+                           currentTime = inf;
+                        else
+                           currentTime = originalCurrentTime;
+                        end
+                        
+                     elseif strcmp(event, 'calibrate')
+                        
+                        % Calibrate the active reader
+                        if isfield(self.helpers, 'reader')
+                           self.caller.controlFlags.calibrate.flag = self.helpers.reader.theObject;
+                           break;
+                        end
+                        
+                     else
+                        
+                        % Set flag
+                        self.caller.controlFlags.(event).flag = true;
+                        break;
+                     end
+                  end
+               end
+               
+               % Wait and process GUI
+               % drawnow; % needed?
+               pause(0.002);
+            end
+            
+            % Reset the active flags
+            if ~isempty(kb)
+               self.deactivateControlKeyboard();
+            end
+         end
          
          % ---- Prepare for the next trial
          %
@@ -624,5 +751,54 @@ classdef topsTreeNodeTask < topsTreeNode
             self.stateMachine.editStateByName(thisState, 'next', nextStateIfFalse);
          end
       end
+      
+      %% debugStates
+      %
+      % Utility to set a flag in the state machine that will print out 
+      %  each state name as it is entered
+      % 
+      function debugStates(self, debugFlag)
+         
+         if nargin < 2 || isempty(debugFlag)
+            debugFlag = true;
+         end
+         
+         self.stateMachine.debugFlag = debugFlag;
+      end      
+         
+      %% activateControlKeyboard
+      % 
+      % Utility to set up the control keyboard to check for inputs 
+      %
+      % Get all activeFlag values in case the keyboard is being used for
+      % something else and the statelist expects certain events to
+      % be active... then just set the ones in the control flags struct
+      function kb = activateControlKeyboard(self, activateAll)
+         
+         if isfield(self.helpers, 'controlKeyboard')
+            kb = self.helpers.controlKeyboard.theObject;
+            kb.flushData();
+            kb.activateEventSet('control');
+            
+            if nargin >= 2 && activateAll
+               kb.activateEvents();
+            end
+         else
+            kb = [];
+         end
+      end
+         
+      %% deactivateControlKeyboard
+      % 
+      % Utility to set up the control keyboard to check for inputs 
+      %
+      function deactivateControlKeyboard(self)
+         
+         if isfield(self.helpers, 'controlKeyboard')
+            kb = self.helpers.controlKeyboard.theObject;
+            kb.flushData();
+            kb.activateEventSet('default');
+         end
+      end         
    end
 end

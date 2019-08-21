@@ -11,16 +11,13 @@ classdef topsTaskHelperDrawable < topsTaskHelper
       
       % Constuct the helper
       %
-      % Arguments:
-      %  drawableName ... string name of drawable
-      function self = topsTaskHelperDrawable(drawableName, varargin)
+      function self = topsTaskHelperDrawable(varargin)
          
-         if nargin < 1 || isempty(drawableName)
-            drawableName = 'dotsDrawable';
-         end
+         % Parse the arguments
+         [~, passedArgs] = parseHelperArgs('drawable', varargin);
          
          % Create it
-         self = self@topsTaskHelper(drawableName, [], varargin{:});
+         self = self@topsTaskHelper(passedArgs{:});      
       end
             
       %% draw(self, args, task, eventTag)
@@ -60,13 +57,11 @@ classdef topsTaskHelperDrawable < topsTaskHelper
          % Use dotsDrawable.drawEnsemble to do the work. For now we do not
          % have the capacity to send a "prepareToDrawFlag" but could change
          % that if needed (third argument)
-         frameInfo = dotsDrawable.drawEnsemble(self.theObject, args, false, task, eventTag);
+         frameInfo = dotsDrawable.drawEnsemble(self.theObject, args, false);
          
          % Store the timing data
          if ~isempty(task) && ~isempty(eventTag)
-            [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-            task.setTrialData([], eventTag, frameInfo.onsetTime - ...
-               referenceTime + offsetTime);
+            self.saveSynchronizedTime(frameInfo.onsetTime, true, task, eventTag);
          end
       end
    end

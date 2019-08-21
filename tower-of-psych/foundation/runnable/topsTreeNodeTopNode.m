@@ -23,10 +23,21 @@ classdef topsTreeNodeTopNode < topsTreeNode
       
       % Flags for on-line flow control (used by run GUI)
       controlFlags = struct( ...
-         'abort',       false, ...  % abort experiment
-         'pause',       false, ...  % pause experiment
-         'skip',        false, ...  % skip to next task
-         'calibrate',   []);        % calibrate given object (I know, not a flag)
+         'abort',          struct( ...    % abort experiment
+         'flag',           false, ...  
+         'key',            'KeyboardQ'), ...
+         'pause',          struct( ...    % pause experiment
+         'flag',           false, ...  
+         'key',            'KeyboardP'), ...
+         'taskStart',      struct( ...    % task start
+         'flag',           false, ...  
+         'key',            'KeyboardT'), ...
+         'skip',           struct( ...    % skip to next task
+         'flag',           false, ...  
+         'key',            'KeyboardS'), ...
+         'calibrate',      struct( ...    % calibrate given object (I know, not a flag)
+         'flag',           [], ...     
+         'key',            'KeyboardC'));
       
       % Flag to re-seed random number generator
       randSeed = true;
@@ -51,19 +62,47 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %% Constructor method
       %
       % Constuct with optional argument:
-      %  name ... string name of the top node
-      function self = topsTreeNodeTopNode(varargin)
+      %  name                 ... string name of the top node
+      %  filename             ... string name of file (with path)
+      %  addControlKeyboard   ... flag to add control keyboard <default true>
+      function self = topsTreeNodeTopNode(name, filename, addControlKeyboard)
          
-         % Make it
-         self = self@topsTreeNode(varargin{:});
+         % ---- Make it using given or default filename
+         %
+         if nargin < 1 || isempty(name)
+            name = 'topNode';
+         end
+         self = self@topsTreeNode(name);
          
          % ---- Set up default filename
          %
          %  Default filename is based on the clock
          %  Can override simply by setting to new value
          %  Set to empty matrix to turn off data storage
-         [path, name] = topsTreeNodeTopNode.getFileparts(self.name);
-         self.filename = fullfile(path, name);
+         if nargin < 2 || isempty(filename)
+            [path, name] = topsTreeNodeTopNode.getFileparts(self.name);
+            self.filename = fullfile(path, name);
+         end
+         
+         % ---- Possibly add control keyboard
+         %
+         if nargin < 3 || addControlKeyboard
+            
+            % Make start function that defines events
+            startStruct = struct('name', {}, 'component', {});
+            index = 1;
+            for ff = fieldnames(self.controlFlags)'
+               startStruct(index).name = ff{:};
+               startStruct(index).component = self.controlFlags.(ff{:}).key;
+               index = index + 1;
+            end
+            
+            % Add a keyboard, definining events based on the control flags
+            self.addHelpers('readable', ...
+               'name',        'controlKeyboard', ...
+               'fevalable',   {@dotsReadableHIDKeyboard, 2}, ...
+               'start',       {@defineEventsFromStruct startStruct 'control'});
+         end
       end
       
       %% Utility: add GUIs
@@ -80,7 +119,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %% Add readable, with initialization/cleanup
       %
       %  Arguments (required):
-      %     constructor    ... string name of helper constructor
+      %     readableName   ... string name of the readable to use
       %  Parameters (optional):
       %     doRecording    ... flag to start/stop recording automatically
       %     doCalibration  ... flag to automatically do calibration at start
@@ -88,50 +127,45 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %                             after calibration
       %     varargin       ... arguments to helper constructor
       function theHelper = addReadable(self, readableName, varargin)
-
-         p = inputParser;
-         p.StructExpand = false;
-         p.KeepUnmatched = true;
-         p.addRequired( 'self');
-         p.addRequired( 'readableName');
-         p.addParameter('doRecording',      false);
-         p.addParameter('doCalibration',    false);
-         p.addParameter('doShow',           false);
-         p.parse(self, readableName, varargin{:});
-                  
+         
+         % Parse the arguments
+         [parsedArgs, passedArgs] = parseHelperArgs(readableName, varargin, ...
+            'doRecording',       false,    ...
+            'doCalibration',     false,   ...
+            'doShow',            false);
+         
          % add the helper, with optional args
-         args = orderParams(p.Unmatched, varargin, true);
-         theHelper = self.addHelpers('readable', readableName, 'fevalable', readableName, args{:});
+         theHelper = self.addHelpers('readable', passedArgs{:});
          theObject = theHelper.(readableName).theObject;
-
+         
          % START CALLS
          %
          % Calibrate
-         if p.Results.doCalibration
+         if parsedArgs.doCalibration
             self.addCall('start', {@calibrate}, 'calibrate',  theObject);
          end
-            
+         
          % Show calibration
-         if p.Results.doShow
+         if parsedArgs.doShow
             self.addCall('start', {@calibrate, 's'}, 'show',  theObject);
          end
-   
+         
          % Turn on data recordings
-         if p.Results.doRecording
+         if parsedArgs.doRecording
             self.addCall('start',  {@record, true}, 'record on',  theObject);
          end
-            
+         
          % FINISH CALLS
          %
          % Always close the device when finished
          self.addCall('finish', {@close}, 'close', theObject);
          
          % Turn of data recordings
-         if p.Results.doRecording
+         if parsedArgs.doRecording
             self.addCall('finish', {@record, false}, 'record off', theObject);
          end
       end
-         
+      
       %% Start
       %
       % Overloaded start function, which checks for gui(s) and sets up the
@@ -169,11 +203,11 @@ classdef topsTreeNodeTopNode < topsTreeNode
                topsDataLog.logDataInGroup(mglGetSecs(), 'startTime');
                
                % Make sure the file directory exists
-               filepath = fileparts(self.filename);               
+               filepath = fileparts(self.filename);
                if ~isempty(filepath) && ~exist(filepath, 'dir')
                   mkdir(filepath);
                end
-
+               
                % Write it to "filename" for the first time; later calls
                %  don't need to keep track of filename
                topsDataLog.writeDataFile(self.filename);
@@ -222,7 +256,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             
             % Show the final message
             if ~isempty(self.closingMessage)
-               dotsDrawableText.showText(self.closingMessage, 'showDuration', 3);
+               topsTaskHelperMessage.showTextMessage(self.closingMessage, 'duration', 3);
             end
             
             % Stop the runnable
@@ -268,27 +302,27 @@ classdef topsTreeNodeTopNode < topsTreeNode
          end
          
          % Pause experiment, wait for ui
-         while self.controlFlags.pause && ~self.controlFlags.abort
+         while self.controlFlags.pause.flag && ~self.controlFlags.abort.flag
             pause(0.01);
          end
          
          % Abort experiment
-         if self.controlFlags.abort
-            self.controlFlags.abort=false;
+         if self.controlFlags.abort.flag
+            self.controlFlags.abort.flag=false;
             self.abort();
             ret = 1;
             return
          end
          
          % Recalibrate
-         if ~isempty(self.controlFlags.calibrate)
-            calibrate(self.controlFlags.calibrate);
-            self.controlFlags.calibrate = [];
+         if ~isempty(self.controlFlags.calibrate.flag)
+            calibrate(self.controlFlags.calibrate.flag);
+            self.controlFlags.calibrate.flag = [];
          end
          
          % Skip to next task
-         if self.controlFlags.skip
-            self.controlFlags.skip=false;
+         if self.controlFlags.skip.flag
+            self.controlFlags.skip.flag=false;
             child.abort();
             ret = 1;
             return
@@ -300,7 +334,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
       
       %% getFileparts
       %
-      % Standard pathname for data 
+      % Standard pathname for data
       %
       %  studyTag   ... string name identifying the study
       %  sessionTag ... string name identifying the session
@@ -310,7 +344,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          % Default session
          if nargin < 1 || isempty(studyTag)
             studyTag = 'test';
-         end                 
+         end
          
          % Default sessionTag is current time (to the second)
          if nargin < 2 || isempty(sessionTag)
@@ -323,7 +357,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          if nargin < 3 || isempty(dataTag)
             dataTag = '_topsDataLog.mat';
          end
-                  
+         
          % Get the pathname
          pathname = fullfile( ...
             dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
@@ -347,8 +381,8 @@ classdef topsTreeNodeTopNode < topsTreeNode
       %
       % Created 5/26/18 by jig
       %
-      function [topNode, FIRA] = loadRawData(studyTag, sessionTag)         
-
+      function [topNode, FIRA] = loadRawData(studyTag, sessionTag)
+         
          %% Parse studyTag, fileTag
          %
          % Give defaults for debugging
@@ -373,7 +407,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
             fullfile(pathname, filename));
          topNode = mainTreeNodeStruct.item;
          
-         % Now read the ecodes -- note that this works only if the trial 
+         % Now read the ecodes -- note that this works only if the trial
          %  struct was made with SCALAR entries only
          FIRA.ecodes = topsDataLog.parseEcodes('trial');
          
@@ -397,7 +431,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
                helper = topNode.helpers.(helperType).theObject;
             end
             
-            % Call the dotsReadable static loadDataFile method            
+            % Call the dotsReadable static loadDataFile method
             FIRA.(helperType) = feval([helperClass '.loadRawData'], ...
                fullfile(pathname, ff{:}), FIRA.ecodes, helper);
          end
@@ -405,7 +439,7 @@ classdef topsTreeNodeTopNode < topsTreeNode
          % Look for readableEye data
          helpers = fieldnames(FIRA);
          eyei = find(strncmp('Eye', helpers, length('Eye')),1);
-         if ~isempty(eyei)            
+         if ~isempty(eyei)
             FIRA.analog = FIRA.(helpers{eyei});
             FIRA = rmfield(FIRA, helpers{eyei});
          end

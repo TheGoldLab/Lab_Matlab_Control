@@ -106,7 +106,7 @@ classdef dotsReadable < handle
       calibrationUI;
       
       % Flag to deactivate all events at the beginning of each trial
-      dactivateEventsAtStartTrial=true;
+      deactivateEventsAtStartTrial=false;
    end
    
    properties (SetAccess = protected)
@@ -128,6 +128,10 @@ classdef dotsReadable < handle
       
       % Default prefix for event names: <prefix>_<componentName>
       defaultEventPrefix = 'event';
+      
+      % Strutures with different named event definitions, in case we want
+      % to quickly swap between them
+      eventSets;
    end
    
    methods
@@ -152,9 +156,8 @@ classdef dotsReadable < handle
          end
          self.isAvailable = isOpen && ~isempty(self.components);
          
-         %> Clear array of event definitions and add dummy event
+         %> Clear array of event definitions
          self.eventDefinitions = [];
-         self.defineEvent('');
       end
       
       %> Calibrate the device
@@ -393,15 +396,15 @@ classdef dotsReadable < handle
       %> Define the event of interest for one of the input components.
       %
       %  Required input:
-      %>    eventName   ... string name for an event of interest
+      %>    name   ... string name for an event of interest
       %
-      %  Optional inputs:
-      %     isActive  	... whether event is current active
-      %>    isInverted  ... whether to invert event detection logic
-      %  property/value pairs for the following:
-      %> 	'component' ... string name or one of the integer IDs in components
-      %> 	'lowValue'  ... the lower bound on the event of interest
-      %>    'highValue' ... the upper bound on the event of interest
+      %  Optional property/value pairs:
+      %> 	'component'    ... string name or one of the integer IDs in components
+      %>    'isActive'  	... whether event is current active
+      %>    'isInverted'   ... whether to invert event detection logic
+      %> 	'lowValue'     ... the lower bound on the event of interest
+      %>    'highValue'    ... the upper bound on the event of interest
+      %>    'isRelease'    ... event on release of component
       %
       %> @details
       %> defineEvent() sets parameters for detecting events of interest as
@@ -441,7 +444,7 @@ classdef dotsReadable < handle
          p.addRequired( 'self');
          p.addRequired( 'name');
          p.addParameter('component',  -1);
-         p.addParameter('isActive',   false);
+         p.addParameter('isActive',   true);
          p.addParameter('isInverted', false);
          p.addParameter('lowValue',  -inf);
          p.addParameter('highValue',  inf);
@@ -468,8 +471,8 @@ classdef dotsReadable < handle
             name = [self.defaultEventPrefix '_' self.getComponentName(ID)];
          end
          
-         % Keep track of size of current array
-         % numEvents = length(self.eventDefinitions);
+         % Keep track of size of current array so we can fill in blanks
+         numEvents = length(self.eventDefinitions);
          
          %> fill in this event definition with given values
          self.eventDefinitions(ID).name       = name;
@@ -480,6 +483,18 @@ classdef dotsReadable < handle
          self.eventDefinitions(ID).highValue  = p.Results.highValue;
          self.eventDefinitions(ID).isRelease  = p.Results.isRelease;
          self.eventDefinitions(ID).waitingForRelease = false;
+         
+         % Fill in blank events (so we can search by name)
+         if ID > numEvents + 1
+            [self.eventDefinitions(numEvents+1:ID-1).name]              = deal('xxx');
+            [self.eventDefinitions(numEvents+1:ID-1).ID]                = deal(nan);
+            [self.eventDefinitions(numEvents+1:ID-1).isActive]          = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).isInverted]        = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).lowValue]          = deal(-inf);
+            [self.eventDefinitions(numEvents+1:ID-1).highValue]         = deal(inf);
+            [self.eventDefinitions(numEvents+1:ID-1).isRelease]         = deal(false);
+            [self.eventDefinitions(numEvents+1:ID-1).waitingForRelease] = deal(false);
+         end
          
          % possibly return the event
          if nargout >= 1
@@ -511,16 +526,35 @@ classdef dotsReadable < handle
       
       % defineEventsFromStruct
       %
-      % Takes an array of structs with fields corresponding to
-      %  property/value pairs used by defineEvent
-      % The only required field is 'name' (first argument to defineEvent),
-      %  all others are optional paired arguments
-      function defineEventsFromStruct(self, eventStruct)
+      % Takes a structure with information about events and calls
+      %  defineEvent for each event.
+      %
+      % Arguments:
+      %
+      %  eventStruct ... array of structs, one per event, with fields
+      %                    corresponding to properties defined in
+      %                    defineEvents (which may be overridden in
+      %                    subclasses). The only required field is 
+      %                    'name' (first argument to defineEvent),
+      %                    all others are optional paired arguments.
+      %  setName ... string name to use to save this set of event
+      %                    definitions
+      %  keepExisting ... string to keep existing definitions (default
+      %                    false)
+      %  startInactive ... flag for initial isActive flag (default false)
+      function defineEventsFromStruct(self, eventStruct, setName, ...
+            keepExisting, inactivate)
          
+         % Clear existing by default
+         if nargin < 4 || ~keepExisting
+            self.eventDefinitions = [];
+         end
+         
+         % Check if a set is given
          if nargin < 2 || isempty(eventStruct)
             return
          end
-         
+        
          % Get list of fieldnames and make the arg array
          %  (first is name, rest are property/value pairs)
          fields = fieldnames(eventStruct);
@@ -536,6 +570,17 @@ classdef dotsReadable < handle
             self.defineEvent(args{:});
          end
          
+         % Save a copy
+         if nargin < 3 || isempty(setName)
+            setName = 'default';
+         end
+         self.eventSets.(setName) = self.eventDefinitions;
+         
+         % Possibly inactivate
+         if nargin >= 5 && inactivate
+            self.deactivateEvents();
+         end
+         
          % Flush the data
          self.flushData();
       end
@@ -549,15 +594,24 @@ classdef dotsReadable < handle
          end
          
          % list of event names
-         for aa = find([self.eventDefinitions.isActive])'
-            fprintf('%s: ID=%d, isInverted=%d, low=%.2f, high=%.2f, isRelease=%d', ...
+         for aa = find([self.eventDefinitions.isActive])  
+            fprintf('%s: ID=%d (%s), isInverted=%d, low=%.2f, high=%.2f, isRelease=%d\n', ...
                self.eventDefinitions(aa).name, ...
                self.eventDefinitions(aa).ID, ...
+               self.getComponentName(self.eventDefinitions(aa).ID), ...
                self.eventDefinitions(aa).isInverted, ...
                self.eventDefinitions(aa).lowValue, ...
                self.eventDefinitions(aa).highValue, ...
                self.eventDefinitions(aa).isRelease)
-            disp(' ')
+         end
+      end
+      
+      % Swap in a set of events
+      %
+      function activateEventSet(self, name)      
+         if nargin >= 2 && ~isempty(name) && ...
+               strcmp(name, fieldnames(self.eventSets))
+            self.eventDefinitions = self.eventSets.(name);
          end
       end
       
@@ -581,6 +635,27 @@ classdef dotsReadable < handle
          end
       end
       
+      % Get all active flags
+      %
+      function activeFlags = getActiveFlags(self)         
+         if isempty(self.eventDefinitions)
+            activeFlags = [];
+         else
+            activeFlags = [self.eventDefinitions.isActive];
+         end
+      end
+      
+      % Set all active flags from array
+      %
+      function setActiveFlags(self, activeFlags)   
+         if isempty(self.eventDefinitions)
+            return
+         end
+         
+         activeFlagsCell = num2cell(activeFlags);
+         [self.eventDefinitions.isActive] = deal(activeFlagsCell{:});
+      end
+         
       % Set/unset activeFlag
       %
       % NOTE: if anything changes here, be careful to update activateEvents
@@ -598,12 +673,27 @@ classdef dotsReadable < handle
          % list of event names
          names = {self.eventDefinitions.name};
          
+         % Check for keyword "all"
+         if nargin > 1 && ischar(activateList) && strcmp(activateList, 'all')
+         
+            % Activate all events
+            [self.eventDefinitions.isActive] = deal(true);
+            activateList = [];
+         end
+         
+         if nargin > 2 && ischar(deactivateList) && strcmp(deactivateList, 'all')
+         
+            % Dectivate all events
+            [self.eventDefinitions.isActive] = deal(false);
+            deactivateList = [];
+         end
+         
          % Activate
          if nargin > 1 && ~isempty(activateList)
             
             if ischar(activateList)
                
-               % One event
+               % Activate one named event
                ind = strcmp(activateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = true;
@@ -625,11 +715,12 @@ classdef dotsReadable < handle
             
             if ischar(deactivateList)
                
-               % One event
+               % Deactivate one named event
                ind = strcmp(deactivateList, names);
                if any(ind)
                   self.eventDefinitions(ind).isActive = false;
                end
+               
             else
                
                % Many events
@@ -641,6 +732,9 @@ classdef dotsReadable < handle
                end
             end
          end
+         
+         % For debugging
+         % self.showActiveEvents();
       end
       
       %> Get the next event that was detected in read().
@@ -757,8 +851,45 @@ classdef dotsReadable < handle
          end
       end
       
+      % Wait for event(s)
+      %
+      function [name, waitTime, data] = waitForEvents( ...
+            self, eventNames, maxWait)
+         
+         % Check args
+         if nargin < 2 || isempty(eventNames)
+            return
+         elseif ischar(eventNames)
+            eventNames = {eventNames};
+         end
+         if nargin < 3 || isempty(maxWait)
+            maxWait = 1;
+         end
+         
+         startTime = self.getDeviceTime();
+         while self.getDeviceTime() < (startTime + maxWait)
+            
+            %> get a queued event for this readable
+            if ~self.isAutoRead
+               self.read();
+            end
+            [name, data] = self.getNextEvent();
+            
+            % Return if the name matches eventName or no eventName given
+            if any(strcmp(name, eventNames))
+               waitTime = self.getDeviceTime() - startTime;
+               return
+            end
+         end
+         
+         % Timed out
+         waitTime  = self.getDeviceTime() - startTime;
+         name      = [];
+         data      = [];
+      end
+      
       %> Get the number of events in eventQueue.
-      %> @detials
+      %> @details
       %> Returns the number of events which are currently enqueued in
       %> eventQueue.
       function nEvents = getNumberOfEvents(self)
@@ -805,8 +936,7 @@ classdef dotsReadable < handle
       %> Get name of component by name or ID
       %
       function name = getComponentName(self, nameOrID)
-         
-         % default
+
          name = [];
          
          % Check args
@@ -814,15 +944,17 @@ classdef dotsReadable < handle
             return
          end
          
-         if isnumeric(nameOrID)
+         % Given as name
+         if ischar(nameOrID)
             name = nameOrID;
+            return
          end
          
-         % Check components
+         % Given as ID, find from component array
          if ~isempty(self.components)
             Lname = nameOrID==[self.components.ID];
             if any(Lname)
-               name = self.components(Lname).name;
+               name = self.components(find(Lname,1)).name;
             end
          end
       end
@@ -862,9 +994,12 @@ classdef dotsReadable < handle
          % Call subclass-specific method
          self.startTrialDevice(varargin{:});
          
+         % Flush the devide
+         self.flushData();
+         
          % Possibly deactivate all events (default=true), so that the trial
          %  can activate them when needed
-         if self.dactivateEventsAtStartTrial
+         if self.deactivateEventsAtStartTrial
             self.deactivateEvents();
          end
       end

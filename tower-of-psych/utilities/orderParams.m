@@ -1,5 +1,5 @@
-function ordered_ = orderParams(disordered, template, makeCellArray)
-% function ordered_ = orderParams(disordered, template, makeCellArray)
+function params_ = orderParams(disordered, template, makeStruct)
+% function params_ = orderParams(disordered, template, makeStruct)
 %
 % Utility for re-ordering parameter/value pairs. Useful for dealing with
 %  the unmatched parameters returned by parser.
@@ -7,18 +7,25 @@ function ordered_ = orderParams(disordered, template, makeCellArray)
 % Arguments:
 %  disordered: struct of param values in the wrong order
 %  template: cell array of parameter/value pairs in the correct order
-%  makeCellArray: whether to return a cell array of parameter/value pairs
+%  makeStruct: whether to return a cell array of parameter/value pairs
 %                    or struct (default)
 
 if nargin < 1 || isempty(disordered)
-   ordered_ = [];
+
+   % Return nothing
+   params_ = [];
 else
+   
+   % Reorder the fields
    names = template(cellfun(@(x) ischar(x), template));
    Lnames = ismember(names, fieldnames(disordered));
-   ordered_ = orderfields(disordered, cell2struct(cell(sum(Lnames),1), names(Lnames)));
+   params_ = orderfields(disordered, cell2struct(cell(sum(Lnames),1), names(Lnames)));
    
-   if nargin >= 3 && makeCellArray
-      cellA = cat(2, fieldnames(ordered_), struct2cell(ordered_));
-      ordered_ = reshape(cellA', 1, []);
+   % Convert to list
+   if nargin < 3  || ~makeStruct
+      
+      % return a list
+      cellA = cat(2, fieldnames(params_), struct2cell(params_));
+      params_ = reshape(cellA', 1, []);
    end
 end

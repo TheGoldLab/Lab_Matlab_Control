@@ -29,7 +29,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       timing = struct( ...
          'fixationTimeout',            5.0, ...
          'holdFixation',               0.75, ...
-         'smileyDuration',             0,   ...
+         'minimumRT',                  0.05, ...
          'holdTarget',                 0.75, ...
          'showFeedback',               1.0, ...
          'interTrialInterval',         1.5, ...
@@ -44,26 +44,14 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       % independentVariables used by topsTreeNodeTask.makeTrials. Can
       % modify using setIndependentVariableByName and setIndependentVariablesByName
       independentVariables = struct( ...
-         'name',                       {'direction'},       ...
-         'values',                     {[0 180]}, ... %{0:90:270},          ...
-         'priors',                     {[]});
+         'direction',   struct('values', [0 180], 'priors', []));
       
       % dataFieldNames are used to set up the trialData structure
       trialDataFields = {'RT', 'correct', 'fixationOn', 'fixationStart', ...
          'targetOn', 'targetOff', 'fixationOff', 'choiceTime', 'feedbackOn'};
       
       % Drawables settings
-      drawable = struct( ...
-         ...
-         ...   % The main stimulus ensemble
-         'stimulusEnsemble',           struct(  ...
-         ...
-         ...   % Smiley face for feedback
-         'smiley',                     struct(  ...
-         'fevalable',                  @dotsDrawableImages, ...
-         'settings',                   struct( ...
-         'fileNames',                  {{'smiley.jpg'}}, ...
-         'height',                     2))));
+      drawable = [];
       
       % Targets settings
       targets = struct( ...
@@ -141,12 +129,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          'dotsReadableDummy',          struct( ...
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'holdFixation', 'choseTarget'}, ...
-         'component',                  {'auto_1', 'auto_2'})}}))));
+         'component',                  {'Dummy1', 'Dummy2'})}}))));
       
       % Feedback messages
       message = struct( ...
          ...       
-         'groups',                     struct( ...
+         'message',                     struct( ...
          ...
          ...   Instructions
          'Instructions',               struct( ...         
@@ -188,6 +176,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %% Start task method
       function startTask(self)
          
+         % ---- Check name
+         %
+         if ~strcmp(self.name, 'VGS') || ~strcmp(self.name, 'MGS')
+            self.name = 'VGS';
+         end
+         
          % ---- Initialize the state machine
          %
          self.initializeStateMachine();
@@ -215,23 +209,14 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             'r',        self.settings.targetDistance, ...
             'theta',    trial.direction);
          
-         % ---- Possibly update feedback
-         %
-         if self.timing.smileyDuration > 0
-            
-            % Set x, y
-            stimulusEnsemble.setObjectProperty('x', ...
-               self.helpers.targets.theObject.getObjectProperty('xCenter', 2), 1);
-            stimulusEnsemble.setObjectProperty('y', ...
-               self.helpers.targets.theObject.getObjectProperty('yCenter', 2), 1);
-            
-            % Prepare the smiley object
-            stimulusEnsemble.callObjectMethod(@prepareToDrawInWindow, [], 1);
-         end         
-      
          % ---- Update stateMachine to jump to VGS-/MGS- specific states
          %
-         self.stateMachine.editStateByName('holdFixation', 'next', [self.name 'showTarget']);
+         self.stateMachine.editStateByName('holdFixation', ...
+            'next',     [self.name 'showTarget']);
+         
+         % ---- Use the task ITI
+         %
+         self.interTrialInterval = self.timing.interTrialInterval;
                
          % ---- Show information about the task/trial
          %
@@ -241,10 +226,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % Trial information
          trialString = sprintf('Trial %d/%d, dir=%d', self.trialCount, ...
-            numel(self.trialData)*self.trialIterations, trial.direction);
+            numel(self.trialData), trial.direction);
          
          % Show the information
-         self.updateStatus(taskString, trialString); % just update the second one
+         self.updateStatus(taskString, trialString);
       end
       
       %% Finish Trial
@@ -256,20 +241,36 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
       %% Set Choice method
       %
       % Save choice/RT information
-      function setChoice(self)
+      function nextState = checkForChoice(self, events, eventTag)
          
+         % ---- Check for event
+         %
+         eventName = self.helpers.reader.readEvent(events, self, eventTag);
+         
+         % Default return
+         nextState = [];
+         
+         % Nothing... keep checking
+         if isempty(eventName)
+            return
+         end
+         
+         % Get current task/trial
+         trial = self.getTrial();
+         
+         % Check for minimum RT
+         RT = trial.choiceTime - trial.fixationOff;
+         if RT < self.timing.minimumRT
+            return
+         end
+
          % ---- Good choice!
          %
          % Set completedTrial flag; save correct, RT
-         trial = self.getTrial();
          self.completedTrial = true;
          self.setTrialData([], 'correct', 1);
-         self.setTrialData([], 'RT', trial.choiceTime - trial.fixationOff);
-         
-         % ---- Possibly show smiley face
-         if self.timing.smileyDuration > 0
-            self.helpers.stimulusEnsemble.draw({1, []});
-         end
+         self.setTrialData([], 'RT', RT);
+         nextState = eventName;         
       end
       
       %% Show feedback
@@ -309,11 +310,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          blanks = {@blank, self.helpers.targets};
          chkuif = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
          chkuib = {}; % {@getNextEvent, self.helpers.reader, false, {}}; % {'brokeFixation'}
-         chkuic = {@readEvent, self.helpers.reader, {'choseTarget'}, self, 'choiceTime'};
+         chkchc = {@checkForChoice, self, {'choseTarget'}, 'choiceTime'};
          dnow   = {@drawnow};
          hidefx = {@show, self.helpers.targets, {[], 1}, self, 'fixationOff'};
          hidet  = {@show, self.helpers.targets, {[], 2}, self, 'targetOff'};
-         setchc = {@setChoice, self};
          showfx = {@show, self.helpers.targets, {1,  2}, self, 'fixationOn'};
          showt  = {@show, self.helpers.targets, {2, []}, self, 'targetOn'};
          showfb = {@showFeedback, self};
@@ -342,12 +342,12 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
             'VGSshowTarget'     showt    chkuib   t.VGSTargetDuration   gwt     'hideFix'         ; ... % VGS
             'MGSshowTarget'     showt    chkuib   t.MGSTargetDuration   {}      'MGSdelay'        ; ... % MGS
             'MGSdelay'          hidet    chkuib   t.MGSDelayDuration    gwt     'hideFix'         ; ...
-            'hideFix'           hidefx   chkuic   t.saccadeTimeout      {}      'blank'           ; ...
-            'choseTarget',      setchc   {}       t.smileyDuration      {}      'blank'           ; ...
-            'blank'             {}       {}       t.holdTarget          blanks  'showFeedback'    ; ...
+            'hideFix'           hidefx   chkchc   t.saccadeTimeout      {}      'blank'           ; ...
+            'choseTarget'       {}       {}       0                     {}      'blank'           ; ...
+            'blank',            {}       {}       t.holdTarget          blanks  'showFeedback'    ; ...
             'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
             'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
-            'done'              dnow     {}       t.interTrialInterval  {}      ''                ; ...
+            'done'              dnow     {}       0                     {}      ''                ; ...
             };
          
          % make the state machine
@@ -372,14 +372,25 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          switch name
             case 'VGS'
-               task.message.groups.Instructions.text = { ...
+               task.message.message.Instructions.text = { ...
                   'Look at the central target until it disappears.', ...
                   'Then look at the other target.'};
             otherwise
-               task.message.groups.Instructions.text = { ...
+               task.message.message.Instructions.text = { ...
                   'Look at the central target until it disappears.', ...
                   'Then look at the remembered location of the other target.'};
          end
+      end
+      
+      %% ---- Utility for getting test configuration
+      %
+      function task = getTestConfiguration()
+         task = topsTreeNodeTaskSaccade();
+         task.name = 'VGS';
+         task.timing.minimumRT = 0.3;
+         task.targets.targets.showLEDs = false;
+         task.independentVariables.direction.values = [0 180];
+         task.message.message.Instructions.text = {'Testing', 'topsTreeNodeTaskSaccade'};
       end
    end
 end

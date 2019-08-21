@@ -11,16 +11,13 @@ classdef topsTaskHelperPlayable < topsTaskHelper
       
       % Constuct the helper
       %
-      % Arguments:
-      %  playableName ... string name of playable
-      function self = topsTaskHelperPlayable(playableName, varargin)
+      function self = topsTaskHelperPlayable(varargin)
          
-         if nargin < 1 || isempty(playableName)
-            playableName = 'dotsPlayableTone';
-         end
+          % Parse the arguments
+         [~, passedArgs] = parseHelperArgs('playable', varargin);
          
          % Create it
-         self = self@topsTaskHelper(playableName, [], varargin{:});
+         self = self@topsTaskHelper(passedArgs{:});
       end
       
       %% play(self, args, task, eventTag)

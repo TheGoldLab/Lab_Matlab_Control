@@ -476,8 +476,10 @@ classdef (Sealed) topsDataLog < topsGroupedList
             %             else
             %                dataStruct = self.readIncrementFromFile();
             %             end
-            dataStruct = self.readIncrementFromFile();
+            self.readIncrementFromFile();
          end
+         
+         % Return the 
       end
       
       % Convenient routine to make a FIRA-like ecodes struct from a set of
@@ -557,15 +559,16 @@ classdef (Sealed) topsDataLog < topsGroupedList
       % fileWithPath is optional filename
       function data = getTaggedData(group, fileWithPath)
          
-         % get the log struct
-         if nargin < 2 || isempty(fileWithPath)
-            logStruct = topsDataLog.getSortedDataStruct();
-         else
-            logStruct = topsDataLog.readDataFile(fileWithPath);
+         % Possibly read the data
+         if nargin >= 2 && ~isempty(fileWithPath)
+            topsDataLog.readDataFile(fileWithPath);
          end
          
+         % get the sorted log struct
+         logStruct = topsDataLog.getSortedDataStruct();
+         
          % Find the structs in the named group
-         if ~isempty(logStruct)
+         if ~isempty(logStruct)            
             % jig changed to strncmp, avoid nested tag names
             data = logStruct(strncmp(group, {logStruct.group}, length(group)));
          else 

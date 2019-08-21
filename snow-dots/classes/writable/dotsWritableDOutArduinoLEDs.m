@@ -24,7 +24,23 @@ classdef dotsWritableDOutArduinoLEDs < dotsWritableDOutArduino
       
       % Quickly turn on LED
       %
-      function timestamp = toggleLED(self, index, color, onOff)
+      % indexOrName is assumed to be based on Liana's 5-LED configuration:
+      %  1: Right
+      %  2: Top
+      %  3: Center
+      %  4: Left
+      %  5: Bottom
+      %
+      % Color is 'r', 'g', 'b'
+      % onOff is 0=off, 1=on, 
+      %
+      function timestamp = toggleLED(self, indexOrName, color, onOff)
+         
+         % Check for name
+         if ischar(indexOrName)
+            indexOrName = find(strcmpi(indexOrName, ...
+               {'right', 'top', 'center', 'left', 'bottom'}));
+         end
          
          % Check if turning on or off
          if nargin < 4
@@ -34,15 +50,15 @@ classdef dotsWritableDOutArduinoLEDs < dotsWritableDOutArduino
          % Check if we need to use setLEDs
          if isnumeric(color)
             if onOff == 1
-               timestamp = self.setLEDs({index color});
+               timestamp = self.setLEDs({indexOrName color});
             else
-               timestamp = self.setLEDs({index 'off'});
+               timestamp = self.setLEDs({indexOrName 'off'});
             end
             return
          end
          
          % Get base pin index
-         LEDBaseIndex = (index-1)*3;
+         LEDBaseIndex = (indexOrName-1)*3;
          
          switch color
             case 'r'
@@ -62,7 +78,7 @@ classdef dotsWritableDOutArduinoLEDs < dotsWritableDOutArduino
                % BLUE
                timestamp = self.writeDigitalPin( ...
                   [self.pinBase int2str(LEDBaseIndex+2)], onOff);
-         end
+         end         
       end
       
       % Turn on/off LED(s)

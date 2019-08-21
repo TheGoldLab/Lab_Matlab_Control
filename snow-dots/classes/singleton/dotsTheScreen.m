@@ -419,11 +419,11 @@ classdef dotsTheScreen < dotsAllSingletonObjects
       %  is created either as a (local) topsEnsemble or for remote 
       %  drawing using dotsClientEnsemble with default network values.
       %
-      % Aguments (for creating:
-      %  useRemote      ... flag for creating client/server ensembles
+      % Aguments (for creating):
+      %  remoteDrawing  ... flag for creating client/server ensembles
       %  displayIndex   ... 0=debug screen; 1=main screen; 2=2nd screen; etc
       %
-      function ensemble = theEnsemble(varargin)
+      function ensemble = theEnsemble(remoteDrawing, displayIndex, varargin)
          
          % Keep as persistent variables local to this method
          persistent selfEnsemble
@@ -432,24 +432,20 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          if isempty(selfEnsemble) || ~isvalid(selfEnsemble)
             
             % Check for local/remote graphics
-            if nargin < 1 || isempty(varargin{1})
-               useRemote = false;
-            else
-               useRemote = varargin{1};      
+            if nargin < 1 || isempty(remoteDrawing)
+               remoteDrawing = false;
             end
             
             % Check display index
-            if nargin < 2 || isempty(varargin{2})
+            if nargin < 2 || isempty(displayIndex)
                displayIndex = 1; % primary screen
-            else
-               displayIndex = varargin{2};
             end
          
             % Set up the screen object and ensemble
-            screen = dotsTheScreen.theObject(varargin{3:end});
+            screen = dotsTheScreen.theObject(varargin{:});
             screen.displayIndex = displayIndex;
-            screen.isRemoteFlag = useRemote;
-            selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', useRemote);
+            screen.isRemoteFlag = remoteDrawing;
+            selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', remoteDrawing);
             selfEnsemble.addObject(screen);
             selfEnsemble.automateObjectMethod('flip', @nextFrame);
          end
@@ -646,6 +642,29 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          
          % close the OpenGL drawing window
          dotsTheScreen.closeWindow();
+      end
+      
+      % Conventient routine to open a screen
+      %
+      function openScreen(remoteDrawing, displayIndex, varargin)
+
+         % Make the ensemble
+         screenEnsemble = dotsTheScreen.theEnsemble( ...
+            remoteDrawing, displayIndex, varargin{:});
+         
+         % Open it
+         screenEnsemble.callObjectMethod(@open);
+      end
+      
+      % Conventient routine to close a screen
+      %
+      function closeScreen()
+
+         % Get the ensemble
+         screenEnsemble = dotsTheScreen.theEnsemble();
+         
+         % Open it
+         screenEnsemble.callObjectMethod(@close);
       end
       
       % Convenient routine to blank the current screen, even if remote

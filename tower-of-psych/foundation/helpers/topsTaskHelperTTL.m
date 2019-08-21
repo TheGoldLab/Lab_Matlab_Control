@@ -6,10 +6,10 @@ classdef topsTaskHelperTTL < topsTaskHelper
    properties (SetObservable)
       
       % Maximum number of pulses
-      maxPulses = 4;
+      maxPulses;
       
       % trialData fields
-      trialDataFields = {'TTLstart', 'TTLnum', 'TTLfinish'};      
+      trialDataFields;
    end
    
    methods
@@ -17,16 +17,23 @@ classdef topsTaskHelperTTL < topsTaskHelper
       % Constuct the helper
       %
       % Arguments:
-      %  writableFcn ... function handle of writable class
-      function self = topsTaskHelperTTL(writableFcn)
+      %  maxPulses         ... maximum number of pulses
+      %  trialDataFields   ... used to store time stamps
+      %  writableFcn       ... function handle of writable class
+      function self = topsTaskHelperTTL(varargin)
             
-         if nargin < 1 || isempty(writableFcn)
-            writableFcn = @dotsWritableDOut1208FS;
-         end
+          % Parse the arguments
+         [parsedArgs, passedArgs] = parseHelperArgs('TTL', varargin, ...
+            'maxPulses',         4, ...
+            'trialDataFields',   {'TTLstart', 'TTLnum', 'TTLfinish'}, ...         
+            'fevalable',         @dotsWritableDOut1208FS);
          
-         % Create it
-         self = self@topsTaskHelper('TTL', [], ...
-            'fevalable', writableFcn);
+         % Create it, putting the fevalable back in the arg list
+         self = self@topsTaskHelper(passedArgs{:}, 'fevalable', parsedArgs.fevalable);
+         
+         % Save the parsed args
+         self.maxPulses = parsedArgs.maxPulses;
+         self.trialDataFields = parsedArgs.trialDataFields;         
       end
       
       % Overloaded start method

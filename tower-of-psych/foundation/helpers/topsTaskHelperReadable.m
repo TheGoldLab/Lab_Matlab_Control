@@ -7,16 +7,14 @@ classdef topsTaskHelperReadable < topsTaskHelper
       
       % Constuct the helper
       %
-      % Arguments:
-      %  readableName  ... string name of readable
-      function self = topsTaskHelperReadable(readableName, varargin)
+      % Arguments: just the ones passed to topsTaskHelper
+      function self = topsTaskHelperReadable(varargin)
          
-         if nargin < 1 || isempty(readableName)
-            readableName = 'dotsReadable';
-         end
+         % Parse the arguments
+         [~, passedArgs] = parseHelperArgs('readable', varargin);
                  
          % Create it
-         self = self@topsTaskHelper(readableName, [], varargin{:});
+         self = self@topsTaskHelper(passedArgs{:});
          
          % Add synchronization
          self.sync.clockFevalable = {@getDeviceTime, self.theObject};
@@ -66,9 +64,7 @@ classdef topsTaskHelperReadable < topsTaskHelper
          
          % Conditionally store the timing data, with synchronization offset
          if ~isempty(eventName) && nargin > 3 && ~isempty(task)
-            task.setTrialData([], eventTag, data(3) - ...
-               self.sync.results.referenceTime + ...
-               self.sync.results.offset);
+            self.saveSynchronizedTime(data(3), [], task, eventTag);
          end
       end
       

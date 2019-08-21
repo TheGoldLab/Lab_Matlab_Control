@@ -3,7 +3,15 @@ classdef topsTaskHelperTargets < topsTaskHelper
    %
    % Helper class for showing targets using the monitor (as a
    % dotsDrawableTargets), LEDs (dotsWritableDOutArduinoLEDs), and spoken
-   % words (directions)
+   % words (directions).
+   %
+   % By default assumes 5 LEDS:
+   %
+   %  1: Right
+   %  2: Top
+   %  3: Center
+   %  4: Left
+   %  5: Bottom
    %
    
    properties (SetObservable)
@@ -34,35 +42,21 @@ classdef topsTaskHelperTargets < topsTaskHelper
       %  showLEDs        ... flag
       %  onPlayables     ... struct of playables when target turns on
       %  offPlayables    ... struct of playables when target turns off
-      function self = topsTaskHelperTargets(name, varargin)
+      function self = topsTaskHelperTargets(varargin)
          
          % Parse the arguments
-         p = inputParser;
-         p.StructExpand = false;
-         p.KeepUnmatched = true;
-         p.addRequired( 'name');
-         p.addParameter('showDrawables', true);
-         p.addParameter('showLEDs',      false);
-         p.addParameter('onPlayables',   false);
-         p.addParameter('offPlayables',  false);
-         p.parse(name, varargin{:});
-         
-         % Get the remaining optional args
-         args = orderParams(p.Unmatched, varargin, true);
-         
-         % Check name
-         if isempty(p.Results.name)
-            name = 'targets';
-         else
-            name = p.Results.name;
-         end
+         [parsedArgs, passedArgs] = parseHelperArgs('targets', varargin, ...
+            'showDrawables',     true,    ...
+            'showLEDs',          false,   ...
+            'onPlayables',       false,   ...
+            'offPlayables',      false);
          
          % Create it
-         self = self@topsTaskHelper(name, [], args{:});
+         self = self@topsTaskHelper(passedArgs{:});
          
          % Set properties
-         self.showDrawables = p.Results.showDrawables;
-         self.showLEDs      = p.Results.showLEDs;
+         self.showDrawables = parsedArgs.showDrawables;
+         self.showLEDs      = parsedArgs.showLEDs;
          
          % Set up LED object
          if self.showLEDs
@@ -73,6 +67,11 @@ classdef topsTaskHelperTargets < topsTaskHelper
          % Check screen
          if ~dotsTheScreen.isOpen
             self.showDrawables = false;
+         end
+         
+         % Check for targets
+         if isempty(self.theObject)
+            return
          end
          
          % Get number of drawable targets
@@ -90,11 +89,11 @@ classdef topsTaskHelperTargets < topsTaskHelper
             % Check if on/off playables were given
             name = self.ensembleObjectNames{ii};
             args = {};
-            if isfield(p.Results.onPlayables, name)
-               args = cat(2, args, 'onPlayable', p.Results.onPlayables.(name));
+            if isfield(parsedArgs.onPlayables, name)
+               args = cat(2, args, 'onPlayable', parsedArgs.onPlayables.(name));
             end
-            if isfield(p.Results.offPlayables, name)
-               args = cat(2, args, 'offPlayable', p.Results.offPlayables.(name));
+            if isfield(parsedArgs.offPlayables, name)
+               args = cat(2, args, 'offPlayable', parsedArgs.offPlayables.(name));
             end
             
             % Set the target properties
@@ -223,8 +222,10 @@ classdef topsTaskHelperTargets < topsTaskHelper
          end
          
          % LED color
-         self.LEDObject.set(self.targetProperties(index).LEDindex, ...
-            self.theObject.getObjectProperty('colors', index));
+         if ~isempty(self.LEDObject)
+            self.LEDObject.set(self.targetProperties(index).LEDindex, ...
+               self.theObject.getObjectProperty('colors', index));
+         end
                   
          % Playable settings
          for playable = {'onPlayable', 'offPlayable'}
@@ -269,9 +270,7 @@ classdef topsTaskHelperTargets < topsTaskHelper
             
             % Store the timing data
             if nargin >=4 && ~isempty(task) && ~isempty(eventTag)
-               [offsetTime, referenceTime] = dotsTheScreen.getSyncTimes();
-               task.setTrialData([], eventTag, frameInfo.onsetTime - ...
-                  referenceTime + offsetTime);
+               self.saveSynchronizedTime(frameInfo.onsetTime, true, task, eventTag);
             end
          end
          
@@ -286,8 +285,7 @@ classdef topsTaskHelperTargets < topsTaskHelper
             % NOTE THAT THIS WILL OVERWRITE DRAWABLE TIMING - change if you
             % don't want this behavior
             if nargin >=4 && ~isempty(task) && ~isempty(eventTag)
-               task.setTrialData([], eventTag, timestamp - ...
-                   self.sync.results.referenceTime + self.sync.results.offset);
+               self.saveSynchronizedTime(timestamp, [], task, eventTag);
             end
          end
          

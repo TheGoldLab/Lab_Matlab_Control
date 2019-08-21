@@ -299,10 +299,10 @@ if ~handles.isRunning
 end
 
 % Toggle flag
-handles.topsTreeNode.controlFlags.pause = ~handles.topsTreeNode.controlFlags.pause;
+handles.topsTreeNode.controlFlags.pause.flag = ~handles.topsTreeNode.controlFlags.pause.flag;
 
 % Paused!
-if handles.topsTreeNode.controlFlags.pause
+if handles.topsTreeNode.controlFlags.pause.flag
    
    % Set appearance
    set(hObject, 'String', 'Paused', ...
@@ -310,7 +310,7 @@ if handles.topsTreeNode.controlFlags.pause
    drawnow;
    
    if ~handles.topsTreeNode.isRunning
-      while handles.topsTreeNode.controlFlags.pause
+      while handles.topsTreeNode.controlFlags.pause.flag
          pause(0.01);
          handles = guidata(hObject);
       end
@@ -330,7 +330,7 @@ function skipbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.topsTreeNode.controlFlags.skip = true;
+handles.topsTreeNode.controlFlags.skip.flag = true;
 
 % --- Executes on button press in abortbutton.
 function abortbutton_Callback(hObject, eventdata, handles)
@@ -346,7 +346,7 @@ if ~handles.topsTreeNode.isRunning
    error('Aborting early!')
 else
    % Wait until end of trial
-   handles.topsTreeNode.controlFlags.abort = true;
+   handles.topsTreeNode.controlFlags.abort.flag = true;
 end
 
 % --- Executes on button press in recalibratebutton.
@@ -356,7 +356,7 @@ function recalibratebutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Send a handle to the object to calibrate
-handles.topsTreeNode.controlFlags.calibrate = handles.readableEye;
+handles.topsTreeNode.controlFlags.calibrate.flag = handles.readableEye;
 
 % --- Executes on button press in upbutton.
 function upbutton_Callback(hObject, eventdata, handles)

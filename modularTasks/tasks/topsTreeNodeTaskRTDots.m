@@ -31,22 +31,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %     [min mean max] ... specify as pick from exponential distribution
       settings = struct( ...
          'useQuest',                   [],   ...
-         'coherencesFromQuest',        [],   ...
+         'valsFromQuest',              [],   ...
          'directionPriors',            [80 20], ... % For asymmetric priors
          'referenceRT',                [],   ...
          'fixationRTDim',              0.4,  ...
          'targetDistance',             8,    ...
-         'textStrings',                '',   ...
-         'correctImageIndex',          1,    ...
-         'errorImageIndex',            3,    ...
-         'errorTooSlowImageIndex',     4,    ... % see topsTaskHelperFeedback
-         'correctPlayableIndex',       3,    ...
-         'errorPlayableIndex',         4);
+         'dotsSeedBase',               randi(9999));
       
       % Timing properties, referenced in statelist
       timing = struct( ...
          'fixationTimeout',           5.0, ...
          'holdFixation',              0.5, ...
+         'minimumRT',                 0.05, ...
          'showSmileyFace',            0,   ...
          'showFeedback',              1.0, ...
          'interTrialInterval',        1.0, ...
@@ -69,9 +65,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       
       % Array of structures of independent variables, used by makeTrials
       independentVariables = struct( ...
-         'name',        {'direction', 'coherence'}, ...
-         'values',      {[0 180], [0 3.2 6.4 12.8 25.6 51.2]}, ...
-         'priors',      {[], []});
+         'direction',   struct('values', [0 180],                    'priors', []), ...
+         'coherence',   struct('values', [0 3.2 6.4 12.8 25.6 51.2], 'priors', []));
       
       % dataFieldNames are used to set up the trialData structure
       trialDataFields = {'RT', 'choice', 'correct', 'direction', 'coherence', ...
@@ -82,7 +77,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       drawable = struct( ...
          ...
          ...   % Stimulus ensemble and settings
-         'stimulusEnsemble',              struct( ...
+         'stimulusEnsemble',           struct( ...
          ...
          ...   % Fixation drawable settings
          'fixation',                   struct( ...
@@ -157,17 +152,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          ...   % Dummy to run in demo mode
          'dotsReadableDummy',          struct( ...
          'start',                      {{@defineEventsFromStruct, struct( ...
-         'name',                       {'holdFixation'}, ...
-         'component',                  {'auto_1'})}}))));
+         'name',                       {'holdFixation', 'choseLeft', 'choseRight'}, ...
+         'component',                  {'Dummy1', 'Dummy2', 'Dummy3'})}}))));
       
       % Feedback messages
       message = struct( ...
          ...
-         'groups',                     struct( ...
+         'message',                    struct( ...
          ...
          ...   Instructions
          'Instructions',               struct( ...
-         'text',                       2, ...
+         'speakText',                  true, ...
+         'text',                       {{'Indicate the dot direction', 'Good luck!'}}, ...
          'duration',                   1, ...
          'pauseDuration',              0.5, ...
          'bgEnd',                      [0 0 0]), ...
@@ -238,15 +234,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
                self.questSettings.lapseRange}));
             
             % Update independent variable struct using initial value
-            self.setIndependentVariableByName('coherence', 'values', ...
-               self.getQuestGuess());
+            self.independentVariables.coherence.values = self.getQuestGuess();
             
          elseif ~isempty(self.settings.useQuest)
             
             % Update independent variable struct using Quest threshold
-            self.setIndependentVariableByName('coherence', 'values', ...
-               self.settings.useQuest.getQuestThreshold( ...
-               self.settings.coherencesFromQuest));
+            self.independentVariables.coherence.values = ...
+            self.settings.useQuest.getQuestThreshold(self.settings.valsFromQuest);
          end
          
          % ---- Initialize the state machine
@@ -256,7 +250,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Show task-specific instructions
          %
          self.helpers.message.show('Instructions');
-      end
+       end
       
       %% Finish task (overloaded)
       %
@@ -273,9 +267,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Prepare components
          %
          self.prepareDrawables();
-         self.prepareReadables();
          self.prepareStateMachine();
          
+         % ---- Use the task ITI
+         %
+         self.interTrialInterval = self.timing.interTrialInterval;
+                  
          % ---- Show information about the task/trial
          %
          % Task information
@@ -289,7 +286,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          trialString = sprintf('Trial %d/%d, dir=%d, coh=%.0f', self.trialCount, ...
             numel(self.trialData), trial.direction, trial.coherence);
          
-         % Show the information
+         % Show the information on the GUI
          self.updateStatus(taskString, trialString); % just update the second one
       end
       
@@ -324,7 +321,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             %        and set reference RT
             %
             self.settings.coherences  = self.getQuestThreshold( ...
-               self.settings.coherencesFromQuest);
+               self.settings.valsFromQuest);
             self.settings.referenceRT = nanmedian([self.trialData.RT]);
          end
       end
@@ -332,25 +329,40 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       %% Check for choice
       %
       % Save choice/RT information and set up feedback for the dots task
-      function nextState = checkForChoice(self, events, eventTag)
+      function nextState = checkForChoice(self, events, eventTag, nextStateAfterChoice)
          
          % ---- Check for event
          %
          eventName = self.helpers.reader.readEvent(events, self, eventTag);
          
+         % Default return
+         nextState = [];
+         
          % Nothing... keep checking
          if isempty(eventName)
-            nextState = [];
             return
          end
          
+         % Get current task/trial
+         trial = self.getTrial();
+         
+         % Check for minimum RT, wrt dotsOn for RT, dotsOff for non-RT
+         if self.isRT
+            RT = trial.choiceTime - trial.dotsOn;
+         else
+            RT = trial.choiceTime - trial.dotsOff;
+         end
+         if RT < self.timing.minimumRT
+            return
+         end
+
          % ---- Good choice!
          %
          % Override completedTrial flag
          self.completedTrial = true;
          
          % Jump to next state when done
-         nextState = 'blank';
+         nextState = nextStateAfterChoice;
          
          % Get current task/trial
          trial = self.getTrial();
@@ -360,15 +372,11 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Mark as correct/error
          trial.correct = double( ...
-            (trial.choice==0 && trial.direction==180) || ...
-            (trial.choice==1 && trial.direction==0));
+            (trial.choice==0 && cosd(trial.direction)<0) || ...
+            (trial.choice==1 && cosd(trial.direction)>0));
          
-         % Compute/save RT, wrt dotsOn for RT, dotsOff for non-RT
-         if self.isRT
-            trial.RT = trial.choiceTime - trial.dotsOn;
-         else
-            trial.RT = trial.choiceTime - trial.dotsOff;
-         end
+         % Save RT
+         trial.RT = RT;
          
          % ---- Re-save the trial
          %
@@ -391,10 +399,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % Get feedback message group
          if trial.correct == 1
             messageGroup = 'Correct';
-            self.helpers.message.setText('Good choice!');
+            self.helpers.message.setText('Correct choice');
          elseif trial.correct == 0
             messageGroup = 'Error';
-            self.helpers.message.setText('Bad choice!');
+            self.helpers.message.setText('Incorrect choice');
          else
             messageGroup = 'No_choice';
          end
@@ -513,7 +521,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Set a new seed base for the dots random-number process
          %
-         trial.randSeedBase = randi(9999);
+         trial.randSeedBase = self.settings.dotsSeedBase;
          self.setTrial(trial);
          
          % ---- Save dots properties
@@ -536,22 +544,13 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          ensemble.callObjectMethod(@prepareToDrawInWindow);
       end
       
-      %% Prepare readables for this trial
-      %
-      function prepareReadables(self)
-         
-         % ---- Inactivate all of the readable events
-         %
-         self.helpers.reader.theObject.deactivateEvents();
-      end
-      
       %% Prepare stateMachine for this trial
       %
       function prepareStateMachine(self)
          
          % ---- Set RT/deadline
          %
-         self.isRT = isempty(self.timing.dotsDuration);
+         self.isRT = isempty(self.timing.dotsDuration);         
       end
       
       %% Initialize StateMachine
@@ -560,11 +559,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Fevalables for state list
          %
-         dnow    = {@drawnow};
          blanks  = {@dotsTheScreen.blankScreen};
          chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
          chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
-         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime'};
+         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'blank'};
          showfx  = {@draw, self.helpers.stimulusEnsemble, {{'colors', ...
             [1 1 1], 1}, {'isVisible', true, 1}, {'isVisible', false, [2 3 4]}},  self, 'fixationOn'};
          showt   = {@draw, self.helpers.stimulusEnsemble, {2, []}, self, 'targetOn'};
@@ -580,7 +578,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % Activate/deactivate readable events
          sea   = @setEventsActiveFlag;
-         gwfxw = {sea, self.helpers.reader.theObject, 'holdFixation'};
+         gwfxw = {sea, self.helpers.reader.theObject, 'holdFixation', 'all'};
          gwfxh = {};
          gwts  = {sea, self.helpers.reader.theObject, {'choseLeft', 'choseRight'}, 'holdFixation'};
          
@@ -593,39 +591,24 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          states = {...
             'name'              'entry'  'input'  'timeout'          'exit'     'next'            ; ...
-            'showFixation'      showfx   {}       0                     pdbr    'waitForFixation' ; ...
-            'waitForFixation'   gwfxw    chkuif   t.fixationTimeout     {}      'blankNoFeedback' ; ...
-            'holdFixation'      gwfxh    chkuib   t.holdFixation        hfdc    'showTargets'     ; ...
-            'showTargets'       showt    chkuib   t.preDots             gwts    'preDots'         ; ...
-            'preDots'           {}       {}       0                     {}      ''                ; ...
-            'showDotsRT'        showdRT  chkuic   t.dotsTimeout         hided   'blank'           ; ...
-            'showDotsFX'        showdFX  {}       t.dotsDuration        hided   'waitForChoiceFX' ; ...
-            'waitForChoiceFX'   {}       chkuic   t.choiceTimeout       {}      'blank'           ; ...
-            'blank'             {}       {}       0.2                   blanks  'showFeedback'    ; ...
-            'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
-            'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
-            'done'              dnow     {}       t.interTrialInterval  {}      ''                ; ...
+            'showFixation'      showfx   {}       0                  pdbr    'waitForFixation' ; ...
+            'waitForFixation'   gwfxw    chkuif   t.fixationTimeout  {}      'blankNoFeedback' ; ...
+            'holdFixation'      gwfxh    chkuib   t.holdFixation     hfdc    'showTargets'     ; ...
+            'showTargets'       showt    chkuib   t.preDots          gwts    'preDots'         ; ...
+            'preDots'           {}       {}       0                  {}      ''                ; ...
+            'showDotsRT'        showdRT  chkuic   t.dotsTimeout      hided   'blank'           ; ...
+            'showDotsFX'        showdFX  {}       t.dotsDuration     hided   'waitForChoiceFX' ; ...
+            'waitForChoiceFX'   {}       chkuic   t.choiceTimeout    {}      'blank'           ; ...
+            'blank'             {}       {}       0.2                blanks  'showFeedback'    ; ...
+            'showFeedback'      showfb   {}       t.showFeedback     blanks  'done'            ; ...
+            'blankNoFeedback'   {}       {}       0                  blanks  'done'            ; ...
+            'done'              {}       {}       0                  {}      ''                ; ...
             };
          
-         % ---- Set up ensemble activation list. This determines which
-         %        states will correspond to automatic, repeated calls to
-         %        the given ensemble methods
-         %
-         % See topsActivateEnsemblesByState for details.
-         activeList = {{ ...
-            self.helpers.stimulusEnsemble.theObject, 'draw'; ...
-            self.helpers.screenEnsemble.theObject, 'flip'}, ...
-            {'preDots' 'showDotsRT' 'showDotsFX'}};
-         
-         % --- List of children to add to the stateMachineComposite
-         %        (the state list above is added automatically)
-         %
-         compositeChildren = { ...
-            self.helpers.stimulusEnsemble.theObject, ...
-            self.helpers.screenEnsemble.theObject};
-         
-         % Call utility to set up the state machine
-         self.addStateMachine(states, activeList, compositeChildren);
+         % Set up the state list with automatic drawing/fipping of the
+         %  objects in stimulusEnsemble in the given list of states
+         self.addStateMachineWithDrawing(states, ...
+            'stimulusEnsemble', {'preDots' 'showDotsRT' 'showDotsFX'});
       end
    end
    
@@ -670,10 +653,18 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          %
          Lsat  = strcmp(name(1), SATsettings(:,1));
          Lbias = strcmp(name(2), BIASsettings(:,1));
-         task.message.groups.Instructions.text = ...
-            {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
+         task.message.message.Instructions.text = {SATsettings{Lsat, 2}, BIASsettings{Lbias, 2}};
          task.settings.referenceRT = SATsettings{Lsat, 3};
-         task.setIndependentVariableByName('direction', 'priors', BIASsettings{Lbias, 3});
+         task.independentVariables.direction.priors = BIASsettings{Lbias, 3};
+      end
+      
+      %% ---- Utility for getting test configuration
+      %
+      function task = getTestConfiguration()
+         task = topsTreeNodeTaskRTDots();
+         task.timing.minimumRT = 0.3;
+         task.independentVariables.coherence.values = 50;
+         task.message.message.Instructions.text = {'Testing', 'topsTreeNodeTaskRTDots'};
       end
    end
 end

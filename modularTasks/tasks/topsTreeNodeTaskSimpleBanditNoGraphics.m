@@ -5,6 +5,10 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
    %  probabilities, DOES NOT USE SNOW-DOTS GRAPHICS. This task is intended
    %  to be a learning tool.
    %
+   % To run it, use:
+   %  task = topsTreeNodeTaskSimpleBanditNoGraphics();
+   %  task.run();
+   %
    % 6/10/19 created by jig
    
    properties % (SetObservable) % uncomment if adding listeners
@@ -20,7 +24,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          'choiceTimeout',              0.4, ...
          'pauseAfterChoice',           0.2, ...
          'showFeedback',               1.0, ...
-         'interTrialInterval',         1.5);
+         'interTrialInterval',         1.0);
       
       % Fields below are optional but if found with the given names
       %  will be used to automatically configure the task
@@ -43,9 +47,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
       %     trialIterationMethod property to determine the
       %              ordering of the trials (in trialIndices)
       independentVariables = struct( ...
-         'name',                       {'probabilityLeft'},       ...
-         'values',                     {[0.10 0.35 0.65 0.90]},   ...
-         'priors',                     {[]});
+         'probabilityLeft',   struct('values', [0.10 0.35 0.65 0.90], 'priors', []));
       
       % dataFieldNames is a cell array of string names used as trialData fields
       trialDataFields = {'choice', 'rewarded', 'RT', 'stimOn', 'choiceTime', ...
@@ -63,7 +65,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          'fevalable',                  @dotsReadableDummy, ...
          'start',                      {{@defineEventsFromStruct, struct( ...
          'name',                       {'choseLeft', 'choseRight'}, ...
-         'component',                  {'auto_1', 'auto_2'})}}));
+         'component',                  {'Dummy1', 'Dummy2'})}}));
       
       % Feedback messages
       message = [];
@@ -71,7 +73,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
    
    methods
       
-      %% Constuct with name optional.
+      %% Constuctor, with name optional.
       % @param name optional name for this object
       % @details
       % If @a name is provided, assigns @a name to this object.
@@ -83,6 +85,8 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
       end
       
       %% Start task method
+      %
+      % Always runs once when the task is starting
       function startTask(self)
          
          % ---- Initialize the state machine
@@ -107,12 +111,15 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
             'choseRight'   showr    {}       []                    {}      'blank'           ; ...
             'blank'        {}       {}       t.pauseAfterChoice    {}      'showFeedback'    ; ...
             'showFeedback' showfb   {}       t.showFeedback        {}      'done'            ; ...
-            'done'         {}       {}       t.interTrialInterval  {}      ''                ; ...
+            'done'         {}       {}       []                    {}      ''                ; ...
             };
          
          % Add the state machine to the task
          self.addStateMachine(states);         
          
+         % Turn on state debug flag
+         % self.debugStates();
+
          % ---- Set up block switches
          %
          self.incrementTrialMethod            = 'hazard';
@@ -126,6 +133,8 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
       end
       
       %% Overloaded finish task method
+      %
+      % Always runs once when the task is ending
       function finishTask(self)
          
          % ---- Show finish message
@@ -186,11 +195,10 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          % Re-save the trial
          self.setTrial(trial);
          
-         % ---- Prepare readable
+         % ---- Use the task ITI
          %
-         % Activate chose* events
-         self.helpers.reader.theObject.setEventsActiveFlag({'choseLeft', 'choseRight'});
-         
+         self.interTrialInterval = self.timing.interTrialInterval;
+
          % ---- Show information about the trial
          %
          % Task information
@@ -228,7 +236,6 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          
          % Nothing... keep checking
          if isempty(nextState)
-            nextState = [];
             return
          end
          
@@ -283,6 +290,19 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
             self.trialCount, self.incrementTrial.counter, numel(self.trialData), ...
             trial.choice, feedback);
          self.updateStatus([], trialString); % just update the second one
+      end
+   end
+   
+   methods (Static)
+      
+      %% ---- Utility for getting test configuration
+      %
+      function task = getTestConfiguration()
+         
+         task = topsTreeNodeTaskSimpleBanditNoGraphics();
+         task.independentVariables.probabilityLeft.values = 0.5;
+         task.settings.blockChangeMin = 2;
+         task.settings.blockChangeMax = 2;
       end
    end
 end
