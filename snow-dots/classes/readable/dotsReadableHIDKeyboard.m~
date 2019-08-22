@@ -65,40 +65,32 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
                ProductIDs = repmat(ProductIDs(1), 1, length(VendorIDs));
             end
             
-            % Check order -- possibly given in devicePreference    
-            nDev = length(VendorIDs);
-            if nDev > 0
-               
-               if nargin > 0 && ~isempty(devicePreference) && ...
-                     devicePreference <= nDev
-                  
-                  % change order
-                  order = [devicePreference setdiff(1:nDev, devicePreference)];
-                  VendorIDs = VendorIDs(order);
-                  ProductIDs = ProductIDs(order);
-               end
-               
-               % Get all keyboards and find the first one that exists
-               if ~mexHID('isInitialized')
-                  mexHID('initialize');
-               end
-               infoStruct = mexHID('summarizeDevices');
-               
-               % Loop through and try to get it
-               for ii = 1:nDev
-                  
-                  if any([infoStruct.VendorID] == VendorIDs(ii) & ...
-                        [infoStruct.ProductID] == ProductIDs(ii))
-                     
-                     self.devicePreference.VendorID = VendorIDs(ii);
-                     self.devicePreference.ProductID = ProductIDs(ii);
-                     break
-                  end
-               end
-               
-               % Same primary usage
-               self.devicePreference.PrimaryUsage = self.PrimaryUsage;
+            % Check order -- possibly given in devicePreference           
+            order = 1:length(VendorIDs);
+            if nargin > 0 && ~isempty(devicePreference)
+               order = [devicePreference order(order~=devicePreference)];
             end
+            
+            % Get all keyboards and find the first one that exists
+            if ~mexHID('isInitialized')
+               mexHID('initialize');
+            end
+            infoStruct = mexHID('summarizeDevices');
+            
+            % Loop through and try to get it
+            for ii = 1:length(order)
+               
+               if any([infoStruct.VendorID] == VendorIDs(order(ii)) & ...
+                     [infoStruct.ProductID] == ProductIDs(order(ii)))
+                  
+                  self.devicePreference.VendorID = VendorIDs(order(ii));
+                  self.devicePreference.ProductID = ProductIDs(order(ii));                  
+                  break
+               end
+            end
+                  
+            % Same primary usage
+            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
          end
          
          % choose basic device identification criteria
