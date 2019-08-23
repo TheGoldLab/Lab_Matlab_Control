@@ -171,6 +171,10 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % ---- Make it from the superclass
          %
          self = self@topsTreeNodeTask(varargin{:});
+         
+         % ---- Set task type ID
+         %
+         self.taskTypeID = 1;
       end
       
       %% Start task method

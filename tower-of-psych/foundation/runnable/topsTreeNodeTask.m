@@ -31,11 +31,7 @@ classdef topsTreeNodeTask < topsTreeNode
       taskTypeID = -1;
       
       % An array of structs describing each trial
-      trialData = struct( ...
-         'taskID',       [], ...
-         'trialIndex',   [], ...
-         'trialStart',   [], ...
-         'trialEnd',     []);
+      trialData;
       
       % Index of current trial (in trialIndices array)
       trialCount = 0;
@@ -85,6 +81,9 @@ classdef topsTreeNodeTask < topsTreeNode
       
       % Control keyboard active flags, so we can reset them
       controlActiveFlags;
+      
+      % Default trialData fields
+      trialDataDefaultFields = {'taskID', 'trialIndex', 'trialStart', 'trialEnd'};
    end
    
    methods
@@ -167,20 +166,24 @@ classdef topsTreeNodeTask < topsTreeNode
          % Call child's startTask method
          self.startTask();
          
-         % Set up trials
-         %
-         % If trialDataFields given, use to set up trialData struct
-         if any(strcmp(properties(self), 'trialDataFields'))
-            for ii = 1:length(self.trialDataFields)
-               [self.trialData.(self.trialDataFields{ii})] = deal(nan);
-            end
-         end
-         
-         % Add trials from independent variables struct. This is done
-         % automatically if anything is given... otherwise it can be done
-         % elsewhere using the makeTrials routine (or not)
+         % Make trials -- note that this can always be done in the task
+         %  if this field is blank
          if any(strcmp(properties(self), 'independentVariables'))
-            self.makeTrials(self.independentVariables, self.trialIterations);
+            
+            if ischar(self.independentVariables)
+
+               % If string is given, treat it as a filename and call load
+               self.loadTrials(self.independentVariables)
+            else
+               
+               % Otherwise add trials from independent variables struct.            
+               self.makeTrials(self.independentVariables, self.trialIterations);
+            end
+            
+         else
+            
+            % Just make empty set
+            self.makeTrialData();
          end
          
          % Get the first trial
@@ -336,21 +339,125 @@ classdef topsTreeNodeTask < topsTreeNode
          grids  = cell(size(allValues));
          [grids{:}] = ndgrid(allValues{:});
          
-         % update trialData struct array with "trialIterations" copies of
-         % each trial, defined by unique combinations of the independent
-         % variables
-         ntr = numel(grids{1}) * trialIterations;
-         self.trialData = repmat(self.trialData(1), ntr, 1);
-         [self.trialData.taskID] = deal(self.taskID);
-         trlist = num2cell(1:ntr);
-         [self.trialData.trialIndex] = deal(trlist{:});
+         % make an array of structures, the loop through the independent 
+         %  variables and fill in values. Note that we repeat each set 
+         %  trialIterations times.
          
-         % loop through the independent variables and set in each trialData
-         % struct. Make sure to repeat each set trialIterations times.
+         ivStruct = repmat(cell2struct(cell(size(names)), names, 1), ...
+            numel(grids{1}) * trialIterations, 1);
          for ii = 1:numVariables
             values = num2cell(repmat(grids{ii}(:), trialIterations, 1));
-            [self.trialData.(names{ii})] = deal(values{:});
+            [ivStruct.(names{ii})] = deal(values{:});
          end
+         
+         % Make the struct
+         self.makeTrialData(ivStruct);
+      end
+      
+      % Utility for taking an array of structs, adding default fields and 
+      %  storing as self.trialData
+      %
+      % ivStruct is the structure of independent variable values
+      %
+      function makeTrialData(self, ivStruct)
+         
+         % Always add the defaults
+         self.trialData = cell2struct(cell(size(self.trialDataDefaultFields)), ...
+            self.trialDataDefaultFields, 2);
+         
+         % Add the given trialDataFields
+         if any(strcmp(properties(self), 'trialDataFields'))
+            for ii = 1:length(self.trialDataFields)
+               [self.trialData.(self.trialDataFields{ii})] = deal(nan);
+            end
+         end
+                  
+         % Add independent variables, if given
+         if nargin >= 2 && ~isempty(ivStruct)
+            
+            % Compute total number of trials using the given struct
+            ntr = length(ivStruct);
+            
+            % Add the trials to the existing fields
+            self.trialData = repmat(self.trialData, ntr, 1);
+            
+            % Add task ID, trials
+            [self.trialData.taskID] = deal(self.taskID);
+            trlist = num2cell(1:ntr);
+            [self.trialData.trialIndex] = deal(trlist{:});
+            
+            % Now add the data from the given struct
+            for ff = fieldnames(ivStruct)'
+               [self.trialData.(ff{:})] = deal(ivStruct.(ff{:}));
+            end         
+         end
+      end
+      
+      %% loadTrials
+      %
+      %  Utility to load trialData from a file.
+      %
+      function loadTrials(self, filename)
+         
+         % Get filename
+         if nargin < 2 || isempty(filename)
+            filename = 'trials.csv';
+         end
+         
+         % Load the table
+         theTable = readtable(filename);
+         
+         % Make trialData array
+         self.makeTrialData(table2struct(theTable));
+      end
+      
+      %% saveTrials
+      %
+      %  Utility to save trialData to a file.
+      %
+      %  Arguments:
+      %   filename   ... string name, possibly with path
+      %   variableList
+      %
+      function saveTrials(self, filename, variableList)
+         
+         % Get filename
+         if nargin < 2 || isempty(filename)
+            filename = 'trials.csv';
+         end
+         
+         % Get the list of independent variables to save
+         if nargin < 3 || isempty(variableList)
+
+            variableList = {};
+
+            if any(strcmp(properties(self), 'independentVariables')) && ...
+                  ~isempty(self.independentVariables)
+               
+               % Try to get from independent variables struct
+               variableList = fieldnames(self.independentVariables);
+               
+            elseif ~isempty(self.trialData)
+               
+               % Try to get from trialData struct(s)
+               variableList = setdiff(fieldnames(self.trialData(1)), ...
+                  self.trialDataDefaultFields);
+            end
+            
+            if isempty(variableList)
+               return
+            end
+         end
+         
+         % Make the reduced struct
+         structsToSave = rmfield(self.trialData, ...
+            setdiff(fieldnames(self.trialData(1)), variableList));
+         
+         % Make the table
+         theTable = struct2table(structsToSave);
+         
+         % Save it
+         writetable(theTable, filename);
       end
       
       %% Get a trial struct by trialCount index

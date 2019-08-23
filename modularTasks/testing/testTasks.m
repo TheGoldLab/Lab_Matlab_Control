@@ -32,6 +32,7 @@ topNode.addReadable('dotsReadableDummy');
 for tt = 1:length(tasks)
    task = feval([tasks{tt} '.getTestConfiguration']);
    task.taskID = tt;
+   % task.pauseBeforeTask = -1;
    
    % Uncomment this line to test control keyboard
    % task.pauseBeforeTask = -1;

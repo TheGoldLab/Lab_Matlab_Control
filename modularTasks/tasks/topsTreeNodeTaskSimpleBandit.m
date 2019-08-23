@@ -170,6 +170,10 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % ---- Make it from the superclass
          %
          self = self@topsTreeNodeTask(varargin{:});
+
+         % ---- Set task type ID
+         %
+         self.taskTypeID = 3;
       end
       
       %% Start task method

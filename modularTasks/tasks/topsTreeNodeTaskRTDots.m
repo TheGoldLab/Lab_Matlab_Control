@@ -211,6 +211,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Make it from the superclass
          %
          self = self@topsTreeNodeTask(varargin{:});
+
+         % ---- Set task type ID
+         %
+         self.taskTypeID = 2;
       end
       
       %% Start task (overloaded)
@@ -264,6 +268,9 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       % Put stuff here that you want to do before each time you run a trial
       function startTrial(self)
          
+         % jig 
+         self.saveTrials('test.csv')
+
          % ---- Prepare components
          %
          self.prepareDrawables();
