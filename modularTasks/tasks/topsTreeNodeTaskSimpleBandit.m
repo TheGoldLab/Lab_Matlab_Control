@@ -58,7 +58,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
       %     trialIterationMethod property to determine the
       %              ordering of the trials (in trialIndices)
       independentVariables = struct( ...
-         'probabilityLeft',   struct('values', [0.10 0.35 0.65 0.90], 'priors', []));
+         'probabilityLeft', struct('values', [0.10 0.35 0.65 0.90], 'priors', []));
       
       % dataFieldNames is a cell array of string names used as trialData fields
       trialDataFields = {'choice', 'rewarded', 'RT', 'stimOn', 'choiceTime', ...

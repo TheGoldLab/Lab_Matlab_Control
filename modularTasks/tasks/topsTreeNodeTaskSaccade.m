@@ -182,7 +182,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          
          % ---- Check name
          %
-         if ~strcmp(self.name, 'VGS') || ~strcmp(self.name, 'MGS')
+         if ~strcmp(self.name, 'VGS') && ~strcmp(self.name, 'MGS')
             self.name = 'VGS';
          end
          
@@ -293,7 +293,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % --- Show trial feedback in gui
          %
          trialString = sprintf('Trial %d/%d, dir=%d: %s, RT=%.2f', ...
-            self.trialCount, numel(self.trialData)*self.trialIterations, ...
+            self.trialCount, numel(self.trialData), ...
             trial.direction, feedbackStr, trial.RT);
          self.updateStatus([], trialString); % just update the second one
          

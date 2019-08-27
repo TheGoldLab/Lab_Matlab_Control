@@ -269,7 +269,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
       function startTrial(self)
          
          % jig 
-         self.saveTrials('test.csv')
+         % self.saveTrials('test.csv')
 
          % ---- Prepare components
          %

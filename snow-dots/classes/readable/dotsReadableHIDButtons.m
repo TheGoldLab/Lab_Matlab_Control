@@ -13,7 +13,9 @@ classdef dotsReadableHIDButtons < dotsReadableHIDKeyboard
       % Contstructor -- just a keyboard, really.
       function self = dotsReadableHIDButtons()
          
-         mexHID('initialize');
+          if ~mexHID('isInitialized')
+              mexHID('initialize');
+          end
          infoStruct = mexHID('summarizeDevices');
          
          if any([infoStruct.VendorID] == 1240)

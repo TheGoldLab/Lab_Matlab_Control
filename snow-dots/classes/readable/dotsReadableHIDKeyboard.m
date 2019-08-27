@@ -95,10 +95,10 @@ classdef dotsReadableHIDKeyboard < dotsReadableHID
                      break
                   end
                end
-               
-               % Same primary usage
-               self.devicePreference.PrimaryUsage = self.PrimaryUsage;
             end
+            
+            % Same primary usage
+            self.devicePreference.PrimaryUsage = self.PrimaryUsage;
          end
          
          % choose basic device identification criteria
