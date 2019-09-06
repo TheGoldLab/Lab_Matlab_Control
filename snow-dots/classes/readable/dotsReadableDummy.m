@@ -1,10 +1,8 @@
 classdef dotsReadableDummy < dotsReadable
    % dotsReadableDummy
+   % A 'dummy' readable to automatically generate inputs, usually for demo modes.
    %
-   % A 'dummy' readable that will automatically generate inputs, usually
-   % used for demo modes.
-   %
-   % Components are named auto_1 ... auto_n, where n is numComponents
+   % Components are named Dummy1 ... Dummyn, where n is numComponents
    %
    % 9/13/18 written by jig
    
