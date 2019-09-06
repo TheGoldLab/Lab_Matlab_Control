@@ -482,7 +482,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          end
          
          % Convert to % coherence
-         threshold = 10^(threshold./20).*100;
+         threshold = 10.^(threshold./20).*100;
       end
       
       %% Get next coherences guess from Quest
