@@ -211,9 +211,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          if ~isempty(self.settings.useQuest)
             
             % Update independent variable struct using Quest threshold
-            self.setIndependentVariableByName('coherence', 'values', ...
+            self.independentVariables.coherence.values = ...
                self.settings.useQuest.getQuestThreshold( ...
-               self.settings.valsFromQuest));
+               self.settings.valsFromQuest);
          end
          
          % ---- Get some useful indices
