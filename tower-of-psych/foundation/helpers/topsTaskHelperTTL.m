@@ -62,7 +62,7 @@ classdef topsTaskHelperTTL < topsTaskHelper
          numPulses =  mod(max(0, treeNode.trialCount-1), self.maxPulses)+1;
          
          % send pulses
-         [startTime, endTime] = self.theObject.sendTTLPulses([], numPulses);
+         [startTime, endTime] = self.theObject.sendTTLPulses(numPulses);
          
          % Set the values in the trialData struct
          treeNode.setTrialData([], self.trialDataFields{1}, startTime);
