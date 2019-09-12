@@ -515,11 +515,12 @@ classdef (Sealed) topsDataLog < topsGroupedList
                   [logStruct(inds).item]),[3 1 2]);
                
                % Convert empties to nans
-               Lempty = cellfun('isempty', cellData);
-               cellData(Lempty) = {nan};
                
-               % Make sure everything is a double and convert to matrix
-               grdata = cellfun(@double, cellData);
+               
+               % Make sure everything is a double
+               cellData = cellfun(@double, cellData);
+               % Convert to a matrix
+               grdata = cell2mat();
             
                if ii==1
                   

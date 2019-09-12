@@ -324,9 +324,9 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % Check to give reward
          if (trial.choice == 0 && rand() <= trial.probabilityLeft) || ...
                (trial.choice == 1 && rand() > trial.probabilityLeft)
-            trial.rewarded = true;
+            trial.rewarded = 1;
          else
-            trial.rewarded = false;
+            trial.rewarded = 0;
          end
          
          % Mark as correct/error (with respect to largest reward side)
@@ -353,7 +353,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % Check for outcome
          if ~self.completedTrial
             messageGroup = 'No_choice';
-         elseif trial.rewarded
+         elseif trial.rewarded==1
             messageGroup = 'Correct';
          else
             messageGroup = 'Error';
