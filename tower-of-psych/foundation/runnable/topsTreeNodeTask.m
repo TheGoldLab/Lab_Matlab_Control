@@ -177,7 +177,7 @@ classdef topsTreeNodeTask < topsTreeNode
             else
                
                % Otherwise add trials from independent variables struct.            
-               self.makeTrials(self.independentVariables, self.trialIterations);
+               self.makeTrials();
             end
             
          else
@@ -296,8 +296,12 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       function makeTrials(self, independentVariables, trialIterations)
          
+         % Check args
+         if nargin < 2 || isempty(independentVariables)
+            independentVariables = self.independentVariables;
+         end
          if nargin < 3 || isempty(trialIterations)
-            trialIterations = 1;
+            trialIterations = self.trialIterations;
          end
          
          % Loop through to set full set of values for each variable, and
@@ -307,9 +311,19 @@ classdef topsTreeNodeTask < topsTreeNode
          allValues = cell(1, length(names));
          for ii = 1:numVariables
             
-            % update values based on priors, if they are given in the
+            % CHECK FOR FORMAT
+            %
+            if ~isstruct(independentVariables.(names{ii}))
+               independentVariables.(names{ii}).values = ...
+                  independentVariables.(names{ii});
+            end
+            
+            % CHECK FOR PRIORS
+            %
+            % Update values based on priors, if they are given in the
             % format: [proportion_value_1 proportion_value_2 ... etc]
-            if length(independentVariables.(names{ii}).priors) == ...
+            if isfield(independentVariables.(names{ii}), 'priors') && ...
+                  length(independentVariables.(names{ii}).priors) == ...
                   length(independentVariables.(names{ii}).values) && ...
                   sum(independentVariables.(names{ii}).priors) > 0
                
@@ -359,7 +373,7 @@ classdef topsTreeNodeTask < topsTreeNode
       %
       % ivStruct is the structure of independent variable values
       %
-      function makeTrialData(self, ivStruct)
+      function makeTrialData(self, ivvStruct)
          
          % Always add the defaults
          self.trialData = cell2struct(cell(size(self.trialDataDefaultFields)), ...
@@ -373,10 +387,10 @@ classdef topsTreeNodeTask < topsTreeNode
          end
                   
          % Add independent variables, if given
-         if nargin >= 2 && ~isempty(ivStruct)
+         if nargin >= 2 && ~isempty(ivvStruct)
             
             % Compute total number of trials using the given struct
-            ntr = length(ivStruct);
+            ntr = length(ivvStruct);
             
             % Add the trials to the existing fields
             self.trialData = repmat(self.trialData, ntr, 1);
@@ -387,8 +401,8 @@ classdef topsTreeNodeTask < topsTreeNode
             [self.trialData.trialIndex] = deal(trlist{:});
             
             % Now add the data from the given struct
-            for ff = fieldnames(ivStruct)'
-               [self.trialData.(ff{:})] = deal(ivStruct.(ff{:}));
+            for ff = fieldnames(ivvStruct)'
+               [self.trialData.(ff{:})] = deal(ivvStruct.(ff{:}));
             end         
          end
       end
@@ -407,8 +421,17 @@ classdef topsTreeNodeTask < topsTreeNode
          % Load the table
          theTable = readtable(filename);
          
+         % Convert it to a struct
+         ivvStruct = table2struct(theTable);
+         
          % Make trialData array
-         self.makeTrialData(table2struct(theTable));
+         self.makeTrialData(ivvStruct);    
+         
+         % Save it in the right format in independentVariables
+         self.independentVariables = struct();         
+         for ff = fieldnames(ivvStruct)'
+            self.independentVariables.(ff{:}) = [ivvStruct.(ff{:})];
+         end         
       end
       
       %% saveTrials
@@ -416,8 +439,8 @@ classdef topsTreeNodeTask < topsTreeNode
       %  Utility to save trialData to a file.
       %
       %  Arguments:
-      %   filename   ... string name, possibly with path
-      %   variableList
+      %   filename      ... string name, possibly with path
+      %   variableList  ... cell array of string names of variables to save
       %
       function saveTrials(self, filename, variableList)
          
@@ -447,6 +470,11 @@ classdef topsTreeNodeTask < topsTreeNode
             if isempty(variableList)
                return
             end
+            
+         elseif strcmp(variableList, 'all')
+            
+            % Save everything
+            variableList = fieldnames(self.trialData(1));
          end
          
          % Make the reduced struct
@@ -507,7 +535,23 @@ classdef topsTreeNodeTask < topsTreeNode
          for ii = 1:2:nargin-2
             self.trialData(trialIndex).(varargin{ii}) = varargin{ii+1};
          end
-      end      
+      end   
+      
+      %% Utility for getting trialData value(s)
+      %
+      function data = getTrialData(self, fieldName, trialIndex)
+         
+         % Check whether we are getting a single value or all unique        
+         if nargin < 3 || isempty(trialIndex)
+            
+            % All unique values
+            data = unique([self.trialData.(fieldName)]);
+         else
+            
+            % Single value
+            data = self.trialData(trialIndex).(fieldName);
+         end       
+      end
    end
    
    methods (Access = protected)
