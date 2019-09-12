@@ -483,7 +483,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             if numReversals > 0
                
                % Set up reversals struct, with one entry per direction epoch
-               otherDirection = setdiff( fjq, trial.direction);
+               otherDirection = setdiff(self.getTrialData('direction'), trial.direction);
                self.reversals.directions = repmat(trial.direction, 1, numReversals+1);
                self.reversals.directions(end:-2:1) = otherDirection;
                self.reversals.plannedTimes = [0 plannedTimes];
