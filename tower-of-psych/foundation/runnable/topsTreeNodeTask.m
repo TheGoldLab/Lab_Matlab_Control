@@ -427,7 +427,7 @@ classdef topsTreeNodeTask < topsTreeNode
          % Make trialData array
          self.makeTrialData(ivvStruct);    
          
-         % Save it in the right format in independentVariables
+         % Save it in the correct format in independentVariables
          self.independentVariables = struct();         
          for ff = fieldnames(ivvStruct)'
             self.independentVariables.(ff{:}) = [ivvStruct.(ff{:})];
@@ -552,6 +552,36 @@ classdef topsTreeNodeTask < topsTreeNode
             data = self.trialData(trialIndex).(fieldName);
          end       
       end
+      
+      %% Utility function to set the value of a property 
+      %  in the current trial data struct
+      %
+      function setTrialDataValue(self, name, value, trialIndex)
+         
+         if nargin < 4 || isempty(trialIndex)
+            trialIndex = self.trialIndices(self.trialCount);
+         else
+            trialIndex = self.trialIndices(trialIndex);
+         end
+         
+         % Set the value
+         self.trialData(trialIndex).(name) = value;
+      end
+      
+      %% Utility function to blank the screen and save a timestamp
+      %
+      % name is string name of trialData field
+      function blankScreen(self, name)
+         
+         % Blank the screen
+         frameInfo = dotsTheScreen.blankScreen();
+         
+         % Possibly save the timestamp
+         if nargin >= 2 && ~isempty(name)
+            self.trialData(self.trialIndices(self.trialCount)).(name) = ...
+               frameInfo.onsetTime;
+         end
+      end   
    end
    
    methods (Access = protected)

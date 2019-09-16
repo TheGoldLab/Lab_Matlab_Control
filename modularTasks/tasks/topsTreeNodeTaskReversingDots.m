@@ -68,7 +68,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       trialDataFields = {'RT', 'choice', 'correct', ...
          'direction', 'coherence', 'randSeedBase', 'fixationOn', ...
          'fixationStart', 'targetOn', 'dotsOn', 'finalCPTime', 'dotsOff', ...
-         'choiceTime', 'targetOff', 'fixationOff', 'feedbackOn'};
+         'choiceTime', 'blankScreen', 'feedbackOn'};
       
       % Drawables settings
       drawable = struct( ...
@@ -179,8 +179,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
    
    properties (SetAccess = protected)
       
-      % Check for changes in properties that require drawables to be
-      %  recomputed
+      % Check for changes in properties that require drawables to be recomputed
       targetDistance;
       
       % Reversal directions/times -- precomputed for each trial and then executed.
@@ -379,6 +378,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % Save RT
          trial.RT = RT;
          
+         % Save the final reversal time
+         trial.finalCPTime = self.reversals.actualTimes(end);
+         
          % Store the reversal times
          topsDataLog.logDataInGroup(self.reversals, 'ReversingDotsReversals');
          
@@ -413,7 +415,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Show trial feedback on the screen
          %
-         self.helpers.message.show(messageGroup);
+         self.helpers.message.show(messageGroup, self, 'feedbackOn');
       end
    end
       
@@ -483,7 +485,8 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
             if numReversals > 0
                
                % Set up reversals struct, with one entry per direction epoch
-               otherDirection = setdiff(self.getTrialData('direction'), trial.direction);
+               otherDirection = setdiff(...
+                  self.independentVariables.direction, trial.direction);
                self.reversals.directions = repmat(trial.direction, 1, numReversals+1);
                self.reversals.directions(end:-2:1) = otherDirection;
                self.reversals.plannedTimes = [0 plannedTimes];
@@ -536,8 +539,11 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Fevalables for state list
          %
-         blanks  = {@dotsTheScreen.blankScreen};
-         chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
+         % blanks  = {@dotsTheScreen.blankScreen};
+         blanks  = {@blankScreen, self, 'blankScreen'};
+         % chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
+         chkuif  = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
+         
          chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
          chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'blank'};
          chkrev  = {@checkForReversal, self};
@@ -547,8 +553,11 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          showd   = {@draw,self.helpers.stimulusEnsemble, {self.dotsIndex, []}, self, 'dotsOn'};
          hided   = {@draw,self.helpers.stimulusEnsemble, {[], [self.fpIndex self.dotsIndex]}, self, 'dotsOff'};
          
-         % drift correction
+         % Drift correction
          hfdc  = {@reset, self.helpers.reader.theObject, true};
+         
+         % Save values in trialData
+         % tdhf = {@setTrialDataValue, self, 'holdFixation', value, trialIndex};
          
          % Activate/deactivate readable events
          sea   = @setEventsActiveFlag;
