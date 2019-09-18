@@ -379,7 +379,9 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          trial.RT = RT;
          
          % Save the final reversal time
-         trial.finalCPTime = self.reversals.actualTimes(end);
+         if ~isempty(self.reversals)
+            trial.finalCPTime = self.reversals.actualTimes(end);
+         end
          
          % Store the reversal times
          topsDataLog.logDataInGroup(self.reversals, 'ReversingDotsReversals');
