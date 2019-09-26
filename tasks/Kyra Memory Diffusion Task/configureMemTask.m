@@ -1,7 +1,7 @@
-function [tree, list] = configureODRtaskInfercloud(logic, isClient)
+function [tree, list] = configureMemTask(logic, isClient)
 % for the within trial change-point task
 sc=dotsTheScreen.theObject;
-sc.reset('displayIndex', 0);
+sc.reset('displayIndex', 1);
 
 if nargin < 1 || isempty(logic)
     logic = TAFCDotsLogic();
@@ -50,14 +50,13 @@ list{'graphics'}{'feedback diameter'} = 0.22;
 list{'graphics'}{'ISO1'} = [0.1 0.1 0.1];
 list{'graphics'}{'ISO2'} = [0.50 0.50 0.50];
 
-list{'graphics'}{'trainer segs'} = logic.distSTD*7;
-list{'graphics'}{'trainer mod'}=.95;
+
 
 
 % EYELINK  
     list{'Eyelink'}{'SamplingFreq'} = 1000; %Before 1000!!Check actual device sampling frequency in later version
-       screensize = sc.displayPixels(1,3:4);
-
+    screensize = get(0, 'MonitorPositions');
+    screensize = screensize(1, [3, 4]);
     centers = screensize/2;
     list{'Eyelink'}{'Centers'} = centers;
     list{'Eyelink'}{'Invalid'} = -32768;
@@ -160,104 +159,25 @@ list{'graphics'}{'counter'}=counter;
     list{'graphics'}{'ring'}=ring;
     
     
-%Training Marker
-    Trainer=dotsDrawableArcs();
-    TrainerColors=[];
-    for i=1:7*logic.distSTD;
-        TrainerColors=[TrainerColors;.35+20*normpdf(i,logic.distSTD*3.5,logic.distSTD)*[1,1,1]];
-    end
-    list{'graphics'}{'TrainerColors'} = TrainerColors;
-    Trainer.colors=TrainerColors;
-    Trainer.xCenter=0;
-    Trainer.yCenter=0;
-    Trainer.rInner=logic.targRadius-3;
-    Trainer.rOuter=logic.targRadius-2;
-    Trainer.nPieces=5;
-    Trainer.startAngle=0;
-    Trainer.sweepAngle=1;
-    Trainer.isVisible=false;
-    list{'graphics'}{'Trainer'}=Trainer;
-    
-% %Mask ensamble
-%     stable = dotsEnsembleUtilities.makeEnsemble('stable', isClient);
-%     maskDots=dotsDrawableDotKinetogram();
-%     maskDots.xCenter=0;
-%     maskDots.yCenter=0;
-%     maskDots.coherence=0;
-%     maskDots.diameter=2*logic.targRadius+2;
-%     maskDots.isFlickering=false;
-%     maskDots.isVisible=true;
-%     maskDots.density=70;
-%     maskDots.colors=[.15,.15,.15];
-%     maskDots.isLimitedLifetime=false;
-%     maskDots.pixelSize=10;
-%     maskDots.speed=3;
-%     stable.addObject(maskDots);
-%     
-%     centerMask=dotsDrawableTargets();
-%     centerMask.width=13;
-%     centerMask.height=13;
-%     centerMask.colors=[0 0 0];
-%     centerMask.isVisible=true;
-%      stable.addObject(centerMask);
+
+
 %     
    drawables = dotsEnsembleUtilities.makeEnsemble('drawables', isClient);
-   
-   
+    
     
 
-for i=1:logic.nDots;
+
+  for i=1:max(logic.PossDots);
       dots=dotsDrawableTargets();
-      dots.colors=ring.colors;
+      dots.colors=[logic.colArray{i}];
     dots.xCenter=0;
     dots.yCenter=0;
-    dots.width=.40;
-    dots.height=.40;
-    dots.nSides=3;
+    dots.width=.60;
+    dots.height=.60;
+    %dots.nSides=3;
     dots.isVisible=false;
     drawables.addObject(dots);
-    list{'graphics'}{['dots',num2str(i)]}=dots;
-
-end
-
-
-MaskIDX=zeros(1,2*length(logic.MaskTargets));
-for i=1:logic.MaskTargets 
-      dotOut=dotsDrawableTargets();
-      dotIn=dotsDrawableTargets();
-      dotOut.colors=list{'graphics'}{'ISO1'};
-      dotIn.colors=list{'graphics'}{'ISO2'};
-    dotOut.xCenter=logic.targRadius;
-    dotOut.yCenter=0;
-    dotIn.xCenter=logic.targRadius;
-    dotIn.yCenter=0;
-    dotOut.width=.45;
-    dotOut.height=.45;
-    dotIn.width=.45/sqrt(2);
-    dotIn.height=.45/sqrt(2);
-    %dots.nSides=3;
-    dotOut.isVisible=false;
-    dotIn.isVisible=false;
-    MaskIDX(2*(i-1)+1)=drawables.addObject(dotOut);
-    MaskIDX(2*i)=drawables.addObject(dotIn);
-end
-
-
-
-
-    
-% 
-%   for i=1:logic.nDots;
-%       dots=dotsDrawableTargets();
-%       dots.colors=ring.colors;
-%     dots.xCenter=0;
-%     dots.yCenter=0;
-%     dots.width=.60;
-%     dots.height=.60;
-%     %dots.nSides=3;
-%     dots.isVisible=false;
-%     drawables.addObject(dots);
-%   end
+  end
 
 
   
@@ -319,7 +239,7 @@ counterInd = drawables.addObject(counter);
 MMInd=drawables.addObject(MM);
 ringInd=stable.addObject(ring);
 feedbackPInd=drawables.addObject(feedbackP);
-TrainerInd = drawables.addObject(Trainer);
+
 GuessInd = drawables.addObject(GuessMarker);
 errorInd=drawables.addObject(error);
 
@@ -343,10 +263,9 @@ list{'graphics'}{'counter index'} = counterInd;
 list{'graphics'}{'MM Index'}=MMInd;
 list{'graphics'}{'Ring Index'}=ringInd;
 list{'graphics'}{'FeedbackP Index'}=feedbackPInd;
-list{'graphics'}{'Trainer Index'}=TrainerInd;
+
 list{'graphics'}{'Guess Index'}=GuessInd;
 list{'graphics'}{'Error Index'}=errorInd;
-list{'graphics'}{'Mask Indexes'}=MaskIDX;
 
 list{'graphics'}{'screen'} = screen;
 
@@ -361,20 +280,19 @@ compMouse = dotsReadableHIDMouse();
     compMouse.isAutoRead = 1;
      
     compMouse.flushData;
-    compMouse.initialize();
+%     compMouse.initialize();
      
      
-    % undefine any default events
-    IDs = compMouse.getComponentIDs();
-    for ii = 1:numel(IDs)
-        compMouse.undefineEvent(IDs(ii));
-    end
-    %Define a mouse button press event
-    compMouse.defineEvent(3, 'left', 0, 0, true);
-    compMouse.defineEvent(4, 'right', 0, 0, true);
-    %store the mouse separately in case we need to use it
+%     % undefine any default events
+%     IDs = compMouse.getComponentIDs();
+%     for ii = 1:numel(IDs)
+%         compMouse.undefineEvent(IDs(ii));
+%     end
+%     %Define a mouse button press event
+%     compMouse.defineEvent(3, 'left', 0, 0, true);
+%     compMouse.defineEvent(4, 'right', 0, 0, true);
+%     %store the mouse separately in case we need to use it
     list{'input'}{'mouse'} = compMouse;
-
 %% Outline the structure of the experiment with topsRunnable objects
 %   visualize the structure with tree.gui()
 %   run the experiment with tree.run()
@@ -424,32 +342,23 @@ on = @(index)drawables.setObjectProperty('isVisible', true, index);
 %onStable=@(index)stable.setObjectProperty('isVisible', true, index);
 off = @(index)drawables.setObjectProperty('isVisible', false, index);
 %offStable = @(index)stable.setObjectProperty('isVisible', false, index);
-cho = @(index)drawables.setObjectProperty('colors', [0.12 0.12 0.12], index);
+cho = @(index)drawables.setObjectProperty('colors', [0.25 0.25 0.25], index);
 chf = @(index)drawables.setObjectProperty('colors', [0.45 0.45 0.45], index);
-
-    target=[1:2*min(length(logic.targPerSample),logic.overlapTargets)];
 
 
 
 fixedStates = { ...
     'name'      'entry'         'timeout'	'exit'          'next'      'input'; ...
     'prepare1'  {on, [fpInd counterInd]} 0 {@flushui, list}           'prepare2'     {}; ...
-%     'pause'     {chf, fpInd}         .5      {} 'pause2'    {};...     %Testing replacing instructions with viewSlides 
-%     'pause2'    {cho, fpInd}         1       {}    'prepare2'  {};...
-    'prepare2'  {@checkFix list, 1.5,1}         0       {@editState,trialStates,list}  'turn on target' {}; ... %Change time of target on depending on if is a Visual or Memory
-    %%% %*** Probably should check for fixation here, before put on the
-    %%% sample so that you can look at response to sample.  Probably should
-    %%% be short check though, maybe integrate with the ITI
-    'turn on target' {on, target}    0       {}         'turn on mask' {};   %prepare two had on,  qpInd in entry  *********@offDots list in exit state if not doing overlap!!!
-    'turn on mask'   {on, [MaskIDX,target]}      0       {@offDots list} 'turn off mask' {};
-    'turn off mask' {}    0       {off, MaskIDX}         'delay' {};
-    'delay'     {@offDots list}                   0       {}    'flush' {};  %indicate should make response   **** MAKE SURE FIXATING HERE AS WELL!
-    'delay eye' {@offDots list} 0       {@checkFix list, logic.durationDelay,2}    'flush'  {};
+    'prepare2'  {@checkFix list, .2}         0       {@editState,trialStates,list}  'turn on target' {}; ... %Change time of target on depending on if is a Visual or Memory
+    'turn on target' {@onDots list}    0       {}         '' {};   %prepare two had on,  qpInd in entry  *********@offDots list in exit state if not doing overlap!!!
+    'delay'     {@offDots list}                   0       {@toc}    'flush' {};  %indicate should make response   **** MAKE SURE FIXATING HERE AS WELL!
+    'delay eye' {@offDots list} 0       {@checkFix list, logic.durationDelay}    'flush'  {};
+    'loop'      {@checkLoop,trialStates, list             } 0       {}                ''    {};...
     'flush'     {@flushui, list}     0    {@setTimeStamp, logic}             'decision'     {}; ...
-    'decision'  {@MoveMarker, list}  0   {}  'show feedback'  {}; ...  %***** MAYBE PUT DELAY HERE BEFORE FEEDBACK FOR PUPIL THINGS WHEN GET THAT RUNNING
-                                                                              % Or maybe not if still using color to indicate reward 
-    'show feedback' {@showFeedback, list} tFeed {off [feedbackPInd,GuessInd,errorInd,feedbackInd]} 'clean' {};
-    'clean'         {cho, fpInd} 0 {}    'counter' {};                                               % *** Maybe set this to ~2 seconds in order to let pupil equilibrate???? 
+    'decision'  {@MoveMarker, list}  0   {}  'show feedback'  {}; ...  %***** MAYBE PUT DELAY HERE BEFORE FEEDBACK FOR PUPIL THINGS WHEN GET THAT RUNNING                                                                           % Or maybe not if still using color to indicate reward 
+    'show feedback' {@showFeedback, list} tFeed {off [feedbackPInd,GuessInd]} 'clean' {};
+    'clean'         {} 0 {}    'counter' {};                                               % *** Maybe set this to ~2 seconds in order to let pupil equilibrate???? 
     'counter'  {@addCount, list}  0   {on, [counterInd]}              'set'          {}; ... % always a good trial for now
     'set'  {@setGoodTrial, logic}  0   {}              ''          {}; ...
     'exit'     {@closeTree,tree}          0           {}          ''  {}; ...
@@ -476,34 +385,42 @@ logic = list{'object'}{'logic'};
 
 %Control how long targets are on for
 trialStates.editStateByName('turn on target', 'timeout', logic.durationTarget);
-trialStates.editStateByName('turn on mask', 'timeout', logic.durationTarget);
-
-
-%Control how long Mask are on for
-trialStates.editStateByName('turn off mask', 'timeout', logic.durationMask);
 
 %Control the delay period
-
-    trialStates.editStateByName('delay', 'timeout', logic.durationDelay);
-
+trialStates.editStateByName('delay', 'timeout', logic.durationDelay);
 
 %Determine whether or not to sample and get a guess from the subject      
-if ~logic.isSampled
-      trialStates.editStateByName('turn on target', 'next', 'counter');
-else
-    if logic.isMask
-        trialStates.editStateByName('prepare2', 'next', 'turn on mask');
-        state='turn off mask';
-    else
-        state='turn on target';
-    end
-    
+
     if logic.useMouse==1
-        trialStates.editStateByName(state, 'next', 'delay');
+        trialStates.editStateByName('turn on target', 'next', 'delay');
     else
-        trialStates.editStateByName(state, 'next', 'delay eye'); 
+        trialStates.editStateByName('turn on target', 'next', 'delay eye'); 
     end
+   
+    
+    %Determine if showing at same time or not
+%     if logic.tempDelay
+%         trialStates.editStateByName('delay eye', 'next', 'loop'); 
+%         trialStates.editStateByName('delay', 'next', 'loop');
+%         
+%     end
+    
+
+function checkLoop(trialStates, list)
+%Controls the timing and order of events in a trial:
+logic = list{'object'}{'logic'};
+
+
+if logic.currentdot<logic.ndots
+        trialStates.editStateByName('loop', 'next', 'turn on target');
+else
+            trialStates.editStateByName('loop', 'next', 'flush');
+
 end
+logic.currentdot=logic.currentdot+1;
+
+    
+    
 
 
 function addCount(list)
@@ -515,45 +432,43 @@ drawables.setObjectProperty('string', strcat(num2str(logic.blockTotalTrials + 1)
     num2str(logic.trialsPerBlock)), counterInd);
 
 function onDots(list)
-%Turn on all of the target blue dots
+%turn on target dot if its not a sample trial
 logic= list{'object'}{'logic'};
 drawables = list{'graphics'}{'drawables'};
-for i=1:logic.nCoherentDots
-drawables.setObjectProperty('isVisible', true, i);
-end
+% if logic.tempDelay
+% target=logic.currentdot;
+%     drawables.setObjectProperty('isVisible', true, target);
+% else
+    target=[1:logic.ndots];
+    drawables.setObjectProperty('isVisible', true, target);
+% end
+disp([num2str(logic.currentdot),'/',num2str(logic.ndots), '  ', num2str(logic.durationDelay)]);
+toc
+
+ 
+
 
 function offDots(list)
 %Turn off all the target blue dotsS
 logic= list{'object'}{'logic'};
 drawables = list{'graphics'}{'drawables'};
-TrainerInd = list{'graphics'}{'Trainer Index'};
-if logic.currentBlock==3 && logic.isSampled;
-drawables.setObjectProperty('isVisible', false, TrainerInd);
-end
 
-if logic.isDemo==2
-for i=1:logic.nCoherentDots
-%     disp (i)
-drawables.setObjectProperty('isVisible', false, i);
-end
-elseif logic.currentBlock==1
-else
-   for i=1:logic.nCoherentDots
-%     disp (i)
-drawables.setObjectProperty('isVisible', false, i);
-end 
-end
+toc
+% if logic.tempDelay
+% target=logic.currentdot;
+%     drawables.setObjectProperty('isVisible', false, target);
+% else
+    target=[1:logic.ndots];
+    drawables.setObjectProperty('isVisible', false, target);
+% end
 
 
-function checkFix(list,fixtime,type)
+
+
+function checkFix(list,fixtime)
     %disp('Checking Fix')
     %Import values
 logic= list{'object'}{'logic'};
-if type==2
-    fixtime=logic.durationDelay;
-else
-    fixtime=fixtime;
-end
 
     fs = list{'Eyelink'}{'SamplingFreq'};
     invalid = list{'Eyelink'}{'Invalid'};
@@ -587,7 +502,6 @@ end
             logic.eyelinkTSDelay=eyestruct.time;
             
         end
-
         
          while fixed == 0
         %Ensuring eyestruct does not get prohibitively large. 
@@ -629,35 +543,23 @@ end
         %necessary to check times for samples to get a good approximation
         %for how long a subject is fixating
         endtime = time(end);
-        start_idx = find((time <= (endtime - fixms)), 1, 'last');
-
+        start_idx = find((time <= endtime - fixms), 1, 'last');
+        
         if ~isempty(start_idx)
             lengthreq = length(start_idx:length(xgaze));
-           % disp([start_idx endtime-time(start_idx)  lengthreq]);
         else
             lengthreq = Inf;
         end
-                
-
+        
         if length(xgaze) >= lengthreq;
-            if nnz(xgaze(start_idx :end)  >= xbounds(1) & ... 
-                    xgaze(start_idx :end) <= xbounds(2))>=(length(xgaze)-start_idx)-5 && ...
-                    nnz(ygaze(start_idx :end) >= ybounds(1) & ...
-                    ygaze(start_idx :end) <= ybounds(2))>=(length(xgaze)-start_idx)-5
-                
-                %%% KAS 4/24/18 Edit so can have up to 5 samples flick out of the
-                %%% fixation window so that when have blinks register as far point doesn't restart counter 
-                %%% Used to be all instead of nnz
+            if all(xgaze(start_idx :end)  >= xbounds(1) & ... 
+                    xgaze(start_idx :end) <= xbounds(2)) && ...
+                    all(ygaze(start_idx :end) >= ybounds(1) & ...
+                    ygaze(start_idx :end) <= ybounds(2))
                 
                 fixed = 1;
                 eyestruct = [];
             else
-%                 disp(nnz(xgaze(start_idx :end)  >= xbounds(1) & ... 
-%                     xgaze(start_idx :end) <= xbounds(2)));
-%                 disp(nnz(ygaze(start_idx :end) >= ybounds(1) & ...
-%                     ygaze(start_idx :end) <= ybounds(2)));
-%                 disp(length(xgaze)-start_idx);
-  
                 if fixtime<1
                     brokenfix=1;
                 else
@@ -671,9 +573,6 @@ end
         if fixtime<1
         logic.brokenFixes=[logic.brokenFixes,brokenfix];
         end
-        
-    else
-        pause(fixtime);
     end
     
     
@@ -686,21 +585,19 @@ compMouse=list{'input'}{'mouse'};
 counter=list{'graphics'}{'counter'};
 bg=list{'graphics'}{'bg'};
 logic = list{'object'}{'logic'};
-MMind=list{'graphics'}{'Mouse Marker'};
+MM=list{'graphics'}{'Mouse Marker'};
 s=list{'screen'}{'actual screen'};
 fp=list{'graphics'}{'fixation point'};
 ring=list{'graphics'}{'ring'};
-Trainer=list{'graphics'}{'Trainer'};
+
 compMouse.flushData;
 scaleFac = s.pixelsPerDegree;
-for i=1:logic.nCoherentDots
-    subsampledots(i)=list{'graphics'}{['dots',num2str(i)]};
-end
+
 
 if logic.useMouse==1
 mXprev = compMouse.x/scaleFac;
 mYprev = compMouse.y/scaleFac;
-sensitivityFac =   1;% 0.7*0.9; %.6*0.9; -- might want to lower this for motor error
+sensitivityFac =   0.7*0.9; %.6*0.9; -- might want to lower this for motor error
 else
      eyestruct = Eyelink( 'NewestFloatSample');
     mXprev= ((eyestruct.gx(1)/2048)*46.9491) - 23.4746;
@@ -708,35 +605,27 @@ else
     sensitivityFac =   1; %.6*0.9; -- might want to lower this for motor error
 end
 
-MMind.xCenter=0;
-MMind.yCenter=0;
+MM.xCenter=0;
+MM.yCenter=0;
 MM.isVisible=true;
 
-%*** Commented out 6/06
-% %if logic.isDemo==1 && logic.currentBlock~=2;  %If we are just demoing
-%     %pick target, as ok, good, or great range
-%     logic.demoTarget=logic.distMean+logic.distSTD*logic.demoResponseList(logic.demoPointIndex);
-%     logic.demoPointIndex=logic.demoPointIndex+1;
-% end
+if logic.isDemo==1 && logic.currentBlock~=2;  %If we are just demoing
+    %pick target, as ok, good, or great range
+    logic.demoTarget=logic.distMean+logic.distSTD*logic.demoResponseList(logic.demoPointIndex);
+    logic.demoPointIndex=logic.demoPointIndex+1;
+end
 
-MMArray=[0,0];
-CurrentRadius=0;
 %Move the mouse
-while CurrentRadius<logic.targRadius;
-    
-    %*** commented out 6/06
-%     if logic.isDemo==1 && logic.currentBlock~=2;  %If we are just demoing
-%         dx=1/4*cos(deg2rad(logic.demoTarget));
-%         dy=1/4*sin(deg2rad(logic.demoTarget));
-%         pause(.025);
-%         
-%     else
+while sqrt((MM.xCenter)^2+(MM.yCenter)^2)<logic.targRadius;
+    if logic.isDemo==1 && logic.currentBlock~=2;  %If we are just demoing
+        dx=1/4*cos(deg2rad(logic.demoTarget));
+        dy=1/4*sin(deg2rad(logic.demoTarget));
+        pause(.025);
+        
+    else
         if logic.useMouse==1
         compMouse.read();
         mXcurr = compMouse.x/scaleFac; mYcurr = -compMouse.y/scaleFac;
-        if logic.isDemo==1
-%     disp('here');
-    end
         else
             eyestruct = Eyelink( 'NewestFloatSample');
            mXcurr= ((eyestruct.gx(1)/2048)*46.9491) - 23.4746;
@@ -744,53 +633,37 @@ while CurrentRadius<logic.targRadius;
         end
         dx =sensitivityFac*(mXcurr-mXprev);
         dy=sensitivityFac*(mYcurr-mYprev);
-    %end
-        MMind.xCenter=MMind.xCenter+dx;
-        MMind.yCenter=MMind.yCenter+dy;
-        MMArray=[MMArray;MMind.xCenter,MMind.yCenter];
-        SamplesToAvg=min(size(MMArray,1),10);
-        %%% Need to find way to avg X and Y for a few samples to give a bit
-        %%% of adjustment time if you can.  
-        CurrentRadius=sqrt((mean(MMArray(end-SamplesToAvg+1:end,1)))^2+(mean(MMArray(end-SamplesToAvg+1:end,2))^2));
+    end
+        MM.xCenter=MM.xCenter+dx;
+        MM.yCenter=MM.yCenter+dy;
        
    %if logic.iso==1     
         bg.draw;
    %end
-        fp.draw; ring.draw; MMind.draw; counter.draw; 
+        fp.draw; ring.draw; MM.draw; counter.draw; 
         
-        if logic.isDemo==1
-            if logic.currentBlock==1;
-                for i=1:logic.nCoherentDots
-                    subsampledots(i).draw;
-                end
-            end
-            if logic.currentBlock<3
-        Trainer.draw;
-            end
-        end
+
         
                      
         s.nextFrame();
-        
-        %*** Commented out 6/06
-%         if logic.isDemo~=1 || logic.currentBlock==2
+        if logic.isDemo~=1 || logic.currentBlock==2
         mXprev = mXcurr;
         mYprev = mYcurr;
-%         end
+        end
  MM.isVisible=false;
 end
 
 %if logic.iso==1
  bg.draw;
 %end
-ring.draw;
+
 %Store the guess
-if MMind.xCenter>=0 && MMind.yCenter>=0
-    logic.guessAngle=atand(MMind.yCenter/MMind.xCenter);
-elseif MMind.xCenter>=0 && MMind.yCenter<0
-    logic.guessAngle=360+atand(MMind.yCenter/MMind.xCenter);
+if MM.xCenter>=0 && MM.yCenter>=0
+    logic.guessAngle=atand(MM.yCenter/MM.xCenter);
+elseif MM.xCenter>=0 && MM.yCenter<0
+    logic.guessAngle=360+atand(MM.yCenter/MM.xCenter);
 else 
-    logic.guessAngle=180+atand(MMind.yCenter/MMind.xCenter);
+    logic.guessAngle=180+atand(MM.yCenter/MM.xCenter);
 end
 
 
@@ -816,10 +689,8 @@ function configStartTrial(list)
 % start Logic trial
 logic = list{'object'}{'logic'};
 logic.startTrial;
-TrainerColors=list{'graphics'}{'TrainerColors'}; 
+
 % clear data from the last trial
-fpInd = list{'graphics'}{'fixation point index'};
-MaskIDX=list{'graphics'}{'Mask Indexes'};
 
 compMouse=list{'input'}{'mouse'};
 
@@ -830,106 +701,38 @@ list{'control'}{'current choice'} = 'none';
 %   use the drawables ensemble, to allow remote behavior
 drawables = list{'graphics'}{'drawables'};
 feedbackInd = list{'graphics'}{'feedback marker index'};
-TrainerInd = list{'graphics'}{'Trainer Index'};
+fpInd = list{'graphics'}{'fixation point index'};
+feedbackPInd = list{'graphics'}{'FeedbackP Index'};
+errorInd=list{'graphics'}{'Error Index'};
+
 MMInd=list{'graphics'}{'MM Index'};
 drawables.setObjectProperty( ...
-    'colors', list{'graphics'}{'gray'}, [feedbackInd]);
+    'colors', list{'graphics'}{'darkgray'}, [feedbackInd,fpInd,feedbackPInd,errorInd]);
 drawables.setObjectProperty( ...
-    'colors', list{'graphics'}{'darkgray'}, [fpInd]);
+    'colors', logic.colArray{logic.targOfInt}, [MMInd]);
 
 
-% let all the graphics set up to draw in the open window
-drawables.setObjectProperty('isVisible', false);
-                
-segs=list{'graphics'}{'trainer segs'};
-%Demo and training arch
-if logic.isDemo==1
 
-    if logic.currentBlock==2
-        TrainerColors=[];
-             for i=1:segs;
-                TrainerColors=[TrainerColors;20*normpdf(i,segs/2,logic.distSTD)*[1,1,1]];
-             end
-         TrainerColors=.325+TrainerColors*list{'graphics'}{'trainer mod'}; 
-         list{'graphics'}{'trainer mod'}=list{'graphics'}{'trainer mod'}*.8; %was .95
-         
-         list{'graphics'}{'TrainerColors'} = TrainerColors;
-         
-         drawables.setObjectProperty('colors',TrainerColors, TrainerInd);
-         list{'graphics'}{'TrainerColors'}=TrainerColors;
-    
-             list{'graphics'}{'trainer segs'}=max(3,segs-20);%was 4
+%Make the set of dots have the right values
 
-    end
-
-        MeanToUse=logic.targGenDistMean;
-  
-    drawables.setObjectProperty('startAngle',linspace(MeanToUse-segs/2, MeanToUse+segs/2, segs) , TrainerInd);
-    drawables.setObjectProperty('isVisible', true, TrainerInd);
-    
-else
-       drawables.setObjectProperty('isVisible', false, TrainerInd);
-end
-
-
-%For the hemi-cloud task
-
-    %Pick the target mean for the trial
-        logic.targetAngle=logic.NextAngle;
-        logic.NextAngle=logic.distSTD*randn+logic.nextdistMean;
-        logic.targetAngle(logic.targetAngle<0)=logic.targetAngle(logic.targetAngle<0)+360;
-        logic.targetAngle(logic.targetAngle>360)=mod(logic.targetAngle(logic.targetAngle>360),360);
-        
-        logic.targPerCP=[logic.targPerCP,logic.targetAngle];
-        logic.targPerSample=[logic.targPerSample,logic.targetAngle];
-  
-        
-        
-        
-        
-    %Pick the number of coherent dots    
-%     if logic.sampleType~=2
-
-
-nCoherentDots=max(1,sum(rand(1,logic.nDots)<logic.density));
-        logic.nCoherentDots=nCoherentDots;
-        logic.cloudAngles=logic.miniSTD*randn(1,nCoherentDots)+logic.targetAngle;
-        logic.randtargRadius=.75*randn(1,nCoherentDots)+logic.targRadius;
-        for i=1:nCoherentDots %nCoherentDots  
-                drawables.setObjectProperty('xCenter',logic.randtargRadius(i)*cos(logic.cloudAngles(i)*pi/180), i);   
-                drawables.setObjectProperty('yCenter',logic.randtargRadius(i)*sin(logic.cloudAngles(i)*pi/180), i);
-                drawables.setObjectProperty('isVisible',true, i);
-        
-                    drawables.setObjectProperty('nSides',logic.CPflag, i);
+ndots=logic.ndots;
+samples=logic.TrueSamples;
+       
+        for i=1:ndots %nCoherentDots  
+                drawables.setObjectProperty('xCenter',logic.targRadius*cos(samples(i)*pi/180), i);   
+                drawables.setObjectProperty('yCenter',logic.targRadius*sin(samples(i)*pi/180), i);
 
 
         end
 
 
-                    drawables.setObjectProperty('nSides',logic.CPflag, fpInd);
 
-     
 
+
+% let all the graphics set up to draw in the open window
+drawables.setObjectProperty('isVisible', false);
+                
         
-        %Set the non-targetdots if applicable
-    for i=nCoherentDots:logic.nDots-1%nCoherentDots:logic.nDots
-%         RandAngle=rand*360;
-%         RandRadius=.75*randn+logic.targRadius;
-%         drawables.setObjectProperty('x',RandRadius*cos(RandAngle*pi/180), i+1);   
-%         drawables.setObjectProperty('y',RandRadius*sin(RandAngle*pi/180), i+1);
-%         drawables.setObjectProperty('colors',[.1,.1,.1], i);
-          drawables.setObjectProperty('isVisible',false, i+1);
-    end
-
-
-for i=1:logic.MaskTargets
-    angle=360*rand;
-    while abs(rad2deg(angdiff(deg2rad(angle),deg2rad(logic.targetAngle))))<7
-        angle=360*rand;
-    end
-     drawables.setObjectProperty('xCenter',logic.targRadius*cos(angle*pi/180), [MaskIDX(2*(i-1)+1),MaskIDX(2*i)]);   
-     drawables.setObjectProperty('yCenter',logic.targRadius*sin(angle*pi/180), [MaskIDX(2*(i-1)+1),MaskIDX(2*i)]);
-end
 
    
 %     end
@@ -968,7 +771,6 @@ list{'logic'}{'statusData'} = statusData;
 if isempty(dataPath)
     dataPath = dotsTheMachineConfiguration.getDefaultValue('dataPath');
 end
-dataPath='/Users/joshuagold/Psychophysics/Data/KyraODRTask/MainTaskData';
 dataFullFile = fullfile(dataPath, dataName);
 save(dataFullFile, 'statusData')
 
@@ -981,7 +783,6 @@ save(dataFullFile, 'statusData')
 
 % only need to wait our the intertrial interval
 pause(list{'timing'}{'intertrial'});
-
 
 function showFeedback(list)
 logic = list{'object'}{'logic'};
@@ -996,59 +797,25 @@ counterInd = list{'graphics'}{'counter index'};
 logic.setDetection();
 % drawables.setObjectProperty('isVisible', false, [fpInd]);
 
-if logic.sampleType==1
-    feedback=logic.targetAngle;
+if logic.targOfInt==6
+    feedback=logic.TrueMean;
+else
+    feedback=logic.TrueSamples(logic.targOfInt);
+end
         Errormarkers=[feedbackPInd,errorInd,fpInd];
       drawables.setObjectProperty('isVisible', true, [errorInd]);
       drawables.setObjectProperty('isVisible', true, [feedbackPInd]);
-else
-    feedback=logic.NextAngle;
-    Errormarkers=[fpInd];
-end
 
 
 
-      
 
-%IF NOT WORKING UNDO TO HERE
 drawables.setObjectProperty('startAngle',feedback-.25, [feedbackPInd]);
 
-% drawables.setObjectProperty('xCenter',cos(logic.distMean*pi/180)*logic.targRadius, [feedbackPInd]);
-% drawables.setObjectProperty('yCenter', sin(logic.distMean*pi/180)*logic.targRadius, [feedbackPInd]);
-% drawables.setObjectProperty('isVisible', true, [feedbackInd]);
 
 
     drawables.setObjectProperty('xCenter',cos(logic.guessAngle*pi/180)*logic.targRadius, [GuessInd]);
     drawables.setObjectProperty('yCenter', sin(logic.guessAngle*pi/180)*logic.targRadius, [GuessInd]);
     drawables.setObjectProperty('isVisible', true, [GuessInd]);
-
-% currentrun=length(logic.targPerSample);
-
-% for i=3:min(currentrun,logic.nDots-length(logic.targPerCP))
-%     drawables.setObjectProperty('xCenter',cos(logic.targPerSample(i)*pi/180)*logic.targRadius, [i]);
-%     drawables.setObjectProperty('yCenter', sin(logic.targPerSample(i)*pi/180)*logic.targRadius, [i]);
-%     drawables.setObjectProperty('colors', list{'graphics'}{'gray'}, [i]);
-%     drawables.setObjectProperty('isVisible', true, [i]);
-% end
-% 
-% for i=currentrun+1:currentrun+length(logic.targPerCP)
-%     drawables.setObjectProperty('xCenter',cos(logic.targPerCP(i-currentrun)*pi/180)*logic.targRadius, [i]);
-%     drawables.setObjectProperty('yCenter', sin(logic.targPerCP(i-currentrun)*pi/180)*logic.targRadius, [i]);
-%     drawables.setObjectProperty('colors', list{'graphics'}{'darkgray'}, [i]);
-%     drawables.setObjectProperty('isVisible', true, [i]);
-% end
-
-
-
-%Show all Previous targets in current CP 
-if logic.extraFeedback==1
-for i=2*logic.overlapTargets+1:2*logic.overlapTargets+length(logic.targPerCP)
-    drawables.setObjectProperty('xCenter',cos(logic.targPerCP(i-2*logic.overlapTargets)*pi/180)*logic.targRadius, [i]);
-    drawables.setObjectProperty('yCenter', sin(logic.targPerCP(i-2*logic.overlapTargets)*pi/180)*logic.targRadius, [i]);
-    drawables.setObjectProperty('colors', list{'graphics'}{'darkgray'}, [i]);
-    drawables.setObjectProperty('isVisible', true, [i]);
-end
-end
 
 
   drawables.setObjectProperty('startAngle', feedback, [errorInd]); 
@@ -1056,103 +823,28 @@ end
   drawables.setObjectProperty('sweepAngle', rad2deg(angdiff(deg2rad(feedback),deg2rad(logic.guessAngle))), [errorInd]); 
  
 
+%Old color system
+Great=15;
+Good=30;
 
 
+if abs(logic.guessAngle-feedback)<Great  || 360-abs(logic.guessAngle-feedback)<Great %
+    drawables.setObjectProperty( ...
+        'colors', list{'graphics'}{'green'}, Errormarkers);
+    logic.correct = 1;
     
+elseif abs(logic.guessAngle-feedback)<Good  || 360-abs(logic.guessAngle-feedback)<Good %
+    drawables.setObjectProperty( ...
+        'colors', list{'graphics'}{'yellow'},Errormarkers);
+    logic.correct = .5;
+    
+    
+else
+    drawables.setObjectProperty( ...
+        'colors', list{'graphics'}{'red'}, Errormarkers);
+    logic.correct = 0;
 
-
-%Designated correct if less than 10 degrees off
-
-
-      
-FBColors=[        1.0000         0         0
-    1.0000    0.0549         0
-    1.0000    0.1098         0
-    1.0000    0.1647         0
-    1.0000    0.2196         0
-    1.0000    0.2745         0
-    1.0000    0.3333         0
-    1.0000    0.3882         0
-    1.0000    0.4431         0
-    1.0000    0.4980         0
-    1.0000    0.5529         0
-    1.0000    0.6078         0
-    1.0000    0.6275         0
-    1.0000    0.6431         0
-    1.0000    0.6627         0
-    1.0000    0.6824         0
-    1.0000    0.6980         0
-    1.0000    0.7176         0
-    1.0000    0.7333         0
-    1.0000    0.7529         0
-    1.0000    0.7725         0
-    1.0000    0.7882         0
-    1.0000    0.8078         0
-    1.0000    0.8314         0
-    1.0000    0.8549         0
-    1.0000    0.8784         0
-    1.0000    0.8980         0
-    1.0000    0.9216         0
-    1.0000    0.9451         0
-    1.0000    0.9686         0
-    1.0000    0.9922         0
-    0.9843    1.0000         0
-    0.9608    1.0000         0
-    0.9412    1.0000         0
-    0.9176    1.0000         0
-    0.8941    1.0000         0
-    0.8706    1.0000         0
-    0.7843    1.0000         0
-    0.7020    1.0000         0
-    0.6157    1.0000         0
-    0.5333    1.0000         0
-    0.4471    1.0000         0
-    0.3647    1.0000         0
-    0.2784    1.0000         0
-    0.1961    1.0000         0
-    0.1098    1.0000         0
-    0.0275    1.0000         0
-         0    1.0000    0.0588
-         0    1.0000    0.1176
-         0    1.0000    0.1804];
-     
-     
-FBColors=FBColors*.75;
-Errorsize=min(abs(logic.guessAngle-feedback),360-abs(logic.guessAngle-feedback));
-bins=linspace(0,3*logic.distSTD,50);
-ColorIndex=0;
-while Errorsize>=bins(1+ColorIndex) && ColorIndex<49
-    ColorIndex=ColorIndex+1;
 end
-ColorIndex=max(1,ColorIndex);
-drawables.setObjectProperty( ...
-        'colors', FBColors(51-ColorIndex,:), Errormarkers);
-    logic.correct = .02*(51-ColorIndex);
-
-
-
-% %Old color system
-% Great=logic.distSTD;
-% Good=2*logic.distSTD;
-% 
-% 
-% if abs(logic.guessAngle-feedback)<Great  || 360-abs(logic.guessAngle-feedback)<Great %
-%     drawables.setObjectProperty( ...
-%         'colors', list{'graphics'}{'green'}, Errormarkers);
-%     logic.correct = 1;
-%     
-% elseif abs(logic.guessAngle-feedback)<Good  || 360-abs(logic.guessAngle-feedback)<Good %
-%     drawables.setObjectProperty( ...
-%         'colors', list{'graphics'}{'yellow'},Errormarkers);
-%     logic.correct = .5;
-%     
-%     
-% else
-%     drawables.setObjectProperty( ...
-%         'colors', list{'graphics'}{'red'}, Errormarkers);
-%     logic.correct = 0;
-% 
-% end
 
 
 
@@ -1210,9 +902,5 @@ if logic.useMouse==2
 end
 screen = list{'graphics'}{'screen'};
 screen.callObjectMethod(@close);
-
-
-
-
 
 
