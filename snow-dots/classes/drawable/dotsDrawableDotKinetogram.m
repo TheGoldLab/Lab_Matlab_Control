@@ -132,6 +132,7 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         % Compute some parameters and create a circular aperture texture.
         function prepareToDrawInWindow(self)
            
+           disp('HERE')
             % Get the frame rate -- rounding to nearest 10 to avoid
             %  problems with keeping track of random positions when there
             %  are slight differences in frame rate

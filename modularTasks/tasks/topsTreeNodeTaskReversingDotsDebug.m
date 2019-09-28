@@ -254,12 +254,6 @@ classdef topsTreeNodeTaskReversingDotsDebug < topsTreeNodeTask
             % ---- Show task-specific instructions
             %
             self.helpers.message.show('Instructions');
-               
-            % pre-allocate cell size to record dots positions and states
-            if self.settings.recordDotsPositions
-                self.dotsInfo.dotsPositions = cell(1,length(self.trialIndices));
-                self.dotsInfo.dumpTime = self.dotsInfo.dotsPositions;
-            end
         end
         
         %% Finish task (overloaded)
@@ -309,20 +303,26 @@ classdef topsTreeNodeTaskReversingDotsDebug < topsTreeNodeTask
         %
         % Could add stuff here
         function finishTrial(self)
+           
+           %% dump dots positions and states
+           % by state I mean whether each dot is active or not on a particular
+           % frame, and whether it is coherent or not, on a particular frame
+           if self.settings.recordDotsPositions
+              
+              % Pre-allocate cells
+              if isempty(self.dotsInfo.dotsPositions)
+                 self.dotsInfo.dotsPositions = cell(1, length(self.trialIndices));
+                 self.dotsInfo.dumpTime      = nans(1, length(self.trialIndices));
+              end
+              
+              % Save the info
+              self.dotsInfo.dotsPositions{self.trialCount} = ...
+                 self.helpers.stimulusEnsemble.theObject.getObjectProperty(...
+                 'dotsPositions', self.dotsIndex);
+              self.dotsInfo.dumpTime(self.trialCount) = feval(self.clockFunction);
+           end
         end
-        
-        %% dump dots positions and states
-        % by state I mean whether each dot is active or not on a particular
-        % frame, and whether it is coherent or not, on a particular frame
-        function dumpDots(self)
-            if self.settings.recordDotsPositions
-                self.dotsInfo.dotsPositions{self.trialCount} = ...
-                    self.helpers.stimulusEnsemble.theObject.getObjectProperty(...
-                    'dotsPositions', self.dotsIndex);
-                self.dotsInfo.dumpTime{self.trialCount} = feval(self.clockFunction);
-            end
-        end
-        
+    
         %% Check for flip
         %
         %
