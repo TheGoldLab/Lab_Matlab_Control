@@ -209,7 +209,11 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                         
             % pick random start positions for all dots
             self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
-            fprintf('    start positions: %0.6f\n', self.normalizedXY)
+            % fprintf('    start positions: %0.6f\n', self.normalizedXY)
+            fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
+            
+            % Re-set the frame number to 0
+            self.frameNumber = 0;
             
             % pre-allocate size of first 2 dimensions of dotsPositions
             % the third dimension is unknown (I believe)
@@ -251,7 +255,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                   coh = abs(coh);
                end
                cohCoinToss = 100*self.thisRandStream.rand(1, nFrameDots) < coh;
-               fprintf('    sum(coinToss): %d\n',sum(cohCoinToss))
+               % fprintf('    sum(coinToss): %d\n',sum(cohCoinToss))
             end               
             nCoherentDots = sum(cohCoinToss);
             nNonCoherentDots = nFrameDots - nCoherentDots;
@@ -313,7 +317,8 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             % move the non-coherent dots
             if self.isFlickering
                 flicker = self.thisRandStream.rand(2, nNonCoherentDots);
-                fprintf('    flicker: %0.6f\n', flicker)
+                % fprintf('    flicker: %0.6f\n', flicker)
+                % fprintf('    %d flickering\n', length(flicker))
                 XY(:,nonCohSelector) = flicker;
             else
                 radians = 2*pi*self.thisRandStream.rand(1, nNonCoherentDots);
@@ -335,7 +340,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                 
                 % randomize the other component
                 wrapRands = self.thisRandStream.rand(1, sum(componentOverrun(1:end)));
-                fprintf('    wrapping %0.6f\n', wrapRands)
+                % fprintf('    wrapping %0.6f\n', wrapRands)
                 XY(componentOverrun([2,1],:)) = wrapRands;
                 
             else
@@ -349,6 +354,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             self.x = (XY(1, thisFrame)-0.5)*self.fieldWidth + self.xCenter;
             self.y = (XY(2, thisFrame)-0.5)*self.fieldWidth + self.yCenter;
             
+            disp([self.x(end) self.y(end)])
             % fill out dotsPositions
             if self.recordDotsPositions
                 self.dotsPositions(:,:,end+1) = [...

@@ -314,8 +314,8 @@ classdef topsTreeNodeTask < topsTreeNode
             % CHECK FOR FORMAT
             %
             if ~isstruct(independentVariables.(names{ii}))
-               independentVariables.(names{ii}).values = ...
-                  independentVariables.(names{ii});
+               independentVariables.(names{ii}) = struct('values', ...
+                  independentVariables.(names{ii}));
             end
             
             % CHECK FOR PRIORS
