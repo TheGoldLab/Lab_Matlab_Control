@@ -24,8 +24,12 @@ classdef topsEnsemble < topsCallList
     % call arbitrary functions, topsEnsemble can also call arbitrary
     % methods on its aggrigated objects.
     properties (SetAccess = protected)
+       
         % array of objects in the ensemble
         objects = {};
+        
+        % optional array of object names, for convenience
+        objectNames = {};
     end
     
     methods
@@ -237,6 +241,7 @@ classdef topsEnsemble < topsCallList
         % By default, sets @a value to all objects in the ensemble.  If @a
         % index is provided, it may specify a subset of ensemble objects.
         function setObjectProperty(self, property, value, index)
+           
             % all or indexed objects?
             if nargin >= 4
                 objs = self.objects(index);
@@ -306,8 +311,7 @@ classdef topsEnsemble < topsCallList
         % a cell array of objects as the first argument.  This assumes that
         % @a method is a static class method that operates on multiple
         % objects at once.  @a method could also be a regular function.
-        function result = callObjectMethod( ...
-                self, method, args, index, isCell)
+        function result = callObjectMethod(self, method, args, index, isCell)
             % pass arguments to method?
             if nargin < 3 || isempty(args)
                 args = {};
@@ -425,5 +429,34 @@ classdef topsEnsemble < topsCallList
             index = self.addCall(fevalable, name);
             self.setActiveByName(isActive, name);
         end
+    end
+    
+    methods (Static)
+       
+       % Convenient utility for combining a bunch of objects into an ensemble
+       %
+       % Aguments:
+       %  name           ... optional <string> name of the ensemble/composite
+       %  objects        ... cell array of objects
+       %
+       function ensemble = makeEnsemble(name, objects)
+          
+          if nargin < 1 || isempty(name)
+             name = 'ensemble';
+          end
+          
+          % Check for drawable objects, in which case we want to make a
+          % drawable ensemble
+          if nargin >= 2 && any(cellfun(@(x) isa(x, 'dotsDrawable'), objects))
+             ensemble = dotsDrawable.makeEnsemble(name, objects);
+          else
+             ensemble = topsEnsemble(name);
+             if nargin >= 2 && ~isempty(objects)
+                for ii = 1:length(objects)
+                   ensemble.addObject(objects{ii});
+                end
+             end
+          end
+       end
     end
 end

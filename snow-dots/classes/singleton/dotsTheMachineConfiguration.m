@@ -225,7 +225,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             self.settings.addItemToGroupWithMnemonic( ...
                 1, group, 'height');
             self.settings.addItemToGroupWithMnemonic( ...
-                2, group, 'distance');
+                60, group, 'distance');
             self.settings.addItemToGroupWithMnemonic( ...
                 [], group, 'bitDepth');
             self.settings.addItemToGroupWithMnemonic( ...
@@ -234,7 +234,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
                 [0 0 0], group, 'backgroundColor');
             self.settings.addItemToGroupWithMnemonic( ...
                 [1 1 1], group, 'foregroundColor');
-            
+                         
             group = 'dotsTheMessenger';
             self.settings.addItemToGroupWithMnemonic( ...
                 'dotsSocketPnet', group, 'socketClassName');
@@ -318,12 +318,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
         % Returns the standard file name for an .xml settings file on this
         % host, suitable for automatic loading.
         function hostFile = getHostFilename()
-            if isunix()
-                [stat,h] = unix('hostname -s');
-            else
-                h = 'windows';
-            end
-            hostFile = sprintf('dots_%s_MachineConfig.xml', deblank(h));
+            hostFile = sprintf('dots_%s_MachineConfig.xml', getMachineName());
         end
         
         % Get the value of a default setting by name.
@@ -335,7 +330,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             self = dotsTheMachineConfiguration.theObject();
             
             group = self.defaultGroup;
-            if self.settings.containsMnemonicInGroup(name, group);
+            if self.settings.containsMnemonicInGroup(name, group)
                 value = self.settings.getItemFromGroupWithMnemonic( ...
                     group, name);
             else
@@ -433,7 +428,7 @@ classdef dotsTheMachineConfiguration < dotsAllSingletonObjects
             else
                 group = class(object);
             end
-            
+                        
             % any defaults for this class?
             if self.settings.containsGroup(group);
                 [items, mnemonics] = ...

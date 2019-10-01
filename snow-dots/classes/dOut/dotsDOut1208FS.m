@@ -204,7 +204,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
             stop = self.formatSignalStop;
             mexHID('writeDeviceReport', self.primaryID, stop);
             
-            % confiugure both digital ports A and B to do output
+            % configure both digital ports A and B to do output
             dOutA = self.formatDigitalConfig(0, 0);
             mexHID('writeDeviceReport', self.primaryID, dOutA);
             dOutB = self.formatDigitalConfig(1, 0);
@@ -310,9 +310,9 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         % pulseSignal begins with a true value, the timestamp will be an
         % estimate of when @a channel transitioned to a high value. See
         % sendTTLSignal() for timing details and other details.
-        function timestamp = sendTTLPulse(self, channel)
+        function [timestamp, ref] = sendTTLPulse(self, channel)
             frequency = ceil(1/self.pulseWidth);
-            timestamp = self.sendTTLSignal( ...
+            [timestamp, ref] = self.sendTTLSignal( ...
                 channel, self.pulseSignal, frequency);
         end
         
@@ -359,7 +359,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         % preceeding interval did not seem to depend on the length of @a
         % signal.  Further testing would be warranted.
         % @details
-        % Here are the channels, "signal name"s and phisical device pins
+        % Here are the channels, "signal name"s and physical device pins
         % that dotsDOut1208FS expects to match:
         % <table border="0" cellpadding="3" cellspacing="2"
         %   frame="void" rules="all">
@@ -373,11 +373,12 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         %   <td>pin</td><td>13</td><td>14</td>
         % </tr>
         % </table>
-        function timestamp = sendTTLSignal( ...
+        function [timestamp, ref] = sendTTLSignal( ...
                 self, channel, signal, frequency)
             if ~self.isAvailable
                 timestamp = -1;
-                return
+                ref = nan;
+                return                
             end
             
             nSamples = numel(signal);
@@ -385,6 +386,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
                 warning('TTL signal is too long: %d > %d max samples', ...
                     nSamples, self.signalMaxSamples);
                 timestamp = -2;
+                ref = nan;
                 return;
             end
             
@@ -392,7 +394,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
             self.waitForRunningSignal;
             
             % send the new signal
-            [status, timing] = self.writeSignalSamples( ...
+            [status, timing, ref] = self.writeSignalSamples( ...
                 channel, signal, frequency);
                         
             if status < 0
@@ -507,7 +509,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
         end
         
         % Write configuration and samples to analog output scan.
-        function [status, timing] = writeSignalSamples( ...
+        function [status, timing, ref] = writeSignalSamples( ...
                 self, channel, signal, frequency)
             % generate HID reports
             config = self.formatSignalConfig( ...
@@ -523,6 +525,7 @@ classdef dotsDOut1208FS < dotsAllDOutObjects
             
             [status, timing] = mexHID('writeDeviceReport', ...
                 self.outputID, samples);
+             ref = mglGetSecs();
         end
     end
 end

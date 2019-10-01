@@ -22,7 +22,7 @@ classdef dotsPlayableNote < dotsPlayable
         % Constructor takes no arguments.
         function self = dotsPlayableNote()
             self = self@dotsPlayable();
-            InitializePsychSound
+%            InitializePsychSound
             self.player = PsychPortAudio('Open', [], [], 0, self.sampleFrequency, 2);
         end
         
@@ -67,7 +67,7 @@ classdef dotsPlayableNote < dotsPlayable
             if ~isempty(self.waveform)
                 % play is async, playblocking would be sync
                 PsychPortAudio('FillBuffer', self.player, self.waveform);
-                self.lastPlayTime = PsychPortAudio('Start', self.player, 1, GetSecs + self.waitTime, 1, inf, 0);
+                self.lastPlayTime = PsychPortAudio('Start', self.player, 1, mglGetSecs + self.waitTime, 1, inf, 0);
             end
         end
         

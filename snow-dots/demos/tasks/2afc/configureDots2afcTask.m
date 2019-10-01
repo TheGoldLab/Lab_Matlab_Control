@@ -118,7 +118,6 @@ list{'graphics'}{'rightward'} = 0;
 list{'graphics'}{'left side'} = -5;
 list{'graphics'}{'right side'} = 5;
 
-
 %% Graphics:
 % Create some drawable objects. Configure them with the constants above.
 
@@ -185,7 +184,6 @@ list{'graphics'}{'targets index'} = targsInd;
 list{'graphics'}{'cursor index'} = cursorInd;
 list{'graphics'}{'stimulus index'} = stimInd;
 list{'graphics'}{'screen'} = screen;
-
 
 %% Input:
 % Create an input source.
@@ -355,7 +353,7 @@ reactionConcurrents.addChild(reactionMachine);
 reactionConcurrents.addChild(drawables);
 reactionConcurrents.addChild(screen);
 
-% add a branch to the tree trunk to lauch a Fixed Time trial
+% add a branch to the tree trunk to launch a Fixed Time trial
 reactionTree = tree.newChildNode('reaction time trial');
 reactionTree.iterations = inf;
 reactionTree.addChild(taskConditions);
@@ -394,7 +392,6 @@ preparationTree = tree.newChildNode('prepare time trial');
 preparationTree.iterations = inf;
 preparationTree.addChild(taskConditions);
 preparationTree.addChild(preparationConcurrents);
-
 
 %% Custom Behaviors:
 % Define functions to handle some of the unique details of this task.

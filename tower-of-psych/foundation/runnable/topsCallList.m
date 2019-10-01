@@ -38,6 +38,9 @@ classdef topsCallList < topsConcurrent
         
         % true or false, whether to run indefinitely
         alwaysRunning = true;
+        
+        % true or false, invert order of calls
+        invertOrder = false;
     end
     
     methods
@@ -81,6 +84,7 @@ classdef topsCallList < topsConcurrent
         % Returns the index into the calls struct array where @a fevalable
         % was appended or inserted.
         function index = addCall(self, fevalable, name)
+           
             % is this a new name or a replacement?
             index = topsFoundation.findStructName(self.calls, name);
             
@@ -100,7 +104,7 @@ classdef topsCallList < topsConcurrent
         % calls have the same name, @a isActive will be applied to all of
         % them.
         function setActiveByName(self, isActive, name)
-            [index selector] = ...
+            [~, selector] = ...
                 topsFoundation.findStructName(self.calls, name);
             [self.calls(selector).isActive] = deal(isActive);
         end
@@ -127,7 +131,7 @@ classdef topsCallList < topsConcurrent
             end
             
             % invoke the call
-            [index selector] = ...
+            [~, selector] = ...
                 topsFoundation.findStructName(self.calls, name);
             if any(selector)
                 call = self.calls(selector);
@@ -146,11 +150,40 @@ classdef topsCallList < topsConcurrent
             if ~isempty(self.calls)
                 isActive = [self.calls.isActive];
                 fevalables = {self.calls(isActive).fevalable};
-                for ii = 1:length(fevalables)
-                    feval(fevalables{ii}{:});
+                if self.invertOrder
+                    for ii = length(fevalables):-1:1
+                        feval(fevalables{ii}{:});
+                    end
+                else
+                    for ii = 1:length(fevalables)
+                        feval(fevalables{ii}{:});
+                    end
                 end
-                self.isRunning = self.isRunning && self.alwaysRunning;
             end
+            self.isRunning = self.isRunning && self.alwaysRunning;
         end
+    end
+    
+    methods (Static)
+       
+       % Utility to make a call list as an fevalable
+       %
+       % Arguments:
+       %    invertOrder    ... flag to run in reverse order
+       %
+       % Returns:
+       %    fevalable      ... cell array that runs the callList
+       %
+       function fevalable = makeFevalable(invertOrder)
+             
+          theCallList = topsCallList();
+          theCallList.alwaysRunning = false;
+          
+          if nargin > 1
+             theCallList.invertOrder = invertOrder;
+          end
+          
+          fevalable = {@run, theCallList};
+       end
     end
 end

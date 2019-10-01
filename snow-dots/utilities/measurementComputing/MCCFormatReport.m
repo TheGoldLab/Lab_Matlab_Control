@@ -1,5 +1,5 @@
 function report = MCCFormatReport(mcc, type, varargin)
-%Get a formatted report to send to the 1208FS device.
+% Get a formatted report to send to the 1208FS device.
 %
 %   type is a string describing the function of the report:
 %
