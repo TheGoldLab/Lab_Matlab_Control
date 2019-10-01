@@ -1,5 +1,5 @@
-classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
-   % @class topsTreeNodeTaskReversingDots
+classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
+   % @class topsTreeNodeTaskReversingDots4AFC
    %
    % Reversing dots (RD) task
    %
@@ -17,7 +17,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
    %
    %  3. Add this as a child to another topsTreeNode
    %
-   % 8/17/19 created by jig
+   % 10/01/19 created by aer
    
    properties % (SetObservable)
       
@@ -199,7 +199,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
       %% Constuctor
       %  Use topsTreeNodeTask method, which can parse the argument list
       %  that can set properties (even those nested in structs)
-      function self = topsTreeNodeTaskReversingDots(varargin)
+      function self = topsTreeNodeTaskReversingDots4AFC(varargin)
          
          % ---- Make it from the superclass
          %
@@ -614,14 +614,14 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Get the task object, with optional property/value pairs
          %
-         task = topsTreeNodeTaskReversingDots(name, varargin{:});
+         task = topsTreeNodeTaskReversingDots4AFC(name, varargin{:});
       end
       
       %% ---- Utility for getting test configuration
       %
       function task = getTestConfiguration()
          
-         task = topsTreeNodeTaskReversingDots();
+         task = topsTreeNodeTaskReversingDots4AFC();
          task.timing.minimumRT = 0.3;
          task.message.message.Instructions.text = {'Testing', 'topsTreeNodeTaskRTDots'};
       end
