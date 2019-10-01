@@ -19,5 +19,5 @@ topNode.addChild(cpDots1Task);
 
 topNode.run();
 
-csvfile = 'completedTrials1.csv';
+csvfile = 'completedTrials2.csv';
 topNode.children{1}.saveTrials(csvfile, 'all');
