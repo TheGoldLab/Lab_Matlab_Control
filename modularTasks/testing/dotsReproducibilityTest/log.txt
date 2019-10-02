@@ -2039,3 +2039,72 @@ Trial 10/10, coh=55, dur=0.30, nflips=0
 
 Trial 10/10: Correct, RT=0.94
 ========================================== END
+
+
+
+
+================ SESSION 2019_10_02_16_31 =======================
+
+>> launch
+(mglVisualAngleCoordinates) !!!!! Assuming square pixels causes an error in the 
+vertical pix2deg of 10.598075 percent. To fix, you can either set your monitor to a mode with
+square pixel dimensions or turn off squrePixels in mglEditScreenParams if you are
+using mglEditScreenParams or set mglSetParam('visualAngleSquarePixels',0,1) if not!!!!!!
+(mglVisualAngleCoordinates) !!!!! Assuming square pixels causes an error in the 
+vertical pix2deg of 13.448677 percent. To fix, you can either set your monitor to a mode with
+square pixel dimensions or turn off squrePixels in mglEditScreenParams if you are
+using mglEditScreenParams or set mglSetParam('visualAngleSquarePixels',0,1) if not!!!!!!
+dotsMglFlushGauge measuring 100 video refresh cycles.
+HERE
+ 
+cpDots1 (task 1/1): 0 correct, 0 error, mean RT=NaN
+Trial 1/10, coh=55, dur=0.30, nflips=0
+Trial 1/10: Correct, RT=0.88
+HERE
+ 
+cpDots1 (task 1/1): 1 correct, 0 error, mean RT=0.88
+Trial 2/10, coh=55, dur=0.30, nflips=0
+Trial 2/10: Correct, RT=0.69
+HERE
+ 
+cpDots1 (task 1/1): 2 correct, 0 error, mean RT=0.78
+Trial 3/10, coh=55, dur=0.30, nflips=0
+Trial 3/10: Correct, RT=0.70
+HERE
+ 
+cpDots1 (task 1/1): 3 correct, 0 error, mean RT=0.76
+Trial 4/10, coh=55, dur=0.30, nflips=0
+Trial 4/10: Correct, RT=0.68
+HERE
+ 
+cpDots1 (task 1/1): 4 correct, 0 error, mean RT=0.74
+Trial 5/10, coh=55, dur=0.30, nflips=0
+Trial 5/10: Correct, RT=0.90
+HERE
+ 
+cpDots1 (task 1/1): 5 correct, 0 error, mean RT=0.77
+Trial 6/10, coh=55, dur=0.30, nflips=0
+Trial 6/10: Correct, RT=0.39
+HERE
+ 
+cpDots1 (task 1/1): 6 correct, 0 error, mean RT=0.71
+Trial 7/10, coh=55, dur=0.30, nflips=0
+Trial 7/10: Correct, RT=0.79
+HERE
+ 
+cpDots1 (task 1/1): 7 correct, 0 error, mean RT=0.72
+Trial 8/10, coh=55, dur=0.30, nflips=0
+Trial 8/10: Correct, RT=0.44
+HERE
+ 
+cpDots1 (task 1/1): 8 correct, 0 error, mean RT=0.69
+Trial 9/10, coh=55, dur=0.30, nflips=0
+Trial 9/10: Correct, RT=0.52
+HERE
+ 
+cpDots1 (task 1/1): 9 correct, 0 error, mean RT=0.67
+Trial 10/10, coh=55, dur=0.30, nflips=0
+Trial 10/10: Correct, RT=0.90
+
+
+========================================== END
