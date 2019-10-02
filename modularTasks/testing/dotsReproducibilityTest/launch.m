@@ -1,4 +1,5 @@
 function launch()
+% Run the debug version of the Reversing Dots task
 topNode = topsTreeNodeTopNode('oneCP');
 
 topNode.addHelpers('screenEnsemble',  ...
@@ -19,5 +20,5 @@ topNode.addChild(cpDots1Task);
 
 topNode.run();
 
-csvfile = 'completedTrials1.csv';
+csvfile = 'debugFIRAtable.csv';
 topNode.children{1}.saveTrials(csvfile, 'all');
