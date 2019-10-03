@@ -1,0 +1,285 @@
+which trials.csv
+/Users/adrian/Documents/MATLAB/toolboxes/Lab_Matlab_Control_eyeDev/modularTasks/testing/dotsReproducibilityTest/trials.csv
+which launch.m
+/Users/adrian/Documents/MATLAB/toolboxes/Lab_Matlab_Control_eyeDev/modularTasks/testing/dotsReproducibilityTest/launch.m
+run launch
+(mglVisualAngleCoordinates) !!!!! Assuming square pixels causes an error in the 
+vertical pix2deg of 10.598075 percent. To fix, you can either set your monitor to a mode with
+square pixel dimensions or turn off squrePixels in mglEditScreenParams if you are
+using mglEditScreenParams or set mglSetParam('visualAngleSquarePixels',0,1) if not!!!!!!
+(mglVisualAngleCoordinates) !!!!! Assuming square pixels causes an error in the 
+vertical pix2deg of 13.448677 percent. To fix, you can either set your monitor to a mode with
+square pixel dimensions or turn off squrePixels in mglEditScreenParams if you are
+using mglEditScreenParams or set mglSetParam('visualAngleSquarePixels',0,1) if not!!!!!!
+dotsMglFlushGauge measuring 100 video refresh cycles.
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 0 correct, 0 error, mean RT=NaN
+Trial 1/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+Trial 1/10: Correct, RT=1.30
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 1 correct, 0 error, mean RT=1.30
+Trial 2/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+Trial 2/10: Correct, RT=2.11
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 2 correct, 0 error, mean RT=1.71
+Trial 3/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 3/10: Correct, RT=1.86
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 3 correct, 0 error, mean RT=1.76
+Trial 4/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 4/10: Correct, RT=0.88
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 4 correct, 0 error, mean RT=1.54
+Trial 5/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+Trial 5/10: Correct, RT=1.40
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 5 correct, 0 error, mean RT=1.51
+Trial 6/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 6/10: Correct, RT=1.19
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 6 correct, 0 error, mean RT=1.46
+Trial 7/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 7/10: Correct, RT=1.54
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 7 correct, 0 error, mean RT=1.47
+Trial 8/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 8/10: Correct, RT=1.05
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 8 correct, 0 error, mean RT=1.42
+Trial 9/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 9/10: Correct, RT=1.42
+ENTERING prepareToDrawInWindow 
+    initial seed line171: 68056
+    position 61: 0.756932
+ 
+cpDots1 (task 1/1): 9 correct, 0 error, mean RT=1.42
+Trial 10/10, coh=55, dur=0.30, nflips=0
+   -4.3755   -5.4686
+
+    2.0700    5.1138
+
+   -5.3240    3.9355
+
+   -4.5255   -5.4686
+
+   -1.7362    2.6744
+
+   -5.4740    3.9355
+
+    4.6963    5.1102
+
+   -3.1224    1.4845
+
+    5.4243   -0.5482
+
+    4.5463    5.1102
+
+   -3.2724    1.4845
+
+Trial 10/10: Correct, RT=1.41
+diary off
