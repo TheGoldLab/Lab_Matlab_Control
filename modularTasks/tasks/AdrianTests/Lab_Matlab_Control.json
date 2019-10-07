@@ -1,0 +1,25 @@
+[
+    {
+		"name": "Lab_Matlab_Control",
+		"type": "git",
+        "update": "never",
+		"url": "https://github.com/TheGoldLab/Lab_Matlab_Control.git",
+		"pathPlacement": "append"
+    },
+    {
+		"name": "Lab_Matlab_Utilities",
+		"type": "include",
+        "pathPlacement": "append"
+    },
+    {
+		"name": "mgl",
+		"type": "git",
+		"url": "https://github.com/justingardner/mgl.git",
+		"pathPlacement": "append"
+    },
+    {  
+		"name": "mQUESTPlus",
+		"pathPlacement": "append",
+		"type": "include"
+    }
+]
