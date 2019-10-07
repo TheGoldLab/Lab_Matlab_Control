@@ -523,8 +523,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             fpY = ensemble.getObjectProperty('yCenter', self.fpIndex);
             
             %  Now set the targets x,y
-            ensemble.setObjectProperty('xCenter', [fpX - td, fpX + td, fpX - td, fpX + td], self.targetIndex);
-            ensemble.setObjectProperty('yCenter', [fpY - td, fpY + td, fpY - td, fpY + td], self.targetIndex);
+            ensemble.setObjectProperty('xCenter', [fpX + td, fpX - td, fpX - td, fpX + td], self.targetIndex);
+            ensemble.setObjectProperty('yCenter', [fpY + td, fpY + td, fpY - td, fpY - td], self.targetIndex);
          end
          
          % ---- Save dots properties
@@ -553,7 +553,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
          chkuif  = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
          
          chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
-         chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'blank'};
+         chkuic  = {@checkForChoice, self, {'choseTopLeft' 'choseTopRight' 'choseBottomLeft' 'choseBottomRight'}, 'choiceTime', 'blank'};
          chkrev  = {@checkForReversal, self};
          showfx  = {@draw, self.helpers.stimulusEnsemble, {self.fpIndex, [self.targetIndex self.dotsIndex]},  self, 'fixationOn'};
          showt   = {@draw, self.helpers.stimulusEnsemble, {self.targetIndex, []}, self, 'targetOn'};
@@ -571,7 +571,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
          sea   = @setEventsActiveFlag;
          gwfxw = {sea, self.helpers.reader.theObject, 'holdFixation', 'all'};
          gwfxh = {};
-         gwts  = {sea, self.helpers.reader.theObject, {'choseLeft', 'choseRight'}, 'holdFixation'};
+         gwts  = {sea, self.helpers.reader.theObject, {'choseTopLeft', 'choseBottomLeft', 'choseTopRight', 'choseBottomRight'}, 'holdFixation'};
          
          % ---- Timing variables, read directly from the timing property struct
          %
