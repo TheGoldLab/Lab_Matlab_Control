@@ -314,18 +314,18 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         function finishTrial(self)
             % update running count of consecutive correct trials
             trial = self.getTrial();
-            if trial.dirCorrect && ...
-                    trial.cpCorrect && ...
-                    self.consecutiveCorrect
-                self.consecutiveCorrect = self.consecutiveCorrect + 1;
-                
-                if isnumeric(self.stopCondition) && self.consecutiveCorrect == self.stopCondition
-                    self.abort()
+            dcorr = trial.dirCorrect;
+            ccorr = trial.cpCorrect;
+            if ~isnan(ccorr) && ~isnan(dcorr)
+                if dcorr && ccorr
+                    self.consecutiveCorrect = self.consecutiveCorrect + 1;
+                    if isnumeric(self.stopCondition) && self.consecutiveCorrect == self.stopCondition
+                        self.abort()
+                    end
+                else
+                    self.consecutiveCorrect = 0;
                 end
-            else
-                self.consecutiveCorrect = 0;
             end
-            
         end
         
         %% Check for flip

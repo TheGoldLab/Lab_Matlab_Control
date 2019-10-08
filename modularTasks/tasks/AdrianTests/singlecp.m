@@ -53,11 +53,11 @@ pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBefo
     end
 
 
-add_block(topNode, 1, 'training_1', 'training_1.csv', 7)
-add_block(topNode, 2, 'training_2', 'training_2.csv', 7)
-add_block(topNode, 3, 'training_3', 'training_3.csv', 7)
-add_block(topNode, 4, 'training_4', 'training_4.csv', 15)
-add_block(topNode, 5, 'training_5', 'training_5.csv', 25)
+add_block(topNode, 1, 'training_1', 'training_1.csv', 3)
+add_block(topNode, 2, 'training_2', 'training_2.csv', 3)
+add_block(topNode, 3, 'training_3', 'training_3.csv', 3)
+add_block(topNode, 4, 'training_4', 'training_4.csv', 5)
+add_block(topNode, 5, 'training_5', 'training_5.csv', 10)
 add_block(topNode, 6, 'training_6', 'training_6.csv', 'button')
 add_block(topNode, 7, 'training_7', 'training_7.csv', 'button')
 add_block(topNode, 8, 'training_8', 'training_8.csv', 'button')
@@ -74,6 +74,8 @@ topNode.run();
             timestamp,'.csv'];
         task.saveTrials(csvfile, 'all');
     end
+
+num_children = length(topNode.children);
 
 for c = 1:num_children
     dumpFIRA(topNode, c)
