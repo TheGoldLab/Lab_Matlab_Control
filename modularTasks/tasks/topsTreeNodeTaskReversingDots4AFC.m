@@ -197,6 +197,10 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         subject;
         date;
         probCP;
+        
+        % stop condition
+        stopCondition;
+        consecutiveCorrect;
     end
     
     properties (SetAccess = protected)
@@ -234,6 +238,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         % Put stuff here that you want to do before each time you run this
         % task
         function startTask(self)
+            self.consecutiveCorrect = 0;
             
             if ~isempty(self.settings.useQuest)
                 
@@ -307,6 +312,20 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         %
         % Could add stuff here
         function finishTrial(self)
+            % update running count of consecutive correct trials
+            trial = self.getTrial();
+            if trial.dirCorrect && ...
+                    trial.cpCorrect && ...
+                    self.consecutiveCorrect
+                self.consecutiveCorrect = self.consecutiveCorrect + 1;
+                
+                if isnumeric(self.stopCondition) && self.consecutiveCorrect == self.stopCondition
+                    self.abort()
+                end
+            else
+                self.consecutiveCorrect = 0;
+            end
+            
         end
         
         %% Check for flip
