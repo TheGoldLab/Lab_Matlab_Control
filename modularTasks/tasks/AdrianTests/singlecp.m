@@ -103,15 +103,7 @@ if first_block_of_day
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block','There are no switches'}};
     topNode.addChild(questTask);
-    
-    
-    
-%     questTask = topsTreeNodeTaskRTDots('Quest');
-%     questTask.taskID = 1;
-%     questTask.trialIterations = 1;
-%     questTask.timing.dotsDuration = 0.4;
-%     questTask.pauseBeforeTask = pauseBeforeTask;
-%     topNode.addChild(questTask);
+
 else
     % get questTask from first topsDataLog of the day
     % right now, stops at first Quest block found
@@ -149,7 +141,7 @@ ttt.date = str2double(regexprep(timestamp,'_',''));  % must be numeric
 ttt.probCP = probCP;
 
 ttt.message.message.Instructions.text = {...
-    {{'REAL TASK', 'RARE SWITCHES'}} ...
+    {'REAL TASK', 'RARE SWITCHES'} ...
     };
 
 if ~first_block_of_day
