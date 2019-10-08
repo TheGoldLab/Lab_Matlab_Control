@@ -36,7 +36,7 @@ timestamp = extract_timestamp(topNode);
 diary([dump_folder, 'session_console_',timestamp,'.log'])
 
 topNode.addHelpers('screenEnsemble',  ...
-    'displayIndex',      0, ...
+    'displayIndex',      1, ...
     'remoteDrawing',     false, ...
     'topNode',           topNode);
 topNode.addReadable('dotsReadableHIDKeyboard');
@@ -69,7 +69,7 @@ pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBefo
             {'training block',num2str(tid)})
     end
 
-num_training_blocks=1;
+num_training_blocks=2;
 
 stop_conditions = {...
     3, 3, 3, 3, 3, 'button', 'button', 'button' ...
@@ -84,7 +84,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 1;
+    questTask.trialIterations = 25;
     questTask.timing.dotsDuration = 0.4;
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block','There are no switches'}};
@@ -107,9 +107,15 @@ end
 
 
 % Task blocks
+if probCP < 0.5
+    task_file = 'task_low.csv';
+else
+    task_file = 'task_high.csv';
+end
+
 ttt = topsTreeNodeTaskReversingDots4AFC('TASK');
 ttt.taskID = 100;
-ttt.independentVariables=trials_file;
+ttt.independentVariables=task_file;
 ttt.trialIterationMethod='sequential';
 ttt.pauseBeforeTask = pauseBeforeTask;
 ttt.stopCondition = 'button';
@@ -120,12 +126,16 @@ ttt.date = str2double(regexprep(timestamp,'_',''));  % must be numeric
 ttt.probCP = probCP;
 
 ttt.message.message.Instructions.text = {...
-    block_description ...
+    {{'REAL TASK', 'RARE SWITCHES'}} ...
     };
 
-ttt.questThreshold = questTask.getQuestThreshold();
+if ~first_block_of_day
+    ttt.questThreshold = questTask.getQuestThreshold();
+else 
+    ttt.questThreshold = questTask;
+end
 
-topnode.addChild(ttt);
+topNode.addChild(ttt);
 
 
 

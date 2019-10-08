@@ -239,6 +239,11 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         % Put stuff here that you want to do before each time you run this
         % task
         function startTask(self)
+            if ~isempty(self.questThreshold) 
+                if ~isnumeric(self.questThreshold)
+                    self.questThreshold = self.questThreshold.getQuestThreshold();
+                end
+            end
             self.consecutiveCorrect = 0;
             
             if ~isempty(self.settings.useQuest)
