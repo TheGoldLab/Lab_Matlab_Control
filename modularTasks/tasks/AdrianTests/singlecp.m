@@ -21,6 +21,15 @@ function singlecp(subject_code, experiment_day, first_block_of_day, ...
 %     Quest info.
 %
 
+if nargin < 1
+    subject_code = 'S1';
+    experiment_day = 1;
+    first_block_of_day = true;
+    probCP = 0.3;
+    dump_folder = '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/';
+    quest_task_topsDataLog = '/Users/adrian/oneCP/raw/2019_10_03_10_01/2019_10_03_10_01_topsDataLog.mat';  % made up
+end
+
 topNode = topsTreeNodeTopNode('oneCP');
 
     function ts = extract_timestamp(tn)
@@ -69,7 +78,7 @@ pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBefo
             {'training block',num2str(tid)})
     end
 
-num_training_blocks=2;
+num_training_blocks=1;
 
 stop_conditions = {...
     3, 3, 3, 3, 3, 'button', 'button', 'button' ...
@@ -89,7 +98,16 @@ if first_block_of_day
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block','There are no switches'}};
     topNode.addChild(questTask);
-else 
+    
+    
+    
+%     questTask = topsTreeNodeTaskRTDots('Quest');
+%     questTask.taskID = 1;
+%     questTask.trialIterations = 1;
+%     questTask.timing.dotsDuration = 0.4;
+%     questTask.pauseBeforeTask = pauseBeforeTask;
+%     topNode.addChild(questTask);
+else
     % get questTask from first topsDataLog of the day
     % right now, stops at first Quest block found
     ts = regexprep(quest_task_topsDataLog, ...
