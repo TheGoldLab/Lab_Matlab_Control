@@ -45,8 +45,8 @@ pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBefo
         t.stopCondition = stop_cond;
         
         % must be numeric
-        t.subject = num2str(regexprep(subject_code,'[^0-9]',''));
-        t.date = num2str(regexprep(timestamp,'_',''));  % must be numeric
+        t.subject = str2double(regexprep(subject_code,'[^0-9]',''));
+        t.date = str2double(regexprep(timestamp,'_',''));  % must be numeric
         t.probCP = probCP;
         
         topnode.addChild(t);
@@ -78,7 +78,9 @@ topNode.run();
 num_children = length(topNode.children);
 
 for c = 1:num_children
-    dumpFIRA(topNode, c)
+    if numel(topNode.children{c}.trialData)
+        dumpFIRA(topNode, c)
+    end
 end
 
 diary off
