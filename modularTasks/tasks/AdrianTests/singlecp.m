@@ -26,8 +26,8 @@ if nargin < 1
     experiment_day = 1;
     first_block_of_day = true;
     probCP = 0.3;
-    dump_folder = '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/';
-    quest_task_topsDataLog = '/Users/adrian/oneCP/raw/2019_10_03_10_01/2019_10_03_10_01_topsDataLog.mat';  % made up
+    dump_folder = '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/trials_post_expt/';
+    quest_task_topsDataLog = '/Users/adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
 end
 
 topNode = topsTreeNodeTopNode('oneCP');
@@ -42,7 +42,12 @@ topNode = topsTreeNodeTopNode('oneCP');
 
 timestamp = extract_timestamp(topNode);
 
+
+
 diary([dump_folder, 'session_console_',timestamp,'.log'])
+
+
+
 
 topNode.addHelpers('screenEnsemble',  ...
     'displayIndex',      1, ...
@@ -164,7 +169,7 @@ topNode.run();
         task = topnode.children{child};
         csvfile = ...
             [dump_folder, 'completedReversingDots4AFCtrials_task', ...
-            num2str(child), '_date_', ...
+            num2str(task.taskID), '_date_', ...
             timestamp,'.csv'];
         task.saveTrials(csvfile, 'all');
     end
