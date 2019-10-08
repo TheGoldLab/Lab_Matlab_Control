@@ -1,12 +1,18 @@
 function singlecp(subject_code, experiment_day, first_block_of_day, ...
-    probCP, dump_folder)
+    probCP, dump_folder, quest_task_topsDataLog)
 % function to launch single CP Reversing Dots task
 %
 % ARGS:
 %   subject_code     --  string that identifies subject uniquely, e.g. 'S4'
 %   experiment_day   --  integer counting the days of experimentation with this subject
+%   first_block_of_day --  true or false
 %   probCP           --  numeric value
-%   dump_folder      --  e.g '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/'
+%   dump_folder      --  e.g
+%   '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/'
+%   quest_task_topsDataLog -- full path to topsDataLog containing the Quest
+%   task
+%
+
 
 %
 % This function attempts to implement the following rules:
@@ -83,9 +89,44 @@ if first_block_of_day
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block','There are no switches'}};
     topNode.addChild(questTask);
+else 
+    % get questTask from first topsDataLog of the day
+    % right now, stops at first Quest block found
+    ts = regexprep(quest_task_topsDataLog, ...
+        '[^[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{2}_[0-9]{2}]', '');
+    ts = ts(1:16);
+    [oldTopNode, ~] = topsTreeNodeTopNode.loadRawData('oneCP', ts);
+    for tt = 1:length(oldTopNode.children)
+        task_child = oldTopNode.children{tt};
+        if strcmp(task_child.name,'Quest')
+            questTask = task_child;
+            break
+        end
+    end
 end
 
+
 % Task blocks
+ttt = topsTreeNodeTaskReversingDots4AFC('TASK');
+ttt.taskID = 100;
+ttt.independentVariables=trials_file;
+ttt.trialIterationMethod='sequential';
+ttt.pauseBeforeTask = pauseBeforeTask;
+ttt.stopCondition = 'button';
+
+% must be numeric
+ttt.subject = str2double(regexprep(subject_code,'[^0-9]',''));
+ttt.date = str2double(regexprep(timestamp,'_',''));  % must be numeric
+ttt.probCP = probCP;
+
+ttt.message.message.Instructions.text = {...
+    block_description ...
+    };
+
+ttt.questThreshold = questTask.getQuestThreshold();
+
+topnode.addChild(ttt);
+
 
 
 topNode.run();

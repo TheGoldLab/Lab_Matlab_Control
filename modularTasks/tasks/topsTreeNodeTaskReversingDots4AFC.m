@@ -197,6 +197,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         subject;
         date;
         probCP;
+        questThreshold;
         
         % stop condition
         stopCondition;
@@ -300,6 +301,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             else
                 numReversals = 0;
             end
+                        
             trialString = sprintf('Trial %d/%d, coh=%.0f, dur=%.2f, nflips=%d', ...
                 self.trialCount, numel(self.trialData), trial.coherence, ...
                 trial.duration, numReversals);
@@ -485,6 +487,12 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             %        values
             %
             trial = self.getTrial();
+            
+            % negative coherence in the .csv file is our way to code for 
+            % threshold coherence
+            if trial.coherence < 0 
+                trial.coherence = self.questThreshold;
+            end
             
             % Set the seed base for the random number generator
             trial.randSeedBase = self.settings.dotsSeedBase;
