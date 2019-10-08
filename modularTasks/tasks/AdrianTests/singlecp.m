@@ -1,4 +1,5 @@
-function singlecp(subject_code, experiment_day, probCP, dump_folder)
+function singlecp(subject_code, experiment_day, first_block_of_day, ...
+    probCP, dump_folder)
 % function to launch single CP Reversing Dots task
 %
 % ARGS:
@@ -36,7 +37,8 @@ topNode.addReadable('dotsReadableHIDKeyboard');
 
 pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBeforeTask
 
-    function add_block(topnode, taskID, task_name, trials_file, stop_cond)
+    function add_block(topnode, taskID, task_name, trials_file, ...
+            stop_cond, block_description)
         t = topsTreeNodeTaskReversingDots4AFC(task_name);
         t.taskID = taskID;
         t.independentVariables=trials_file;
@@ -49,18 +51,41 @@ pauseBeforeTask = -1; % -1 means wait for keypress -- see topsTreeNode.pauseBefo
         t.date = str2double(regexprep(timestamp,'_',''));  % must be numeric
         t.probCP = probCP;
         
+        t.message.message.Instructions.text = {...
+            block_description ...
+        };
+        
         topnode.addChild(t);
     end
 
+    function add_training_block(tid, name, condstop)
+        add_block(topNode, tid, name, [name,'.csv'], condstop, ...
+            {'training block',num2str(tid)})
+    end
 
-add_block(topNode, 1, 'training_1', 'training_1.csv', 3)
-add_block(topNode, 2, 'training_2', 'training_2.csv', 3)
-add_block(topNode, 3, 'training_3', 'training_3.csv', 3)
-add_block(topNode, 4, 'training_4', 'training_4.csv', 5)
-add_block(topNode, 5, 'training_5', 'training_5.csv', 10)
-add_block(topNode, 6, 'training_6', 'training_6.csv', 'button')
-add_block(topNode, 7, 'training_7', 'training_7.csv', 'button')
-add_block(topNode, 8, 'training_8', 'training_8.csv', 'button')
+num_training_blocks=1;
+
+stop_conditions = {...
+    3, 3, 3, 3, 3, 'button', 'button', 'button' ...
+    };
+
+for jj = 1:num_training_blocks
+    add_training_block(jj, ['training_',num2str(jj)], stop_conditions{jj})
+end
+
+% Optional Quest
+% only put Quest block if this is the first block of the day
+if first_block_of_day
+    questTask = topsTreeNodeTaskRTDots('Quest');
+    questTask.taskID = 99;
+    questTask.trialIterations = 1;
+    questTask.timing.dotsDuration = 0.4;
+    questTask.pauseBeforeTask = pauseBeforeTask;
+    questTask.message.message.Instructions.text = {{'Quest block','There are no switches'}};
+    topNode.addChild(questTask);
+end
+
+% Task blocks
 
 
 topNode.run();
