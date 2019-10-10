@@ -32,12 +32,13 @@ ddots.Speed = 5;
 ddots.PixelSize = 6;
 ddots.Diameter = 5;
 ddots.CoherenceSTD = 10;
-    function setDotsParams(dots, someStruct)
+    function newStruct = setDotsParams(dots, someStruct)
         someStruct.density = dots.Density;
         someStruct.speed = dots.Speed;
         someStruct.diameter = dots.Diameter;
         someStruct.pixelSize = dots.PixelSize;
         someStruct.coherenceSTD = dots.CoherenceSTD;
+        newStruct = someStruct;
     end
 
 
