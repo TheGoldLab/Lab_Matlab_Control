@@ -46,7 +46,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'interTrialInterval',        1.0,   ...
             'preDots',                   [0.1 0.3 0.6], ...
             'dotsTimeout',               5.0,   ...
-            'choiceTimeout',             3.0);
+            'choiceTimeout',             8.0);
         
         % Fields below are optional but if found with the given names
         %  will be used to automatically configure the task
@@ -478,7 +478,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             % ---- Show trial feedback on the screen
             %
-            self.helpers.message.show(messageGroup, self, 'feedbackOn');
+            if self.timing.showFeedback > 0
+                self.helpers.message.show(messageGroup, self, 'feedbackOn');
+            end
         end
     end
     

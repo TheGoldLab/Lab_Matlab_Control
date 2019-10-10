@@ -445,7 +445,10 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Show trial feedback on the screen
          %
-         self.helpers.message.show(messageGroup);
+         if self.timing.showFeedback > 0
+             self.helpers.message.show(messageGroup);
+         end
+         
       end
       
       %% Get Quest threshold value(s)
