@@ -83,7 +83,7 @@ pauseBeforeTask = -1;
 
 
 %-------------------------- ADD TRAINING BLOCKS TO TOPNODE
-num_training_blocks=1;
+num_training_blocks=3;
 
 stop_conditions = {...
     3, 3, 3, 3, 3, 'button', 'button', 'button' ...
@@ -103,6 +103,7 @@ if first_block_of_day
     questTask.taskID = 99;
     questTask.trialIterations = 25;
     questTask.timing.dotsDuration = 0.4;
+    questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block', ...
         'There are no switches'}};
@@ -143,6 +144,7 @@ else
 end
 
 ttt = topsTreeNodeTaskReversingDots4AFC('TASK');
+ttt.timing.showFeedback = 0;
 ttt.taskID = 100;
 ttt.independentVariables=task_file;
 ttt.trialIterationMethod='sequential';
