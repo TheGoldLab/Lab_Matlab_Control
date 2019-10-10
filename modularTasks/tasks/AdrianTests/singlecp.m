@@ -24,6 +24,27 @@ if nargin < 1
     quest_task_topsDataLog = '/Users/adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
 end
 
+
+
+%-------------------------- DOTS STIMULUS PROPERTIES
+ddots.Density = 90;
+ddots.Speed = 5;
+ddots.PixelSize = 6;
+ddots.Diameter = 5;
+ddots.CoherenceSTD = 10;
+    function setDotsParams(dots, someStruct)
+        someStruct.density = dots.Density;
+        someStruct.speed = dots.Speed;
+        someStruct.diameter = dots.Diameter;
+        someStruct.pixelSize = dots.PixelSize;
+        someStruct.coherenceSTD = dots.CoherenceSTD;
+    end
+
+
+
+
+
+
 %-------------------------- CREATE TOPNODE
 topNode = topsTreeNodeTopNode('oneCP');
 
@@ -73,6 +94,11 @@ pauseBeforeTask = -1;
             block_description ...
         };
         
+    
+        % DOTS PROPERTIES
+        oldDots = t.drawable.stimulusEnsemble.dots;
+        t.drawable.stimulusEnsemble.dots = setDotsParams(ddots, oldDots);
+    
         topnode.addChild(t);
     end
 
@@ -107,6 +133,10 @@ if first_block_of_day
     questTask.pauseBeforeTask = pauseBeforeTask;
     questTask.message.message.Instructions.text = {{'Quest block', ...
         'There are no switches'}};
+    % DOTS PROPERTIES
+    oldieDots = questTask.drawable.stimulusEnsemble.dots;
+    questTask.drawable.stimulusEnsemble.dots = ...
+        setDotsParams(ddots, oldieDots);
     topNode.addChild(questTask);
 
 else
@@ -167,6 +197,11 @@ else
     % if threshold hasn't been estimated yet, pass the Quest task instead
     ttt.questThreshold = questTask;
 end
+
+% DOTS PROPERTIES
+oldieDots = ttt.drawable.stimulusEnsemble.dots;
+ttt.drawable.stimulusEnsemble.dots = ...
+    setDotsParams(ddots, oldieDots);
 
 topNode.addChild(ttt);
 

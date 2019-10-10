@@ -1,0 +1,8 @@
+High level description
+======================
+run 3 training + Quest + 1 task (low probCP)
+run 4 training + noQuest + 1 task (high probCP)
+
+Aggregate all FIRA data for this subject into single .csv
+
+Perform basic analysis 
