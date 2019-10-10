@@ -193,7 +193,12 @@ ttt.message.message.Instructions.text = {...
 
 % set theshold coherence obtained from Quest
 if ~first_block_of_day
-    ttt.questThreshold = questTask.getQuestThreshold();
+    threshold = questTask.getQuestThreshold();
+    if (threshold <= 0) || (100 <= threshold)
+        error(['invalid threshold of', num2str(threshold)])
+    else
+        ttt.questThreshold = threshold; 
+    end
 else
     % if threshold hasn't been estimated yet, pass the Quest task instead
     ttt.questThreshold = questTask;

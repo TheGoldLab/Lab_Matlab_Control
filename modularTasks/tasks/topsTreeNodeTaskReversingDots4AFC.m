@@ -242,6 +242,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             if ~isempty(self.questThreshold) 
                 if ~isnumeric(self.questThreshold)
                     self.questThreshold = self.questThreshold.getQuestThreshold();
+                    if self.questThreshold <= 0 || self.questThreshold >= 100
+                        error(['Invalid questThreshold of ',num2str(self.questThreshold)])
+                    end
                 end
             end
             self.consecutiveCorrect = 0;
