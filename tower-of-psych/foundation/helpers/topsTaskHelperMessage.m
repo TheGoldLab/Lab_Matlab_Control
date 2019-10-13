@@ -320,7 +320,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          else
             
             % Conditionally store the timing data
-            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+            if nargin >= 2 && ~isempty(task) && ~isempty(eventTag)
                task.setTrialData([], eventTag, feval(self.clockFunction));
             end
          end
