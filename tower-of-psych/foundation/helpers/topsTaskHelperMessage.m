@@ -313,14 +313,14 @@ classdef topsTaskHelperMessage < topsTaskHelper
             dotsTheScreen.blankScreen(theGroup.bgEnd);
          
             % Conditionally store the synchronized timing data
-            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+            if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
                self.saveSyncronizedTime(frameInfo.onsetTime, true, task, eventTag)
             end
             
          else
             
             % Conditionally store the timing data
-            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+            if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
                task.setTrialData([], eventTag, feval(self.clockFunction));
             end
          end
