@@ -314,7 +314,7 @@ classdef topsTaskHelperMessage < topsTaskHelper
          
             % Conditionally store the synchronized timing data
             if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
-               self.saveSyncronizedTime(frameInfo.onsetTime, true, task, eventTag)
+               self.saveSynchronizedTime(frameInfo.onsetTime, true, task, eventTag)
             end
             
          else
