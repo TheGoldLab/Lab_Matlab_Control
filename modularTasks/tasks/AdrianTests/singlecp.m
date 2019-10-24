@@ -8,8 +8,8 @@ function singlecp(subject_code, experiment_day, first_block_of_day, ...
 %                        this subject
 %   first_block_of_day --  true or false
 %   probCP           --  numeric value
-%   dump_folder      --  e.g '/Users/adrian/Documents/MATLAB/projects/Lab_M
-%                        atlab_Control/modularTasks/tasks/AdrianTests/'
+%   dump_folder      --  e.g '/Users/joshuagold/Documents/MATLAB/projects/Lab_M
+%                        atlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/'
 %   quest_task_topsDataLog -- full path to topsDataLog containing the Quest
 %                             task (can be '' if no prior Quest task is 
 %                             required)
@@ -20,8 +20,8 @@ if nargin < 1
     experiment_day = 1;
     first_block_of_day = true;
     probCP = 0.3;
-    dump_folder = '/Users/adrian/Documents/MATLAB/projects/Lab_Matlab_Control/modularTasks/tasks/AdrianTests/trials_post_expt/';
-    quest_task_topsDataLog = '/Users/adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
+    dump_folder = '/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/';
+    quest_task_topsDataLog = '';%'/Users/joshuagold/Users/Adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
 end
 
 
@@ -66,7 +66,7 @@ diary([dump_folder, 'session_console_',timestamp,'.log'])
 
 %-------------------------- SET TOPNODE UP
 topNode.addHelpers('screenEnsemble',  ...
-    'displayIndex',      0, ...
+    'displayIndex',      2, ...
     'remoteDrawing',     false, ...
     'topNode',           topNode);
 topNode.addReadable('dotsReadableHIDKeyboard');
@@ -110,7 +110,7 @@ pauseBeforeTask = -1;
 
 
 %-------------------------- ADD TRAINING BLOCKS TO TOPNODE
-num_training_blocks=3;
+num_training_blocks=1;
 
 stop_conditions = {...
     3, 3, 3, 3, 3, 'button', 'button', 'button' ...
@@ -128,7 +128,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 25;
+    questTask.trialIterations = 2;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
