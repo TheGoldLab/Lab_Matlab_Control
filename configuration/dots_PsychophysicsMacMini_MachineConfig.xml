@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dotsMachineConfig>
+   <defaults>
+      <clockFunction>@mglGetSecs</clockFunction>
+      <dOutClassName>['dotsDOut1208FS']</dOutClassName>
+      <dataPath>['/Users/joshuagold/Documents/MATLAB/projects/Task_SingleCP_DotsReversal/data']</dataPath>
+      <imagesPath>[true ]</imagesPath>
+      <soundsPath>['~']</soundsPath>
+      <tasksPath>['~']</tasksPath>
+   </defaults>
+   <dotsTheMessenger>
+      <ackTimeout>[        1.0000000000]</ackTimeout>
+      <defaultClientIP>['127.0.0.1']</defaultClientIP>
+      <defaultClientPort>[    49200.0000000000]</defaultClientPort>
+      <defaultServerIP>['127.0.0.1']</defaultServerIP>
+      <defaultServerPort>[    49201.0000000000]</defaultServerPort>
+      <receiveTimeout>[        0.0000000000]</receiveTimeout>
+      <sendRetries>[       10.0000000000]</sendRetries>
+      <socketClassName>['dotsSocketPnet']</socketClassName>
+   </dotsTheMessenger>
+   <dotsTheScreen>
+      <backgroundColor>[        0.0000000000,        0.0000000000,        0.0000000000]</backgroundColor>
+      <bitDepth>[]</bitDepth>
+      <displayIndex>[        2.0000000000]</displayIndex>
+      <distance>[        70.0000000000]</distance>
+      <foregroundColor>[        1.0000000000,        1.0000000000,        1.0000000000]</foregroundColor>
+      <height>[        33.5000000000]</height>
+      <multisample>[        1.0000000000]</multisample>
+      <width>[        59.50000000000]</width>
+   </dotsTheScreen>
+</dotsMachineConfig>

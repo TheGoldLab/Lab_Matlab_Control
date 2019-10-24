@@ -1,25 +1,28 @@
 [
     {
-		"name": "Lab_Matlab_Control",
+		"name": "Lab_Matlab_Control_Adrian_Fork",
 		"type": "git",
-        "update": "never",
-		"url": "https://github.com/TheGoldLab/Lab_Matlab_Control.git",
+                "update": "never",
+		"url": "https://github.com/aernesto/Lab_Matlab_Control.git",
 		"pathPlacement": "append"
     },
     {
 		"name": "Lab_Matlab_Utilities",
 		"type": "include",
-        "pathPlacement": "append"
+                "update": "never",
+                "pathPlacement": "append"
     },
     {
 		"name": "mgl",
 		"type": "git",
+                "update": "never",
 		"url": "https://github.com/justingardner/mgl.git",
 		"pathPlacement": "append"
     },
     {  
 		"name": "mQUESTPlus",
 		"pathPlacement": "append",
+                "update": "never",
 		"type": "include"
     }
 ]
