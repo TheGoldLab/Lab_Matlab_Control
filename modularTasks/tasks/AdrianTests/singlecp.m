@@ -64,8 +64,8 @@ topNode.addHelpers('screenEnsemble',  ...
     'displayIndex',      2, ...
     'remoteDrawing',     false, ...
     'topNode',           topNode);
-topNode.addReadable('dotsReadableHIDKeyboard');
-topNode.addReadable('dotsReadableHIDGamepad');t qfq
+%topNode.addReadable('dotsReadableHIDKeyboard');
+topNode.addReadable('dotsReadableHIDGamepad');
 % -1 means wait for keypress -- see topsTreeNode.pauseBeforeTask
 pauseBeforeTask = -1; 
 
