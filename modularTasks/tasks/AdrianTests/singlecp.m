@@ -25,13 +25,13 @@ if nargin < 1
 end
 
 
-
 %-------------------------- DOTS STIMULUS PROPERTIES
 ddots.Density = 90;
 ddots.Speed = 5;
 ddots.PixelSize = 6;
 ddots.Diameter = 5;
 ddots.CoherenceSTD = 10;
+
     function newStruct = setDotsParams(dots, someStruct)
         someStruct.density = dots.Density;
         someStruct.speed = dots.Speed;
@@ -40,10 +40,6 @@ ddots.CoherenceSTD = 10;
         someStruct.coherenceSTD = dots.CoherenceSTD;
         newStruct = someStruct;
     end
-
-
-
-
 
 
 %-------------------------- CREATE TOPNODE
@@ -58,10 +54,9 @@ topNode = topsTreeNodeTopNode('oneCP');
     end
 timestamp = extract_timestamp(topNode);
 
+
 %-------------------------- TURN DIARY ON (LOG CONSOLE OUTPUT TO FILE)
 diary([dump_folder, 'session_console_',timestamp,'.log'])
-
-
 
 
 %-------------------------- SET TOPNODE UP
@@ -72,9 +67,6 @@ topNode.addHelpers('screenEnsemble',  ...
 topNode.addReadable('dotsReadableHIDKeyboard');
 % -1 means wait for keypress -- see topsTreeNode.pauseBeforeTask
 pauseBeforeTask = -1; 
-
-
-
 
     function add_block(topnode, taskID, task_name, trials_file, ...
             stop_cond, block_description)
@@ -94,7 +86,6 @@ pauseBeforeTask = -1;
         t.message.message.Instructions.text = {...
             block_description ...
         };
-        
     
         % DOTS PROPERTIES
         oldDots = t.drawable.stimulusEnsemble.dots;
@@ -110,10 +101,10 @@ pauseBeforeTask = -1;
 
 
 %-------------------------- ADD TRAINING BLOCKS TO TOPNODE
-num_training_blocks=1;
+num_training_blocks=0;
 
 stop_conditions = {...
-    3, 3, 3, 3, 3, 'button', 'button', 'button' ...
+    1, 1, 2, 2, 1, 'button', 'button', 'button' ...
     };
 
 for jj = 1:num_training_blocks
@@ -122,13 +113,12 @@ end
 
 
 
-
 %-------------------------- ADD OPTIONAL QUEST BLOCK TO TOPNODE
 % only put Quest block if this is the first block of the day
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 2;
+    questTask.trialIterations = 5;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
@@ -164,14 +154,11 @@ end
 
 
 
-
-
-
-%-------------------------- ADD TASK BLOCKS (10 by default)
+%-------------------------- ADD TASK BLOCKS (4 by default)
 if probCP < 0.5
-    task_file = 'task_low.csv';
+    task_file = 'Block1.csv';
 else
-    task_file = 'task_high.csv';
+    task_file = 'Block0.csv';
 end
 
 ttt = topsTreeNodeTaskReversingDots4AFC('TASK');
@@ -212,15 +199,9 @@ ttt.drawable.stimulusEnsemble.dots = ...
 topNode.addChild(ttt);
 
 
-
-
-
 %-------------------------- RUN TOPNODE
 
 topNode.run();
-
-
-
 
 
 %-------------------------- DUMP FIRA INFO (ONE FILE PER BLOCK)
@@ -242,8 +223,7 @@ for c = 1:num_children
     end
 end
 
-
-
 %-------------------------- TURN OFF DIARY
+disp(['file with timestamp ', timestamp, ' produced'])
 diary off
 end
