@@ -36,7 +36,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         % Timing properties, referenced in statelist
         timing = struct( ...
             'fixationTimeout',           5.0,   ...
-            'holdFixation',              0.5,   ...
+            'holdFixation',              0,   ...
             'duration',                  [0.2 0.5 1.0], ... % min mean max
             'finalEpochDuration',        [],    ...
             'minEpochDuration',          0.1,   ...
@@ -78,14 +78,16 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'fixationStart', ...
             'targetOn', ...
             'dotsOn', ...
-            'finalCPTime', ...
+            'finalCPTime', ...  % actual CP time
             'dotsOff', ...
             'choiceTime', ...
+            'cpChoiceTime', ...
             'blankScreen', ...
             'feedbackOn', ...
             'subject', ...
             'date', ...
-            'probCP'};
+            'probCP', ...
+            'cpScreenOn'};
         
         % Drawables settings
         drawable = struct( ...
@@ -109,8 +111,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'fevalable',                  @dotsDrawableTargets, ...
             'settings',                   struct( ...
             'nSides',                     100,              ...
-            'width',                      1.3.*[1 1 1 1],       ...
-            'height',                     1.3.*[1 1 1 1])),      ...
+            'width',                      1.3.*[1 1],       ...
+            'height',                     1.3.*[1 1])),      ...
             ...
             ...   % Dots drawable settings
             'dots',                       struct( ...
@@ -152,24 +154,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             ...   % Gamepad
             'dotsReadableHIDGamepad',     struct( ...
             'start',                      {{@defineEventsFromStruct, struct( ...
-            'name',                       {'choseBottomLeft', ...  % A button
-            'dummyEvent', ...    % left trigger
-            'holdFixation', ...   % right trigger
-            'choseBottomRight', ...    % B button
-            'choseTopLeft', ...      % X button
-            'choseTopRight'}, ...   % Y button
-            'component',                  {'Button1', ...  % button ID 3
-            'Trigger1', ...% button ID 7
-            'Trigger2', ...% button ID 8
-            'Button2', ... % button ID 4
-            'Button3', ... % button ID 5
-            'Button4'}, ...% button ID 6
-            'isRelease',                  {false, ...
-            false, ...
-            true, ...
-            false, ...
-            false, ...
-            false})}}), ...
+            'name',                       {'holdFixation', 'choseLeft', 'choseRight'}, ...
+            'component',                  {'Button1', 'Trigger1', 'Trigger2'}, ...  %i.e. A button, Left Trigger, Right Trigger
+            'isRelease',                  {true, false, false})}}), ...
             ...
             ...   % Dummy to run in demo mode
             'dotsReadableDummy',          struct( ...
@@ -234,7 +221,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         fpIndex;
         targetIndex;
         dotsIndex;
-        
     end
     
     methods
@@ -278,6 +264,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             self.fpIndex     = find(strcmp('fixation', fn));
             self.targetIndex = find(strcmp('targets', fn));
             self.dotsIndex   = find(strcmp('dots', fn));
+            self.cpscreenIndex = find(strcmp('cpScreen', fn));
             
             % ---- Initialize the state machine
             %
@@ -409,6 +396,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % ---- Check for event
             %
             eventName = self.helpers.reader.readEvent(events, self, eventTag);
+            isCPchoice = strcmp(eventName, 'cpResponse') || strcmp(eventName, 'nocpResponse');
             
             % Default return
             nextState = [];
@@ -429,25 +417,29 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             % ---- Good choice!
             %
-            % Override completedTrial flag
-            self.completedTrial = true;
+            if isCPchoice
+                % Override completedTrial flag
+                self.completedTrial = true;
+            end
             
             % Jump to next state when done
             nextState = nextStateAfterChoice;
             
             % Save the choice
-            trial.dirChoice = double(strcmp(eventName, 'choseTopRight') || ...
-                strcmp(eventName, 'choseBottomRight'));
-            trial.cpChoice = double(strcmp(eventName, 'choseTopRight') || ...
-                strcmp(eventName, 'choseTopLeft'));
+            if isCPchoice
+                trial.cpChoice = double(strcmp(eventName, 'cpResponse'));
+                trial.cpCorrect = double( ...
+                    (trial.cpChoice==0 && trial.reversal == 0) || ...
+                    (trial.cpChoice==1 && trial.reversal ~= 0));
+            else
+                trial.dirChoice = double(strcmp(eventName, 'choseRight'));
+                % Mark as correct/error
+                trial.dirCorrect = double( ...
+                    (trial.dirChoice==0 && cosd(trial.direction)<0) || ...
+                    (trial.dirChoice==1 && cosd(trial.direction)>0));
+            end
             
-            % Mark as correct/error
-            trial.dirCorrect = double( ...
-                (trial.dirChoice==0 && cosd(trial.direction)<0) || ...
-                (trial.dirChoice==1 && cosd(trial.direction)>0));
-            trial.cpCorrect = double( ...
-                (trial.cpChoice==0 && trial.reversal == 0) || ...
-                (trial.cpChoice==1 && trial.reversal ~= 0));
+            
             % Save RT
             trial.RT = RT;
             
@@ -500,6 +492,10 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 self.helpers.message.show(messageGroup, self, 'feedbackOn');
             end
         end
+        
+%         function displayCPchoiceScreen(self)
+%             
+%         end
     end
     
     methods (Access = protected)
@@ -604,8 +600,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 fpY = ensemble.getObjectProperty('yCenter', self.fpIndex);
                 
                 %  Now set the targets x,y
-                ensemble.setObjectProperty('xCenter', [fpX + td, fpX - td, fpX - td, fpX + td], self.targetIndex);
-                ensemble.setObjectProperty('yCenter', [fpY + td, fpY + td, fpY - td, fpY - td], self.targetIndex);
+                ensemble.setObjectProperty('xCenter', [fpX + td, fpX - td], self.targetIndex);
+                ensemble.setObjectProperty('yCenter', [fpY, fpY], self.targetIndex);
             end
             
             % ---- Save dots properties
@@ -613,7 +609,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             ensemble.setObjectProperty('randBase',  trial.randSeedBase, self.dotsIndex);
             ensemble.setObjectProperty('coherence', trial.coherence,    self.dotsIndex);
             ensemble.setObjectProperty('direction', startDirection,     self.dotsIndex);
-            
+                     
             % ---- Prepare to draw dots stimulus
             %
             ensemble.callObjectMethod(@prepareToDrawInWindow);
@@ -631,16 +627,19 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % blanks  = {@dotsTheScreen.blankScreen};
             blanks  = {@blankScreen, self, 'blankScreen'};
             % chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
-            chkuif  = {@readEvent, self.helpers.reader, {'holdFixation'}, self, 'fixationStart'};
+            chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
             
             chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
-            chkuic  = {@checkForChoice, self, {'choseTopLeft' 'choseTopRight' 'choseBottomLeft' 'choseBottomRight'}, 'choiceTime', 'blank'};
+            chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'waitForCPchoice'};
+            chkuicp  = {@checkForChoice, self, {'cpResponse' 'nocpResponse'}, 'cpChoiceTime', 'blank'};
             chkrev  = {@checkForReversal, self};
             showfx  = {@draw, self.helpers.stimulusEnsemble, {self.fpIndex, [self.targetIndex self.dotsIndex]},  self, 'fixationOn'};
             showt   = {@draw, self.helpers.stimulusEnsemble, {self.targetIndex, []}, self, 'targetOn'};
             showfb  = {@showFeedback, self};
             showd   = {@draw,self.helpers.stimulusEnsemble, {self.dotsIndex, []}, self, 'dotsOn'};
             hided   = {@draw,self.helpers.stimulusEnsemble, {[], [self.fpIndex self.dotsIndex]}, self, 'dotsOff'};
+            
+            cpscr = {};
             
             % Drift correction
             hfdc  = {@reset, self.helpers.reader.theObject, true};
@@ -652,7 +651,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             sea   = @setEventsActiveFlag;
             gwfxw = {sea, self.helpers.reader.theObject, 'holdFixation', 'all'};
             gwfxh = {};
-            gwts  = {sea, self.helpers.reader.theObject, {'choseTopLeft', 'choseBottomLeft', 'choseTopRight', 'choseBottomRight'}, 'holdFixation'};
+            gwts  = {sea, self.helpers.reader.theObject, {'choseLeft', 'choseRight'}, 'holdFixation'};
             
             % ---- Timing variables, read directly from the timing property struct
             %
@@ -670,6 +669,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 'preDots'           {}       {}       0                     {}      'showDots'        ; ...
                 'showDots'          showd    chkrev   0                     hided   'waitForChoice'   ; ...
                 'waitForChoice'     {}       chkuic   t.choiceTimeout       {}      'blank'           ; ...
+                'waitForCPchoice'   cpscr    chkuicp  t.choiceTimeout       {}      'blank'           ; ...       
                 'blank'             {}       {}       0.2                   blanks  'showFeedback'    ; ...
                 'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
                 'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
