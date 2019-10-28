@@ -26,10 +26,10 @@ end
 
 
 %-------------------------- DOTS STIMULUS PROPERTIES
-ddots.Density = 90;
+ddots.Density = 150;
 ddots.Speed = 5;
 ddots.PixelSize = 6;
-ddots.Diameter = 5;
+ddots.Diameter = 10;
 ddots.CoherenceSTD = 10;
 
     function newStruct = setDotsParams(dots, someStruct)
@@ -119,7 +119,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 5;
+    questTask.trialIterations = 2;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
