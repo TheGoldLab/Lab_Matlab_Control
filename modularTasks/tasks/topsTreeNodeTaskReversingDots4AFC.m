@@ -154,9 +154,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             ...   % Gamepad
             'dotsReadableHIDGamepad',     struct( ...
             'start',                      {{@defineEventsFromStruct, struct( ...
-            'name',                       {'holdFixation', 'choseLeft', 'choseRight'}, ...
-            'component',                  {'Button1', 'Trigger1', 'Trigger2'}, ...  %i.e. A button, Left Trigger, Right Trigger
-            'isRelease',                  {true, false, false})}}), ...
+            'name',                       {'holdFixation', 'choseLeft', 'choseRight', 'nocpResponse'}, ...
+            'component',                  {'Button1', 'Trigger1', 'Trigger2', 'Button2'}, ...  %i.e. A button, Left Trigger, Right Trigger, B button
+            'isRelease',                  {true, false, false, false})}}), ...
             ...
             ...   % Dummy to run in demo mode
             'dotsReadableDummy',          struct( ...
@@ -264,7 +264,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             self.fpIndex     = find(strcmp('fixation', fn));
             self.targetIndex = find(strcmp('targets', fn));
             self.dotsIndex   = find(strcmp('dots', fn));
-            self.cpscreenIndex = find(strcmp('cpScreen', fn));
             
             % ---- Initialize the state machine
             %
@@ -396,7 +395,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % ---- Check for event
             %
             eventName = self.helpers.reader.readEvent(events, self, eventTag);
-            isCPchoice = strcmp(eventName, 'cpResponse') || strcmp(eventName, 'nocpResponse');
+            
             
             % Default return
             nextState = [];
@@ -405,6 +404,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             if isempty(eventName)
                 return
             end
+            isCPchoice = strcmp(eventName, 'holdFixation') || strcmp(eventName, 'nocpResponse');
+            disp('detected Event')
+            disp(eventName)
             
             % Get current task/trial
             trial = self.getTrial();
@@ -427,6 +429,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             % Save the choice
             if isCPchoice
+                disp('HEYYYYY THIS IS CP CHOICE')
                 trial.cpChoice = double(strcmp(eventName, 'cpResponse'));
                 trial.cpCorrect = double( ...
                     (trial.cpChoice==0 && trial.reversal == 0) || ...
@@ -493,9 +496,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             end
         end
         
-%         function displayCPchoiceScreen(self)
-%             
-%         end
+        function displayCPchoiceScreen(self)
+            topsTaskHelperMessage.showTextMessage('HHHHHHAAAAAAAA');
+        end
     end
     
     methods (Access = protected)
@@ -631,7 +634,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
             chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'waitForCPchoice'};
-            chkuicp  = {@checkForChoice, self, {'cpResponse' 'nocpResponse'}, 'cpChoiceTime', 'blank'};
+            chkuicp  = {@checkForChoice, self, {'holdFixation' 'nocpResponse'}, 'cpChoiceTime', 'blank'};
             chkrev  = {@checkForReversal, self};
             showfx  = {@draw, self.helpers.stimulusEnsemble, {self.fpIndex, [self.targetIndex self.dotsIndex]},  self, 'fixationOn'};
             showt   = {@draw, self.helpers.stimulusEnsemble, {self.targetIndex, []}, self, 'targetOn'};
@@ -639,7 +642,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             showd   = {@draw,self.helpers.stimulusEnsemble, {self.dotsIndex, []}, self, 'dotsOn'};
             hided   = {@draw,self.helpers.stimulusEnsemble, {[], [self.fpIndex self.dotsIndex]}, self, 'dotsOff'};
             
-            cpscr = {};
+            cpscr = {@displayCPchoiceScreen, self};
             
             % Drift correction
             hfdc  = {@reset, self.helpers.reader.theObject, true};
