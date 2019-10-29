@@ -500,7 +500,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         end
         
         function displayCPchoiceScreen(self)
-                self.helpers.message.show('cpInstructions', self, 'cpScreenOn');
+                % do nothing on purpose
         end
     end
     
