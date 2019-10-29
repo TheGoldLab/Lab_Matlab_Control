@@ -88,7 +88,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'subject', ...
             'date', ...
             'probCP', ...
-            'cpScreenOn'};
+            'cpScreenOn', ...
+            'dummyBlank'};
         
         % Drawables settings
         drawable = struct( ...
@@ -126,7 +127,13 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'pixelSize',                  6,                ...
             'diameter',                   8,                ...
             'density',                    150,              ...
-            'speed',                      5))));
+            'speed',                      5)), ...
+            ...   % CP Targets drawable settings
+            'cpScreen',                   struct( ...
+            'fevalable',                  @dotsDrawableText, ...
+            'settings',                   struct( ...
+            'x',                          0, ...
+            'y',                          0))));
         
         % Readable settings
         readable = struct( ...
@@ -135,15 +142,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'reader',                    	struct( ...
             ...
             'copySpecs',                  struct( ...
-            ...
-            ...   % The gaze windows
-            'dotsReadableEye',            struct( ...
-            'bindingNames',               'stimulusEnsemble', ...
-            'prepare',                    {{@updateGazeWindows}}, ...
-            'start',                      {{@defineEventsFromStruct, struct( ...
-            'name',                       {'holdFixation', 'breakFixation', 'choseLeft', 'choseRight'}, ...
-            'ensemble',                   {'stimulusEnsemble', 'stimulusEnsemble', 'stimulusEnsemble', 'stimulusEnsemble'}, ... % ensemble object to bind to
-            'ensembleIndices',            {[1 1], [1 1], [2 1], [2 2]})}}), ...
             ...
             ...   % The keyboard events .. 'uiType' is used to conditionally use these depending on the theObject type
             'dotsReadableHIDKeyboard',    struct( ...
@@ -177,12 +175,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'pauseDuration',              0.5, ...
             'bgEnd',                      [0 0 0]), ...
             ...
-            ...   CP choice instructions
-            'cpInstructions',               struct( ...
-            'text',                       {{'PRESS A IF THERE WAS A SWITCH', 'PRESS B IF THERE WAS NOT'}}, ...
-            'duration',                   2, ...
-            'pauseDuration',              0.5, ...
-            'bgEnd',                      [0 0 0]), ...
             ...   Correct
             'Correct',                    struct(  ...
             'text',                       {{'Correct', 'y', 6}}, ...
@@ -219,7 +211,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         targetDistance;
         
         % Reversal directions/times -- precomputed for each trial and then executed.
-        reversals = struct('directions', [], 'plannedTimes', [], 'actualTimes', []);
+        reversals = struct('directions', [], 'plannedTimes', [], ...
+            'actualTimes', []);
         
         % Keep track of reversals
         nextReversal;
@@ -228,6 +221,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         fpIndex;
         targetIndex;
         dotsIndex;
+        cpScreenIndex;
     end
     
     methods
@@ -249,9 +243,12 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         function startTask(self)
             if ~isempty(self.questThreshold)
                 if ~isnumeric(self.questThreshold)
-                    self.questThreshold = self.questThreshold.getQuestThreshold();
-                    if self.questThreshold <= 0 || self.questThreshold >= 100
-                        error(['Invalid questThreshold of ',num2str(self.questThreshold)])
+                    self.questThreshold = ...
+                        self.questThreshold.getQuestThreshold();
+                    if self.questThreshold <= 0 || ...
+                            self.questThreshold >= 100
+                        error(['Invalid questThreshold of ', ...
+                            num2str(self.questThreshold)])
                     end
                 end
             end
@@ -271,6 +268,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             self.fpIndex     = find(strcmp('fixation', fn));
             self.targetIndex = find(strcmp('targets', fn));
             self.dotsIndex   = find(strcmp('dots', fn));
+            self.cpScreenIndex = find(strcmp('cpScreen', fn));
             
             % ---- Initialize the state machine
             %
@@ -306,8 +304,10 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % Task information
             taskString = sprintf('%s (task %d/%d): %d dirCorrect, %d cpCorrect, %d dirError, %d cpError, mean RT=%.2f', ...
                 self.name, self.taskID, length(self.caller.children), ...
-                sum([self.trialData.dirCorrect]==1), sum([self.trialData.cpCorrect]==1), ...
-                sum([self.trialData.dirCorrect]==0), sum([self.trialData.cpCorrect]==0), ...
+                sum([self.trialData.dirCorrect]==1), ...
+                sum([self.trialData.cpCorrect]==1), ...
+                sum([self.trialData.dirCorrect]==0), ...
+                sum([self.trialData.cpCorrect]==0), ...
                 nanmean([self.trialData.RT]));
             
             % Trial information
@@ -337,7 +337,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             if ~isnan(ccorr) && ~isnan(dcorr)
                 if dcorr && ccorr
                     self.consecutiveCorrect = self.consecutiveCorrect + 1;
-                    if isnumeric(self.stopCondition) && self.consecutiveCorrect == self.stopCondition
+                    if isnumeric(self.stopCondition) && ...
+                            self.consecutiveCorrect == self.stopCondition
                         self.abort()
                     end
                 else
@@ -370,15 +371,18 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 %
                 % Set the direction
                 eh = self.helpers.stimulusEnsemble;
-                eh.theObject.setObjectProperty('direction', self.reversals.directions(self.nextReversal), ...
+                eh.theObject.setObjectProperty('direction', ...
+                    self.reversals.directions(self.nextReversal), ...
                     self.dotsIndex);
                 
                 % Explicitly flip here so we can get the timestamp
-                frameInfo = eh.theObject.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
+                frameInfo = eh.theObject.callObjectMethod(...
+                    @dotsDrawable.drawFrame, {}, [], true);
                 
                 % Save the time in SCREEN time
                 self.reversals.actualTimes(self.nextReversal) = ...
-                    eh.getSynchronizedTime(frameInfo.onsetTime, true) - trial.dotsOn;
+                    eh.getSynchronizedTime(frameInfo.onsetTime, true) - ...
+                    trial.dotsOn;
                 
                 % For debugging
                 fprintf('FLIPPED to %d at time: %.2f planned, %.2f actual\n', ...
@@ -397,14 +401,16 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         %% Check for choice
         %
         % Save choice/RT information and set up feedback for the dots task
-        function nextState = checkForChoice(self, events, eventTag, nextStateAfterChoice)
+        function nextState = checkForChoice(self, events, eventTag, ...
+                nextStateAfterChoice)
 %             disp('JUST ENTERED CHECK FOR CHOICE')
 %             disp('events are')
 %             disp(events)
 %             
             % ---- Check for event
             %
-            eventName = self.helpers.reader.readEvent(events, self, eventTag);
+            eventName = self.helpers.reader.readEvent(events, self, ...
+                eventTag);
 
             % Default return
             nextState = [];
@@ -413,10 +419,11 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             if isempty(eventName)
                 return
             end
-            isCPchoice = strcmp(eventName, 'holdFixation') || strcmp(eventName, 'nocpResponse');
-            disp('detected Event')
-            disp(eventName)
-            
+            isCPchoice = strcmp(eventName, 'holdFixation') || ...
+                strcmp(eventName, 'nocpResponse');
+%             disp('detected Event')
+%             disp(eventName)
+%             
             % Get current task/trial
             trial = self.getTrial();
             
@@ -446,7 +453,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             % Save the choice
             if isCPchoice
-                disp('HEYYYYY THIS IS CP CHOICE')
                 trial.cpChoice = double(strcmp(eventName, 'holdFixation'));
                 trial.cpCorrect = double(...
                     (trial.cpChoice==0 && trial.reversal == 0) || ...
@@ -465,7 +471,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             end
             
             % Store the reversal times
-            topsDataLog.logDataInGroup(self.reversals, 'ReversingDotsReversals');
+            topsDataLog.logDataInGroup(self.reversals, ...
+                'ReversingDotsReversals');
             
             % write metadata (same for all trials)
             trial.subject = self.subject;
@@ -504,13 +511,14 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % ---- Show trial feedback on the screen
             %
             if self.timing.showFeedback > 0
-                self.helpers.message.show(messageGroup, self, 'feedbackOn');
+                self.helpers.message.show(messageGroup, self, ...
+                    'feedbackOn');
             end
         end
         
-        function displayCPchoiceScreen(self)
-                % do nothing on purpose
-        end
+%         function displayCPchoiceScreen(self)
+%                 % do nothing on purpose
+%         end
     end
     
     methods (Access = protected)
@@ -577,7 +585,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                         end
                         
                         % Strip unnecessary values
-                        plannedTimes = plannedTimes(plannedTimes<trial.duration);
+                        plannedTimes = plannedTimes(plannedTimes < ...
+                            trial.duration);
                 end
                 
                 % Check that we have reversals
@@ -586,19 +595,25 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                     
                     % Set up reversals struct, with one entry per direction epoch
                     otherDirection = setdiff(...
-                        self.independentVariables.direction, trial.direction);
-                    self.reversals.directions = repmat(trial.direction, 1, numReversals+1);
+                        self.independentVariables.direction, ...
+                        trial.direction);
+                    self.reversals.directions = repmat(trial.direction, ...
+                        1, numReversals+1);
                     self.reversals.directions(end:-2:1) = otherDirection;
                     self.reversals.plannedTimes = [0 plannedTimes];
-                    self.reversals.actualTimes  = [0 nans(1, numReversals)];
+                    self.reversals.actualTimes  = ...
+                        [0 nans(1, numReversals)];
                     self.nextReversal           = 2;
-                    startDirection              = self.reversals.directions(1);
-                    trial.direction             = self.reversals.directions(end);
+                    startDirection              = ...
+                        self.reversals.directions(1);
+                    trial.direction             = ...
+                        self.reversals.directions(end);
                 end
             end
             
             % Set the dots duration in the statelist
-            self.stateMachine.editStateByName('showDots', 'timeout', trial.duration);
+            self.stateMachine.editStateByName('showDots', 'timeout', ...
+                trial.duration);
             
             % ---- Possibly update all stimulusEnsemble objects if settings
             %        changed
@@ -615,16 +630,30 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 fpY = ensemble.getObjectProperty('yCenter', self.fpIndex);
                 
                 %  Now set the targets x,y
-                ensemble.setObjectProperty('xCenter', [fpX + td, fpX - td], self.targetIndex);
-                ensemble.setObjectProperty('yCenter', [fpY, fpY], self.targetIndex);
+                ensemble.setObjectProperty('xCenter', ...
+                    [fpX + td, fpX - td], self.targetIndex);
+                ensemble.setObjectProperty('yCenter', ...
+                    [fpY, fpY], self.targetIndex);
             end
             
             % ---- Save dots properties
             %
-            ensemble.setObjectProperty('randBase',  trial.randSeedBase, self.dotsIndex);
-            ensemble.setObjectProperty('coherence', trial.coherence,    self.dotsIndex);
-            ensemble.setObjectProperty('direction', startDirection,     self.dotsIndex);
-                     
+            ensemble.setObjectProperty('randBase',  trial.randSeedBase, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('coherence', trial.coherence, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('direction', startDirection, ...
+                self.dotsIndex);
+            
+            
+            % ---- Set CP screen instructions
+            %
+            ensemble.setObjectProperty('string', ...
+                {'WAS THERE A SWITCH IN DIRECTION?  --> PRESS A', ...
+                 'WAS THERE A SWITCH IN DIRECTION?  --> PRESS B'}, ...
+                 self.cpScreenIndex);
+         
+            
             % ---- Prepare to draw dots stimulus
             %
             ensemble.callObjectMethod(@prepareToDrawInWindow);
@@ -645,16 +674,34 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             chkuif  = {@getNextEvent, self.helpers.reader.theObject, false, {'holdFixation'}};
             
             chkuib  = {}; % {@getNextEvent, self.readables.theObject, false, {}}; % {'brokeFixation'}
-            chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, 'choiceTime', 'waitForCPchoice'};
-            chkuicp  = {@checkForChoice, self, {'holdFixation' 'nocpResponse'}, 'cpChoiceTime', 'blank'};
+            chkuic  = {@checkForChoice, self, {'choseLeft' 'choseRight'}, ...
+                'choiceTime', 'waitForCPchoice'};
+            chkuicp  = {@checkForChoice, self, ...
+                {'holdFixation' 'nocpResponse'}, 'cpChoiceTime', 'blank'};
             chkrev  = {@checkForReversal, self};
-            showfx  = {@draw, self.helpers.stimulusEnsemble, {self.fpIndex, [self.targetIndex self.dotsIndex]},  self, 'fixationOn'};
-            showt   = {@draw, self.helpers.stimulusEnsemble, {self.targetIndex, []}, self, 'targetOn'};
+            showfx  = {@draw, self.helpers.stimulusEnsemble, ...
+                {self.fpIndex, [self.targetIndex self.dotsIndex]}, ...
+                self, 'fixationOn'};
+            showt   = {@draw, self.helpers.stimulusEnsemble, ...
+                {self.targetIndex, []}, self, 'targetOn'};
             showfb  = {@showFeedback, self};
-            showd   = {@draw,self.helpers.stimulusEnsemble, {self.dotsIndex, []}, self, 'dotsOn'};
-            hided   = {@draw,self.helpers.stimulusEnsemble, {[], [self.fpIndex self.dotsIndex]}, self, 'dotsOff'};
+            showd   = {@draw,self.helpers.stimulusEnsemble, ...
+                {self.dotsIndex, []}, self, 'dotsOn'};
+            hided   = {@draw,self.helpers.stimulusEnsemble, {[], ...
+                [self.fpIndex self.dotsIndex]}, self, 'dotsOff'};
             
-            cpscr = {@displayCPchoiceScreen, self};
+            cpscr   = {@draw,self.helpers.stimulusEnsemble, ...
+                {[self.cpScreenIndex], ...
+                [self.fpIndex self.dotsIndex self.targetIndex]}, self, ...
+                'cpScreenOn'};
+            
+            blank = {@draw,self.helpers.stimulusEnsemble, ...
+                {[], [...
+                self.fpIndex ...
+                self.dotsIndex ...
+                self.targetIndex ...
+                self.cpScreenIndex]}, self, ...
+                'dummyBlank'};
             
             % Drift correction
             hfdc  = {@reset, self.helpers.reader.theObject, true};
@@ -667,18 +714,21 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             sea   = @setEventsActiveFlag;
             
             % this activates holdFixation and deactivates everything else
-            gwfxw = {sea, self.helpers.reader.theObject, 'holdFixation', 'all'};  
+            gwfxw = {sea, self.helpers.reader.theObject, ...
+                'holdFixation', 'all'};  
             
             % nothing
             gwfxh = {};
             
             % this activates choseLeft and choseRight but deactivates
             % everything else
-            gwts  = {sea, self.helpers.reader.theObject, {'choseLeft', 'choseRight'}, 'all'};
+            gwts  = {sea, self.helpers.reader.theObject, ...
+                {'choseLeft', 'choseRight'}, 'all'};
             
             % this activates holdFixation (to report CP) and nocpResponse but deactivates
             % everything else
-            gwcp  = {sea, self.helpers.reader.theObject, {'holdFixation', 'nocpResponse'}, 'all'};
+            gwcp  = {sea, self.helpers.reader.theObject, ...
+                {'holdFixation', 'nocpResponse'}, 'all'};
             
             % ---- Timing variables, read directly from the timing property struct
             %
@@ -696,7 +746,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 'preDots'           {}       {}       0                     {}      'showDots'        ; ...
                 'showDots'          showd    chkrev   0                     hided   'waitForChoice'   ; ...
                 'waitForChoice'     gwts     chkuic   t.choiceTimeout       cpscr   'blank'           ; ...
-                'waitForCPchoice'   gwcp     chkuicp  t.choiceTimeout       {}      'blank'           ; ...       
+                'waitForCPchoice'   gwcp     chkuicp  t.choiceTimeout       blank   'blank'           ; ...       
                 'blank'             {}       {}       0.2                   blanks  'showFeedback'    ; ...
                 'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
                 'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
@@ -708,8 +758,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             self.addStateMachineWithDrawing(states, ...
                 'stimulusEnsemble', {'preDots' 'showDots'});
             
-            % Turn on state debug flag
-            % self.debugStates();
         end
     end
     
