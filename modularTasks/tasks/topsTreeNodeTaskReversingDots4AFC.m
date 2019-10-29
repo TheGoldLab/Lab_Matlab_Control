@@ -397,6 +397,9 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         %
         % Save choice/RT information and set up feedback for the dots task
         function nextState = checkForChoice(self, events, eventTag, nextStateAfterChoice)
+            disp('JUST ENTERED CHECK FOR CHOICE')
+            disp('events are')
+            disp(events)
             
             % ---- Check for event
             %
@@ -416,17 +419,18 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % Get current task/trial
             trial = self.getTrial();
             
-            % Check for minimum RT, wrt dotsOn for RT, dotsOff for non-RT
-            RT = trial.choiceTime - trial.dotsOff;
-            if RT < self.timing.minimumRT
-                return
-            end
-            
             % ---- Good choice!
             %
             if isCPchoice
                 % Override completedTrial flag
                 self.completedTrial = true;
+            else
+                % Check for minimum RT, wrt dotsOn for RT, dotsOff for non-RT
+                RT = trial.choiceTime - trial.dotsOff;
+                if RT < self.timing.minimumRT
+                    disp('NEG RT FOUND')
+                    return
+                end
             end
             
             % Jump to next state when done
@@ -675,7 +679,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                 'preDots'           {}       {}       0                     {}      'showDots'        ; ...
                 'showDots'          showd    chkrev   0                     hided   'waitForChoice'   ; ...
                 'waitForChoice'     {}       chkuic   t.choiceTimeout       {}      'blank'           ; ...
-                'waitForCPchoice'   cpscr    chkuicp  t.choiceTimeout       {}      'blank'           ; ...       
+                'waitForCPchoice'   {}       chkuicp  t.choiceTimeout       {}      'blank'           ; ...       
                 'blank'             {}       {}       0.2                   blanks  'showFeedback'    ; ...
                 'showFeedback'      showfb   {}       t.showFeedback        blanks  'done'            ; ...
                 'blankNoFeedback'   {}       {}       0                     blanks  'done'            ; ...
