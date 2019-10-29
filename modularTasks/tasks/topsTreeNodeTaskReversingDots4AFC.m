@@ -176,6 +176,12 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'pauseDuration',              0.5, ...
             'bgEnd',                      [0 0 0]), ...
             ...
+            ...   CP choice instructions
+            'cpInstructions',               struct( ...
+            'text',                       {{'PRESS A IF THERE WAS A SWITCH', 'PRESS B IF THERE WAS NOT'}}, ...
+            'duration',                   2, ...
+            'pauseDuration',              0.5, ...
+            'bgEnd',                      [0 0 0]), ...
             ...   Correct
             'Correct',                    struct(  ...
             'text',                       {{'Correct', 'y', 6}}, ...
@@ -395,8 +401,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % ---- Check for event
             %
             eventName = self.helpers.reader.readEvent(events, self, eventTag);
-            
-            
+
             % Default return
             nextState = [];
             
@@ -442,7 +447,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                     (trial.dirChoice==1 && cosd(trial.direction)>0));
             end
             
-            
             % Save RT
             trial.RT = RT;
             
@@ -453,7 +457,6 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             
             % Store the reversal times
             topsDataLog.logDataInGroup(self.reversals, 'ReversingDotsReversals');
-            
             
             % write metadata (same for all trials)
             trial.subject = self.subject;
@@ -497,7 +500,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         end
         
         function displayCPchoiceScreen(self)
-            topsTaskHelperMessage.showTextMessage('HHHHHHAAAAAAAA');
+                self.helpers.message.show('cpInstructions', self, 'cpScreenOn');
         end
     end
     
