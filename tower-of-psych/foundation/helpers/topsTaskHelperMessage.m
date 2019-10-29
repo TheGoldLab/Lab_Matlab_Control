@@ -331,6 +331,96 @@ classdef topsTaskHelperMessage < topsTaskHelper
          % Always store the specs in the data log
          topsDataLog.logDataInGroup(groupName, 'showMessage');
       end
+      
+      
+      % Set and show messages with text, images, and sounds
+      %
+      % Arguments
+      %  groupName      ... string
+      %  task           ... the topsTreeNode task caller
+      %  eventTag       ... string used to store timing information in trial
+      %                       struct. Assumes that the current trialData
+      %                       struct has an entry called time_<eventTag>.
+      function shownoclear(self, groupName, task, eventTag)         
+         
+         % Get the message group
+         theGroup = self.messageGroups.(groupName);
+         
+         % Draw the drawable(s)
+         if self.showDrawables && ~isempty(theGroup.drawableEnsemble)
+            
+            % Set background
+            if ~isempty(theGroup.bgStart)
+               dotsTheScreen.blankScreen(theGroup.bgStart);
+            end
+            
+            % Possibly prepare to draw
+            if ~theGroup.isPrepared
+               theGroup.drawableEnsemble.setObjectProperty('isVisible', true);
+               theGroup.drawableEnsemble.callObjectMethod(@prepareToDrawInWindow);
+               self.messageGroups.(groupName).isPrepared = true;
+            end
+            
+            % Draw
+            frameInfo = theGroup.drawableEnsemble.callObjectMethod(...
+               @dotsDrawable.drawFrame, {}, [], false);
+         end
+         
+         % Possibly show/speak the text
+         for ii = theGroup.textIndices
+            
+            % Get the text
+            text = theGroup.drawableEnsemble.getObjectProperty('string', ii);
+
+            if ~isempty(text) && ~all(isspace(text))
+
+               % Possibly show the text in the command window if it was not
+               % shown on the screen
+               if ~self.showDrawables
+                  disp(text)
+               end
+            
+               % Possibly speak the text
+               if theGroup.speakText
+                  system(['say ' text]);
+               end
+            end
+         end
+         
+         % Play the playable
+         if ~isempty(theGroup.playable)
+            theGroup.playable.play();
+         end
+
+         % End drawing
+         if self.showDrawables && ~isempty(theGroup.drawableEnsemble) && ...
+               isfinite(theGroup.duration) && theGroup.duration > 0
+
+            % Wait
+            pause(theGroup.duration);
+         
+            % Clear screen and possibly re-set background
+            dotsTheScreen.blankScreen(theGroup.bgEnd);
+         
+            % Conditionally store the synchronized timing data
+            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+               self.saveSyncronizedTime(frameInfo.onsetTime, true, task, eventTag)
+            end
+            
+         else
+            
+            % Conditionally store the timing data
+            if nargin >= 5 && ~isempty(task) && ~isempty(eventTag)
+               task.setTrialData([], eventTag, feval(self.clockFunction));
+            end
+         end
+         
+         % Possibly wait again
+         pause(theGroup.pauseDuration);
+         
+         % Always store the specs in the data log
+         topsDataLog.logDataInGroup(groupName, 'showMessage');
+      end
    end
    
    methods (Access = protected)
