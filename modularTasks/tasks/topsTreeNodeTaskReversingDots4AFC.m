@@ -67,6 +67,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         % dataFieldNames are used to set up the trialData structure
         trialDataFields = { ...
             'RT', ...
+            'cpRT', ...
             'dirChoice', ...
             'cpChoice', ...
             'dirCorrect', ...
@@ -397,10 +398,10 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         %
         % Save choice/RT information and set up feedback for the dots task
         function nextState = checkForChoice(self, events, eventTag, nextStateAfterChoice)
-            disp('JUST ENTERED CHECK FOR CHOICE')
-            disp('events are')
-            disp(events)
-            
+%             disp('JUST ENTERED CHECK FOR CHOICE')
+%             disp('events are')
+%             disp(events)
+%             
             % ---- Check for event
             %
             eventName = self.helpers.reader.readEvent(events, self, eventTag);
@@ -424,11 +425,18 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             if isCPchoice
                 % Override completedTrial flag
                 self.completedTrial = true;
+                trial.cpRT = trial.cpChoiceTime - trial.choiceTime;
             else
                 % Check for minimum RT, wrt dotsOn for RT, dotsOff for non-RT
                 RT = trial.choiceTime - trial.dotsOff;
+                % Save RT
+                trial.RT = RT;
                 if RT < self.timing.minimumRT
-                    disp('NEG RT FOUND')
+                    % write metadata (same for all trials)
+                    trial.subject = self.subject;
+                    trial.date = self.date;
+                    trial.probCP = self.probCP;
+                    self.setTrial(trial);
                     return
                 end
             end
@@ -439,8 +447,8 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             % Save the choice
             if isCPchoice
                 disp('HEYYYYY THIS IS CP CHOICE')
-                trial.cpChoice = double(strcmp(eventName, 'cpResponse'));
-                trial.cpCorrect = double( ...
+                trial.cpChoice = double(strcmp(eventName, 'holdFixation'));
+                trial.cpCorrect = double(...
                     (trial.cpChoice==0 && trial.reversal == 0) || ...
                     (trial.cpChoice==1 && trial.reversal ~= 0));
             else
@@ -450,10 +458,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
                     (trial.dirChoice==0 && cosd(trial.direction)<0) || ...
                     (trial.dirChoice==1 && cosd(trial.direction)>0));
             end
-            
-            % Save RT
-            trial.RT = RT;
-            
+
             % Save the final reversal time
             if ~isempty(self.reversals)
                 trial.finalCPTime = self.reversals.actualTimes(end);
