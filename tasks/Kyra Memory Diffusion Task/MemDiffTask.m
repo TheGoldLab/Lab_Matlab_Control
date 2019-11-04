@@ -24,12 +24,12 @@ logic.nBlocks = 1;
 
 
 
-        logic.trialsPerBlock= 1500 ;
+        logic.trialsPerBlock= 650;
 
 
 
 
-logic.isDemo=input('Demo?: 1=demo, 2=normaltask ');
+logic.isDemo=2 ;%input('Demo?: 1=demo, 2=normaltask ');
 % logic.totalDelay=input('Total delay length   ');
 logic.exptType=input('Objective? 1=Mem, 2=Avg, 3= both  ');
 

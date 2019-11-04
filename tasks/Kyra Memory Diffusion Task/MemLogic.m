@@ -67,7 +67,7 @@ classdef MemLogic < handle
                   
  
         %which number of samples do you want to assay?
-         PossDots=[1,3,5];
+         PossDots=[1,2,3,5];
     
          
         %number of samples on a given trial
@@ -83,11 +83,11 @@ classdef MemLogic < handle
         %Possible Samples Arrays:
         PossibleSamples=[
     
-     4    -5    -22    13    -11        
-    24    -4   -25    12    6      
-    15    29  -18     3   -30        
-    17     0    -22    -10    7       
-     9   -22     0   -12    28    ]
+     -22    -2    7    13    -11        %20 between first two
+    24   -25    -4  12    6             % 50 
+    15   -18  29    3   -30             % 30
+    17     0    -22    -10    7         %15
+     0     9  -19   -12    28    ]     %10
         
         
         %Location around which the samples are scattered, NOT the mean
@@ -263,7 +263,11 @@ classdef MemLogic < handle
                 self.Baselocation=floor(360*rand);      
            %Pick number of dots to use on this trial; and delay to use on
            %this trial
-                self.ndots=self.PossDots(ceil(rand*3));
+           if self.exptType<3
+                self.ndots=self.PossDots(ceil(rand*length(self.PossDots)));
+           else
+               self.ndots=self.PossDots(1+ceil(rand*(length(self.PossDots)-1)));
+           end
                 self.totalDelay=self.PossDelay(ceil(rand*4));
            %Pick which set you are using this trial
                 self.theSet=ceil(rand*5) ;  
@@ -287,7 +291,7 @@ classdef MemLogic < handle
         elseif self.exptType==2;
             self.proportionMem=0;
         else
-            self.proportionMem=.5;
+            self.proportionMem=.5;  % 10/10/19, made it so that the P(avg)=p(any dot), so set size dependent 
         end
             
         if rand<self.proportionMem     %Mem trial
