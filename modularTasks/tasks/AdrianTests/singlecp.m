@@ -101,10 +101,10 @@ pauseBeforeTask = -1;
 
 
 %-------------------------- ADD TRAINING BLOCKS TO TOPNODE
-num_training_blocks=0;
+num_training_blocks=8;
 
 stop_conditions = {...
-    1, 1, 2, 2, 1, 'button', 'button', 'button' ...
+    7, 7, 7, 15, 25, 'button', 'button', 'button' ...
     };
 
 for jj = 1:num_training_blocks
