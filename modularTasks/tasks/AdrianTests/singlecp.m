@@ -108,7 +108,15 @@ stop_conditions = {...
     };
 
 for jj = 1:num_training_blocks
-    add_training_block(jj, ['training_',num2str(jj)], stop_conditions{jj})
+    if jj == 2
+        if probCP < .5
+            add_training_block(jj, 'training_2_lowprob', stop_conditions{jj})
+        else
+            add_training_block(jj, 'training_2_highprob', stop_conditions{jj})
+        end
+    else
+        add_training_block(jj, ['training_',num2str(jj)], stop_conditions{jj})
+    end
 end
 
 
