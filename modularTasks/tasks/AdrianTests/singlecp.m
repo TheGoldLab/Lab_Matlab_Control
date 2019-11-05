@@ -1,11 +1,8 @@
-function singlecp(subject_code, experiment_day, first_block_of_day, ...
-    probCP, dump_folder, quest_task_topsDataLog)
+function singlecp(subject_code, probCP)
 % function to launch single CP Reversing Dots task
 %
 % ARGS:
 %   subject_code     --  string that identifies subject uniquely, e.g. 'S4'
-%   experiment_day   --  integer counting the days of experimentation with 
-%                        this subject
 %   first_block_of_day --  true or false
 %   probCP           --  numeric value
 %   dump_folder      --  e.g '/Users/joshuagold/Documents/MATLAB/projects/Lab_M
@@ -15,14 +12,15 @@ function singlecp(subject_code, experiment_day, first_block_of_day, ...
 %                             required)
 
 %-------------------------- DEFAULT ARGS
-if nargin < 1
-    subject_code = 'S1';
-    experiment_day = 1;
-    first_block_of_day = true;
-    probCP = 0.3;
-    dump_folder = '/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/';
-    quest_task_topsDataLog = '';%'/Users/joshuagold/Users/Adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
-end
+dump_folder = '/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/';
+first_block_of_day = true;  % if true, Quest block is added
+
+
+% the following variable should hold the full path to a topsDataLog.mat
+% file where a valid Quest block was run. This is when one wants to skip
+% the Quest block presently, and thus use the threshold estimated from a
+% prior Quest block.
+quest_task_topsDataLog = '';%'/Users/joshuagold/Users/Adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
 
 
 %-------------------------- DOTS STIMULUS PROPERTIES
@@ -75,7 +73,8 @@ pauseBeforeTask = -1;
         t = topsTreeNodeTaskReversingDots4AFC(task_name);
         t.taskID = taskID;
         t.independentVariables=trials_file;
-        t.trialIterationMethod='sequential';
+%        t.trialIterationMethod='sequential';
+        t.randomizeWhenRepeating = false;
         t.pauseBeforeTask = pauseBeforeTask;
         t.stopCondition = stop_cond;
         
@@ -119,7 +118,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 1;
+    questTask.trialIterations = 10;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
@@ -132,7 +131,6 @@ if first_block_of_day
     topNode.addChild(questTask);
 
 else
-    
     % extract timestamp from full path
     ts = regexprep(quest_task_topsDataLog, ...
         '[^[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{2}_[0-9]{2}]', '');
