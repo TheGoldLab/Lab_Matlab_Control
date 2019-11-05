@@ -101,10 +101,10 @@ pauseBeforeTask = -1;
 
 
 %-------------------------- ADD TRAINING BLOCKS TO TOPNODE
-num_training_blocks=8;
+num_training_blocks=2;
 
 stop_conditions = {...
-    7, 7, 7, 15, 25, 'button', 'button', 'button' ...
+    7, 'button' ...
     };
 
 for jj = 1:num_training_blocks
@@ -118,7 +118,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 10;
+    questTask.trialIterations = 50;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
