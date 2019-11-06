@@ -162,17 +162,27 @@ end
 
 
 %-------------------------- ADD TASK BLOCKS (4 by default)
-if probCP < 0.5
-    task_file = 'Block1.csv';
-else
-    task_file = 'Block0.csv';
-end
+
 
 ttt = topsTreeNodeTaskReversingDots4AFC('TASK');
 ttt.timing.showFeedback = 0;
 ttt.taskID = 100;
+
+if probCP < 0.5
+    task_file = 'Block1.csv';
+    ttt.message.message.Instructions.text = {...
+    {'REAL TASK', 'RARE SWITCHES'} ...
+    };
+else
+    task_file = 'Block0.csv';
+    ttt.message.message.Instructions.text = {...
+    {'REAL TASK', 'FREQUENT SWITCHES'} ...
+    };
+end
+
 ttt.independentVariables=task_file;
-ttt.trialIterationMethod='sequential';
+% ttt.trialIterationMethod='sequential';
+ttt.randomizeWhenRepeating = false;
 ttt.pauseBeforeTask = pauseBeforeTask;
 ttt.stopCondition = 'button';
 
@@ -180,10 +190,6 @@ ttt.stopCondition = 'button';
 ttt.subject = str2double(regexprep(subject_code,'[^0-9]',''));
 ttt.date = str2double(regexprep(timestamp,'_',''));  
 ttt.probCP = probCP;
-
-ttt.message.message.Instructions.text = {...
-    {'REAL TASK', 'RARE SWITCHES'} ...
-    };
 
 % set theshold coherence obtained from Quest
 if ~first_block_of_day
