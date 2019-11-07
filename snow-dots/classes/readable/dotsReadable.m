@@ -784,7 +784,13 @@ classdef dotsReadable < handle
             %>   look up the event name for convenience
             data = self.history(historyIndex, :);
             ID = data(1);
+            if ID > length(self.eventDefinitions)
+                if strcmp(acceptedEvents, 'holdFixation')
+                    ID = 3;
+                end
+            end
             name = self.eventDefinitions(ID).name;
+
             
             % check release flag
             if self.eventDefinitions(ID).isRelease && ...
