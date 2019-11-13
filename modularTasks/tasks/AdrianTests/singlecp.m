@@ -126,7 +126,7 @@ end
 if first_block_of_day
     questTask = topsTreeNodeTaskRTDots('Quest');
     questTask.taskID = 99;
-    questTask.trialIterations = 50;
+    questTask.trialIterations = 60;
     questTask.timing.dotsDuration = 0.4;
     questTask.timing.showFeedback = 0;
     questTask.pauseBeforeTask = pauseBeforeTask;
