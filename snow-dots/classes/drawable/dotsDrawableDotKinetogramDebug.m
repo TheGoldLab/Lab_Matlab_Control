@@ -275,11 +275,11 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                 * (self.interleaving / frameRate);
             
             % draw into an OpenGL stencil to make the circular aperture
-            mglStencilCreateBegin(self.stencilNumber);
+%             mglStencilCreateBegin(self.stencilNumber);
             sizeStencil = self.diameter*[1 1];
-            mglFillOval(self.xCenter, self.yCenter, sizeStencil);
-            mglStencilCreateEnd();
-            mglClearScreen();
+%             mglFillOval(self.xCenter, self.yCenter, sizeStencil);
+%             mglStencilCreateEnd();
+%             mglClearScreen();
             
             % build a lookup table to pick weighted directions
             %   based on a uniform random variable.
