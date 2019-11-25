@@ -99,8 +99,12 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
         dotsPositions = [];
         
         % Flag controlling whether to record dots positions or not
-	% Note, this doesn't record any time stamp. 
+	    % Note, this doesn't record any time stamp. 
         recordDotsPositions = false;
+        
+        reversal = 0;  % theoretical CP time
+        duration = 0;  % theoretical duration of stimulus (sec)
+        finalDuration = 0;  % precise duration of last epoch
     end
     
     properties (SetAccess = protected)
@@ -143,10 +147,24 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
     end
     
     methods
-        % Constructor takes no arguments.
-        function self = dotsDrawableDotKinetogramDebug()
+        function self = dotsDrawableDotKinetogramDebug(dots_params)
             self = self@dotsDrawableVertices();
-            
+            fields = fieldnames(dots_params);
+            num_fields = length(fields);
+            disp('====== constructor dotsDrawableDotKinetogramDebug')
+            for ix = 1:num_fields
+                f = fields{ix};
+                if strcmp(f, 'randSeedBase')
+                    newf = 'randBase';
+                else
+                    newf = f;
+                end
+                
+                disp(['setting property ', newf])
+
+                self.(newf) = dots_params.(f);
+            end
+            disp('-----  done')
             % draw as points
             self.primitive = 0;
         end
@@ -166,6 +184,78 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', round(sum(clock*10)));
 	       disp('    somehow self.randBase is NaN')
+            else
+               % use the given seed
+               initseed=abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000));
+               fprintf('    initial seed line171: %d\n', initseed)
+               self.thisRandStream = RandStream('mt19937ar', ...
+                  'Seed', initseed);
+            end
+               
+            % gross accounting for the underlying dot field
+            self.fieldWidth = self.diameter*self.fieldScale;
+            self.nDots = ceil(self.density * self.fieldWidth^2 / frameRate);
+            self.frameSelector = false(1, self.nDots);
+            self.dotLifetimes = zeros(1, self.nDots);
+            
+            % treat speed as step-per-interleaved-frame
+            self.deltaR = self.speed / self.fieldWidth ...
+                * (self.interleaving / frameRate);
+            
+            % draw into an OpenGL stencil to make the circular aperture
+            mglStencilCreateBegin(self.stencilNumber);
+            sizeStencil = self.diameter*[1 1];
+            mglFillOval(self.xCenter, self.yCenter, sizeStencil);
+            mglStencilCreateEnd();
+            mglClearScreen();
+            
+            % build a lookup table to pick weighted directions
+            %   based on a uniform random variable.
+            if ~isequal( ...
+                    numel(self.directionWeights), numel(self.direction))
+                self.directionWeights = ones(1, length(self.direction));
+            end
+            
+            directionCDF = cumsum(self.directionWeights) ...
+                / sum(self.directionWeights);
+            self.directionCDFInverse = ones(1, self.directionCDFSize);
+            probs = linspace(0, 1, self.directionCDFSize);
+            for ii = 1:self.directionCDFSize
+                nearest = find(directionCDF >= probs(ii), 1, 'first');
+                self.directionCDFInverse(ii) = self.direction(nearest);
+            end
+                        
+            % pick random start positions for all dots
+            self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
+            % fprintf('    start positions: %0.6f\n', self.normalizedXY)
+            fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
+            
+            % Re-set the frame number to 0
+            self.frameNumber = 0;
+            
+            % pre-allocate size of first 2 dimensions of dotsPositions
+            % the third dimension is unknown (I believe)
+            if self.recordDotsPositions
+                self.dotsPositions = zeros(4,self.nDots,0);
+            end
+        end
+        
+        
+        % Compute some parameters and create a circular aperture texture.
+        function prepare_to_virtually_draw(self, frameRate)
+            disp('ENTERING prepare_to_virtually_draw')
+            % Get the frame rate -- rounding to nearest 10 to avoid
+            %  problems with keeping track of random positions when there
+            %  are slight differences in frame rate
+            
+            %frameRate = 10*round(screen.windowFrameRate/10);
+            
+            % Check for random number seed
+            if isnan(self.randBase)
+               % no seed given, use the clock
+               self.thisRandStream = RandStream('mt19937ar', ...
+                  'Seed', round(sum(clock*10)));
+	           disp('    somehow self.randBase is NaN')
             else
                % use the given seed
                initseed=abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000));
