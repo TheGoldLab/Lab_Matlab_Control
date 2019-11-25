@@ -105,6 +105,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
         reversal = 0;  % theoretical CP time
         duration = 0;  % theoretical duration of stimulus (sec)
         finalDuration = 0;  % precise duration of last epoch
+        finalCPTime = 0;  % real flip time
     end
     
     properties (SetAccess = protected)
