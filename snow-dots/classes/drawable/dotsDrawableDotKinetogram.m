@@ -210,7 +210,8 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             if self.coherenceSTD==0
                cohCoinToss = 100*self.thisRandStream.rand(1, nFrameDots) < self.coherence;
             else
-               coh = normrnd(self.coherence, self.coherenceSTD);
+%                coh = normrnd(self.coherence, self.coherenceSTD);
+               coh = self.coherence + self.coherenceSTD .* self.thisRandStream.randn();
                if coh < 0
                   if self.flipDir
                      degreeOffset = 180;
