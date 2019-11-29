@@ -152,7 +152,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             self = self@dotsDrawableVertices();
             fields = fieldnames(dots_params);
             num_fields = length(fields);
-            disp('====== constructor dotsDrawableDotKinetogramDebug')
+            %disp('====== constructor dotsDrawableDotKinetogramDebug')
             for ix = 1:num_fields
                 f = fields{ix};
                 if strcmp(f, 'randSeedBase')
@@ -161,18 +161,18 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                     newf = f;
                 end
                 
-                disp(['setting property ', newf])
+                %disp(['setting property ', newf])
 
                 self.(newf) = dots_params.(f);
             end
-            disp('-----  done')
+            %disp('-----  done')
             % draw as points
             self.primitive = 0;
         end
         
         % Compute some parameters and create a circular aperture texture.
         function prepareToDrawInWindow(self)
-            disp('ENTERING prepareToDrawInWindow ')
+            %disp('ENTERING prepareToDrawInWindow ')
             % Get the frame rate -- rounding to nearest 10 to avoid
             %  problems with keeping track of random positions when there
             %  are slight differences in frame rate
@@ -184,11 +184,11 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                % no seed given, use the clock
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', round(sum(clock*10)));
-	       disp('    somehow self.randBase is NaN')
+	       %disp('    somehow self.randBase is NaN')
             else
                % use the given seed
                initseed=abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000));
-               fprintf('    initial seed line171: %d\n', initseed)
+               %fprintf('    initial seed line171: %d\n', initseed)
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', initseed);
             end
@@ -229,7 +229,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             % pick random start positions for all dots
             self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
             % fprintf('    start positions: %0.6f\n', self.normalizedXY)
-            fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
+            %fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
             
             % Re-set the frame number to 0
             self.frameNumber = 0;
@@ -244,7 +244,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
         
         % Compute some parameters and create a circular aperture texture.
         function prepare_to_virtually_draw(self, frameRate)
-            disp('ENTERING prepare_to_virtually_draw')
+            %disp('ENTERING prepare_to_virtually_draw')
             % Get the frame rate -- rounding to nearest 10 to avoid
             %  problems with keeping track of random positions when there
             %  are slight differences in frame rate
@@ -256,11 +256,11 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
                % no seed given, use the clock
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', round(sum(clock*10)));
-	           disp('    somehow self.randBase is NaN')
+	           %disp('    somehow self.randBase is NaN')
             else
                % use the given seed
                initseed=abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000));
-               fprintf('    initial seed line171: %d\n', initseed)
+               %fprintf('    initial seed line171: %d\n', initseed)
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', initseed);
             end
@@ -301,7 +301,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             % pick random start positions for all dots
             self.normalizedXY = self.thisRandStream.rand(2, self.nDots);
             % fprintf('    start positions: %0.6f\n', self.normalizedXY)
-            fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
+            %fprintf('    position %d: %0.6f\n', length(self.normalizedXY), self.normalizedXY(end))
             
             % Re-set the frame number to 0
             self.frameNumber = 0;
@@ -445,7 +445,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             self.x = (XY(1, thisFrame)-0.5)*self.fieldWidth + self.xCenter;
             self.y = (XY(2, thisFrame)-0.5)*self.fieldWidth + self.yCenter;
             
-            disp([self.x(end) self.y(end)])
+            %disp([self.x(end) self.y(end)])
             % fill out dotsPositions
             if self.recordDotsPositions
                 self.dotsPositions(:,:,end+1) = [...
