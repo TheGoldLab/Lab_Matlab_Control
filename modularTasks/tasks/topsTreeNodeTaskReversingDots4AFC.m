@@ -29,7 +29,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'useQuest',                   [],   ...
             'valsFromQuest',              [],   ... % % cor vals on pmf to get
             'targetDistance',             8,    ...
-            'dotsSeedBase',               randi(9999), ...
+            'dotsSeedBase',               1, ...
             'reversalSet',                [0.3 0.6 0.9], ... % if reversal<-1
             'reversalType',               'time'); % 'time' or 'hazard'; see prepareDrawables
         
@@ -538,7 +538,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             end
             
             % Set the seed base for the random number generator
-            trial.randSeedBase = self.settings.dotsSeedBase;
+            trial.randSeedBase = sum(clock*10);
             
             % Set the dots duration if not already given in trial struct
             if ~isfinite(trial.duration)
