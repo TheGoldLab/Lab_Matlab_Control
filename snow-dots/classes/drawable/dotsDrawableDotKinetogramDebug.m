@@ -187,7 +187,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
 	       %disp('    somehow self.randBase is NaN')
             else
                % use the given seed
-               initseed=abs(round(self.randBase + self.coherence + 100*self.direction(1) + 50000));
+               initseed=abs(round(self.randBase));
                %fprintf('    initial seed line171: %d\n', initseed)
                self.thisRandStream = RandStream('mt19937ar', ...
                   'Seed', initseed);
