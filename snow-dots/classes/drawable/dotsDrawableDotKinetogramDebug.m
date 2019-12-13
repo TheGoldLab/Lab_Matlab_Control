@@ -21,7 +21,7 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
         coherenceSTD = 0;
         
         % if flip when random coherence < 0
-        flipDir = false;
+        flipDir = true;
         
         % density of dots in the kinetogram (dots per degree-visual-angle^2
         % per second)
