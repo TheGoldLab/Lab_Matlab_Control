@@ -80,6 +80,27 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
         %   Seed is computed as randBase+coherence+100*direction;
         randBase = sum(clock*10);
         
+        % timestamp for CP time
+        cpTimeDotsClock = nan;
+        
+        % timestamp of first call to draw
+        firstDraw = nan;
+        
+        % timestamp of first call to draw after direction has been swapped
+        firstDrawPostCP = nan;
+        
+        % timestamp of last call to draw
+        lastDraw = nan;
+        
+        % number of calls to draw before CP
+        numberDrawPreCP = 0;
+        
+        % number of calls to draw after CP
+        numberDrawPostCP = 0;
+        
+        % bool: whether CP has been passed or not
+        passedCP = false;
+        
         % dot positions, active and coherence states, all gathered in a 
         % single x-by-y-by-z 3D-matrix.
         %
@@ -461,6 +482,27 @@ classdef dotsDrawableDotKinetogramDebug < dotsDrawableVertices
             self.computeNextFrame;
             mglStencilSelect(self.stencilNumber);
             self.draw@dotsDrawableVertices;
+            
+            % the whole if block below stores timestamps used to reproduce
+            % dots later
+            if self.passedCP
+                if isnan(self.firstDrawPostCP)
+                    self.firstDrawPostCP = now;
+                    self.lastDraw = self.firstDrawPostCP;
+                else
+                    self.lastDraw = now;
+                end
+                self.numberDrawPostCP = self.numberDrawPostCP + 1;
+            else
+                if isnan(self.firstDraw)
+                    self.firstDraw = now;
+                    self.lastDraw = self.firstDraw;
+                else
+                    self.lastDraw = now;
+                end
+                self.numberDrawPreCP = self.numberDrawPreCP + 1;
+            end
+            
             mglStencilSelect(0);
         end
     end
