@@ -79,6 +79,27 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
         %   and direction (assuming all other properties are constant).
         %   Seed is computed as randBase+coherence+100*direction;
         randBase = sum(clock*10);
+        
+        % timestamp for CP time
+        cpTimeDotsClock = nan;
+        
+        % timestamp of first call to draw
+        firstDraw = nan;
+        
+        % timestamp of first call to draw after direction has been swapped
+        firstDrawPostCP = nan;
+        
+        % timestamp of last call to draw
+        lastDraw = nan;
+        
+        % number of calls to draw before CP
+        numberDrawPreCP = 0;
+        
+        % number of calls to draw after CP
+        numberDrawPostCP = 0;
+        
+        % bool: whether CP has been passed or not
+        passedCP = false;
     end
     
     properties (SetAccess = protected)
@@ -319,6 +340,27 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             self.computeNextFrame;
             mglStencilSelect(self.stencilNumber);
             self.draw@dotsDrawableVertices;
+            
+            % the whole if block below stores timestamps used to reproduce
+            % dots later
+            if self.passedCP
+                if isnan(self.firstDrawPostCP)
+                    self.firstDrawPostCP = clock;
+                    self.lastDraw = self.firstDrawPostCP;
+                else
+                    self.lastDraw = clock;
+                end
+                self.numberDrawPostCP = self.numberDrawPostCP + 1;
+            else
+                if isnan(self.firstDraw)
+                    self.firstDraw = clock;
+                    self.lastDraw = self.firstDraw;
+                else
+                    self.lastDraw = clock;
+                end
+                self.numberDrawPreCP = self.numberDrawPreCP + 1;
+            end
+            
             mglStencilSelect(0);
         end
     end
