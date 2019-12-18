@@ -345,18 +345,18 @@ classdef dotsDrawableDotKinetogram < dotsDrawableVertices
             % dots later
             if self.passedCP
                 if isnan(self.firstDrawPostCP)
-                    self.firstDrawPostCP = clock;
+                    self.firstDrawPostCP = now;
                     self.lastDraw = self.firstDrawPostCP;
                 else
-                    self.lastDraw = clock;
+                    self.lastDraw = now;
                 end
                 self.numberDrawPostCP = self.numberDrawPostCP + 1;
             else
                 if isnan(self.firstDraw)
-                    self.firstDraw = clock;
+                    self.firstDraw = now;
                     self.lastDraw = self.firstDraw;
                 else
-                    self.lastDraw = clock;
+                    self.lastDraw = now;
                 end
                 self.numberDrawPreCP = self.numberDrawPreCP + 1;
             end
