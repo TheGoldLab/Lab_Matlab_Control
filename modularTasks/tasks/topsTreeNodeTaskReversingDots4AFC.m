@@ -680,6 +680,20 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             ensemble.setObjectProperty('direction', startDirection, ...
                 self.dotsIndex);
             
+            % reset the timestamps and draw counters for current trial
+            ensemble.setObjectProperty('firstDraw', nan, self.dotsIndex);
+            ensemble.setObjectProperty('firstDrawPostCP', nan, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('lastDraw', nan, self.dotsIndex);
+            ensemble.setObjectProperty('numberDrawPreCP', 0, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('numberDrawPostCP', 0, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('cpTimeDotsClock', nan, ...
+                self.dotsIndex);
+            ensemble.setObjectProperty('passedCP', false, self.dotsIndex);
+            
+            self.setTrial(trial);
             
             % ---- Set CP screen instructions
             %
