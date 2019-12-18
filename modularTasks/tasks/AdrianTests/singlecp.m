@@ -181,7 +181,7 @@ else
 end
 
 ttt.independentVariables=task_file;
-% ttt.trialIterationMethod='sequential';
+ttt.trialIterationMethod='sequential';
 ttt.randomizeWhenRepeating = false;
 ttt.pauseBeforeTask = pauseBeforeTask;
 ttt.stopCondition = 'button';
