@@ -572,7 +572,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             end
             
             % Set the seed base for the random number generator
-            trial.randSeedBase = sum(clock*10);
+            trial.randSeedBase = trial.trialIndex; %sum(clock*10);
             
             % Set the dots duration if not already given in trial struct
             if ~isfinite(trial.duration)

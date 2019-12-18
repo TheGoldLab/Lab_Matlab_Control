@@ -13,14 +13,14 @@ function singlecp(subject_code, probCP)
 
 %-------------------------- DEFAULT ARGS
 dump_folder = '/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/';
-first_block_of_day = true;  % if true, Quest block is added
+first_block_of_day = false;  % if true, Quest block is added
 
 
 % the following variable should hold the full path to a topsDataLog.mat
 % file where a valid Quest block was run. This is when one wants to skip
 % the Quest block presently, and thus use the threshold estimated from a
 % prior Quest block.
-quest_task_topsDataLog = '';%'/Users/joshuagold/Users/Adrian/oneCP/raw/2019_10_08_17_17/2019_10_08_17_17_topsDataLog.mat';  % made up
+quest_task_topsDataLog = '/Users/joshuagold/Users/Adrian/oneCP/raw/2019_12_13_13_37/2019_12_13_13_37_topsDataLog.mat';  
 
 
 %-------------------------- DOTS STIMULUS PROPERTIES
