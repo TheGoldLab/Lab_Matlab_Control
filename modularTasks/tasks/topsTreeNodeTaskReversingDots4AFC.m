@@ -30,6 +30,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'valsFromQuest',              [],   ... % % cor vals on pmf to get
             'targetDistance',             8,    ...
             'dotsSeedBase',               1, ...
+            'recordDotsPositions',        true, ...
             'reversalSet',                [0.3 0.6 0.9], ... % if reversal<-1
             'reversalType',               'time'); % 'time' or 'hazard'; see prepareDrawables
         
@@ -97,6 +98,23 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'numberDrawPreCP', ...
             'numberDrawPostCP'};
         
+        % empty struct that will later be filled, only if
+        % self.settings.recordDotsPositions is true.
+        %%%%%%%%%%%%%%%%%%%%%%%%
+        % Description of fields:
+        %  dotsPositions is a 1-by-JJ cell, where JJ is the number of
+        %                trials run in the experiment. Each entry of the
+        %                cell will contain matrix equal to
+        %                dotsDrawableDotKinetogram.dotsPositions
+        %  dumpTime      is a cell array of times, each computed as
+        %                feval(self.clockFunction).
+        %                The times are computed by the dumpDots() method,
+        %                once at the end of every trial. They should be
+        %                compared to the 'trialStart' time stamp in order
+        %                to assign a sequence of dots frames to a
+        %                particular trial.
+        dotsInfo = struct('dotsPositions', [], 'dumpTime', []);
+        
         % Drawables settings
         drawable = struct( ...
             ...
@@ -133,6 +151,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
             'pixelSize',                  6,                ...
             'diameter',                   8,                ...
             'density',                    150,              ...
+            'recordDotsPositions',        true,             ...
             'speed',                      5)), ...
             ...   % CP Targets drawable settings
             'cpScreen',                   struct( ...
@@ -335,6 +354,25 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
         %
         % Could add stuff here
         function finishTrial(self)
+            %% dump dots positions and states
+            % by state I mean whether each dot is active or not on a particular
+            % frame, and whether it is coherent or not, on a particular frame
+            if self.settings.recordDotsPositions
+                
+                % Pre-allocate cells
+                if isempty(self.dotsInfo.dotsPositions)
+                    self.dotsInfo.dotsPositions = cell(1, length(self.trialIndices));
+                    self.dotsInfo.dumpTime      = nans(1, length(self.trialIndices));
+                end
+                
+                % Save the info
+                self.dotsInfo.dotsPositions{self.trialCount} = ...
+                    self.helpers.stimulusEnsemble.theObject.getObjectProperty(...
+                    'dotsPositions', self.dotsIndex);
+                self.dotsInfo.dumpTime(self.trialCount) = feval(self.clockFunction);
+            end
+            
+            
             % update running count of consecutive correct trials
             trial = self.getTrial();
             dcorr = trial.dirCorrect;
