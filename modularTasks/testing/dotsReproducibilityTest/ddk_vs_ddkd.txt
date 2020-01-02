@@ -1,0 +1,46 @@
+ddk = readtable('/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/2019_12_18_14_00/completed4AFCtrials_task100_date_2019_12_18_14_00.csv');
+ddkd = readtable('/Users/joshuagold/Documents/MATLAB/projects/Lab_Matlab_Control_Adrian_Fork/modularTasks/tasks/AdrianTests/trials_post_expt/2019_12_18_17_06/completed4AFCtrials_task100_date_2019_12_18_17_06.csv');
+ddk = ddk(1:10,:); ddkd = ddkd(1:10,:);
+epoch1_ddk = (ddk.cpTimeDotsClock - ddk.firstDraw)*24*3600;
+epoch1_ddkd = (ddkd.cpTimeDotsClock - ddkd.firstDraw)*24*3600;
+epoch1_ddkd - epoch1_ddk
+ans =
+       NaN
+   -0.0030
+       NaN
+   -0.0016
+    0.0060
+    0.0132
+    0.0015
+       NaN
+    0.0074
+       NaN
+(epoch1_ddkd - epoch1_ddk)*1000
+ans =
+       NaN
+   -3.0175
+       NaN
+   -1.6294
+    5.9545
+   13.2166
+    1.4685
+       NaN
+    7.4230
+       NaN
+plot(ddk.trialIndex, ddk.numberDrawPreCP, 'bo', 'MarkerSize', 15)
+hold on
+plot(ddkd.trialIndex, ddkd.numberDrawPreCP, 'r*', 'MarkerSize', 15)
+legend({'ddk', 'ddkd'})
+plot(ddkd.trialIndex, ddkd.numberDrawPostCP, 'r^', 'MarkerSize', 15)
+plot(ddk.trialIndex, ddk.numberDrawPostCP, 'b.', 'MarkerSize', 23)
+legend({'epoch1 ddk', 'epoch1 ddkd', 'epoch2 ddkd', 'epoch2 ddk'})
+title('frame count with dDDK vs dDDKDebug')
+ylabel('calls to draw()')
+xlabel('trialIndex')
+hold off
+hold on
+stairs(1:10, ddk.numberDrawPreCP + ddk.numberDrawPostCP, 'r')
+stairs(1:10, ddkd.numberDrawPreCP + ddkd.numberDrawPostCP, 'b')
+stairs(1:10, ddk.numberDrawPreCP + ddk.numberDrawPostCP, 'b')
+stairs(1:10, ddkd.numberDrawPreCP + ddkd.numberDrawPostCP, 'r')
+diary off

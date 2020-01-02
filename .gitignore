@@ -1,1 +1,9 @@
 *.DS_Store
+modularTasks/tasks/AdrianTests/trials_post_expt/*
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_3.csv
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_4.csv
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_5.csv
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_6.csv
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_7.csv
+modularTasks/tasks/AdrianTests/trials_pre_expt/training_8.csv
+*.png
