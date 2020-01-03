@@ -24,15 +24,21 @@ logic.nBlocks = 1;
 
 
 
-        logic.trialsPerBlock= 650;
+
 
 
 
 
 logic.isDemo=2 ;%input('Demo?: 1=demo, 2=normaltask ');
 % logic.totalDelay=input('Total delay length   ');
-logic.exptType=input('Objective? 1=Ind, 2=Avg, 3= both  ');
+logic.exptType=input('Objective? 0=Practice/Single 1=Ind, 2=Avg, 3= both  ');
+if logic.exptType>0
+        logic.trialsPerBlock= 650;
+else
+        logic.trialsPerBlock=100;
+end
 
+        
 % logic.tempDelay=input('Together=0 or Spaced in Time=1  ');
 logic.useMouse=input('Using mouse or eye 1=mouse, 2=eye  ');
 if logic.useMouse==2 && logic.isDemo==2

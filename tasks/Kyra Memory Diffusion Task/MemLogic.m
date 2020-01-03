@@ -17,7 +17,7 @@ classdef MemLogic < handle
 
         %What is the target? 1=Memory, 2=Average, 3=percentage
         
-        exptType=0;
+        exptType=NaN;
         
         %Probability of mem/avg in type 3;
         proportionMem=.5;
@@ -263,7 +263,9 @@ classdef MemLogic < handle
                 self.Baselocation=floor(360*rand);      
            %Pick number of dots to use on this trial; and delay to use on
            %this trial
-           if self.exptType<3
+           if self.exptType==0
+               self.ndots=1;
+           elseif self.exptType<3
                 self.ndots=self.PossDots(ceil(rand*length(self.PossDots)));
            else
                self.ndots=self.PossDots(1+ceil(rand*(length(self.PossDots)-1)));
@@ -286,7 +288,7 @@ classdef MemLogic < handle
 
 
         %Figure out the response goal;
-        if self.exptType==1
+        if self.exptType<=1 
            self.proportionMem=1;
         elseif self.exptType==2;
             self.proportionMem=0;
