@@ -1,0 +1,30 @@
+[
+    {
+		"name": "Kyra_Memory_Diffusion_Task",
+		"type": "git",
+        "update": "never",
+		"url": "https://github.com/TheGoldLab/Lab_Matlab_Control.git",
+		"pathPlacement": "append"
+    },
+    {
+		"name": "Lab_Matlab_Utilities",
+		"flavor": "5d8a529991e7d1db7bd9560078e886ca3f9a818d",
+        "type": "git",
+        "pathPlacement": "append",
+		"url": "https://github.com/TheGoldLab/Lab_Matlab_Utilities.git"
+    },
+    {
+		"name": "mgl",
+		"type": "git",
+		"flavor": "85153d66e0935b0c78a5447494e212c0e8592afe",
+		"url": "https://github.com/justingardner/mgl.git",
+		"pathPlacement": "append"
+    },
+    {  
+		"name": "mQUESTPlus",
+		"pathPlacement": "append",
+        "flavor": "bd3673db5d3e47699bdb1820dcfe068262d8b609",
+		"type": "git",
+		"url": "https://github.com/brainardlab/mQUESTPlus.git"
+    }
+]
