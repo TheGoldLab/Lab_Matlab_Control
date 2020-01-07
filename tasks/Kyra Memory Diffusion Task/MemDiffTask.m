@@ -32,6 +32,7 @@ logic.nBlocks = 1;
 logic.isDemo=2 ;%input('Demo?: 1=demo, 2=normaltask ');
 % logic.totalDelay=input('Total delay length   ');
 logic.exptType=input('Objective? 0=Practice/Single 1=Ind, 2=Avg, 3= both  ');
+logic.tempDelay=input(' At once= 0 or spread= 1?   ');
 if logic.exptType>0
         logic.trialsPerBlock= 650;
 else

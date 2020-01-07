@@ -1,7 +1,7 @@
 function [tree, list] = configureMemTask(logic, isClient)
 % for the within trial change-point task
 sc=dotsTheScreen.theObject;
-sc.reset('displayIndex', 1);
+sc.reset('displayIndex', 0);
 
 if nargin < 1 || isempty(logic)
     logic = TAFCDotsLogic();
@@ -398,12 +398,12 @@ trialStates.editStateByName('delay', 'timeout', logic.durationDelay);
     end
    
     
-    %Determine if showing at same time or not
-%     if logic.tempDelay
-%         trialStates.editStateByName('delay eye', 'next', 'loop'); 
-%         trialStates.editStateByName('delay', 'next', 'loop');
-%         
-%     end
+%    Determine if showing at same time or not
+    if logic.tempDelay
+        trialStates.editStateByName('delay eye', 'next', 'loop'); 
+        trialStates.editStateByName('delay', 'next', 'loop');
+        
+    end
     
 
 function checkLoop(trialStates, list)
@@ -435,14 +435,15 @@ function onDots(list)
 %turn on target dot if its not a sample trial
 logic= list{'object'}{'logic'};
 drawables = list{'graphics'}{'drawables'};
-% if logic.tempDelay
-% target=logic.currentdot;
-%     drawables.setObjectProperty('isVisible', true, target);
-% else
+if logic.tempDelay && logic.currentdot<logic.ndots;
+target=logic.currentdot;
+    drawables.setObjectProperty('isVisible', true, [1:target]);
+elseif logic.currentdot==logic.ndots;
+        drawables.setObjectProperty('isVisible', true, [logic.ndots]);
+else
     target=[1:logic.ndots];
     drawables.setObjectProperty('isVisible', true, target);
-% end
-disp([num2str(logic.currentdot),'/',num2str(logic.ndots), '  ', num2str(logic.durationDelay)]);
+end
 toc
 
  
@@ -454,13 +455,15 @@ logic= list{'object'}{'logic'};
 drawables = list{'graphics'}{'drawables'};
 
 toc
-% if logic.tempDelay
-% target=logic.currentdot;
-%     drawables.setObjectProperty('isVisible', false, target);
-% else
+if logic.tempDelay && logic.currentdot<logic.ndots;
+target=logic.currentdot;
+    drawables.setObjectProperty('isVisible', false, [1:target]);
+elseif logic.currentdot==logic.ndots;
+        drawables.setObjectProperty('isVisible', false, [logic.ndots]);
+else
     target=[1:logic.ndots];
     drawables.setObjectProperty('isVisible', false, target);
-% end
+end
 
 
 

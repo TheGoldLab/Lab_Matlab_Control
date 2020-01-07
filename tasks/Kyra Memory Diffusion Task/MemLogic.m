@@ -12,7 +12,7 @@ classdef MemLogic < handle
                
 %        %Are the targets spread throughout the period? 0=all at once,
 %        %1=sprea
-%        tempDelay=0;
+       tempDelay=0;
 %       
 
         %What is the target? 1=Memory, 2=Average, 3=percentage
@@ -75,6 +75,7 @@ classdef MemLogic < handle
          
         %how many dots have been shown so far;
         currentdot=1;
+        selectedlast=NaN; %was the selected dot the post delay dot
 
          %Which set was actually used (numb between 1 &5
          theSet=ceil(rand*5) ;
@@ -265,12 +266,18 @@ classdef MemLogic < handle
            %this trial
            if self.exptType==0
                self.ndots=1;
-           elseif self.exptType<3
+           elseif self.exptType<3 && ~ self.tempDelay
                 self.ndots=self.PossDots(ceil(rand*length(self.PossDots)));
            else
                self.ndots=self.PossDots(1+ceil(rand*(length(self.PossDots)-1)));
            end
+           
+           if ~self.tempDelay
                 self.totalDelay=self.PossDelay(ceil(rand*4));
+           else
+               self.totalDelay=self.PossDelay(ceil(rand*3)+1);
+           end
+           
            %Pick which set you are using this trial
                 self.theSet=ceil(rand*5) ;  
            %Pick the actual sampels
@@ -280,11 +287,12 @@ classdef MemLogic < handle
           
            
            %Figure out the duration delay based on whether spaced or not
-%            if self.tempDelay
-%                 self.durationDelay=(self.totalDelay-self.ndots*self.durationTarget)/self.ndots;
-%            else
+           if self.tempDelay %figure out how much time between when first N-1 targets presented and Nth target
+                self.durationDelay=(self.totalDelay-2*self.durationTarget)/2;
+                self.currentdot=self.ndots-1;
+           else
                 self.durationDelay=max(self.totalDelay-self.durationTarget,0);
-%            end
+           end
 
 
         %Figure out the response goal;
@@ -302,6 +310,12 @@ classdef MemLogic < handle
             self.targOfInt=6;
         end
 
+        if self.targOfInt==self.ndots
+            self.selectedlast=1;
+        else
+            self.selectedlast=0;
+        end
+        
 
         end
         
