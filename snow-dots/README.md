@@ -13,4 +13,4 @@ You can give it an optional filename as an argument, or it will make one by defa
 3. Test other graphics benchmarks. See snow-dots/utilities/benchmarking
 
 
-Be sure to check out the Wiki if you are just getting started!
+Be sure to check out our [documentation](https://thegoldlab.github.io/SnowDotsDocumentation/index.html) and [tutorials](https://github.com/TheGoldLab/Lab_Tutorials) if you are just getting started!
