@@ -28,8 +28,8 @@ classdef topsTaskHelperTargets < topsTaskHelper
       % dotsWritableDOutArduinoLEDs object used to show LEDs
       LEDObject;
       
-      % Array of structs with target specifications -- see constructor for
-      % detailsn below
+      % Array of structs with target specifications. See constructor below 
+      %  for details
       targetProperties;
    end
    
@@ -104,7 +104,7 @@ classdef topsTaskHelperTargets < topsTaskHelper
       %% set
       %
       % Utility for setting target(s) properties
-      function set(self, index, varargin)
+      function set(self, indexOrName, varargin)
          
          % ---- Parse the arguments
          %
@@ -118,7 +118,7 @@ classdef topsTaskHelperTargets < topsTaskHelper
          p.addParameter('color',       []);
          p.addParameter('onPlayable',  []);
          p.addParameter('offPlayable', []);
-         p.parse(index, varargin{:});
+         p.parse(indexOrName, varargin{:});
          
          % Get index from name(s), if needed
          if ischar(p.Results.indexOrName)

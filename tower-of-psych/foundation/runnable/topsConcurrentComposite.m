@@ -66,8 +66,7 @@ classdef topsConcurrentComposite < topsRunnableComposite
             self.finishChildren();
             self.finish();
         end
-        
-        
+                
         % Do a little flow control with each child object.
         % @details
         % Calls runBriefly() once, sequentually, for each child object.

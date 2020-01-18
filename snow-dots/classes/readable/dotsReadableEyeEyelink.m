@@ -110,9 +110,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          if isempty(strfind(filenameWithPath, '_EyeEyelink.edf'))
             filenameWithPath = [filenameWithPath '_EyeEyelink.edf'];
-         end         
+         end  
+         
          % jig
-         filenameWithPath
+         % filenameWithPath
          
          % parse the edf file
          edf = Edf2Mat(filenameWithPath);

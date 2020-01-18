@@ -210,11 +210,7 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
-
-         % ---- Set task type ID
-         %
-         self.taskTypeID = 2;
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task (overloaded)
@@ -283,8 +279,8 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
          % ---- Show information about the task/trial
          %
          % Task information
-         taskString = sprintf('%s (task %d/%d): %d correct, %d error, mean RT=%.2f', ...
-            self.name, self.taskID, length(self.caller.children), ...
+         taskString = sprintf('%s (ID=%d, task %d/%d): %d correct, %d error, mean RT=%.2f', ...
+            self.name, self.taskID, self.taskIndex, length(self.caller.children), ...
             sum([self.trialData.correct]==1), sum([self.trialData.correct]==0), ...
             nanmean([self.trialData.RT]));
          
@@ -613,9 +609,12 @@ classdef topsTreeNodeTaskRTDots < topsTreeNodeTask
             };
          
          % Set up the state list with automatic drawing/fipping of the
-         %  objects in stimulusEnsemble in the given list of states
-         self.addStateMachineWithDrawing(states, ...
-            'stimulusEnsemble', {'preDots' 'showDotsRT' 'showDotsFX'});
+         %  objects in stimulusEnsemble in the given list of states. 
+         %  Note that the predots state is what allows us to get a good timestamp
+         %  of the dots onset... we start the flipping before, so the dots will start
+         %  as soon as we send the isVisible command in the entry fevalable of showDots
+         self.addStates(states, 'draw', ...
+            {'stimulusEnsemble', {'preDots' 'showDotsRT' 'showDotsFX'}});
       end
    end
    

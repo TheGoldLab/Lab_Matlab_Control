@@ -1,31 +1,49 @@
 function topsActivateEnsemblesByState(activeList, state)
 % function topsActivateEnsemblesByState(activeList, state)
 %
-% Toggle isActive flags for children of concurrentComposite during
+% Toggle isActive flags of a topsEnsemble during
 %  stateMachine traversal. This is used if you don't want all of 
-%  the children of the topsConcurrentComposite that contains the 
-%  stateMachine to always be running. 
+%  the children stateMachine to be running all the time.
 %
 % Arguments:
-%  activeList           ... A cell array with possibly multiple rows of:
-%     <[ensemble1], [ensemble1 method name]; [ensemble2], [ensemble2 method name]>, 
-%               <cell array of state names to activate>
+%  activeList  ... A cell array with rows that correspond to different
+%                    groups of ensembles, with two columns of data:
+%
+%                    - Column 1 is a list of ensemble/method pairs to call; e.g.,
+%                          { <ensemble1>, <ensemble1 method name>; 
+%                            <ensemble2>, <ensemble2 method name>; ...
+%                            etc. }
+%                    
+%                    - Column 2 is a list of states in which to call those
+%                          methods; e.g., 
+%                           { <state1>, <state2>, etc. }
+%
+%  state       ... string name of the current state when this shared fevalable
+%                    is called.
 %
 % Created 5/10/18 by jig
 
 % disp(sprintf('Entering state <%s>', state.name))
 
 %% Loop through the specification list
+% 
+% Each row is a different ensemble
 for ii = 1:size(activeList, 1)
    
-   % check if should be activated
+   % The second column is a list of states. First check if the current 
+   %  state is in the list and therefore should be activated
    if any(strcmp(state.name, activeList{ii,2}))
+      
+      % Found it -- activate!
       activateFlag = true;
    else
+      
+      % Did not find it -- inactivate!
       activateFlag = false;
    end
    
-   % loop through each object in list
+   % The first column is a list of ensemble/method pairs. Loop through 
+   %  each pair and set the activateFlag.
    for jj = 1:size(activeList{ii,1},1)
       
       % get the ensemble

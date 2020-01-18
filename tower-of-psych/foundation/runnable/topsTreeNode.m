@@ -60,7 +60,7 @@ classdef topsTreeNode < topsRunnableComposite
       inheritHelpers = 'all';
       
       % List of helper types
-      helperTypes = {'drawable', 'targets', 'playable', 'readable', 'writable', 'message', 'general'};
+      helperTypes = {'drawable', 'targets', 'stimulusGroups', 'playable', 'readable', 'writable', 'message', 'general'};
    end
    
    methods
@@ -240,18 +240,6 @@ classdef topsTreeNode < topsRunnableComposite
             end
          end
          helper = [];
-      end
-      
-      % Get the control helper (see topsTreeNodeTopNode)
-      %
-      function helper = getControlHelper(self)
-                     
-         Lctl = strncmp('control', fieldnames(self.helpers), length('control'));
-         if any(Lctl)
-            helper = self.helpers(Lctl);
-         else
-            helper = [];
-         end
       end
       
       % Recursively run(), starting with this node.

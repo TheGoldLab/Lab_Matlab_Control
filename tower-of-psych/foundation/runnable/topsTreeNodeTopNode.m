@@ -236,6 +236,13 @@ classdef topsTreeNodeTopNode < topsTreeNode
                rng('shuffle');
             end
             
+            % Set the task indices
+            for ii = 1:length(self.children)
+               if isa(self.children{ii}, 'topsTreeNodeTask')
+                  self.children{ii}.taskIndex = ii;
+               end
+            end
+               
             % Run for realsies
             self.start@topsRunnable();
             

@@ -162,19 +162,13 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
    
    methods
       
-      %% Construct with name optional.
-      % @param name optional name for this object
-      % @details
-      % If @a name is provided, assigns @a name to this object.
+      %% Construct with name and property/value pairs optional
+      %
       function self = topsTreeNodeTaskSaccade(varargin)
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
-         
-         % ---- Set task type ID
-         %
-         self.taskTypeID = 1;
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task method
@@ -225,8 +219,8 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          % ---- Show information about the task/trial
          %
          % Task information
-         taskString = sprintf('%s (task %d/%d): mean RT=%.2f', self.name, ...
-            self.taskID, length(self.caller.children), nanmean([self.trialData.RT]));
+         taskString = sprintf('%s (ID=%d, task %d/%d): mean RT=%.2f', self.name, ...
+            self.taskID, task.taskIndex, length(self.caller.children), nanmean([self.trialData.RT]));
          
          % Trial information
          trialString = sprintf('Trial %d/%d, dir=%d', self.trialCount, ...

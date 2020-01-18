@@ -203,7 +203,7 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task (overloaded)
@@ -259,8 +259,8 @@ classdef topsTreeNodeTaskReversingDots < topsTreeNodeTask
          % ---- Show information about the task/trial
          %
          % Task information
-         taskString = sprintf('%s (task %d/%d): %d correct, %d error, mean RT=%.2f', ...
-            self.name, self.taskID, length(self.caller.children), ...
+         taskString = sprintf('%s (ID=%d, task %d/%d): %d correct, %d error, mean RT=%.2f', ...
+            self.name, self.taskID, self.taskIndex, length(self.caller.children), ...
             sum([self.trialData.correct]==1), sum([self.trialData.correct]==0), ...
             nanmean([self.trialData.RT]));
          

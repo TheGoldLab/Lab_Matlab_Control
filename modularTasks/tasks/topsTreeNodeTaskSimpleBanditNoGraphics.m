@@ -81,11 +81,7 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
-
-         % ---- Set task type ID
-         %
-         self.taskTypeID = 4;
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task method
@@ -207,8 +203,8 @@ classdef topsTreeNodeTaskSimpleBanditNoGraphics < topsTreeNodeTask
          %
          % Task information
          if ~isempty(self.caller)
-            taskString = sprintf('%s (task %d/%d)', self.name, ...
-               self.taskID, length(self.caller.children));
+            taskString = sprintf('%s (ID=%d, task %d/%d)', self.name, ...
+               self.taskID, self.taskIndex, length(self.caller.children));
          else
             taskString = sprintf('%s (%d)', self.name, self.taskID);
          end

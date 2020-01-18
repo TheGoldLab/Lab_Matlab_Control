@@ -1,6 +1,7 @@
-classdef dotsPlayableFastTone < dotsPlayable
+classdef dotsPlayableTonePTB < dotsPlayable
    % @class dotsPlayableFastTone
-   % Play a pure sinusoudal tone, quickly
+   % Play a pure sinusoudal tone, quickly using psychtoolbox
+   %  utilities
    
    properties
       
@@ -9,6 +10,9 @@ classdef dotsPlayableFastTone < dotsPlayable
       
       % Flag to block until sound has actually started playing (if usePTB)
       waitForStart = 1;
+      
+      % Cos ramp time, in sec
+      rampDuration = 0.01;
    end
    
    properties (SetAccess = protected)
@@ -20,7 +24,7 @@ classdef dotsPlayableFastTone < dotsPlayable
    
    methods
       % Constructor takes no arguments.
-      function self = dotsPlayableFastTone()
+      function self = dotsPlayableTonePTB()
          self = self@dotsPlayable();
          
          % Initialize
@@ -36,8 +40,8 @@ classdef dotsPlayableFastTone < dotsPlayable
             2, self.sampleFrequency, 2, 0, []);
          
          % Not sure if this does anything
-         prelat  = PsychPortAudio('LatencyBias', self.player, 0);
-         postlat = PsychPortAudio('LatencyBias', self.player);
+         PsychPortAudio('LatencyBias', self.player, 0);
+         PsychPortAudio('LatencyBias', self.player);
       end
       
       % Compute a sinusoidal waveform to play.
@@ -47,6 +51,14 @@ classdef dotsPlayableFastTone < dotsPlayable
          nCycles = self.frequency * self.duration;
          nSamples = self.sampleFrequency * self.duration;
          waveform = sin(linspace(0, nCycles*2*pi, nSamples))*self.intensity;
+         
+         % Add ramp
+         if self.rampDuration > 0
+            ramp = cos(linspace(pi, 2*pi, self.sampleFrequency * self.rampDuration));
+            ramp = (ramp+1)/2;
+            envelope = [ramp ones(1, length(waveform)-2*length(ramp)) fliplr(ramp)];
+            waveform = waveform.*envelope;
+         end
          
          % Always use two channels
          if strcmp(self.side,'left')

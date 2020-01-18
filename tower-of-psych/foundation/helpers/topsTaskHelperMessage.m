@@ -274,6 +274,8 @@ classdef topsTaskHelperMessage < topsTaskHelper
             % Draw
             frameInfo = theGroup.drawableEnsemble.callObjectMethod(...
                @dotsDrawable.drawFrame, {}, [], true);
+         else
+            frameInfo = [];
          end
          
          % Possibly show/speak the text
@@ -303,30 +305,34 @@ classdef topsTaskHelperMessage < topsTaskHelper
          end
 
          % End drawing
-         if self.showDrawables && ~isempty(theGroup.drawableEnsemble) && ...
-               isfinite(theGroup.duration) && theGroup.duration > 0
-
-            % Wait
-            pause(theGroup.duration);
-         
-            % Clear screen and possibly re-set background
-            dotsTheScreen.blankScreen(theGroup.bgEnd);
-         
+         if ~isempty(frameInfo)
+            
+            % If duration is given, wait, clear screen and 
+            %  possibly re-set background
+            if theGroup.duration > 0
+               
+               % Wait
+               pause(theGroup.duration);
+            
+               % Clear screen
+               dotsTheScreen.blankScreen(theGroup.bgEnd);
+            end
+            
             % Conditionally store the synchronized timing data
             if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
                self.saveSynchronizedTime(frameInfo.onsetTime, true, task, eventTag)
             end
             
-         else
+         elseif nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
             
-            % Conditionally store the timing data
-            if nargin >= 3 && ~isempty(task) && ~isempty(eventTag)
-               task.setTrialData([], eventTag, feval(self.clockFunction));
-            end
+            % Store timing data based on current clock
+            task.setTrialData([], eventTag, feval(self.clockFunction));
          end
          
          % Possibly wait again
-         pause(theGroup.pauseDuration);
+         if theGroup.pauseDuration > 0
+            pause(theGroup.pauseDuration);
+         end
          
          % Always store the specs in the data log
          topsDataLog.logDataInGroup(groupName, 'showMessage');

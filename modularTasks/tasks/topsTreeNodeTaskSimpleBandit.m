@@ -169,11 +169,7 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
-
-         % ---- Set task type ID
-         %
-         self.taskTypeID = 3;
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task method
@@ -265,8 +261,8 @@ classdef topsTreeNodeTaskSimpleBandit < topsTreeNodeTask
          % ---- Show information about the trial
          %
          % Task information
-         taskString = sprintf('%s (task %d/%d)', self.name, ...
-            self.taskID, length(self.caller.children));
+         taskString = sprintf('%s (ID=%d, task %d/%d)', self.name, ...
+            self.taskID, self.taskIndex, length(self.caller.children));
          
          % Trial information
          trialString = sprintf('Trial %d(%d)/%d: Rews=[%.0f %.0f], Correct=%d/%d', ...

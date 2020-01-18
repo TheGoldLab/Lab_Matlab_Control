@@ -203,7 +203,7 @@ classdef topsTreeNodeTaskReversingDots4AFC < topsTreeNodeTask
          
          % ---- Make it from the superclass
          %
-         self = self@topsTreeNodeTask(varargin{:});
+         self = self@topsTreeNodeTask(mfilename, varargin{:});
       end
       
       %% Start task (overloaded)

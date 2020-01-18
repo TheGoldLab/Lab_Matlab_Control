@@ -49,6 +49,15 @@ if isempty(OP)
    return
 end
 
+
+
+for ii = 1:1000
+   OP.getLuminance(1, 0.1);
+   disp(OP.values(end))
+end
+
+
+   
 %% Setup screen
 SCREEN_INDEX  = 0;  % 0=small rectangle on main screen; 1=main screen; 2=secondary
 dotsTheScreen.reset('displayIndex', SCREEN_INDEX);

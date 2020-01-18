@@ -17,7 +17,11 @@ classdef topsTaskHelperReadable < topsTaskHelper
          self = self@topsTaskHelper(passedArgs{:});
          
          % Add synchronization
-         self.sync.clockFevalable = {@getDeviceTime, self.theObject};
+         if isempty(self.theObject)
+            self.sync.clockFevalable = {@self.clockFunction};
+         else
+            self.sync.clockFevalable = {@getDeviceTime, self.theObject};
+         end
       end
       
       %% startTrial
@@ -28,7 +32,9 @@ classdef topsTaskHelperReadable < topsTaskHelper
          self.startTrial@topsTaskHelper(varargin{:});
          
          % Call the readable startTrial method
-         self.theObject.startTrial();
+         if ~isempty(self.theObject)
+            self.theObject.startTrial();
+         end
       end
       
       %% finishTrial
@@ -39,7 +45,9 @@ classdef topsTaskHelperReadable < topsTaskHelper
          self.finishTrial@topsTaskHelper(varargin{:});
          
          % Call the readable finishTrial method
-         self.theObject.finishTrial();
+         if ~isempty(self.theObject)
+            self.theObject.finishTrial();
+         end
       end
       
       %% readEvent

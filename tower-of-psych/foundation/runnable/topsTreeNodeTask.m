@@ -27,8 +27,8 @@ classdef topsTreeNodeTask < topsTreeNode
       % Unique identifier
       taskID = -1;
       
-      % Unique type identifier
-      taskTypeID = -1;
+      % Index in topNode children
+      taskIndex = -1;
       
       % An array of structs describing each trial
       trialData;
@@ -66,6 +66,10 @@ classdef topsTreeNodeTask < topsTreeNode
       % Array of trial indices, in order of calling
       trialIndices = [];
       
+      % Set readable active flags before each trial (true/false or []=do
+      % nothing)
+      setReadableActiveFlags = [];
+      
       % Time to pause before task starts. Negative means wait for 't'
       % keypress if control helper is set up
       pauseBeforeTask = 0;
@@ -73,17 +77,17 @@ classdef topsTreeNodeTask < topsTreeNode
    
    properties (SetAccess = protected)
       
-      % The state machine
-      stateMachine
+      % The state machine(s)
+      stateMachine;
+      
+      % The trial node
+      trialNode;
       
       % flag if successefully finished trial (or need to repeat)
-      completedTrial = false;
-      
-      % Control keyboard active flags, so we can reset them
-      controlActiveFlags;
+      completedTrial=false;
       
       % Default trialData fields
-      trialDataDefaultFields = {'taskID', 'trialIndex', 'trialStart', 'trialEnd'};
+      trialDataDefaultFields = {'taskID', 'taskIndex', 'trialIndex', 'trialStart', 'trialEnd'};
    end
    
    methods
@@ -95,16 +99,34 @@ classdef topsTreeNodeTask < topsTreeNode
       % properties can be cell array of strings for property structs
       function self = topsTreeNodeTask(varargin)
          
+         % Get the name from the first argument
          if nargin == 0
             name = 'topsTreeNodeTask';
          else
             name = varargin{1};
          end
+         
+         % Make it as a tree Node
          self = self@topsTreeNode(name);
+         
+         % Set the Task Type ID from the registry
+         self.taskID = find(strcmp(name, { ...
+            'topsTreeNodeTaskSaccade',                ...
+            'topsTreeNodeTaskRTDots',                 ...
+            'topsTreeNodeTaskSimpleBandit',           ...
+            'topsTreeNodeTaskSimpleBanditNoGraphics', ...
+            'topsTreeNodeTaskReversingDots',          ...
+            'topsTreeNodeTask2AFCSwitch'}), 1);
+         
+         % Default
+         if isempty(self.taskID)
+            self.taskID = 0;
+         end
          
          % Default is to iterate children until instructed to stop
          self.iterations = inf;
          
+         % Parse additonal argument pairs
          if nargin > 1
             for ii = 2:2:nargin
                
@@ -163,6 +185,12 @@ classdef topsTreeNodeTask < topsTreeNode
             self.taskID = self.taskTypeID;
          end
          
+         % Add the trial node, with start/finish trial functions
+         self.trialNode = topsTreeNode();
+         self.trialNode.startFevalable  = {@self.startTaskTrial};
+         self.trialNode.finishFevalable = {@self.finishTaskTrial};
+         self.addChild(self.trialNode);
+
          % Call child's startTask method
          self.startTask();
          
@@ -269,11 +297,8 @@ classdef topsTreeNodeTask < topsTreeNode
       
       %% Blank startTask method -- overload in subclass
       %
-      % Overloaded method can/should fill the following fields, as needed:
-      %
-      %  stateMachineStates
-      %  stateMachineActiveList
-      %  stateMachineCompositeChildren
+      % Overloaded method can/should add the stateMachine, via addStates
+      %  (see below)
       %
       function startTask(self)
       end
@@ -395,8 +420,9 @@ classdef topsTreeNodeTask < topsTreeNode
             % Add the trials to the existing fields
             self.trialData = repmat(self.trialData, ntr, 1);
             
-            % Add task ID, trials
+            % Add task ID, index, trials
             [self.trialData.taskID] = deal(self.taskID);
+            [self.trialData.taskIndex] = deal(self.taskIndex);
             trlist = num2cell(1:ntr);
             [self.trialData.trialIndex] = deal(trlist{:});
             
@@ -586,33 +612,162 @@ classdef topsTreeNodeTask < topsTreeNode
    
    methods (Access = protected)
       
-      %% Utility to add a state machine that sets up drawing
+      %% addStates
+      %
+      % Utility to add states
+      %
+      % Add states to a task. 
+      %
+      % Arguments:
+      %
+      %  states   ... the cell array of state specs for
+      %                       topsStateMachine.addMultipleStates
+      %  varargin ... property/value pairs:
+      %  	- 'draw', <specs used by addStateMachineWithDrawing>
+      %     - 'activeList', <specs sent to topsActivateEnsemblesByState>
+      %     - 'compositeChildren', <cell array of children>
+      %                 
+      function addStates(self, states, varargin)
+
+         % parse inputs
+         p = inputParser;
+         p.addRequired( 'self')
+         p.addRequired( 'states');
+         p.addParameter('draw',             	{});
+         p.addParameter('activeList',        {});
+         p.addParameter('compositeChildren', {});
+         p.parse(self, states, varargin{:});
+         
+         % ---- Make a concurrent composite to interleave run calls and add
+         %        it to the trialNode
+         % 
+         stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
+         self.trialNode.addChild(stateMachineComposite);
+                  
+         % ---- Add state machine, if given
+         %
+         if ~isempty(states)
+            
+            % Make the state machine
+            thisStateMachine = topsStateMachine();
+            
+            % Add the states
+            thisStateMachine.addMultipleStates(states);
+            
+            % Save a local copy so it's easy to check/modify
+            self.stateMachine = cat(2, self.stateMachine, thisStateMachine);
+            
+            % Add it to the concurrentComposite that will actually run it
+            stateMachineComposite.addChild(thisStateMachine);
+         end
+         
+         % ---- Set up automated drawing, if given
+         %
+         if ~isempty(p.Results.draw)
+            
+            % Call setupStateMachineDrawing to get:
+            %  - activeList, which determines which states are used 
+            %                 for automated drawing
+            %  - concurrentComposite, which is the list of drawable
+            %                 ensembles that do the actual drawing/flipping
+            [activeList, compositeChildren] = ...
+               self.setupStateMachineDrawing(p.Results.draw{:});
+            
+            % Set up the activeList
+            if ~isempty(activeList)
+               thisStateMachine.addSharedFevalableWithName( ...
+                  {@topsActivateEnsemblesByState activeList}, ...
+                  'activeDrawableEnsembles', 'entry');
+            end
+            
+            % Add the compositeChildren to the concurrentComposite
+            for ii = 1:length(compositeChildren)
+               stateMachineComposite.addChild(compositeChildren{ii});
+            end
+         end
+         
+         % ---- Add given activeList
+         %
+         if ~isempty(p.Results.activeList)
+            thisStateMachine.addSharedFevalableWithName( ...
+               {@topsActivateEnsemblesByState p.Results.activeList}, ...
+               'activeEnsembles', 'entry');
+         end
+         
+         % ---- Add given compositeChildren
+         %
+         for ii = 1:length(p.Results.compositeChildren)
+            stateMachineComposite.addChild(p.Results.compositeChildren{ii});
+         end
+      end
+      
+      %% setupStateMachineDrawing
+      %
+      % Utility to make standardized activeList/concurrentComposite object
+      % to be used for automated drawing in a stateMachine
       %
       % Varargin is in pairs:
       %  1. name of ensemble to be found in self.helpers.(name).theObject
       %  2. list of state names in which the ensemble should be
       %        drawn and the screen flipped automatically (e.g., for dots)
-      function addStateMachineWithDrawing(self, states, varargin)
+      %
+      % Returns:
+      %  1. An "activeList" (cell array) that is sent to topsActivateEnsemblesByState
+      %        every time a state is entered. Each row correspond to a
+      %        different drawable ensemble, with two columns of data.
+      %        - Column 1 is a list of methods of the ensemble to call
+      %        - Column 2 is a list of states in which to call those methods
+      %  2. A list (cell array) of children to add to the topsConcurrentComposite
+      %        that includes the state machine, so all of them can be
+      %        interleaved
+      function [activeList, compositeChildren] = setupStateMachineDrawing( ...
+            self, varargin)
          
-         numEnsembles = length(varargin)/2;
-         activeList = cell(numEnsembles, 2);
+         % Parse the arguments by pairs of <drawable ensemble>, <specs>
+         numEnsembles      = length(varargin)/2;
+         activeList        = cell(numEnsembles, 2);
          compositeChildren = cell(numEnsembles+1, 1);
+         
+         % Loop through each drawable ensemble
          for ii = 1:numEnsembles
+            
+            % Get the drawable ensemble
             ensemble = self.helpers.(varargin{(ii-1)*2+1}).theObject;
+            
+            % Set up automated draw/flip methods
             activeList{ii,1} = {ensemble, 'draw'; ...
                self.helpers.screenEnsemble.theObject, 'flip'};
+            
+            % Save the states that will use the draw/flip methods
             activeList{ii,2} = varargin{(ii-1)*2+2};
+            
+            % add the ensemble to the topsConcurrentComposite
             compositeChildren{ii} = ensemble;
          end
          
-         % add the screen
+         % add the screen to the topsConcurrentComposite
          compositeChildren{end} = self.helpers.screenEnsemble.theObject;
+      end
+      
+      %% addStateMachineWithDrawing
+      %
+      % Utility to add a state machine that sets up drawing. Calls
+      %  setupStateMachineDrawing and addStateMachineto do the work. 
+      %
+      %  This is now depracated, use addStates instead.
+      %  
+      function addStateMachineWithDrawing(self, states, varargin)
          
-         % call addStateMachine to do the work
+         % call setupStateMachineDrawing
+         self.setupStateMachineDrawing(varargin{:});
+         
+         % call addStateMachine
          self.addStateMachine(states, activeList, compositeChildren);
       end
       
-      %% Utility to add a state machine
+      %% addStateMachine
+      %
+      % Utility to add a state machine
       %
       % Arguments:
       %  states      ... the cell array of state specs for
@@ -624,20 +779,19 @@ classdef topsTreeNodeTask < topsTreeNode
       %  compositeChildren ... Cell array of children to add to the
       %                       stateMachineComposite
       %  nodeChildren ... Cell array of children to add to this topsTreeNode
+      %
       function addStateMachine(self, states, activeList, compositeChildren, nodeChildren)
          
          % Set up the state machine
          self.stateMachine = topsStateMachine();
          self.stateMachine.addMultipleStates(states);
-         self.stateMachine.startFevalable  = {@self.startTaskTrial};
-         self.stateMachine.finishFevalable = {@self.finishTaskTrial};
+         % jig removed after adding trialNode
+         % self.stateMachine.startFevalable  = {@self.startTaskTrial};
+         % self.stateMachine.finishFevalable = {@self.finishTaskTrial};
          
-         % Set up ensemble activation list.
+         % Set up ensemble active list.
          %
          % See topsActivateEnsemblesByState for details.
-         % Note that the predots state is what allows us to get a good timestamp
-         %   of the dots onset... we start the flipping before, so the dots will start
-         %   as soon as we send the isVisible command in the entry fevalable of showDots
          if nargin >= 3 && ~isempty(activeList)
             self.stateMachine.addSharedFevalableWithName( ...
                {@topsActivateEnsemblesByState activeList}, 'activateEnsembles', 'entry');
@@ -647,20 +801,24 @@ classdef topsTreeNodeTask < topsTreeNode
          %
          stateMachineComposite = topsConcurrentComposite('stateMachine Composite');
          
-         % Add the state machine
+         % Add the state machine to the concurrent composite
          stateMachineComposite.addChild(self.stateMachine);
          
-         % Add the other children from the given list
+         % Add the other children in "compositeChildren" cell array to the
+         % concurrent composite. Each of these will runBriefly, in order,
+         % when the concurrent composite is running
          if nargin >= 3 && ~isempty(compositeChildren)
             for ii = 1:length(compositeChildren)
                stateMachineComposite.addChild(compositeChildren{ii});
             end
          end
          
-         % Add it as a child to the task
+         % Add the concurrent composite as a child to the task
          %
-         self.addChild(stateMachineComposite);
-         
+         % jig changed 12/15/19          
+         % self.addChild(stateMachineComposite);
+         self.trialNode.addChild(stateMachineComposite);
+          
          % Add remaining children to this task node
          if nargin >= 5 && ~isempty(nodeChildren)
             for ii = 1:length(nodeChildren)
@@ -692,9 +850,18 @@ classdef topsTreeNodeTask < topsTreeNode
             self.helpers.(ff{:}).sync.results.referenceTime = startTime;
             self.helpers.(ff{:}).startTrial(self);
             
-            % Flush readables
-            if ismethod(self.helpers.(ff{:}).theObject, 'flushData')
+            % Set up readables
+            if isa(self.helpers.(ff{:}).theObject, 'dotsReadable')
+               
+               % Flush data
                self.helpers.(ff{:}).theObject.flushData();
+               
+               % Set events isActive flag
+               if self.setReadableActiveFlags==true
+                  self.helpers.(ff{:}).theObject.activateEvents();
+               elseif self.setReadableActiveFlags==false
+                  self.helpers.(ff{:}).theObject.deActivateEvents();
+               end
             end
          end
       end
@@ -927,10 +1094,18 @@ classdef topsTreeNodeTask < topsTreeNode
       function setNextState(self, condition, thisState, nextStateIfTrue, nextStateIfFalse)
          
          if self.(condition)
-            self.stateMachine.editStateByName(thisState, 'next', nextStateIfTrue);
+            nextState = nextStateIfTrue;
          else
-            self.stateMachine.editStateByName(thisState, 'next', nextStateIfFalse);
+            nextState = nextStateIfFalse;
          end
+         
+         % Look for named state
+         for ii = 1:length(self.stateMachine)
+            if self.stateMachine(ii).isStateName(thisState)
+               self.stateMachine(ii).editStateByName(thisState, 'next', nextState);
+               return
+            end
+         end         
       end
       
       %% debugStates
@@ -943,8 +1118,8 @@ classdef topsTreeNodeTask < topsTreeNode
          if nargin < 2 || isempty(debugFlag)
             debugFlag = true;
          end
-         
-         self.stateMachine.debugFlag = debugFlag;
+                  
+         [self.stateMachine.debugFlag] = deal(debugFlag);
       end      
          
       %% activateControlKeyboard
