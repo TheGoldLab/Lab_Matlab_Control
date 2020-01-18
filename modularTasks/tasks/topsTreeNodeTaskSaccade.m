@@ -220,7 +220,7 @@ classdef topsTreeNodeTaskSaccade < topsTreeNodeTask
          %
          % Task information
          taskString = sprintf('%s (ID=%d, task %d/%d): mean RT=%.2f', self.name, ...
-            self.taskID, task.taskIndex, length(self.caller.children), nanmean([self.trialData.RT]));
+            self.taskID, self.taskIndex, length(self.caller.children), nanmean([self.trialData.RT]));
          
          % Trial information
          trialString = sprintf('Trial %d/%d, dir=%d', self.trialCount, ...
