@@ -220,9 +220,9 @@ classdef topsTreeNodeTopNode < topsTreeNode
                   if isa(self.helpers.(ff{:}).theObject, 'dotsReadable')
                      
                      % Parse the filename from the readable class
-                     className = class(self.helpers.(ff{:}).theObject);
-                     K = strfind(className, 'dotsReadable');
-                     className(K:K+length('dotsReadable')-1) = [];
+                     className = parseSnowDotsClassName( ...
+                        class(self.helpers.(ff{:}).theObject), ...
+                        'dotsReadable');
                      
                      % Set it in the helper object
                      self.helpers.(ff{:}).theObject.filepath = filepath;

@@ -150,7 +150,7 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
    
    methods (Static)
       
-      % readDataFromFile
+      % loadRawData
       %
       % Utility for reading data from a raw data file of mouse positions
       %
@@ -160,17 +160,16 @@ classdef dotsReadableEyeMouseSimulator < dotsReadableEye
       %  1. timestamp
       %  2. gaze x
       %  3. gaze y
-      function [data, tags] = readRawDataFromFile(filename)
-         
+      function data = loadRawData(filename, ecodes, helper)
+
          % for debugging
          if nargin < 1 || isempty(filename)
             filename = fullfile(DBSfilepath(), 'Pupil', 'data_2018_06_23_20_58_eye');
          end
          
-         % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y'};
-         
-         load(filename);
+         S = load(filename, 'data');
+         data.values = S.data;
+         data.tags = {'time', 'gaze_x', 'gaze_y'};
          %          data = csvread(filename);
          %          data(:,2) =  data(:,2)/10;
          %          data(:,3) = -data(:,3)/10;

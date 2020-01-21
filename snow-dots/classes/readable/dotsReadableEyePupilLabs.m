@@ -617,11 +617,12 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
          tmpFileName    = 'tmpDataFile';
         
          % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
-         data = [];
+         data.tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil_0', 'pupil_1'};
+         data.values = [];
          
          % Loop through the subdirectories, getting the data
          dirs = dir(fullfile(dirname, '0*'));
+         values = [];
          for dd = 1:length(dirs)
 
             % load into a temporary file... not sure how else to do this (yet)
@@ -633,14 +634,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             load(tmpFileName);
             
             % concatenate 
-            data = cat(1, data, eval(tmpFileName));
+            values = cat(1, values, eval(tmpFileName));
          end
       
          % clean up the tmp file
          system(sprintf('rm %s.mat', tmpFileName));
          
          % Convert from cell array
-         data = cell2num(data);
+         data.values = cell2num(values);
 
          % Calibrate and synchronize using data from the current topsDataLog
          if nargin > 1 && ~isempty(ecodes)
@@ -653,14 +654,14 @@ classdef dotsReadableEyePupilLabs < dotsReadableEye
             eyi  = find(strcmp(tags, 'gaze_y'));
 
             % Calibrate from the dataLog calibration data
-            data(:,[eti exi eyi]) = ...
+            data.values(:,[eti exi eyi]) = ...
                dotsReadableEye.calibrateGazeSets( ...
-               data(:,[eti exi eyi]), ...
+               data.values(:,[eti exi eyi]), ...
                topsDataLog.getTaggedData(['calibrate ' mfilename]));
 
             % Synchronize
             %
-            data = dotsReadableEye.parseRawData(data, tags, ...
+            data.values = dotsReadableEye.parseRawData(data.values, tags, ...
                topsTaskHelper.getSynchronizationData(mfilename));
          end 
       end

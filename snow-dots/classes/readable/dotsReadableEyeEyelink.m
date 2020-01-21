@@ -13,18 +13,18 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % IP address of the Eyelink machine
       eyelinkIP = '100.1.1.1';
       
-      % Default filename on eyelink machine
-      defaultFilename = 'dotseye.edf';
+      % Filename on eyelink machine
+      eyelinkFilename = 'dotseye.edf';
       
       % Time for eyelink to switch to new mode (msec)
       waitForModeReadyTime = 50;
       
       % Calibration properties for Eyelink
       ELcalibration = struct( ...
-         'defaultPacing',                 0,    ... % calibration/validation pacing: 0 (for manual trigger) or 500, 1000, or 1500 (msec)
-         'TargetBeep',                    [1250 0.05 0.6], ... % Frequency/duration/intensity values
-         'SuccessBeep',                   [ 400 0.25 0.8], ...
-         'FailureBeep',                   [ 800 0.25 0.8]);
+         'defaultPacing',        0,    ... % calibration/validation pacing: 0 (for manual trigger) or 500, 1000, or 1500 (msec)
+         'TargetBeep',           [1250 0.05 0.6], ... % Frequency/duration/intensity values
+         'SuccessBeep',          [ 400 0.25 0.8], ...
+         'FailureBeep',          [ 800 0.25 0.8]);
       
    end % Public properties
    
@@ -61,6 +61,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % dummy for returning vals
       blankData;
       
+      % Keep track of whether we opened the data file
+      openedDataFile = false;
+      
    end % Protected properties
    
    methods
@@ -87,43 +90,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          else
             time = feval(self.clockFunction);
          end
-      end
-      
-      % readDataFromFile
-      %
-      % Utility for reading data from an eyelink file
-      %
-      % dataPath is string pathname to where the pupil-labs folder is
-      %
-      % Returns data matrix, rows are times, columns are:
-      %  1. timestamp
-      %  2. gaze x
-      %  3. gaze y
-      %  4. confidence
-      function [dataMatrix, tags] = readRawDataFromFile(self, filenameWithPath)
-         
-         % for debugging
-         if nargin < 1 || isempty(filenameWithPath)
-            filenameWithPath = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
-               'DBSStudy', 'dotsReadable', 'data_2018_08_27_12_19_EyeEyelink.edf');
-         end
-         
-         if isempty(strfind(filenameWithPath, '_EyeEyelink.edf'))
-            filenameWithPath = [filenameWithPath '_EyeEyelink.edf'];
-         end  
-         
-         % jig
-         % filenameWithPath
-         
-         % parse the edf file
-         edf = Edf2Mat(filenameWithPath);
-         
-         % transform the data
-         xyt = transformRawData(self, [edf.Samples.posX edf.Samples.posY edf.Samples.time]);
-
-         % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil'};
-         dataMatrix = cat(2, xyt(:,[3 1 2]), double(isfinite(xyt(:,1))), edf.Samples.pupilSize);
       end
    end % Public methods
    
@@ -163,13 +129,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                   dotsPlayableTone.makeTone(self.ELcalibration.failureBeep)};
             end
             
-            % open the data file
-            if ~isempty(self.filename)
-               
-               % Open data file on eyelink computer
-               Eyelink('OpenFile', self.defaultFilename);
-            end
-            
             % make the blank data
             self.blankData = cat(2, [self.xID self.yID self.pupilID]', nans(3,2));
 
@@ -187,19 +146,19 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          end
          
          % Transfer and save data file
-         if ~isempty(self.filename)
+         if self.openedDataFile
             
             % Close the file
             Eyelink('CloseFile');
             
             % Get the file
-            status = Eyelink('ReceiveFile', [], self.defaultFilename);
+            status = Eyelink('ReceiveFile', [], self.eyelinkFilename);
             
             % Copy to the data directory
-            if status == 0 || ~exist(self.defaultFilename, 'file')
+            if status == 0 || ~exist(self.eyelinkFilename, 'file')
                disp('dotsReadableEyeEyelink: problems transferring data file')
             else
-               copyfile(self.defaultFilename, fullfile(self.filepath, [self.filename '.edf']));
+               copyfile(self.eyelinkFilename, fullfile(self.filepath, [self.filename '.edf']));
             end
          end
          
@@ -537,6 +496,16 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       %
       function isRecording = startRecording(self)
          
+         % Make sure data file is open
+         if ~self.openedDataFile && ~isempty(self.filename)
+               
+            % Open data file on eyelink computer
+            Eyelink('OpenFile', self.eyelinkFilename);
+            
+            % Save flag
+            self.openedDataFile = true;
+         end
+         
          % make sure it's in record mode
          if Eyelink('CurrentMode') ~= 4
             Eyelink('StartRecording');
@@ -616,4 +585,56 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          xyt(:,3) = xyt(:,3)/1000.0;         
       end
    end % Protected methods
+   
+   methods (Static)
+      
+      % Load raw data from an eyelink file
+      %
+      % filenameWithPath is the data file name, with full path
+      % ecodes and helper are ignored
+      %
+      % Returns data matrix, rows are times, columns are:
+      %  1. timestamp
+      %  2. gaze x
+      %  3. gaze y
+      %  4. confidence
+      %  5. pupil
+      function data = loadRawData(filename, ecodes, helper)
+         
+         % for debugging
+         if nargin < 1 || isempty(filename)
+            filename = fullfile(dotsTheMachineConfiguration.getDefaultValue('dataPath'), ...
+               'DBSStudy', 'dotsReadable', 'data_2018_08_27_12_19_EyeEyelink.edf');
+         end
+         
+         % Check for file
+         if ~exist(filename, 'file')
+            
+            % Check with suffix
+            suffix = parseSnowDotsClassName(class(self), 'dotsReadable');
+            
+            if isempty(strfind(filename, suffix))
+               filenameWithSuffix = [filename '_' suffix];
+            end
+            
+            if ~exist(filenameWithSuffix, 'file')
+               disp([filename ' not found'])
+               data = [];
+               return
+            else
+               filename = filenameWithSuffix;
+            end
+         end
+         
+         % parse the edf file
+         edf = Edf2Mat(filename);
+         
+         % Convert x,y to degrees visual angle wrt center of the screen
+         xyt = transformRawData(self, [edf.Samples.posX edf.Samples.posY edf.Samples.time]);
+
+         % Set up the return values
+         data.tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil'};
+         data.values = cat(2, xyt(:,[3 1 2]), double(isfinite(xyt(:,1))), edf.Samples.pupilSize);
+      end
+      
 end

@@ -20,7 +20,7 @@ classdef dotsReadableSpike2 < dotsReadableEye
       function data = loadRawData(filename, ecodes, helper)
          
          % Set up the return values
-         tags = {'time', 'gaze_x', 'gaze_y'};
+         data.tags = {'time', 'gaze_x', 'gaze_y'};
          data = [];
 
          % Need filename argument
@@ -81,7 +81,7 @@ classdef dotsReadableSpike2 < dotsReadableEye
             elseif strcmp(S.(channels{ii}).title, 'EOGV')
                
                % Vertical eye data
-               vEye = cat(2, times, S.(channels{ii}).values.*gainH);
+               vEye = cat(2, times, S.(channels{ii}).values.*gainV);
                
             elseif strcmp(S.(channels{ii}).title, 'MICRO')
                
