@@ -32,7 +32,7 @@ classdef topsTreeNodeTask2AFCSwitch < topsTreeNodeTask
          'blockMin',                   0,   ... % min hazard-block length (trials)
          'blockMax',                   0,   ... % max hazard-block length (trials)
          'blockHazard',                0.1, ... % p(block switch)
-         'predictOrReport',            'Predict', ... % duh
+         'predictOrReport',            'Report', ... % duh
          'useDrawables',               true, ... % Use visual stimuli
          'usePlayables',               true, ... % Use auditory stimuli
          'checkFixation',              false, ... % Whether to use eye tracker to check
@@ -474,8 +474,8 @@ classdef topsTreeNodeTask2AFCSwitch < topsTreeNodeTask
          else
             
             % Report task: first stimulus, then response
-            self.addStateMachine(responseStates); 
             self.addStateMachine(stimStates);
+            self.addStateMachine(responseStates); 
          end
       end
    end

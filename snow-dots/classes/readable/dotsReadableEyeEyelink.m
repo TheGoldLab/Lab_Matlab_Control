@@ -22,9 +22,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % Calibration properties for Eyelink
       ELcalibration = struct( ...
          'defaultPacing',        0,    ... % calibration/validation pacing: 0 (for manual trigger) or 500, 1000, or 1500 (msec)
-         'TargetBeep',           [1250 0.05 0.6], ... % Frequency/duration/intensity values
-         'SuccessBeep',          [ 400 0.25 0.8], ...
-         'FailureBeep',          [ 800 0.25 0.8]);
+         'targetBeep',           [1250 0.05 0.6], ... % Frequency/duration/intensity values
+         'successBeep',          [ 400 0.25 0.8], ...
+         'failureBeep',          [ 800 0.25 0.8]);
       
    end % Public properties
    
@@ -44,19 +44,19 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       
       % Return values from Eyelink
       eyelinkVals = struct( ...
-      'NO_REPLY',             1000,    ... 	% no reply yet (for polling test)
-      'KB_PRESS',             10,      ... 	% pressed keyboard
-      'MISSING',              -32768,  ...	% eyedata.h
-      'IN_DISCONNECT_MODE',   16384,   ... 	% disconnected
-      'IN_UNKNOWN_MODE',      0,       ... 	% mode fits no class (i.e setup menu)
-      'IN_IDLE_MODE',         1,       ...   % off-line
-      'IN_SETUP_MODE',        2,       ...   % setup or cal/val/dcorr
-      'IN_RECORD_MODE',       4,       ...   % data flowing
-      'IN_TARGET_MODE',       8,       ...   % some mode that needs fixation targets
-      'IN_DRIFTCORR_MODE',    16,      ...   % drift correction
-      'IN_IMAGE_MODE',        32,      ...   % image-display mode
-      'IN_USER_MENU',         64,      ...   % user menu
-      'IN_PLAYBACK_MODE',     256);% tracker sending playback data
+         'NO_REPLY',             1000,    ... 	% no reply yet (for polling test)
+         'KB_PRESS',             10,      ... 	% pressed keyboard
+         'MISSING',              -32768,  ...	% eyedata.h
+         'IN_DISCONNECT_MODE',   16384,   ... 	% disconnected
+         'IN_UNKNOWN_MODE',      0,       ... 	% mode fits no class (i.e setup menu)
+         'IN_IDLE_MODE',         1,       ...   % off-line
+         'IN_SETUP_MODE',        2,       ...   % setup or cal/val/dcorr
+         'IN_RECORD_MODE',       4,       ...   % data flowing
+         'IN_TARGET_MODE',       8,       ...   % some mode that needs fixation targets
+         'IN_DRIFTCORR_MODE',    16,      ...   % drift correction
+         'IN_IMAGE_MODE',        32,      ...   % image-display mode
+         'IN_USER_MENU',         64,      ...   % user menu
+         'IN_PLAYBACK_MODE',     256);% tracker sending playback data
       
       % dummy for returning vals
       blankData;
@@ -67,6 +67,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
    end % Protected properties
    
    methods
+      
       % Constructor takes no arguments.
       function self = dotsReadableEyeEyelink()
          self = self@dotsReadableEye();
@@ -131,7 +132,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             
             % make the blank data
             self.blankData = cat(2, [self.xID self.yID self.pupilID]', nans(3,2));
-
+            
          catch err
             warning(err.message);
          end
@@ -178,13 +179,25 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          %
          if isempty(self.pixelsPerDegree)
             
-            % Set screen coordinates
-            windowRect = getObjectProperty(self.helpers.screenEnsemble, 'windowRect');
+            % Get the screen ensemble
+            screenEnsemble = dotsTheScreen.theEnsemble();
+            
+            % Set screen coordinates in Eyelink and save screen center
+            windowRect = getObjectProperty(screenEnsemble, 'windowRect');
             Eyelink('Command', 'screen_pixel_coords = %d %d %d %d', ...
                windowRect(1), windowRect(2), windowRect(3)-1, windowRect(4)-1);
-            self.pixelsPerDegree = getObjectProperty(self.helpers.screenEnsemble, 'pixelsPerDegree');
             self.windowCtr = [windowRect(3)/2 windowRect(4)/2];
-            disp(self.windowCtr)
+            
+            % Set pixels per degree
+            self.pixelsPerDegree = getObjectProperty(screenEnsemble, 'pixelsPerDegree');
+            
+            % Make a target and add it to the calibration ensemble
+            t        = dotsDrawableTargets();
+            t.nSides = 100;
+            t.width  = 1.5.*[1 1];
+            t.height = 1.5.*[1 1];
+            self.calibrationEnsemble = dotsDrawable.makeEnsemble('calibrationEnsemble', {});
+            self.calibrationEnsemble.addObject(t);
          end
          
          % default return
@@ -214,8 +227,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          pause(0.15);
          
          % Blank screen (black background)
-         self.calibrationEnsemble.callObjectMethod(...
-            @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+         dotsTheScreen.blankScreen(zeros(1,3));
          
          % Flush the ui
          self.calibrationUI.flushData();
@@ -352,8 +364,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                   targetY == self.eyelinkVals.MISSING
                
                % Blank the screen
-               self.calibrationEnsemble.callObjectMethod(...
-                  @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+               dotsTheScreen.blankScreen(zeros(1,3));
                
                % Indicate not drawn
                targetOldX = self.eyelinkVals.MISSING;
@@ -380,11 +391,13 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                   if count==1
                      pause(0.2);
                   end
-                  self.calibrationEnsemble.callObjectMethod(...
-                     @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+                  
+                  % Blank it
+                  dotsTheScreen.blankScreen(zeros(1,3));
                   pause(0.2);
-                  self.calibrationEnsemble.callObjectMethod(...
-                     @dotsDrawable.drawFrame, {}, [], true);
+                  
+                  % Flip it
+                  self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
                   
                   % update the count
                   count = count + 1;
@@ -412,7 +425,8 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
                   end
                   
                   % Wait to release keypress
-                  while ~isempty(self.calibrationUI.getNextEvent()) end
+                  while ~isempty(self.calibrationUI.getNextEvent())
+                  end
                   self.calibrationUI.flushData();
                   
                case 'abort'
@@ -424,8 +438,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          end % while continueCalibration
          
          % Blank the screen
-         self.calibrationEnsemble.callObjectMethod(...
-            @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+         dotsTheScreen.blankScreen(zeros(1,3));
       end
       
       % Drift correction
@@ -461,8 +474,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
             self.calibrationEnsemble.setObjectProperty('yCenter', xy(2));
             
             % Draw the target and flip the buffer
-            self.calibrationEnsemble.callObjectMethod(...
-               @dotsDrawable.drawFrame, {}, [], true);
+            self.calibrationEnsemble.callObjectMethod(@dotsDrawable.drawFrame, {}, [], true);
             
             % Play alerting sound
             play(self.calibrationPlayables{1});
@@ -483,8 +495,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % Blank the screen if we drew the target
          if drawTarget
-            self.calibrationEnsemble.callObjectMethod(...
-               @dotsDrawable.blankScreen, {[0 0 0]}, [], true);
+            dotsTheScreen.blankScreen(zeros(1,3));
          end
          
          % Start recording
@@ -498,7 +509,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % Make sure data file is open
          if ~self.openedDataFile && ~isempty(self.filename)
-               
+            
             % Open data file on eyelink computer
             Eyelink('OpenFile', self.eyelinkFilename);
             
@@ -582,7 +593,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          xyt(:,2) = -(xyt(:,2) - self.windowCtr(2))/self.pixelsPerDegree;
          
          % Convert time to seconds
-         xyt(:,3) = xyt(:,3)/1000.0;         
+         xyt(:,3) = xyt(:,3)/1000.0;
       end
    end % Protected methods
    
@@ -631,10 +642,10 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
          
          % Convert x,y to degrees visual angle wrt center of the screen
          xyt = transformRawData(self, [edf.Samples.posX edf.Samples.posY edf.Samples.time]);
-
+         
          % Set up the return values
          data.tags = {'time', 'gaze_x', 'gaze_y', 'confidence', 'pupil'};
          data.values = cat(2, xyt(:,[3 1 2]), double(isfinite(xyt(:,1))), edf.Samples.pupilSize);
-      end
-      
+      end      
+   end
 end
