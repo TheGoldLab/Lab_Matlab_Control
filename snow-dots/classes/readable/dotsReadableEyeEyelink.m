@@ -36,6 +36,9 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       % Playable objects for calibration feedback tones
       calibrationPlayables = {};
       
+      % Screen for calibration
+      calibrationEnsemble;
+      
       % Center of window rect for converting screen coordinates into deg vis ang
       windowCtr = [];
       
@@ -63,7 +66,6 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       
       % Keep track of whether we opened the data file
       openedDataFile = false;
-      
    end % Protected properties
    
    methods
@@ -72,7 +74,7 @@ classdef dotsReadableEyeEyelink < dotsReadableEye
       function self = dotsReadableEyeEyelink()
          self = self@dotsReadableEye();
          
-         % default
+         % Set default sample rate
          self.sampleFrequency = 1000;
          
          % initialize the device

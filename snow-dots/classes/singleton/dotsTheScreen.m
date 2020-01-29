@@ -431,21 +431,22 @@ classdef dotsTheScreen < dotsAllSingletonObjects
          % If it does not yet exist, make it
          if isempty(selfEnsemble) || ~isvalid(selfEnsemble)
             
-            % Check for local/remote graphics
-            if nargin < 1 || isempty(remoteDrawing)
-               remoteDrawing = false;
+            % Set up the screen object, with defaults
+            screen = dotsTheScreen.theObject(varargin{:});
+
+            % Check for local/remote graphics and update properties
+            if nargin >= 1 && ~isempty(remoteDrawing)
+               screen.isRemoteFlag = remoteDrawing;
             end
             
             % Check display index
-            if nargin < 2 || isempty(displayIndex)
-               displayIndex = 1; % primary screen
+            if nargin >= 2 && ~isempty(displayIndex)
+               screen.displayIndex = 1; % primary screen
             end
          
-            % Set up the screen object and ensemble
-            screen = dotsTheScreen.theObject(varargin{:});
-            screen.displayIndex = displayIndex;
-            screen.isRemoteFlag = remoteDrawing;
-            selfEnsemble = dotsEnsembleUtilities.makeEnsemble('screenEnsemble', remoteDrawing);
+            % Set up the ensemble
+            selfEnsemble = dotsEnsembleUtilities.makeEnsemble( ...
+               'screenEnsemble', screen.isRemoteFlag);
             selfEnsemble.addObject(screen);
             selfEnsemble.automateObjectMethod('flip', @nextFrame);
          end
